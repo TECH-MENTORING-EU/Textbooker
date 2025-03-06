@@ -1,0 +1,100 @@
+name: Build and Deploy (.NET 9.0) with OIDC Debugging
+
+on:
+  push:
+    branches:
+      - release  # Trigger workflow on push to the release branch
+
+permissions:
+  id-token: write  # Required for OIDC authentication
+  contents: read   # Required to checkout the repo
+
+jobs:
+  build-deploy:
+    runs-on: windows-latest  # Use Windows runner for Windows hosting
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: release  # Ensure the workflow runs on the release branch
+
+      # 2. Authenticate with Azure using OIDC
+      - name: Azure Login with OIDC
+        uses: azure/login@v1
+        with:
+          client-id: fd4296f4-bdfb-4544-8203-c0fac560a7a0     # App ID
+          tenant-id: a3fb7c77-7f12-4e8c-9864-240eadfb4fdb    # Azure Tenant ID
+          subscription-id: 2fe4631b-3ade-4eda-bf70-a1dd7f0a86c1  # Subscription ID
+          enable-AzPSSession: false
+          audience: api://AzureADTokenExchange               # Explicitly set the audience
+
+      # 3. Retrieve secrets from Azure Key Vault and write them to GITHUB_ENV
+      - name: Get Secrets from Azure Key Vault
+        id: keyvault
+        shell: pwsh
+        run: |
+          # Retrieve MSDeploy Username
+          $MSDEPLOY_USERNAME = az keyvault secret show --name "MSDEPLOY-USERNAME" --vault-name "Booker" --query value -o tsv
+          Write-Host "::add-mask::$MSDEPLOY_USERNAME"
+          echo "MSDEPLOY_USERNAME=$MSDEPLOY_USERNAME" >> $env:GITHUB_ENV
+
+          # Retrieve MSDeploy Password
+          $MSDEPLOY_PASSWORD = az keyvault secret show --name "MSDEPLOY-PASSWORD" --vault-name "Booker" --query value -o tsv
+          $MSDEPLOY_PASSWORD = $MSDEPLOY_PASSWORD -replace ';', '%3B'
+          Write-Host "::add-mask::$MSDEPLOY_PASSWORD"
+          echo "MSDEPLOY_PASSWORD=$MSDEPLOY_PASSWORD" >> $env:GITHUB_ENV
+
+          # Retrieve MSDeploy Service URL
+          $MSDEPLOY_SERVICE_URL = az keyvault secret show --name "MSDEPLOY-SERVICE-URL" --vault-name "Booker" --query value -o tsv
+          echo "MSDEPLOY_SERVICE_URL=$MSDEPLOY_SERVICE_URL" >> $env:GITHUB_ENV
+
+          # Retrieve IIS App Path
+          $MSDEPLOY_IIS_APP_PATH = az keyvault secret show --name "MSDEPLOY-IIS-APP-PATH" --vault-name "Booker" --query value -o tsv
+          echo "MSDEPLOY_IIS_APP_PATH=$MSDEPLOY_IIS_APP_PATH" >> $env:GITHUB_ENV
+
+          # Retrieve Database Connection Details
+          $DB_HOST = az keyvault secret show --name "DB-HOST" --vault-name "Booker" --query value -o tsv
+          $DB_PORT = az keyvault secret show --name "DB-PORT" --vault-name "Booker" --query value -o tsv
+          $DB_NAME = az keyvault secret show --name "DB-NAME" --vault-name "Booker" --query value -o tsv
+          $DB_USER = az keyvault secret show --name "DB-USER" --vault-name "Booker" --query value -o tsv
+          $DB_PASS = az keyvault secret show --name "DB-PASSWORD" --vault-name "Booker" --query value -o tsv
+
+          Write-Host "::add-mask::$DB_PASS"
+          echo "DB_HOST=$DB_HOST" >> $env:GITHUB_ENV
+          echo "DB_PORT=$DB_PORT" >> $env:GITHUB_ENV
+          echo "DB_NAME=$DB_NAME" >> $env:GITHUB_ENV
+          echo "DB_USER=$DB_USER" >> $env:GITHUB_ENV
+          echo "DB_PASS=$DB_PASS" >> $env:GITHUB_ENV
+
+          # Construct the DB_CONNECTION_STRING
+          $env:DB_CONNECTION_STRING = "server=$DB_HOST,$DB_PORT;database=$DB_NAME;uid=$DB_USER;pwd=$DB_PASS;TrustServerCertificate=True;"
+          echo "DB_CONNECTION_STRING=$env:DB_CONNECTION_STRING" >> $env:GITHUB_ENV
+
+      # 4. Setup .NET SDK
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: |
+            9.0.x
+
+      # 5. Restore dependencies
+      - name: Restore Dependencies
+        shell: pwsh
+        run: dotnet restore .\Booker\Booker.sln
+
+      # 6. Replace DB connection string token in appsettings.json
+      - name: Replace db_connection_string token in appsettings.json
+        shell: pwsh
+        run: |
+          (Get-Content .\Booker\appsettings.json) |
+            ForEach-Object { $_ -replace '{#db-connection-string#}', "$env:DB_CONNECTION_STRING" } |
+            Set-Content .\Booker\appsettings.json
+
+      - name: Build and Deploy
+        shell: pwsh
+        run: |   
+          echo $env:MSDEPLOY_PASSWORD
+          dotnet build .\Booker\Booker.sln /p:Configuration=Release /p:DeployOnBuild=True /p:WebPublishMethod=MSDeploy /p:MSDeployPublishMethod=WMSVC /p:MSDeployServiceUrl=$env:MSDEPLOY_SERVICE_URL /p:UserName=$env:MSDEPLOY_USERNAME /p:Password=$env:MSDEPLOY_PASSWORD /p:DeployIISAppPath=$env:MSDEPLOY_IIS_APP_PATH /p:SkipExtraFilesOnServer=False /p:OutputPath=".\Booker\build_artifacts"
+        

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Booker.Services;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Configuration;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,7 @@ Log.Logger = new LoggerConfiguration()
         rollingInterval: RollingInterval.Day,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
     .CreateLogger();
+
 
 builder.Host.UseSerilog();
 
