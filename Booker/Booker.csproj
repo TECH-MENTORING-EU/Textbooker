@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -6,13 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>1007ab89-0fbd-45eb-92e2-3755701b3e59</UserSecretsId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="wwwroot\img\**" />
-    <Content Remove="wwwroot\img\**" />
-    <EmbeddedResource Remove="wwwroot\img\**" />
-    <None Remove="wwwroot\img\**" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Faker.Net" Version="2.0.154" />
@@ -34,10 +27,6 @@
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 
 </Project>
