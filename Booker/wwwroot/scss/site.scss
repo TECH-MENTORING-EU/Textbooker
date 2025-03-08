@@ -1,6 +1,6 @@
 // $enable-transitions: false; // not really needed
 
-@use "../lib/pico-2.0.6/scss/pico";
+@use "../lib/pico/scss/pico" with ( $theme-color: "azure" );
 @use "./error.scss";
 
 @use "sass:map";

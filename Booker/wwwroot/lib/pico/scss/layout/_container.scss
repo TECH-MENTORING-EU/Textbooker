@@ -1,0 +1,30 @@
+@use "sass:map";
+@use "../settings" as *;
+
+@if map.get($modules, "layout/container") and $enable-classes {
+  /**
+   * Container
+   */
+
+  #{$parent-selector} .container,
+  #{$parent-selector} .container-fluid {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: var(#{$css-var-prefix}block-spacing-horizontal);
+  }
+
+  #{$parent-selector} .container {
+    $first-breakpoint: true;
+    @each $key, $values in $breakpoints {
+      @if $values {
+        @media (min-width: map.get($values, "breakpoint")) {
+          max-width: map.get($values, "viewport");
+          @if $first-breakpoint {
+            $first-breakpoint: false;
+            padding-inline: 0;
+          }
+        }
+      }
+    }
+  }
+}
