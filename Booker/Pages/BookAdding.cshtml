@@ -1,0 +1,90 @@
+﻿@page
+@model Booker.Pages.BookAddingModel
+@{
+    ViewData["Title"] = "Booker";
+}
+<!--TODO
+    Pobrać każde przykładowe zdjęcie książki i zaczytywać je przy danych "filtrach".
+    Dodadać możliwość przesłania własnych zdjęć książki.
+    Dodanie odpowiednich svg (ikon) w odpowiednich miejscach :)
+    Zadbanie o to aby ładnie dodawało się do bazy ;)
+    Dodanie custom książek?
+    Poprawki w layout wedle uznania ;)
+-->
+<main class="container">
+    <h1><strong>Nowe ogłoszenie</strong></h1>
+    <form hx-post="/api/add-book" hx-trigger="submit" hx-target="#response">
+        <div class="grid">
+            <section>
+                <img src="https://static.profinfo.pl/storage/image/core_products/2022/10/14/661c19cef6829d8fa75c4f7d7e13e9d5/admin/preview/98469501659KS_HD.jpg.webp" alt="Zdjęcie książki">
+            </section>
+            <section>
+                <label for="subject">Przedmiot:</label>
+                <select id="subject" name="subject"
+                        hx-get="/BookAdding?handler=BooksByFilters"
+                        hx-trigger="change"
+                        hx-target="#TitleLevel"
+                        hx-swap="innerHTML"
+                        hx-include="[name='Grade'], [name='Level']">
+                    <option value="">Wszystkie przedmioty</option>
+                    @if (Model.Subjects != null)
+                    {
+                        @foreach (var subject in Model.Subjects)
+                        {
+                            <option value="@subject">@subject</option>
+                        }
+                    }
+                </select>
+
+                <label for="Grade">Klasa:</label>
+                <select id="Grade" name="Grade"
+                        hx-get="/BookAdding?handler=BooksByFilters"
+                        hx-trigger="change"
+                        hx-target="#TitleLevel"
+                        hx-swap="innerHTML"
+                        hx-include="[name='subject'], [name='Level']">
+                    <option value="">Wszystkie klasy</option>
+                    @if (Model.Grades != null)
+                    {
+                        @foreach (var grade in Model.Grades)
+                        {
+                            <option value="@grade">@grade</option>
+                        }
+                    }
+                </select>
+
+                <label for="Level">Poziom:</label>
+                <select id="Level" name="Level"
+                        hx-get="/BookAdding?handler=BooksByFilters"
+                        hx-trigger="change"
+                        hx-target="#TitleLevel"
+                        hx-swap="innerHTML"
+                        hx-include="[name='subject'], [name='Grade']">
+                    <option value="">Wszystkie poziomy</option>
+                    <option value="Podstawowy">Podstawowy</option>
+                    <option value="Rozszerzony">Rozszerzony</option>
+                </select>
+
+                <label for="TitleLevel">Tytuł książki:</label>
+                <select id="TitleLevel" name="TitleLevel">
+                    @if (Model.Books != null)
+                    {
+                        @foreach (var book in Model.Books)
+                        {
+                            <option value="@book">@book</option>
+                        }
+                    }
+                </select>
+
+                <label for="Description">Ważne informacje:</label>
+                <textarea id="Description" name="Description" rows="4" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
+                <label for="State">Stan książki:</label>
+                <textarea id="State" name="State" rows="6" required placeholder="Opisz stan książki…"></textarea>
+                <label for="Price">Cena:</label>
+                <input type="number" step="1" name="Price" id="Price" placeholder="PLN">
+                <button type="submit">Opublikuj ogłoszenie</button>
+            </section>
+        </div>
+    </form>
+    <div id="response"></div>
+</main>
