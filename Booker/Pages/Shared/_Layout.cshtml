@@ -16,16 +16,21 @@
                     <a asp-area="" asp-page="/Index">Booker</a>
                 </strong>
             </li>
-        </ul>
-        <ul>
             <li>
                 <a asp-area="" asp-page="/Index">Strona główna</a>
             </li>
-            <li>
-                <a role="button" class="outline" href="#">Zaloguj się</a>
-            </li>
-           
         </ul>
+        @* <ul> *@
+        @*     <li> *@
+        @*         <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Login">Zaloguj się</a> *@
+        @*     </li> *@
+        @*     <li> *@
+        @*         <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Register">Zarejestruj się</a> *@
+        @*     </li> *@
+           
+        @* </ul> *@
+        @await Html.PartialAsync("_LoginPartial")
+
     </nav>
 
     <main class="container">

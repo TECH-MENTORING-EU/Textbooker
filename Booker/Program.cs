@@ -8,6 +8,7 @@ using Booker.Services;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Configuration;
 using System.Net;
+using Booker.Areas.Identity.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,7 +50,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 });
 
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<DataContext>();
+    .AddEntityFrameworkStores<DataContext>()
+        .AddErrorDescriber<ErrorDescriber>();
 
 var app = builder.Build();
 
