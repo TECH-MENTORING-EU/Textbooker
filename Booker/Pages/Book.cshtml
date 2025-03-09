@@ -22,15 +22,15 @@
 
         <ul>
             <li>
-                Klasa:
-                @(Model.BookItem?.Book?.BookGrades?.FirstOrDefault()?.Grade?.GradeNumber ?? "nieznana")
+                Klasa: @String.Join(", ", 
+                Model.BookItem?.Book?.Grades?.Select( g => g.GradeNumber ).ToList() ?? new() {"nieznana"})
             </li>
-            <li>Przedmiot: @(Model.BookItem?.Book?.Subject ?? "Nieznany przedmiot")</li>
+            <li>Przedmiot: @(Model.BookItem?.Book?.Subject?.Name ?? "Nieznany przedmiot")</li>
             <li>
                 Zakres:
                 @(Model.BookItem?.Book?.Level == null
                     ? "Nieznany zakres"
-                    : (Model.BookItem.Book.Level == true ? "podstawowy" : "rozszerzony"))
+                    : (Model.BookItem.Book.Level == true ? "rozszerzony" : "podstawowy"))
             </li>
             <li>Stan: @(Model.BookItem?.State ?? "Nieznany stan")</li>
         </ul>

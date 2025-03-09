@@ -1,6 +1,6 @@
 // $enable-transitions: false; // not really needed
 
-@use "../lib/pico-2.0.6/scss/pico";
+@use "../lib/pico/scss/pico" with ( $theme-color: "azure" );
 @use "./error.scss";
 
 @use "sass:map";
@@ -162,5 +162,82 @@ div.htmx-indicator {
 
     &:empty {
         text-align: center;
+    }
+}
+
+details summary {
+    cursor: pointer;
+}
+
+details > form {
+    animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+details[open] summary svg {
+    transform: rotate(90deg);
+    transition: transform 0.3s ease-out;
+    height: 20px;
+    width: 20px;
+}
+
+details summary svg {
+    transition: transform 0.3s ease-out;
+    height: 20px;
+    width: 20px;
+}
+
+.book-tile {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.grid-gallery > .book-tile {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+summary svg {
+    height: 20px;
+    vertical-align: middle;
+}
+
+#mobileFilterSubmit {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    #mobileFilterSubmit {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
     }
 }

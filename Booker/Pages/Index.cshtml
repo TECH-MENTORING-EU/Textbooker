@@ -5,29 +5,58 @@
 }
 
 <section class="filter">
-    <input type="search" name="" placeholder="Wyszukaj..." aria-label="Wyszukaj" />
-    <div class="grid">
-        <select name="" aria-label="Klasa" required>
-            <option selected value="">
-                Wszystkie klasy
-            </option>
-            <option>Klasa 1.</option>
-            <option>Klasa 2.</option>
-            <option>Klasa 3.</option>
-            <option>Klasa 4.</option>
-            <option>Klasa 5.</option>
-        </select>
-        <select name="" aria-label="Przedmiot" required>
-            <option selected value="">
-                Wszystkie przedmioty
-            </option>
-            <option>Polski</option>
-            <option>Matematyka</option>
-            <option>Angielski</option>
-            <option>Biologia</option>
-            <option>Fizyka</option>
-        </select>
-    </div>
+    <form hx-get="/" hx-trigger="input changed delay:500ms, change" hx-target=".grid-gallery" hx-push-url="true"
+          hx-include="[name='search'], [name='grade'], [name='subject'], [name='minPrice'], [name='maxPrice'], [name='level']"
+          hx-vals='{"pageNumber": 0}'>
+        <input type="search" name="search" placeholder="Wyszukaj..." />
+
+        <details id="filterDetails">
+            <summary id="filterSummary">
+                <svg>
+                    <use href="img/icons.svg#si-awesome-sliders" />
+                </svg>
+                Filtry
+            </summary>
+
+            <div class="grid">
+                <select name="grade">
+                    <option value="">Wszystkie klasy</option>
+                    @{
+                        if (Model.Grades != null)
+                        {
+                            foreach (var grade in Model.Grades)
+                            {
+                                <option value="@grade">Klasa @grade.</option>
+                            }
+                        }
+                    }
+                </select>
+
+                <select name="subject">
+                    <option value="">Wszystkie przedmioty</option>
+                    @{
+                        if (Model.Subjects != null)
+                        {
+                            foreach (var subject in Model.Subjects)
+                            {
+                                <option value="@subject">@subject</option>
+                            }
+                        }
+                    }
+                </select>
+
+                <select name="level">
+                    <option value="">Wszystkie poziomy</option>
+                    <option value="Podstawa">Podstawa</option>
+                    <option value="Rozszerzenie">Rozszerzenie</option>
+                </select>
+
+                <input type="number" name="minPrice" placeholder="Cena min." />
+                <input type="number" name="maxPrice" placeholder="Cena max." />
+            </div>
+            <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
+        </details>
+    </form>
 </section>
 
 <section class="grid-gallery">
@@ -37,3 +66,9 @@
 <section>
     <div aria-busy="true" class="htmx-indicator" id="ind"></div>
 </section>
+
+<script>
+    document.getElementById('mobileFilterSubmit').addEventListener('click', function() {
+        document.getElementById('filterDetails').removeAttribute("open");
+    });
+</script>

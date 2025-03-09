@@ -1,14 +1,22 @@
 ﻿@model Booker.Pages.IndexModel.PagedListViewModel
 
-@foreach (var item in Model.Items)
+@if (Model == null || Model.Items == null || Model.Items.Count == 0)
 {
-    @await Html.PartialAsync("_BookTile", item)
-    @if (item == Model.Items.Last())
+    <p>Brak wyników...</p>
+}
+else
+{
+    @foreach (var item in Model.Items)
     {
-        <div hx-get="@Url.Page("Index","More",new { pageNumber = Model.Page + 1 })"
-             hx-trigger="revealed"
-             hx-swap="outerHTML"
-             hx-indicator="#ind">
-        </div>
+        @await Html.PartialAsync("_BookTile", item)
+        @if (item == Model.Items.Last() && Model.HasMorePages)
+        {
+            <div hx-get="@Url.Page("Index", "More", new { pageNumber = Model.Page + 1 })"
+                 hx-trigger="revealed"
+                 hx-swap="outerHTML"
+                 hx-indicator="#ind"
+                 hx-include="[name='search'], [name='grade'], [name='subject'], [name='minPrice'], [name='maxPrice'], [name='level']">
+            </div>
+        }
     }
 }
