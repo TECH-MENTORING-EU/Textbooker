@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Booker.Data;
 using System.Globalization;
 using Microsoft.AspNetCore.Identity;
+using Booker.Areas.Identity.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 });
 
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<DataContext>();
+    .AddEntityFrameworkStores<DataContext>()
+        .AddErrorDescriber<ErrorDescriber>();
 
 var app = builder.Build();
 
