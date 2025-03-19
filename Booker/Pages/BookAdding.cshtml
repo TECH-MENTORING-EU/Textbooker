@@ -3,88 +3,225 @@
 @{
     ViewData["Title"] = "Booker";
 }
-<!--TODO
-    Pobrać każde przykładowe zdjęcie książki i zaczytywać je przy danych "filtrach".
-    Dodadać możliwość przesłania własnych zdjęć książki.
-    Dodanie odpowiednich svg (ikon) w odpowiednich miejscach :)
-    Zadbanie o to aby ładnie dodawało się do bazy ;)
-    Dodanie custom książek?
-    Poprawki w layout wedle uznania ;)
--->
+
 <main class="container">
-    <h1><strong>Nowe ogłoszenie</strong></h1>
-    <form hx-post="/api/add-book" hx-trigger="submit" hx-target="#response">
-        <div class="grid">
-            <section>
-                <img src="https://static.profinfo.pl/storage/image/core_products/2022/10/14/661c19cef6829d8fa75c4f7d7e13e9d5/admin/preview/98469501659KS_HD.jpg.webp" alt="Zdjęcie książki">
-            </section>
-            <section>
-                <label for="subject">Przedmiot:</label>
-                <select id="subject" name="subject"
-                        hx-get="/BookAdding?handler=BooksByFilters"
-                        hx-trigger="change"
-                        hx-target="#TitleLevel"
-                        hx-swap="innerHTML"
-                        hx-include="[name='Grade'], [name='Level']">
-                    <option value="">Wszystkie przedmioty</option>
-                    @if (Model.Subjects != null)
-                    {
-                        @foreach (var subject in Model.Subjects)
+    @if (Model.IsUserAuthenticated)
+    {
+        <h1><strong>Nowe ogłoszenie:</strong></h1>
+        <form method="post" enctype="multipart/form-data">
+            <div class="grid">
+                <section>
+                    <img id="bookImagePreview" src="https://static.profinfo.pl/storage/image/core_products/2022/10/14/661c19cef6829d8fa75c4f7d7e13e9d5/admin/preview/98469501659KS_HD.jpg.webp" alt="Zdjęcie książki">
+                    <label for="bookImage">Prześlij zdjęcie swojej książki:</label>
+                    <input type="file" id="bookImage" name="BookImage" accept="image/*" onchange="previewImage(this);">
+                </section>
+                <section>
+                    <label for="subject">Przedmiot:</label>
+                    <select id="subject" name="Subject"
+                            asp-for="Subject"
+                            hx-get="/BookAdding?handler=BooksByFilters"
+                            hx-trigger="change"
+                            hx-target="#TitleLevel"
+                            hx-swap="innerHTML"
+                            hx-include="[name='Grade'], [name='Level']"
+                            data-next-select="grade">
+                        <option value="">Wybierz przedmiot</option>
+                        @foreach (var subject in Model.Subjects ?? new List<string>())
                         {
                             <option value="@subject">@subject</option>
                         }
-                    }
-                </select>
+                    </select>
+                    <span asp-validation-for="Subject" class="text-danger" ErrorMessage="Wybierz przedmiot."></span>
 
-                <label for="Grade">Klasa:</label>
-                <select id="Grade" name="Grade"
-                        hx-get="/BookAdding?handler=BooksByFilters"
-                        hx-trigger="change"
-                        hx-target="#TitleLevel"
-                        hx-swap="innerHTML"
-                        hx-include="[name='subject'], [name='Level']">
-                    <option value="">Wszystkie klasy</option>
-                    @if (Model.Grades != null)
-                    {
-                        @foreach (var grade in Model.Grades)
+                    <label for="Grade">Klasa:</label>
+                    <select id="grade" name="Grade"
+                            asp-for="Grade"
+                            hx-get="/BookAdding?handler=BooksByFilters"
+                            hx-trigger="change"
+                            hx-target="#TitleLevel"
+                            hx-swap="innerHTML"
+                            hx-include="[name='Subject'], [name='Level']"
+                            class="hidden"
+                            data-next-select="level">
+                        <option value="">Wybierz klasę</option>
+                        @foreach (var grade in Model.Grades ?? new List<string>())
                         {
                             <option value="@grade">@grade</option>
                         }
-                    }
-                </select>
+                    </select>
+                    <span asp-validation-for="Grade" class="text-danger" ErrorMessage="Wybierz klasę."></span>
 
-                <label for="Level">Poziom:</label>
-                <select id="Level" name="Level"
-                        hx-get="/BookAdding?handler=BooksByFilters"
-                        hx-trigger="change"
-                        hx-target="#TitleLevel"
-                        hx-swap="innerHTML"
-                        hx-include="[name='subject'], [name='Grade']">
-                    <option value="">Wszystkie poziomy</option>
-                    <option value="Podstawowy">Podstawowy</option>
-                    <option value="Rozszerzony">Rozszerzony</option>
-                </select>
+                    <label for="Level">Poziom:</label>
+                    <select id="level" name="Level"
+                            asp-for="Level"
+                            hx-get="/BookAdding?handler=BooksByFilters"
+                            hx-trigger="change"
+                            hx-target="#TitleLevel"
+                            hx-swap="innerHTML"
+                            hx-include="[name='Subject'], [name='Grade']"
+                            class="hidden"
+                            data-next-select="title">
+                        <option value="">Wybierz poziom</option>
+                        <option value="Podstawowy">Podstawowy</option>
+                        <option value="Rozszerzony">Rozszerzony</option>
+                    </select>
 
-                <label for="TitleLevel">Tytuł książki:</label>
-                <select id="TitleLevel" name="TitleLevel">
-                    @if (Model.Books != null)
-                    {
-                        @foreach (var book in Model.Books)
+                    <label for="TitleLevel">Tytuł książki:</label>
+                    <select id="title" name="Title" asp-for="Title" class="hidden">
+                        <option value="">Wybierz książkę</option>
+                        @foreach (var book in Model.Books ?? new List<string>())
                         {
                             <option value="@book">@book</option>
                         }
-                    }
-                </select>
+                    </select>
+                    <span asp-validation-for="Title" class="text-danger" ErrorMessage="Wybierz tytuł książki."></span>
 
-                <label for="Description">Ważne informacje:</label>
-                <textarea id="Description" name="Description" rows="4" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
-                <label for="State">Stan książki:</label>
-                <textarea id="State" name="State" rows="6" required placeholder="Opisz stan książki…"></textarea>
-                <label for="Price">Cena:</label>
-                <input type="number" step="1" name="Price" id="Price" placeholder="PLN">
-                <button type="submit">Opublikuj ogłoszenie</button>
-            </section>
+                    <label for="Description">Opis ogłoszenia:</label>
+                    <div style="position: relative;">
+                        <textarea id="Description" name="Description" asp-for="Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." oninput="updateCharCount('Description', 200)"></textarea>
+                        <span id="DescriptionCharCount" style="position: absolute; bottom: 5px; right: 5px;">0 / 200</span>
+                    </div>
+
+                    <label for="State">Stan książki:</label>
+                    <div style="position: relative;">
+                        <textarea id="State" name="State" asp-for="State" rows="6" maxlength="40" required placeholder="Opisz stan książki…" oninput="updateCharCount('State', 40)"></textarea>
+                        <span id="StateCharCount" style="position: absolute; bottom: 5px; right: 5px;">0 / 40</span>
+                    </div>
+
+                    <label for="Price">Cena:</label>
+                    <input type="text" name="Price" asp-for="Price" placeholder="PLN" oninput="formatPrice(this);">
+
+                    <button type="button" id="nextButton" style="width: 100%; height: 50px;">Dalej</button>
+                    <div id="summary" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; border: 1px solid #ccc; z-index: 1000; width: 80%; max-width: 600px;">
+                        <span id="closeSummary" style="position: absolute; top: 10px; right: 10px; cursor: pointer;">&times;</span>
+                        <h2>Podsumowanie:</h2>
+                        <img id="summaryImage" src="" alt="Zdjęcie książki" style="max-width: 200px; max-height: 200px;">
+                        <p>Przedmiot: <span id="summarySubject"></span></p>
+                        <p>Klasa: <span id="summaryGrade"></span></p>
+                        <p>Poziom: <span id="summaryLevel"></span></p>
+                        <p>Tytuł książki: <span id="summaryTitle"></span></p>
+                        <p>Opis: <span id="summaryDescription"></span></p>
+                        <p>Stan: <span id="summaryState"></span></p>
+                        <p>Cena: <span id="summaryPrice"></span></p>
+                        <button type="submit" style="width: 100%; height: 50px;">Dodaj ogłoszenie</button>
+                        <button type="button" id="editSummary" style="width: 100%; height: 50px; display: none;">Popraw</button>
+                    </div>
+                </section>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <h1>Nie jesteś zalogowany</h1>
+            <p>
+                Aby dodać ogłoszenie, musisz najpierw się
+                <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Login">zalogować</a>
+                lub
+                <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Register">zarejestrować</a>
+            </p>
         </div>
-    </form>
-    <div id="response"></div>
+    }
 </main>
+
+<script>
+    function previewImage(input) {
+        var preview = document.getElementById('bookImagePreview');
+        var file = input.files[0];
+        var reader = new FileReader();
+
+        reader.onloadend = function () {
+            preview.src = reader.result;
+        }
+
+        if (file) {
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "https://static.profinfo.pl/storage/image/core_products/2022/10/14/661c19cef6829d8fa75c4f7d7e13e9d5/admin/preview/98469501659KS_HD.jpg.webp";
+        }
+    }
+
+    function updateCharCount(id, max) {
+        var textarea = document.getElementById(id);
+        var count = textarea.value.length;
+        document.getElementById(id + 'CharCount').textContent = count + ' / ' + max;
+    }
+
+    function formatPrice(input) {
+        var value = input.value.replace(/[^0-9,]/g, '');
+        input.value = value;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const selects = document.querySelectorAll('select[data-next-select]');
+
+        document.getElementById('grade').style.display = 'none';
+        document.getElementById('level').style.display = 'none';
+        document.getElementById('title').style.display = 'none';
+
+        selects.forEach(select => {
+            select.addEventListener('change', function () {
+                const nextSelectId = this.dataset.nextSelect;
+                const nextSelect = document.getElementById(nextSelectId);
+
+                if (this.value) {
+                    nextSelect.style.display = 'block';
+                } else {
+                    nextSelect.style.display = 'none';
+                }
+
+                let currentSelect = nextSelect;
+                while (currentSelect && currentSelect.dataset.nextSelect) {
+                    const nextId = currentSelect.dataset.nextSelect;
+                    const next = document.getElementById(nextId);
+                    if (next) {
+                        next.style.display = 'none';
+                        next.value = '';
+                    }
+                    currentSelect = next;
+                }
+            });
+        });
+
+        document.getElementById('nextButton').addEventListener('click', function () {
+            document.getElementById('summarySubject').textContent = document.getElementById('subject').value;
+            document.getElementById('summaryGrade').textContent = document.getElementById('grade').value;
+            document.getElementById('summaryLevel').textContent = document.getElementById('level').value;
+            document.getElementById('summaryTitle').textContent = document.getElementById('title').value;
+            document.getElementById('summaryDescription').textContent = document.getElementById('Description').value;
+            document.getElementById('summaryState').textContent = document.getElementById('State').value;
+            document.getElementById('summaryPrice').textContent = document.getElementById('Price').value;
+
+            document.getElementById('summaryImage').src = document.getElementById('bookImagePreview').src;
+
+            document.getElementById('summary').style.display = 'block';
+            if (window.innerWidth < 768) {
+                document.getElementById('editSummary').style.display = 'block';
+            }
+        });
+
+        document.getElementById('closeSummary').addEventListener('click', function () {
+            document.getElementById('summary').style.display = 'none';
+            document.getElementById('editSummary').style.display = 'none';
+        });
+
+        document.getElementById('editSummary').addEventListener('click', function () {
+            document.getElementById('summary').style.display = 'none';
+            document.getElementById('editSummary').style.display = 'none';
+        });
+
+        // Dodanie funkcji filtrowania tytułów książek
+        document.getElementById('subject').addEventListener('change', updateBookTitles);
+        document.getElementById('grade').addEventListener('change', updateBookTitles);
+        document.getElementById('level').addEventListener('change', updateBookTitles);
+
+        function updateBookTitles() {
+            const subject = document.getElementById('subject').value;
+            const grade = document.getElementById('grade').value;
+            const level = document.getElementById('level').value;
+
+            // Użycie htmx do pobrania tytułów książek na podstawie wybranych preferencji
+            htmx.ajax('GET', `/BookAdding?handler=BooksByFilters&subject=${subject}&grade=${grade}&level=${level}`, '#title');
+        }
+    });
+</script>

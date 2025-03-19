@@ -17,7 +17,10 @@
                 </strong>
             </li>
             <li>
-                <a asp-area="" asp-page="/Index">Strona główna</a>
+                <a asp-area="" asp-page="/Index">🏠</a>
+            </li>
+            <li>
+                <a asp-area="" asp-page="/BookAdding">➕Dodaj ogłoszenie</a>
             </li>
         </ul>
         @* <ul> *@
@@ -30,15 +33,6 @@
            
         @* </ul> *@
         @await Html.PartialAsync("_LoginPartial")
-
-            <li>
-                <a asp-area="" asp-page="/BookAdding">➕Dodaj ogłoszenie</a>
-            </li>
-            <li>
-                <a role="button" class="outline" href="#">Zaloguj się</a>
-            </li>
-           
-        </ul>
     </nav>
 
     <main class="container">
