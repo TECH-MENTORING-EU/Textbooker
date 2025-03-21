@@ -241,3 +241,8 @@ summary svg {
         cursor: pointer;
     }
 }
+
+.login-form {
+    margin-inline: auto;
+    max-width: map.get(map.get(pico.$breakpoints, "sm"), "viewport")
+}
