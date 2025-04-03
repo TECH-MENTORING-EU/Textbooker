@@ -4737,5 +4737,9 @@ summary svg {
     cursor: pointer;
   }
 }
+.login-form {
+  margin-inline: auto;
+  max-width: 510px;
+}
 
 /*# sourceMappingURL=site.css.map */
