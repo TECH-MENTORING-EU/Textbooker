@@ -90,5 +90,5 @@ if (app.Environment.IsDevelopment())
     app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
 }
-
+await app.MigrateDatabaseAsync(configuration);
 app.Run();
