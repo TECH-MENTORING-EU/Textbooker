@@ -8,10 +8,10 @@ else
 {
     @foreach (var item in Model.Items)
     {
-        @await Html.PartialAsync("_BookTile", item)
+        @await Html.PartialAsync("_BookTile", new IndexModel.ItemModel(item, Model.Params))
         @if (item == Model.Items.Last() && Model.HasMorePages)
         {
-            <div hx-get="@Url.Page("Index", "More", new { pageNumber = Model.Page + 1 })"
+            <div hx-get="@Url.Page("Index", "More", new { pageNumber = Model.Params.PageNumber + 1 })"
                  hx-trigger="revealed"
                  hx-swap="outerHTML"
                  hx-indicator="#ind"

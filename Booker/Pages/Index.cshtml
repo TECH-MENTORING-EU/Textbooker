@@ -5,10 +5,10 @@
 }
 
 <section class="filter">
-    <form hx-get="/" hx-trigger="input changed delay:500ms, change" hx-target=".grid-gallery" hx-push-url="true"
+    <form hx-get="/" hx-trigger="submit, input changed delay:500ms, change" hx-target=".grid-gallery" hx-push-url="true"
           hx-include="[name='search'], [name='grade'], [name='subject'], [name='minPrice'], [name='maxPrice'], [name='level']"
           hx-vals='{"pageNumber": 0}'>
-        <input type="search" name="search" placeholder="Wyszukaj..." />
+        <input type="search" name="search" placeholder="Wyszukaj..." value="@Model.Params?.Search"/>
 
         <details id="filterDetails">
             <summary id="filterSummary">
@@ -26,7 +26,7 @@
                         {
                             foreach (var grade in Model.Grades)
                             {
-                                <option value="@grade">Klasa @grade.</option>
+                                <option value="@grade" selected="@Model.Params?.Grade?.Equals(@grade)">Klasa @grade.</option>
                             }
                         }
                     }
@@ -39,7 +39,7 @@
                         {
                             foreach (var subject in Model.Subjects)
                             {
-                                <option value="@subject">@subject</option>
+                                <option value="@subject" selected="@Model.Params?.Subject?.Equals(@subject)">@subject</option>
                             }
                         }
                     }
@@ -47,14 +47,14 @@
 
                 <select name="level">
                     <option value="">Wszystkie poziomy</option>
-                    <option value="Podstawa">Podstawa</option>
-                    <option value="Rozszerzenie">Rozszerzenie</option>
+                    <option value="Podstawa" selected='@Model.Params?.Level?.Equals("Podstawa")'>Podstawa</option>
+                    <option value="Rozszerzenie" selected='@Model.Params?.Level?.Equals("Rozszerzenie")'>Rozszerzenie</option>
                 </select>
 
-                <input type="number" name="minPrice" placeholder="Cena min." />
-                <input type="number" name="maxPrice" placeholder="Cena max." />
+                <input type="number" name="minPrice" placeholder="Cena min." value="@Model.Params?.MinPrice"/>
+                <input type="number" name="maxPrice" placeholder="Cena max." value="@Model.Params?.MaxPrice" />
+                <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
             </div>
-            <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
         </details>
     </form>
 </section>
@@ -68,6 +68,26 @@
 </section>
 
 <script>
+    function setFilter(name, value, enable) {
+        const elem = document.querySelector(`[name="${name}"]`);
+        if (elem) {
+            elem.value = enable ? value : "";
+            elem.form.requestSubmit();
+        }
+        
+    }
+
+    htmx.onLoad(function(content) {
+        content.querySelectorAll('button.subject, button.grade, button.level').forEach(button => {
+            button.addEventListener('click', function() {
+                const name = this.classList.contains('subject') ? 'subject' : this.classList.contains('grade') ? 'grade' : 'level';
+                const value = name === 'grade' ? this.textContent.trim().slice(6,7) : this.textContent.trim();
+                this.classList.toggle('outline');
+                setFilter(name, value, !this.classList.contains('outline'));
+            });
+        });
+    });
+
     document.getElementById('mobileFilterSubmit').addEventListener('click', function() {
         document.getElementById('filterDetails').removeAttribute("open");
     });

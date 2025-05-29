@@ -4689,76 +4689,46 @@ div.htmx-indicator:empty {
   text-align: center;
 }
 
-details summary {
-  cursor: pointer;
-}
-
-details > form {
-  animation: slideDown 0.3s ease-out forwards;
-}
-
 @keyframes slideDown {
   0% {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-0.5rem);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
   }
 }
-details[open] summary svg {
+.filter details summary svg {
+  height: 1rem;
+  width: 1rem;
+  transition: transform 0.3s ease-out;
+}
+.filter details[open] summary svg {
   transform: rotate(90deg);
-  transition: transform 0.3s ease-out;
-  height: 20px;
-  width: 20px;
 }
-
-details summary svg {
-  transition: transform 0.3s ease-out;
-  height: 20px;
-  width: 20px;
-}
-
-.book-tile {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-  animation: fadeIn 0.5s ease-out forwards;
+.filter details[open] div.grid {
+  animation: slideDown 0.3s ease-out forwards;
 }
 
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(1rem);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
   }
 }
-.grid-gallery > .book-tile {
+.book-tile {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
   animation: fadeIn 0.5s ease-out forwards;
 }
 
-summary svg {
-  height: 20px;
-  vertical-align: middle;
-}
-
-#mobileFilterSubmit {
-  display: none;
-}
-
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   #mobileFilterSubmit {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
+    display: none;
   }
 }
 .login-form {

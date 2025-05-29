@@ -14,12 +14,15 @@ namespace Booker.Pages
         private readonly IMemoryCache _cache;
         const int PageSize = 25;
 
-        public record PagedListViewModel(List<Item> Items, int Page, bool HasMorePages);
+        public record PagedListViewModel(List<Item> Items, FilterParameters Params, bool HasMorePages);
+        public record ItemModel(Item Item, FilterParameters Params);
         public record FilterParameters(int PageNumber, string? Search, string? Grade, string? Subject, decimal? MinPrice, decimal? MaxPrice, string? Level);
 
         public PagedListViewModel? ItemsList { get; set; }
         public List<string>? Grades { get; set; }
         public List<string>? Subjects { get; set; }
+
+        public FilterParameters? Params { get; set; }
 
         public IndexModel(ILogger<IndexModel> logger, DataContext context, IMemoryCache cache)
         {
@@ -58,6 +61,8 @@ namespace Booker.Pages
                 .Include(i => i.User)
                 .AsQueryable();
 
+            Params = parameters;
+
             query = ApplyFilters(query, parameters);
 
             var totalItems = await query.CountAsync();
@@ -69,7 +74,7 @@ namespace Booker.Pages
                 .Take(PageSize)
                 .ToListAsync();
 
-            ItemsList = new PagedListViewModel(items, parameters.PageNumber, hasMorePages);
+            ItemsList = new PagedListViewModel(items, parameters, hasMorePages);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
@@ -97,7 +102,7 @@ namespace Booker.Pages
                 .Take(PageSize)
                 .ToListAsync();
 
-            var pagedListViewModel = new PagedListViewModel(items, parameters.PageNumber, hasMorePages);
+            var pagedListViewModel = new PagedListViewModel(items, parameters, hasMorePages);
 
             return Partial("_ItemGallery", pagedListViewModel);
         }

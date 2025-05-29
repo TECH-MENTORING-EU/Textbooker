@@ -1,4 +1,4 @@
-﻿@model Booker.Data.Item
+﻿@model Booker.Pages.IndexModel.ItemModel
 
 @functions {
     private string DisplayLevel(bool? level)
@@ -21,35 +21,39 @@
 }
 
 <article class="book-tile">
-    <img src="@Model.Photo" alt="Zdjęcie książki: @Model.Book.Title" />
+    <img src="@Model.Item.Photo" alt="Zdjęcie książki: @Model.Item.Book.Title" />
     <footer>
         <div class="info">
-            <a asp-page="/Book" asp-route-id="@Model.Id">
-                <h2>@Model.Book.Title</h2>
+            <a asp-page="/Book" asp-route-id="@Model.Item.Id">
+                <h2>@Model.Item.Book.Title</h2>
             </a>
         
-            <p>@Model.Price zł</p>
+            <p>@Model.Item.Price zł</p>
             <p>
                 <small>
-                    @(string.IsNullOrWhiteSpace(Model.User?.School) ? "Nieznana szkoła" : Model.User.School)
+                    @(string.IsNullOrWhiteSpace(Model.Item.User?.School) ? "Nieznana szkoła" : Model.Item.User.School)
                 </small>
             </p>
         </div>
         <div class="actions">
-            <button class="outline">
-                @(string.IsNullOrWhiteSpace(Model.Book?.Subject?.Name) ? "Nieznany przedmiot" : Model.Book.Subject?.Name)
+            <button class='@(Model.Item.Book.Subject.Name.Equals(Model.Params.Subject) ? "" : "outline") subject'>
+                @(string.IsNullOrWhiteSpace(Model.Item.Book?.Subject?.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject?.Name)
             </button>
-            @if (Model.Book.Grades != null)
+            @if (Model.Item.Book.Grades != null)
             {
-                @foreach (var grade in Model.Book.Grades)
+                @foreach (var grade in Model.Item.Book.Grades)
                 {
-                    <button class="outline">@DisplayGrade(grade.GradeNumber)</button>
+                    <button class='@(grade.GradeNumber.Equals(Model.Params.Grade) ? "" : "outline") grade'>
+                        @DisplayGrade(grade.GradeNumber)
+                    </button>
                 }
             }
 
-            @if (Model.Book.Level != null)
+            @if (Model.Item.Book.Level != null)
             {
-                <button class="outline">@DisplayLevel(Model.Book.Level)</button>
+                <button class='@(DisplayLevel(Model.Item.Book.Level).Equals(Model.Params.Level) ? "" : "outline") level'>
+                    @DisplayLevel(Model.Item.Book.Level)
+                </button>
             }
         </div>
         <div class="fav">
