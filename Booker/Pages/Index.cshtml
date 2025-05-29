@@ -26,7 +26,7 @@
                         {
                             foreach (var grade in Model.Grades)
                             {
-                                <option value="@grade" selected="@Model.Params?.Grade?.Equals(@grade)">Klasa @grade.</option>
+                                <option value="@grade.GradeNumber" selected="@(Model.MinParams?.Grade?.Id == grade.Id)">Klasa @grade.GradeNumber.</option>
                             }
                         }
                     }
@@ -39,7 +39,7 @@
                         {
                             foreach (var subject in Model.Subjects)
                             {
-                                <option value="@subject" selected="@Model.Params?.Subject?.Equals(@subject)">@subject</option>
+                                <option value="@subject.Name" selected="@(Model.MinParams?.Subject?.Id == subject.Id)">@subject.Name</option>
                             }
                         }
                     }
@@ -47,8 +47,8 @@
 
                 <select name="level">
                     <option value="">Wszystkie poziomy</option>
-                    <option value="Podstawa" selected='@Model.Params?.Level?.Equals("Podstawa")'>Podstawa</option>
-                    <option value="Rozszerzenie" selected='@Model.Params?.Level?.Equals("Rozszerzenie")'>Rozszerzenie</option>
+                    <option value="Podstawa" selected='@(!Model.MinParams?.Level)'>Podstawa</option>
+                    <option value="Rozszerzenie" selected='@(Model.MinParams?.Level)'>Rozszerzenie</option>
                 </select>
 
                 <input type="number" name="minPrice" placeholder="Cena min." value="@Model.Params?.MinPrice"/>

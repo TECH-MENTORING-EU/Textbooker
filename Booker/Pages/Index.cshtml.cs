@@ -14,15 +14,17 @@ namespace Booker.Pages
         private readonly IMemoryCache _cache;
         const int PageSize = 25;
 
-        public record PagedListViewModel(List<Item> Items, FilterParameters Params, bool HasMorePages);
-        public record ItemModel(Item Item, FilterParameters Params);
+        public record PagedListViewModel(List<Item> Items, FilterParametersMin Params, bool HasMorePages);
+        public record ItemModel(Item Item, FilterParametersMin Params);
         public record FilterParameters(int PageNumber, string? Search, string? Grade, string? Subject, decimal? MinPrice, decimal? MaxPrice, string? Level);
+        public record FilterParametersMin(Grade? Grade, Subject? Subject, bool? Level, int PageNumber);
 
         public PagedListViewModel? ItemsList { get; set; }
-        public List<string>? Grades { get; set; }
-        public List<string>? Subjects { get; set; }
+        public List<Grade>? Grades { get; set; }
+        public List<Subject>? Subjects { get; set; }
 
         public FilterParameters? Params { get; set; }
+        public FilterParametersMin? MinParams { get; set; }
 
         public IndexModel(ILogger<IndexModel> logger, DataContext context, IMemoryCache cache)
         {
@@ -33,22 +35,20 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync([FromQuery] FilterParameters parameters)
         {
-            if (!_cache.TryGetValue("grades", out List<string>? grades))
+            if (!_cache.TryGetValue("grades", out List<Grade>? grades))
             {
                 grades = await _context.Grades
                     .OrderBy(g => g.Id)
-                    .Select(g => g.GradeNumber)
                     .ToListAsync();
                 _cache.Set("grades", grades, TimeSpan.FromHours(1));
             }
 
             Grades = grades;
 
-            if (!_cache.TryGetValue("subjects", out List<string>? subjects))
+            if (!_cache.TryGetValue("subjects", out List<Subject>? subjects))
             {
                 subjects = await _context.Subjects
                     .OrderBy(s => s.Name)
-                    .Select(s => s.Name)
                     .ToListAsync();
                 _cache.Set("subjects", subjects, TimeSpan.FromHours(1));
             }
@@ -62,6 +62,7 @@ namespace Booker.Pages
                 .AsQueryable();
 
             Params = parameters;
+            MinParams = GetFilterParametersMin(parameters);
 
             query = ApplyFilters(query, parameters);
 
@@ -73,8 +74,8 @@ namespace Booker.Pages
                 .Skip(parameters.PageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
-
-            ItemsList = new PagedListViewModel(items, parameters, hasMorePages);
+            
+            ItemsList = new PagedListViewModel(items, MinParams, hasMorePages);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
@@ -102,9 +103,20 @@ namespace Booker.Pages
                 .Take(PageSize)
                 .ToListAsync();
 
-            var pagedListViewModel = new PagedListViewModel(items, parameters, hasMorePages);
+            var pagedListViewModel = new PagedListViewModel(items, GetFilterParametersMin(parameters), hasMorePages);
 
             return Partial("_ItemGallery", pagedListViewModel);
+        }
+
+        private FilterParametersMin GetFilterParametersMin(FilterParameters parameters)
+        {
+            return new FilterParametersMin
+            (
+                string.IsNullOrWhiteSpace(parameters.Grade) ? null : Grades?.FirstOrDefault(g => g.GradeNumber == parameters.Grade),
+                string.IsNullOrWhiteSpace(parameters.Subject) ? null : Subjects?.FirstOrDefault(s => s.Name == parameters.Subject),
+                string.IsNullOrWhiteSpace(parameters.Level) ? null : (bool?)parameters.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase),
+                parameters.PageNumber
+            );
         }
 
         private IQueryable<Item> ApplyFilters(IQueryable<Item> query, FilterParameters parameters)

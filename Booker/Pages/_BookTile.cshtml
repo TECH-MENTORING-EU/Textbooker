@@ -36,14 +36,14 @@
             </p>
         </div>
         <div class="actions">
-            <button class='@(Model.Item.Book.Subject.Name.Equals(Model.Params.Subject) ? "" : "outline") subject'>
+            <button class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'>
                 @(string.IsNullOrWhiteSpace(Model.Item.Book?.Subject?.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject?.Name)
             </button>
             @if (Model.Item.Book.Grades != null)
             {
                 @foreach (var grade in Model.Item.Book.Grades)
                 {
-                    <button class='@(grade.GradeNumber.Equals(Model.Params.Grade) ? "" : "outline") grade'>
+                    <button class='@(grade.Id == Model.Params.Grade?.Id ? "" : "outline") grade'>
                         @DisplayGrade(grade.GradeNumber)
                     </button>
                 }
@@ -51,7 +51,7 @@
 
             @if (Model.Item.Book.Level != null)
             {
-                <button class='@(DisplayLevel(Model.Item.Book.Level).Equals(Model.Params.Level) ? "" : "outline") level'>
+                <button class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'>
                     @DisplayLevel(Model.Item.Book.Level)
                 </button>
             }
