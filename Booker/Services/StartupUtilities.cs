@@ -13,6 +13,7 @@ namespace Booker.Services
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddSingleton(x => new BlobServiceClient(configuration["AzureStorage=ConnectionString"]));
+
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));           
             services.AddTransient<SendMailSvc>();
             return services;

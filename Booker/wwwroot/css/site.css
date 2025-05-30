@@ -4544,30 +4544,62 @@ textarea,
 
 .grid-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
   gap: 1rem;
 }
 
 .book-tile {
-  position: relative;
-  --pico-typography-spacing-vertical: 0.25em;
+  display: flex;
+  flex-direction: column;
+  --pico-typography-spacing-vertical: 0.25rem;
 }
-.book-tile button {
+.book-tile h2 {
+  --pico-font-size: 1.125rem;
+  --pico-line-height: 1.225;
+  --pico-typography-spacing-top: 1.6875rem;
+}
+.book-tile footer {
+  flex: 1;
+  display: grid;
+  gap: 0.25rem;
+  grid-template-areas: "main main" "categories fav";
+  grid-template-columns: auto 1.5rem;
+  grid-template-rows: auto 3rem;
+}
+.book-tile footer a::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.book-tile footer button {
   position: relative;
-  z-index: 10;
+  z-index: 1;
+}
+.book-tile footer .info {
+  grid-area: main;
+}
+.book-tile footer .actions {
+  grid-area: categories;
+}
+.book-tile footer .actions button {
   font-size: 0.75em;
   padding: 0 0.5em;
   border-radius: 100vmax;
 }
-.book-tile button.fav {
-  position: absolute;
-  border: none;
-  width: 3em;
-  height: 3em;
-  right: 0.25em;
-  bottom: 0.25em;
+.book-tile footer .fav {
+  grid-area: fav;
+  align-content: end;
 }
-.book-tile button.fav svg {
+.book-tile footer .fav button {
+  border: none;
+  padding: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.book-tile footer .fav button svg {
   width: 100%;
   height: 100%;
 }
@@ -4582,14 +4614,6 @@ textarea,
   --pico-color: unset;
   --pico-underline: unset;
   --pico-text-decoration: underline;
-}
-.book-tile a::after {
-  content: "";
-  height: 100%;
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 100%;
 }
 
 .book-display .image {
@@ -4617,7 +4641,7 @@ textarea,
 @media (min-width: 1024px) {
   .book-display {
     display: grid;
-    gap: 1em;
+    gap: 1rem;
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: min-content 1fr;
   }
@@ -4757,3 +4781,45 @@ summary svg {
     font-size: 0.875em;
     margin-top: 0.25rem;
 }
+@media (max-height: 575px) and (min-width: 480px) {
+  .grid-gallery {
+    display: block;
+  }
+  article:not(:has(> form:first-child)).book-tile,
+  [role=article]:not(:has(> form:first-child)).book-tile {
+    flex-direction: row;
+  }
+  article:not(:has(> form:first-child)).book-tile img,
+  [role=article]:not(:has(> form:first-child)).book-tile img {
+    max-width: 25%;
+  }
+  article:not(:has(> form:first-child)).book-tile > header,
+  article:not(:has(> form:first-child)).book-tile > footer,
+  [role=article]:not(:has(> form:first-child)).book-tile > header,
+  [role=article]:not(:has(> form:first-child)).book-tile > footer {
+    margin-top: calc(var(--pico-block-spacing-vertical) * -1);
+    margin-bottom: calc(var(--pico-block-spacing-vertical) * -1);
+  }
+  article:not(:has(> form:first-child)).book-tile > header,
+  [role=article]:not(:has(> form:first-child)).book-tile > header {
+    border-bottom: revert;
+    border-top-right-radius: revert;
+    margin-left: calc(var(--pico-block-spacing-horizontal) * -1);
+    margin-right: var(--pico-block-spacing-horizontal);
+    border-right: var(--pico-border-width) solid var(--pico-card-border-color);
+    border-top-left-radius: var(--pico-border-radius);
+    border-bottom-left-radius: var(--pico-border-radius);
+  }
+  article:not(:has(> form:first-child)).book-tile > footer,
+  [role=article]:not(:has(> form:first-child)).book-tile > footer {
+    border-top: revert;
+    border-bottom-left-radius: revert;
+    margin-left: var(--pico-block-spacing-horizontal);
+    margin-right: calc(var(--pico-block-spacing-horizontal) * -1);
+    border-left: var(--pico-border-width) solid var(--pico-card-border-color);
+    border-top-right-radius: var(--pico-border-radius);
+    border-bottom-right-radius: var(--pico-border-radius);
+  }
+}
+
+/*# sourceMappingURL=site.css.map */
