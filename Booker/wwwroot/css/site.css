@@ -4742,4 +4742,18 @@ summary svg {
   max-width: 510px;
 }
 
-/*# sourceMappingURL=site.css.map */
+.book-image-preview {
+    max-width: 100%;
+    height: auto;
+    display: none;
+}
+
+    .book-image-preview.active {
+        display: block;
+    }
+
+.text-danger {
+    color: var(--pico-del-color);
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}

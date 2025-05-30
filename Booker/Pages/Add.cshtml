@@ -1,0 +1,341 @@
+﻿@page
+@model Booker.Pages.BookAddingModel
+@{
+    ViewData["Title"] = "Booker";
+}
+
+<main class="container">
+    @if (Model.IsUserAuthenticated)
+    {
+        <h1><strong>Nowe ogłoszenie:</strong></h1>
+        <form method="post" enctype="multipart/form-data">
+
+            <div class="grid">
+                <section>
+                    <img id="bookImagePreview" src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
+                    <label for="bookImage">Prześlij zdjęcie swojej książki:</label>
+                    <input type="file" id="bookImage" name="BookImage" accept="image/*" onchange="handleImageUpload(this);">
+                    <span id="bookImageError" class="text-danger" style="display:none;">Proszę przesłać zdjęcie książki.</span>
+                </section>
+
+                <section>
+                    <label for="title">Tytuł książki:</label>
+                    <select id="title" name="Title" asp-for="Title"
+                            hx-get="/Add?handler=SubjectsForTitle"
+                            hx-trigger="change"
+                            hx-target="#subjectContainer"
+                            hx-swap="innerHTML">
+                        <option value="">Wybierz książkę</option>
+                        @foreach (var bookTitle in Model.AllBookTitles ?? new List<string>())
+                        {
+                            <option value="@bookTitle">@bookTitle</option>
+                        }
+                    </select>
+                    <span id="titleError" class="text-danger" style="display:none;">Tytuł jest wymagany.</span>
+
+                    <div id="subjectContainer">
+                        <label for='subject'>Przedmiot:</label>
+                        <select id='subject' name='Subject' asp-for='Subject'>
+                            <option value="">Wybierz przedmiot</option>
+                        </select>
+                    </div>
+                    <span id="subjectError" class="text-danger" style="display:none;">Przedmiot jest wymagany.</span>
+
+
+                    <div id="gradeContainer">
+                        <label for='grade'>Klasa:</label>
+                        <select id='grade' name='Grade' asp-for='Grade'>
+                            <option value="">Wybierz klasę</option>
+                        </select>
+                    </div>
+                    <span id="gradeError" class="text-danger" style="display:none;">Klasa jest wymagana.</span>
+
+                    <div id="levelContainer">
+                        <label for='level'>Poziom:</label>
+                        <select id='level' name='Level' asp-for='Level'>
+                            <option value="">Wybierz poziom</option>
+                        </select>
+                    </div>
+                    <span id="levelError" class="text-danger" style="display:none;">Poziom jest wymagany.</span>
+
+                    <label for="Description">Opis ogłoszenia:</label>
+                    <div style="position: relative;">
+                        <textarea id="Description" name="Description" asp-for="Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." oninput="updateCharCount('Description', 200)"></textarea>
+                        <span id="DescriptionCharCount" style="position: absolute; bottom: 5px; right: 5px;">0 / 200</span>
+                    </div>
+
+                    <label for="State">Stan książki:</label>
+                    <div style="position: relative;">
+                        <textarea id="State" name="State" asp-for="State" rows="3" maxlength="40" placeholder="Opisz stan książki…" oninput="updateCharCount('State', 40)"></textarea>
+                        <span id="StateCharCount" style="position: absolute; bottom: 5px; right: 5px;">0 / 40</span>
+                    </div>
+                    <span id="stateError" class="text-danger" style="display:none;">Stan książki jest wymagany i nie może przekraczać 40 znaków.</span>
+
+                    <label for="Price">Cena:</label>
+                    <input type="text" id="Price" name="Price" asp-for="Price" placeholder="PLN" oninput="formatPrice(this);">
+                    <span id="priceError" class="text-danger" style="display:none;">Cena jest wymagana i musi być liczbą większą od 0.</span>
+
+                    <button type="button" id="openSummaryButton" style="width: 100%; height: 50px;">Dalej</button>
+
+                    <dialog id="summaryModal" aria-labelledby="modal-title" aria-modal="true">
+                        <article>
+                            <header>
+                                <a href="#close" aria-label="Close" class="close" data-target="summaryModal" onclick="return false;"></a>
+                                <h3 id="modal-title">Podsumowanie ogłoszenia</h3>
+                            </header>
+                            <div style="text-align: center; margin-bottom: 15px;">
+                                <img id="summaryImage" src="" alt="Zdjęcie książki" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
+                            </div>
+                            <p><strong>Tytuł książki:</strong> <span id="summaryTitle"></span></p>
+                            <p><strong>Przedmiot:</strong> <span id="summarySubject"></span></p>
+                            <p><strong>Klasa:</strong> <span id="summaryGrade"></span></p>
+                            <p><strong>Poziom:</strong> <span id="summaryLevel"></span></p>
+                            <p><strong>Opis:</strong> <span id="summaryDescription"></span></p>
+                            <p><strong>Stan:</strong> <span id="summaryState"></span></p>
+                            <p><strong>Cena:</strong> <span id="summaryPrice"></span></p>
+                            <footer>
+                                <button type="submit" id="confirmAddButton">Potwierdź i dodaj ogłoszenie</button>
+                            </footer>
+                        </article>
+                    </dialog>
+
+                </section>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <h1>Nie jesteś zalogowany</h1>
+            <p>
+                Aby dodać ogłoszenie, musisz najpierw się
+                <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Login">zalogować</a>
+                lub
+                <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Register">zarejestrować</a>
+            </p>
+        </div>
+    }
+</main>
+
+@section Scripts {
+    <script>
+        function handleImageUpload(input) {
+            const preview = document.getElementById('bookImagePreview');
+            const file = input.files[0];
+            const imageErrorSpan = document.getElementById('bookImageError');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 600;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(compressedFile);
+                            input.files = dataTransfer.files;
+
+                            const newReader = new FileReader();
+                            newReader.onloadend = () => {
+                                preview.src = newReader.result;
+                                preview.classList.add('active');
+                                imageErrorSpan.style.display = 'none';
+                            };
+                            newReader.readAsDataURL(compressedFile);
+
+                        }, 'image/jpeg', 0.8);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = "#";
+                preview.classList.remove('active');
+            }
+        }
+
+        function updateCharCount(id, max) {
+            const textarea = document.getElementById(id);
+            const count = textarea.value.length;
+            document.getElementById(id + 'CharCount').textContent = `${count} / ${max}`;
+        }
+
+        function formatPrice(input) {
+            let value = input.value.replace(/[^\d.,]/g, '');
+            const parts = value.split(/[.,]/);
+
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            } else if (parts.length === 2) {
+                value = parts[0] + '.' + parts[1];
+            }
+
+            const decimalIndex = value.indexOf('.');
+            if (decimalIndex !== -1 && value.indexOf('.', decimalIndex + 1) !== -1) {
+                value = value.substring(0, value.lastIndexOf('.'));
+            }
+
+            input.value = value;
+        }
+
+        function validateForm() {
+            let formIsValid = true;
+            let firstInvalidField = null;
+
+            const bookImageInput = document.getElementById('bookImage');
+            const bookImageErrorSpan = document.getElementById('bookImageError');
+            if (bookImageInput.files.length === 0) {
+                bookImageErrorSpan.style.display = 'block';
+                formIsValid = false;
+                if (!firstInvalidField) firstInvalidField = bookImageInput;
+            } else {
+                bookImageErrorSpan.style.display = 'none';
+            }
+
+            const titleSelect = document.getElementById('title');
+            const titleErrorSpan = document.getElementById('titleError');
+            if (titleSelect.value === "") {
+                titleErrorSpan.style.display = 'block';
+                formIsValid = false;
+                if (!firstInvalidField) firstInvalidField = titleSelect;
+            } else {
+                titleErrorSpan.style.display = 'none';
+            }
+
+            const subjectSelect = document.getElementById('subject');
+            const subjectErrorSpan = document.getElementById('subjectError');
+            if (!subjectSelect || subjectSelect.value === "") {
+                subjectErrorSpan.style.display = 'block';
+                formIsValid = false;
+                if (!firstInvalidField) firstInvalidField = subjectSelect;
+            } else {
+                subjectErrorSpan.style.display = 'none';
+            }
+
+            const gradeSelect = document.getElementById('grade');
+            const gradeErrorSpan = document.getElementById('gradeError');
+            if (!gradeSelect || gradeSelect.value === "") {
+                gradeErrorSpan.style.display = 'block';
+                formIsValid = false;
+                if (!firstInvalidField) firstInvalidField = gradeSelect;
+            } else {
+                gradeErrorSpan.style.display = 'none';
+            }
+
+            const levelSelect = document.getElementById('level');
+            const levelErrorSpan = document.getElementById('levelError');
+            if (!levelSelect || levelSelect.value === "") {
+                levelErrorSpan.style.display = 'block';
+                formIsValid = false;
+                if (!firstInvalidField) firstInvalidField = levelSelect;
+            } else {
+                levelErrorSpan.style.display = 'none';
+            }
+
+            const stateTextarea = document.getElementById('State');
+            const stateErrorSpan = document.getElementById('stateError');
+            if (stateTextarea.value.trim() === "" || stateTextarea.value.length > 40) {
+                stateErrorSpan.style.display = 'block';
+                formIsValid = false;
+                if (!firstInvalidField) firstInvalidField = stateTextarea;
+            } else {
+                stateErrorSpan.style.display = 'none';
+            }
+
+            const priceInput = document.getElementById('Price');
+            const priceErrorSpan = document.getElementById('priceError');
+            const priceValue = parseFloat(priceInput.value.replace(',', '.'));
+            if (isNaN(priceValue) || priceValue <= 0) {
+                priceErrorSpan.style.display = 'block';
+                formIsValid = false;
+                if (!firstInvalidField) firstInvalidField = priceInput;
+            } else {
+                priceErrorSpan.style.display = 'none';
+            }
+
+            if (!formIsValid && firstInvalidField) {
+                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalidField.focus();
+            }
+
+            return formIsValid;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCharCount('Description', 200);
+            updateCharCount('State', 40);
+
+            const form = document.querySelector('form');
+            const openSummaryButton = document.getElementById('openSummaryButton');
+            const summaryModal = document.getElementById('summaryModal');
+            const confirmAddButton = document.getElementById('confirmAddButton');
+            const closeButton = summaryModal.querySelector('.close');
+
+            openSummaryButton.addEventListener('click', function(event) {
+                event.preventDefault();
+
+                if (validateForm()) {
+                    document.getElementById('summaryTitle').textContent = document.getElementById('title').value;
+                    document.getElementById('summarySubject').textContent = document.getElementById('subject').value;
+                    document.getElementById('summaryGrade').textContent = document.getElementById('grade').value;
+                    document.getElementById('summaryLevel').textContent = document.getElementById('level').value;
+                    document.getElementById('summaryDescription').textContent = document.getElementById('Description').value || "Brak opisu";
+                    document.getElementById('summaryState').textContent = document.getElementById('State').value;
+                    document.getElementById('summaryPrice').textContent = document.getElementById('Price').value + " PLN";
+
+                    const bookImagePreviewSrc = document.getElementById('bookImagePreview').src;
+                    if (document.getElementById('bookImagePreview').classList.contains('active') && bookImagePreviewSrc && bookImagePreviewSrc !== window.location.href + '#') {
+                        document.getElementById('summaryImage').src = bookImagePreviewSrc;
+                        document.getElementById('summaryImage').style.display = 'block';
+                    } else {
+                        document.getElementById('summaryImage').style.display = 'none';
+                        document.getElementById('summaryImage').src = "";
+                    }
+
+                    summaryModal.showModal();
+                } else {
+                    // Walidacja nie powiodła się.
+                }
+            });
+
+            confirmAddButton.addEventListener('click', () => {
+                summaryModal.close();
+                form.submit();
+            });
+
+            if (closeButton) {
+                closeButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    summaryModal.close();
+                });
+            }
+        });
+    </script>
+}
