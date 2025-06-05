@@ -41,7 +41,7 @@ namespace Booker.Pages
         }
 
         [FromQuery]
-        public InputModel Input { get; set; }
+        public InputModel? Input { get; set; }
 
         public class InputModel
         {
@@ -124,7 +124,7 @@ namespace Booker.Pages
             Grades = _grades?.Select(g => new SelectListItem
             {
                 Value = g.GradeNumber,
-                Text = g.GradeNumber
+                Text = $"Klasa {g.GradeNumber}."
             }).ToList();
 
             if (!_cache.TryGetValue("subjects", out List<Subject>? subjects))
@@ -148,20 +148,20 @@ namespace Booker.Pages
         {
             return new FilterParameters
             (
-                string.IsNullOrWhiteSpace(Input.Grade) ? null : _grades?.FirstOrDefault(g => g.GradeNumber == Input.Grade),
-                string.IsNullOrWhiteSpace(Input.Subject) ? null : _subjects?.FirstOrDefault(s => s.Name == Input.Subject),
-                string.IsNullOrWhiteSpace(Input.Level) ? null : Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase),
+                string.IsNullOrWhiteSpace(Input?.Grade) ? null : _grades?.FirstOrDefault(g => g.GradeNumber == Input.Grade),
+                string.IsNullOrWhiteSpace(Input?.Subject) ? null : _subjects?.FirstOrDefault(s => s.Name == Input.Subject),
+                string.IsNullOrWhiteSpace(Input?.Level) ? null : Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase),
                 pageNumber
             );
         }
 
         private IQueryable<Item> ApplyFilters(IQueryable<Item> query)
         {
-            query = ApplySearchFilter(query, Input.Search);
-            query = ApplyGradeFilter(query, Input.Grade);
-            query = ApplySubjectFilter(query, Input.Subject);
-            query = ApplyPriceFilters(query, Input.MinPrice, Input.MaxPrice);
-            query = ApplyLevelFilter(query, Input.Level);
+            query = ApplySearchFilter(query, Input?.Search);
+            query = ApplyGradeFilter(query, Input?.Grade);
+            query = ApplySubjectFilter(query, Input?.Subject);
+            query = ApplyPriceFilters(query, Input?.MinPrice, Input?.MaxPrice);
+            query = ApplyLevelFilter(query, Input?.Level);
 
             return query;
         }

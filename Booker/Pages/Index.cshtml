@@ -12,7 +12,7 @@
         hx-push-url="true" 
         hx-vals='{"pageNumber": 0}'
     >
-        <input type="search" asp-for="Input.Search" placeholder="Wyszukaj..."/>
+        <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" />
 
         <details id="filterDetails">
             <summary id="filterSummary">
@@ -23,20 +23,20 @@
             </summary>
 
             <div class="grid">
-                <select asp-for="Input.Grade" asp-items="Model?.Grades">
+                <select name="grade" asp-for="Input.Grade" asp-items="Model?.Grades" data-val="false">
                     <option value="">Wszystkie klasy</option>
                 </select>
 
-                <select asp-for="Input.Subject" asp-items="Model?.Subjects">
+                <select name="subject" asp-for="Input.Subject" asp-items="Model?.Subjects" data-val="false">
                     <option value="">Wszystkie przedmioty</option>
                 </select>
 
-                <select asp-for="Input.Level" asp-items="Model?.Levels">
+                <select name="level" asp-for="Input.Level" asp-items="Model?.Levels">
                     <option value="">Wszystkie poziomy</option>
                 </select>
 
-                <input asp-for="Input.MinPrice" placeholder="Cena min."/>
-                <input asp-for="Input.MaxPrice" placeholder="Cena max."/>
+                <input type="number" name="minPrice" asp-for="Input.MinPrice" placeholder="Cena min." data-val="false" />
+                <input type="number" name="maxPrice" asp-for="Input.MaxPrice" placeholder="Cena max." data-val="false" />
                 <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
             </div>
         </details>
