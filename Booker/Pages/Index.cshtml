@@ -44,7 +44,7 @@
 </section>
 
 <section class="grid-gallery">
-    @await Html.PartialAsync("_ItemGallery", Model.ItemsList)
+    <partial name="_ItemGallery" for="ItemsList" />
 </section>
 
 <section>

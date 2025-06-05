@@ -71,7 +71,7 @@ namespace Booker.Pages
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
             var items = await query
-                .OrderBy(i => i.DateTime)
+                .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
@@ -83,30 +83,6 @@ namespace Booker.Pages
                 return Partial("_ItemGallery", ItemsList);
             }
             return Page();
-        }
-
-        public async Task<IActionResult> OnGetMoreAsync(int pageNumber)
-        {
-            var query = _context.Items
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .AsQueryable();
-
-            query = ApplyFilters(query);
-
-            var totalItems = await query.CountAsync();
-            bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
-
-            var items = await query
-                .OrderBy(i => i.DateTime)
-                .Skip(pageNumber * PageSize)
-                .Take(PageSize)
-                .ToListAsync();
-
-            var pagedListViewModel = new PagedListViewModel(items, GetFilterParameters(pageNumber), hasMorePages);
-
-            return Partial("_ItemGallery", pagedListViewModel);
         }
 
         private async Task LoadCache()
