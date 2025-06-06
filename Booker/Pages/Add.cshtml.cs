@@ -26,9 +26,6 @@ namespace Booker.Pages
 
         public bool IsFirstLoad { get; set; } = false;
 
-        public bool IsUserAuthenticated { get; set; }
-
-
         public required List<Book> _Books { get; set; } = new();
         public required List<SelectListItem> Books { get; set; } = new();
         public required List<Subject> _Subjects { get; set; } = new();
@@ -74,9 +71,9 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
-            IsUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
-            if (!IsUserAuthenticated)
+            if (!isUserAuthenticated)
             {
                 return RedirectToPage("/Account/Login");
             }
@@ -263,9 +260,9 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            IsUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
-            if (!IsUserAuthenticated)
+            if (!isUserAuthenticated)
             {
                 return RedirectToPage("/Account/Login");
             }
