@@ -5,104 +5,103 @@
     const string include = "#add-form :not([name = '__RequestVerificationToken'])";
 }
 
-<main class="container">
-    @if (Model.IsUserAuthenticated)
-    {
-        <h1><strong>Nowe ogłoszenie:</strong></h1>
-        <form method="post" enctype="multipart/form-data" id="add-form" data-in-summary="" hx-on:submit="this.dataset.inSummary ? this.submit() : showSummary(event)">
-            <div class="grid">
-                <section>
-                    <img src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
-                    <label asp-for="Input.Image">Prześlij zdjęcie swojej książki:</label>
-                    <input type="file" asp-for="Input.Image" accept="image/*" hx-on:change="handleImageUpload(this)">
-                    <small><span asp-validation-for="Input.Image"></span></small>
 
-                    <div asp-validation-summary="ModelOnly"></div>
-                </section>
+@if (Model.IsUserAuthenticated)
+{
+    <h1><strong>Nowe ogłoszenie:</strong></h1>
+    <form method="post" enctype="multipart/form-data" id="add-form" data-in-summary="" hx-on:submit="this.dataset.inSummary ? this.submit() : showSummary(event)">
+        <div class="grid">
+            <section>
+                <img src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
+                <label asp-for="Input.Image">Prześlij zdjęcie swojej książki:</label>
+                <input type="file" asp-for="Input.Image" accept="image/*" hx-on:change="handleImageUpload(this)">
+                <small><span asp-validation-for="Input.Image"></span></small>
 
-                <section>
-                    <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
+                <div asp-validation-summary="ModelOnly"></div>
+            </section>
 
-                    <label asp-for="Input.Title">Tytuł książki:</label>
-                    <select asp-for="Input.Title" asp-items="Model.Books">
-                        <option value="">Wybierz książkę</option>
-                    </select>
-                    <small><span asp-validation-for="Input.Title"></span></small>
+            <section>
+                <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
 
-                    <label asp-for='Input.Subject'>Przedmiot:</label>
-                    <select asp-for='Input.Subject' asp-items="Model.Subjects">
-                        <option value="">Wybierz przedmiot</option>
-                    </select>
-                    <small><span asp-validation-for="Input.Subject"></span></small>
+                <label asp-for="Input.Title">Tytuł książki:</label>
+                <select asp-for="Input.Title" asp-items="Model.Books">
+                    <option value="">Wybierz książkę</option>
+                </select>
+                <small><span asp-validation-for="Input.Title"></span></small>
 
-                    <label asp-for='Input.Grade'>Klasa:</label>
-                    <select asp-for='Input.Grade' asp-items="Model.Grades">
-                        <option value="">Wybierz klasę</option>
-                    </select>
-                    <small><span asp-validation-for="Input.Grade"></span></small>
+                <label asp-for='Input.Subject'>Przedmiot:</label>
+                <select asp-for='Input.Subject' asp-items="Model.Subjects">
+                    <option value="">Wybierz przedmiot</option>
+                </select>
+                <small><span asp-validation-for="Input.Subject"></span></small>
 
-                    <label asp-for='Input.Level'>Poziom:</label>
-                    <select asp-for='Input.Level' asp-items="Model.Levels">
-                        <option value="">Wybierz poziom</option>
-                    </select>
-                    <small><span asp-validation-for="Input.Level"></span></small>
+                <label asp-for='Input.Grade'>Klasa:</label>
+                <select asp-for='Input.Grade' asp-items="Model.Grades">
+                    <option value="">Wybierz klasę</option>
+                </select>
+                <small><span asp-validation-for="Input.Grade"></span></small>
 
-                    <label asp-for="Input.Description">Opis ogłoszenia:</label>
-                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
-                    <small><span class="char-count">0 / 200</span></small>
+                <label asp-for='Input.Level'>Poziom:</label>
+                <select asp-for='Input.Level' asp-items="Model.Levels">
+                    <option value="">Wybierz poziom</option>
+                </select>
+                <small><span asp-validation-for="Input.Level"></span></small>
 
-                    <label asp-for="Input.State">Stan książki:</label>
-                    <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…"></textarea>
-                    <small>
-                        <span asp-validation-for="Input.State"></span>
-                        <span class="char-count" style="text-align: right;">0 / 40</span>
-                    </small>
+                <label asp-for="Input.Description">Opis ogłoszenia:</label>
+                <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
+                <small><span class="char-count">0 / 200</span></small>
 
-                    <label asp-for="Input.Price">Cena:</label>
-                    <input asp-for="Input.Price" placeholder="PLN">
-                    <small><span asp-validation-for="Input.Price"></span></small>
+                <label asp-for="Input.State">Stan książki:</label>
+                <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…"></textarea>
+                <small>
+                    <span asp-validation-for="Input.State"></span>
+                    <span class="char-count" style="text-align: right;">0 / 40</span>
+                </small>
 
-                    <button>Dalej</button>
-                </section>
-            </div>
-        </form>
+                <label asp-for="Input.Price">Cena:</label>
+                <input asp-for="Input.Price" placeholder="PLN">
+                <small><span asp-validation-for="Input.Price"></span></small>
 
-        <dialog id="summaryModal" aria-labelledby="modal-title" aria-modal="true">
-            <article>
-                <header>
-                    @* <a href="#close" aria-label="Close" class="close" data-target="summaryModal" onclick="return false;"></a> *@
-                    <button aria-label="Close" rel="prev" hx-on:click="this.closest('dialog').close(); this.closest('form').dataset.inSummary = false;"></button>
-                    <h2>Podsumowanie ogłoszenia</h2>
-                </header>
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <img id="summaryImage" src="" alt="Zdjęcie książki" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
-                </div>
-                <p><strong>Tytuł książki:</strong> <span id="summaryTitle"></span></p>
-                <p><strong>Przedmiot:</strong> <span id="summarySubject"></span></p>
-                <p><strong>Klasa:</strong> <span id="summaryGrade"></span></p>
-                <p><strong>Poziom:</strong> <span id="summaryLevel"></span></p>
-                <p><strong>Opis:</strong> <span id="summaryDescription"></span></p>
-                <p><strong>Stan:</strong> <span id="summaryState"></span></p>
-                <p><strong>Cena:</strong> <span id="summaryPrice"></span></p>
-                <footer>
-                    <button form="add-form" type="submit">Potwierdź i dodaj ogłoszenie</button>
-                </footer>
-            </article>
-        </dialog>
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            <h1>Nie jesteś zalogowany</h1>
-            <p>
-                Aby dodać ogłoszenie, musisz najpierw się
-                <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Login">zalogować</a>
-                lub
-                <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Register">zarejestrować</a>
-            </p>
+                <button>Dalej</button>
+            </section>
         </div>
-    }
-</main>
+    </form>
+
+    <dialog id="summaryModal" aria-labelledby="modal-title" aria-modal="true">
+        <article>
+            <header>
+                @* <a href="#close" aria-label="Close" class="close" data-target="summaryModal" onclick="return false;"></a> *@
+                <button aria-label="Close" rel="prev" hx-on:click="this.closest('dialog').close(); this.closest('form').dataset.inSummary = false;"></button>
+                <h2>Podsumowanie ogłoszenia</h2>
+            </header>
+            <div>
+                <img id="summaryImage" src="" alt="Zdjęcie książki">
+            </div>
+            <p><strong>Tytuł książki:</strong> <span id="summaryTitle"></span></p>
+            <p><strong>Przedmiot:</strong> <span id="summarySubject"></span></p>
+            <p><strong>Klasa:</strong> <span id="summaryGrade"></span></p>
+            <p><strong>Poziom:</strong> <span id="summaryLevel"></span></p>
+            <p><strong>Opis:</strong> <span id="summaryDescription"></span></p>
+            <p><strong>Stan:</strong> <span id="summaryState"></span></p>
+            <p><strong>Cena:</strong> <span id="summaryPrice"></span></p>
+            <footer>
+                <button form="add-form" type="submit">Potwierdź i dodaj ogłoszenie</button>
+            </footer>
+        </article>
+    </dialog>
+}
+else
+{
+    <div class="alert alert-warning">
+        <h1>Nie jesteś zalogowany</h1>
+        <p>
+            Aby dodać ogłoszenie, musisz najpierw się
+            <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Login">zalogować</a>
+            lub
+            <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Register">zarejestrować</a>
+        </p>
+    </div>
+}
 
 @section Scripts {
     <script>
