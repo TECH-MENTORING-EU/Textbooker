@@ -2,106 +2,93 @@
 @model Booker.Pages.BookAddingModel
 @{
     ViewData["Title"] = "Booker";
+    const string include = "#add-form :not([name = '__RequestVerificationToken'])";
 }
 
 <main class="container">
     @if (Model.IsUserAuthenticated)
     {
         <h1><strong>Nowe ogłoszenie:</strong></h1>
-        <form method="post" enctype="multipart/form-data">
-
+        <form method="post" enctype="multipart/form-data" id="add-form" data-in-summary="" hx-on:submit="this.dataset.inSummary ? this.submit() : showSummary(event)">
             <div class="grid">
                 <section>
-                    <img id="bookImagePreview" src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
-                    <label for="bookImage">Prześlij zdjęcie swojej książki:</label>
-                    <input type="file" id="bookImage" name="BookImage" accept="image/*" onchange="handleImageUpload(this);">
-                    <span id="bookImageError" class="text-danger" style="display:none;">Proszę przesłać zdjęcie książki.</span>
+                    <img src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
+                    <label asp-for="Input.Image">Prześlij zdjęcie swojej książki:</label>
+                    <input type="file" asp-for="Input.Image" accept="image/*" hx-on:change="handleImageUpload(this)">
+                    <small><span asp-validation-for="Input.Image"></span></small>
+
+                    <div asp-validation-summary="ModelOnly"></div>
                 </section>
 
                 <section>
-                    <label for="title">Tytuł książki:</label>
-                    <select id="title" name="Title" asp-for="Title"
-                            hx-get="/Add?handler=SubjectsForTitle"
-                            hx-trigger="change"
-                            hx-target="#subjectContainer"
-                            hx-swap="innerHTML">
+                    <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
+
+                    <label asp-for="Input.Title">Tytuł książki:</label>
+                    <select asp-for="Input.Title" asp-items="Model.Books">
                         <option value="">Wybierz książkę</option>
-                        @foreach (var bookTitle in Model.AllBookTitles ?? new List<string>())
-                        {
-                            <option value="@bookTitle">@bookTitle</option>
-                        }
                     </select>
-                    <span id="titleError" class="text-danger" style="display:none;">Tytuł jest wymagany.</span>
+                    <small><span asp-validation-for="Input.Title"></span></small>
 
-                    <div id="subjectContainer">
-                        <label for='subject'>Przedmiot:</label>
-                        <select id='subject' name='Subject' asp-for='Subject'>
-                            <option value="">Wybierz przedmiot</option>
-                        </select>
-                    </div>
-                    <span id="subjectError" class="text-danger" style="display:none;">Przedmiot jest wymagany.</span>
+                    <label asp-for='Input.Subject'>Przedmiot:</label>
+                    <select asp-for='Input.Subject' asp-items="Model.Subjects">
+                        <option value="">Wybierz przedmiot</option>
+                    </select>
+                    <small><span asp-validation-for="Input.Subject"></span></small>
 
+                    <label asp-for='Input.Grade'>Klasa:</label>
+                    <select asp-for='Input.Grade' asp-items="Model.Grades">
+                        <option value="">Wybierz klasę</option>
+                    </select>
+                    <small><span asp-validation-for="Input.Grade"></span></small>
 
-                    <div id="gradeContainer">
-                        <label for='grade'>Klasa:</label>
-                        <select id='grade' name='Grade' asp-for='Grade'>
-                            <option value="">Wybierz klasę</option>
-                        </select>
-                    </div>
-                    <span id="gradeError" class="text-danger" style="display:none;">Klasa jest wymagana.</span>
+                    <label asp-for='Input.Level'>Poziom:</label>
+                    <select asp-for='Input.Level' asp-items="Model.Levels">
+                        <option value="">Wybierz poziom</option>
+                    </select>
+                    <small><span asp-validation-for="Input.Level"></span></small>
 
-                    <div id="levelContainer">
-                        <label for='level'>Poziom:</label>
-                        <select id='level' name='Level' asp-for='Level'>
-                            <option value="">Wybierz poziom</option>
-                        </select>
-                    </div>
-                    <span id="levelError" class="text-danger" style="display:none;">Poziom jest wymagany.</span>
+                    <label asp-for="Input.Description">Opis ogłoszenia:</label>
+                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
+                    <small><span class="char-count">0 / 200</span></small>
 
-                    <label for="Description">Opis ogłoszenia:</label>
-                    <div style="position: relative;">
-                        <textarea id="Description" name="Description" asp-for="Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." oninput="updateCharCount('Description', 200)"></textarea>
-                        <span id="DescriptionCharCount" style="position: absolute; bottom: 5px; right: 5px;">0 / 200</span>
-                    </div>
+                    <label asp-for="Input.State">Stan książki:</label>
+                    <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…"></textarea>
+                    <small>
+                        <span asp-validation-for="Input.State"></span>
+                        <span class="char-count" style="text-align: right;">0 / 40</span>
+                    </small>
 
-                    <label for="State">Stan książki:</label>
-                    <div style="position: relative;">
-                        <textarea id="State" name="State" asp-for="State" rows="3" maxlength="40" placeholder="Opisz stan książki…" oninput="updateCharCount('State', 40)"></textarea>
-                        <span id="StateCharCount" style="position: absolute; bottom: 5px; right: 5px;">0 / 40</span>
-                    </div>
-                    <span id="stateError" class="text-danger" style="display:none;">Stan książki jest wymagany i nie może przekraczać 40 znaków.</span>
+                    <label asp-for="Input.Price">Cena:</label>
+                    <input asp-for="Input.Price" placeholder="PLN">
+                    <small><span asp-validation-for="Input.Price"></span></small>
 
-                    <label for="Price">Cena:</label>
-                    <input type="text" id="Price" name="Price" asp-for="Price" placeholder="PLN" oninput="formatPrice(this);">
-                    <span id="priceError" class="text-danger" style="display:none;">Cena jest wymagana i musi być liczbą większą od 0.</span>
-
-                    <button type="button" id="openSummaryButton" style="width: 100%; height: 50px;">Dalej</button>
-
-                    <dialog id="summaryModal" aria-labelledby="modal-title" aria-modal="true">
-                        <article>
-                            <header>
-                                <a href="#close" aria-label="Close" class="close" data-target="summaryModal" onclick="return false;"></a>
-                                <h3 id="modal-title">Podsumowanie ogłoszenia</h3>
-                            </header>
-                            <div style="text-align: center; margin-bottom: 15px;">
-                                <img id="summaryImage" src="" alt="Zdjęcie książki" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
-                            </div>
-                            <p><strong>Tytuł książki:</strong> <span id="summaryTitle"></span></p>
-                            <p><strong>Przedmiot:</strong> <span id="summarySubject"></span></p>
-                            <p><strong>Klasa:</strong> <span id="summaryGrade"></span></p>
-                            <p><strong>Poziom:</strong> <span id="summaryLevel"></span></p>
-                            <p><strong>Opis:</strong> <span id="summaryDescription"></span></p>
-                            <p><strong>Stan:</strong> <span id="summaryState"></span></p>
-                            <p><strong>Cena:</strong> <span id="summaryPrice"></span></p>
-                            <footer>
-                                <button type="submit" id="confirmAddButton">Potwierdź i dodaj ogłoszenie</button>
-                            </footer>
-                        </article>
-                    </dialog>
-
+                    <button>Dalej</button>
                 </section>
             </div>
         </form>
+
+        <dialog id="summaryModal" aria-labelledby="modal-title" aria-modal="true">
+            <article>
+                <header>
+                    @* <a href="#close" aria-label="Close" class="close" data-target="summaryModal" onclick="return false;"></a> *@
+                    <button aria-label="Close" rel="prev" hx-on:click="this.closest('dialog').close(); this.closest('form').dataset.inSummary = false;"></button>
+                    <h2>Podsumowanie ogłoszenia</h2>
+                </header>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <img id="summaryImage" src="" alt="Zdjęcie książki" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
+                </div>
+                <p><strong>Tytuł książki:</strong> <span id="summaryTitle"></span></p>
+                <p><strong>Przedmiot:</strong> <span id="summarySubject"></span></p>
+                <p><strong>Klasa:</strong> <span id="summaryGrade"></span></p>
+                <p><strong>Poziom:</strong> <span id="summaryLevel"></span></p>
+                <p><strong>Opis:</strong> <span id="summaryDescription"></span></p>
+                <p><strong>Stan:</strong> <span id="summaryState"></span></p>
+                <p><strong>Cena:</strong> <span id="summaryPrice"></span></p>
+                <footer>
+                    <button form="add-form" type="submit">Potwierdź i dodaj ogłoszenie</button>
+                </footer>
+            </article>
+        </dialog>
     }
     else
     {
@@ -119,223 +106,17 @@
 
 @section Scripts {
     <script>
-        function handleImageUpload(input) {
-            const preview = document.getElementById('bookImagePreview');
-            const file = input.files[0];
-            const imageErrorSpan = document.getElementById('bookImageError');
-
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 600;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        canvas.toBlob((blob) => {
-                            const compressedFile = new File([blob], file.name, {
-                                type: 'image/jpeg',
-                                lastModified: Date.now()
-                            });
-
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(compressedFile);
-                            input.files = dataTransfer.files;
-
-                            const newReader = new FileReader();
-                            newReader.onloadend = () => {
-                                preview.src = newReader.result;
-                                preview.classList.add('active');
-                                imageErrorSpan.style.display = 'none';
-                            };
-                            newReader.readAsDataURL(compressedFile);
-
-                        }, 'image/jpeg', 0.8);
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.src = "#";
-                preview.classList.remove('active');
-            }
-        }
-
-        function updateCharCount(id, max) {
-            const textarea = document.getElementById(id);
-            const count = textarea.value.length;
-            document.getElementById(id + 'CharCount').textContent = `${count} / ${max}`;
-        }
-
-        function formatPrice(input) {
-            let value = input.value.replace(/[^\d.,]/g, '');
-            const parts = value.split(/[.,]/);
-
-            if (parts.length > 2) {
-                value = parts[0] + '.' + parts.slice(1).join('');
-            } else if (parts.length === 2) {
-                value = parts[0] + '.' + parts[1];
-            }
-
-            const decimalIndex = value.indexOf('.');
-            if (decimalIndex !== -1 && value.indexOf('.', decimalIndex + 1) !== -1) {
-                value = value.substring(0, value.lastIndexOf('.'));
-            }
-
-            input.value = value;
-        }
-
-        function validateForm() {
-            let formIsValid = true;
-            let firstInvalidField = null;
-
-            const bookImageInput = document.getElementById('bookImage');
-            const bookImageErrorSpan = document.getElementById('bookImageError');
-            if (bookImageInput.files.length === 0) {
-                bookImageErrorSpan.style.display = 'block';
-                formIsValid = false;
-                if (!firstInvalidField) firstInvalidField = bookImageInput;
-            } else {
-                bookImageErrorSpan.style.display = 'none';
-            }
-
-            const titleSelect = document.getElementById('title');
-            const titleErrorSpan = document.getElementById('titleError');
-            if (titleSelect.value === "") {
-                titleErrorSpan.style.display = 'block';
-                formIsValid = false;
-                if (!firstInvalidField) firstInvalidField = titleSelect;
-            } else {
-                titleErrorSpan.style.display = 'none';
-            }
-
-            const subjectSelect = document.getElementById('subject');
-            const subjectErrorSpan = document.getElementById('subjectError');
-            if (!subjectSelect || subjectSelect.value === "") {
-                subjectErrorSpan.style.display = 'block';
-                formIsValid = false;
-                if (!firstInvalidField) firstInvalidField = subjectSelect;
-            } else {
-                subjectErrorSpan.style.display = 'none';
-            }
-
-            const gradeSelect = document.getElementById('grade');
-            const gradeErrorSpan = document.getElementById('gradeError');
-            if (!gradeSelect || gradeSelect.value === "") {
-                gradeErrorSpan.style.display = 'block';
-                formIsValid = false;
-                if (!firstInvalidField) firstInvalidField = gradeSelect;
-            } else {
-                gradeErrorSpan.style.display = 'none';
-            }
-
-            const levelSelect = document.getElementById('level');
-            const levelErrorSpan = document.getElementById('levelError');
-            if (!levelSelect || levelSelect.value === "") {
-                levelErrorSpan.style.display = 'block';
-                formIsValid = false;
-                if (!firstInvalidField) firstInvalidField = levelSelect;
-            } else {
-                levelErrorSpan.style.display = 'none';
-            }
-
-            const stateTextarea = document.getElementById('State');
-            const stateErrorSpan = document.getElementById('stateError');
-            if (stateTextarea.value.trim() === "" || stateTextarea.value.length > 40) {
-                stateErrorSpan.style.display = 'block';
-                formIsValid = false;
-                if (!firstInvalidField) firstInvalidField = stateTextarea;
-            } else {
-                stateErrorSpan.style.display = 'none';
-            }
-
-            const priceInput = document.getElementById('Price');
-            const priceErrorSpan = document.getElementById('priceError');
-            const priceValue = parseFloat(priceInput.value.replace(',', '.'));
-            if (isNaN(priceValue) || priceValue <= 0) {
-                priceErrorSpan.style.display = 'block';
-                formIsValid = false;
-                if (!firstInvalidField) firstInvalidField = priceInput;
-            } else {
-                priceErrorSpan.style.display = 'none';
-            }
-
-            if (!formIsValid && firstInvalidField) {
-                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                firstInvalidField.focus();
-            }
-
-            return formIsValid;
+        function updateCharCount(e) {
+            const count = this.value.length;
+            const max = this.getAttribute('maxlength') || 200; // Default to 200 if maxlength is not set
+            this.nextElementSibling.querySelector(".char-count").textContent = `${count} / ${max}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            updateCharCount('Description', 200);
-            updateCharCount('State', 40);
-
-            const form = document.querySelector('form');
-            const openSummaryButton = document.getElementById('openSummaryButton');
-            const summaryModal = document.getElementById('summaryModal');
-            const confirmAddButton = document.getElementById('confirmAddButton');
-            const closeButton = summaryModal.querySelector('.close');
-
-            openSummaryButton.addEventListener('click', function(event) {
-                event.preventDefault();
-
-                if (validateForm()) {
-                    document.getElementById('summaryTitle').textContent = document.getElementById('title').value;
-                    document.getElementById('summarySubject').textContent = document.getElementById('subject').value;
-                    document.getElementById('summaryGrade').textContent = document.getElementById('grade').value;
-                    document.getElementById('summaryLevel').textContent = document.getElementById('level').value;
-                    document.getElementById('summaryDescription').textContent = document.getElementById('Description').value || "Brak opisu";
-                    document.getElementById('summaryState').textContent = document.getElementById('State').value;
-                    document.getElementById('summaryPrice').textContent = document.getElementById('Price').value + " PLN";
-
-                    const bookImagePreviewSrc = document.getElementById('bookImagePreview').src;
-                    if (document.getElementById('bookImagePreview').classList.contains('active') && bookImagePreviewSrc && bookImagePreviewSrc !== window.location.href + '#') {
-                        document.getElementById('summaryImage').src = bookImagePreviewSrc;
-                        document.getElementById('summaryImage').style.display = 'block';
-                    } else {
-                        document.getElementById('summaryImage').style.display = 'none';
-                        document.getElementById('summaryImage').src = "";
-                    }
-
-                    summaryModal.showModal();
-                } else {
-                    // Walidacja nie powiodła się.
-                }
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.addEventListener("input",updateCharCount);
+                ta.dispatchEvent(new Event("input")); // Trigger initial count
             });
-
-            confirmAddButton.addEventListener('click', () => {
-                summaryModal.close();
-                form.submit();
-            });
-
-            if (closeButton) {
-                closeButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    summaryModal.close();
-                });
-            }
         });
     </script>
 }

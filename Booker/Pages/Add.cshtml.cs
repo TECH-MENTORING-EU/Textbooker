@@ -1,13 +1,18 @@
+ï»¿using Azure.Storage.Blobs; // Dodaj to using
+using Azure.Storage.Blobs.Models; // Dodaj to using
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Azure.Storage.Blobs; // Dodaj to using
-using Azure.Storage.Blobs.Models; // Dodaj to using
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Options;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration; // Dodaj to using
+using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 
 namespace Booker.Pages
@@ -15,73 +20,245 @@ namespace Booker.Pages
     public class BookAddingModel : PageModel
     {
         private readonly DataContext _context;
-        private readonly IWebHostEnvironment _environment; // Mo¿e byæ usuniête, jeœli nie u¿ywasz ju¿ lokalnego przechowywania
-        private readonly BlobServiceClient _blobServiceClient; // Nowa zale¿noœæ
-        private readonly IConfiguration _config; // Nowa zale¿noœæ
+        private readonly BlobServiceClient _blobServiceClient;
+        private readonly IConfiguration _config;
+        private readonly IMemoryCache _cache;
 
+        public bool IsFirstLoad { get; set; } = false;
 
         public bool IsUserAuthenticated { get; set; }
 
-        public List<string>? AllBookTitles { get; set; }
-        public List<string>? AllSubjects { get; set; }
-        public List<string>? AllGrades { get; set; }
+
+        public required List<Book> _Books { get; set; } = new();
+        public required List<SelectListItem> Books { get; set; } = new();
+        public required List<Subject> _Subjects { get; set; } = new();
+        public required List<SelectListItem> Subjects { get; set; } = new();
+        public required List<Grade> _Grades { get; set; } = new();
+        public required List<SelectListItem> Grades { get; set; } = new();
+        public required List<SelectListItem> Levels { get; set; } = new();
 
         [BindProperty]
-        [Required(ErrorMessage = "Proszê wybraæ tytu³ ksi¹¿ki.")]
-        public string Title { get; set; } = string.Empty;
+        public InputModel Input { get; set; } = null!;
 
-        [BindProperty]
-        [Required(ErrorMessage = "Przedmiot jest wymagany.")]
-        public string Subject { get; set; } = string.Empty;
+        public class InputModel
+        {
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ tytuÅ‚ ksiÄ…Å¼ki.")]
+            public required string Title { get; set; } = string.Empty;
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ przedmiot.")]
+            public required string Subject { get; set; } = string.Empty;
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ klasÄ™.")]
+            public required string Grade { get; set; } = string.Empty;
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ poziom.")]
+            public required string Level { get; set; } = string.Empty;
+            public required string Description { get; set; } = string.Empty;
+            [Required(ErrorMessage = "ProszÄ™ opisaÄ‡ stan ksiÄ…Å¼ki.")]
+            [StringLength(40, ErrorMessage = "Opis stanu ksiÄ…Å¼ki nie moÅ¼e przekraczaÄ‡ 40 znakÃ³w.")]
+            public required string State { get; set; } = string.Empty;
+            [Required(ErrorMessage = "ProszÄ™ podaÄ‡ cenÄ™.")]
+            [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi byÄ‡ wiÄ™ksza od zera.")]
+            public required decimal Price { get; set; } = 0;
+            [Required(ErrorMessage = "ProszÄ™ przesÅ‚aÄ‡ zdjÄ™cie ksiÄ…Å¼ki.")]
+            //[FileExtensions(Extensions = "jpg,jpeg,png,gif", ErrorMessage = "Dozwolone sÄ… tylko pliki graficzne (jpg, jpeg, png, gif).")]
+            //[Length(0, 5 * 1024 * 1024, ErrorMessage = "Plik nie moÅ¼e przekraczaÄ‡ 5 MB.")]
+            [Display(Name = "ZdjÄ™cie ksiÄ…Å¼ki")]
+            public required IFormFile Image { get; set; } = null!;
+        }
 
-        [BindProperty]
-        [Required(ErrorMessage = "Klasa jest wymagana.")]
-        public string Grade { get; set; } = string.Empty;
-
-        [BindProperty]
-        [Required(ErrorMessage = "Poziom jest wymagany.")]
-        public string Level { get; set; } = string.Empty;
-
-        [BindProperty]
-        public string Description { get; set; } = string.Empty;
-
-        [BindProperty]
-        [Required(ErrorMessage = "Proszê opisaæ stan ksi¹¿ki.")]
-        [StringLength(40, ErrorMessage = "Opis stanu ksi¹¿ki nie mo¿e przekraczaæ 40 znaków.")]
-        public string State { get; set; } = string.Empty;
-
-        [BindProperty]
-        [Required(ErrorMessage = "Proszê podaæ cenê.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi byæ wiêksza od zera.")]
-        public decimal Price { get; set; }
-
-        [BindProperty]
-        public IFormFile? BookImage { get; set; }
-
-        public BookAddingModel(DataContext context, IWebHostEnvironment environment, BlobServiceClient blobServiceClient, IConfiguration config)
+        public BookAddingModel(DataContext context, BlobServiceClient blobServiceClient, IConfiguration config, IMemoryCache cache)
         {
             _context = context;
-            _environment = environment;
             _blobServiceClient = blobServiceClient;
             _config = config;
+            _cache = cache;
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
             IsUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
-            if (IsUserAuthenticated)
+            if (!IsUserAuthenticated)
             {
-                AllBookTitles = await _context.Books
-                                              .OrderBy(b => b.Title)
-                                              .Select(b => b.Title)
-                                              .Distinct()
-                                              .ToListAsync();
-                AllSubjects = new List<string>();
-                AllGrades = new List<string>();
+                return RedirectToPage("/Account/Login");
             }
 
+            await LoadData();
+            
             return Page();
+        }
+
+        public async Task<IActionResult> OnGetParamsAsync(bool firstLoad, [ValidateNever] InputModel input)
+        {
+            Input = input;
+            IsFirstLoad = firstLoad;
+            await LoadData();
+
+            return Partial("_FormSelects", this);
+        }
+
+        public async Task LoadData()
+        {
+            await LoadBooks();
+            await LoadGrades();
+            await LoadSubjects();
+            await LoadLevels();
+        }
+
+        private async Task LoadBooks()
+        {
+            if (!_cache.TryGetValue("books", out List<Book>? books))
+            {
+                books = await _context.Books
+                    .Include(b => b.Grades)
+                    .Include(b => b.Subject)
+                    .OrderBy(g => g.Id)
+                    .ToListAsync();
+                _cache.Set("books", books, TimeSpan.FromHours(1));
+            }
+
+            _Books = books!;
+
+            Books = ApplyFilters(_Books.AsQueryable())
+                   .OrderBy(b => b.Title)
+                   .Select(b => b.Title)
+                   .Distinct()
+                   .Select(t => new SelectListItem
+                   {
+                       Value = t,
+                       Text = t
+                   }).ToList();
+
+            if (Books.IsNullOrEmpty())
+            {
+                Books.Add(new SelectListItem
+                {
+                    Value = "null",
+                    Text = "Brak dostÄ™pnych ksiÄ…Å¼ek",
+                    Disabled = true
+                });
+            }
+        }
+
+        private async Task LoadGrades()
+        {
+            if (!_cache.TryGetValue("grades", out List<Grade>? grades))
+            {
+                grades = await _context.Grades
+                    .OrderBy(g => g.Id)
+                    .ToListAsync();
+                _cache.Set("grades", grades, TimeSpan.FromHours(1));
+            }
+            _Grades = grades!;
+
+            Grades = FilterGrades(_Grades).Select(g => new SelectListItem
+            {
+                Value = g.GradeNumber,
+                Text = $"Klasa {g.GradeNumber}."
+            }).ToList();
+
+            if (Grades.Count == 1)
+            {
+                ModelState.Remove("Input.Grade");
+                Input.Grade = Grades[0].Value;
+            }
+        }
+
+        private async Task LoadSubjects()
+        {
+            if (!_cache.TryGetValue("subjects", out List<Subject>? subjects))
+            {
+                subjects = await _context.Subjects
+                    .OrderBy(s => s.Name)
+                    .ToListAsync();
+                _cache.Set("subjects", subjects, TimeSpan.FromHours(1));
+            }
+            _Subjects = subjects!;
+            Subjects = FilterSubjects(_Subjects).Select(s => new SelectListItem
+            {
+                Value = s.Name,
+                Text = s.Name
+            }).ToList();
+            if (Subjects.Count == 1)
+            {
+                ModelState.Remove("Input.Subject");
+                Input.Subject = Subjects[0].Value;
+            }
+        }
+
+        private async Task LoadLevels()
+        {
+            var levels = await _context.Books
+                .Select(b => b.Level)
+                .Distinct()
+                .ToListAsync();
+            Levels = FilterLevels(levels).Select(l => new SelectListItem
+            {
+                Value = (l == true) ? "Rozszerzenie" : "Podstawa",
+                Text = (l == true) ? "Rozszerzenie" : "Podstawa"
+            }).OrderBy(v => v.Value).ToList();
+            if (Levels.Count == 1)
+            {
+                ModelState.Remove("Input.Level");
+                Input.Level = Levels[0].Value;
+            }
+        }
+
+        private IEnumerable<Grade> FilterGrades(IEnumerable<Grade> query)
+        {
+            return string.IsNullOrWhiteSpace(Input?.Title)
+                ? query
+                : _Books.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).SelectMany(b => b.Grades).Distinct();
+        }
+
+        private IEnumerable<Subject> FilterSubjects(IEnumerable<Subject> query)
+        {
+            return string.IsNullOrWhiteSpace(Input?.Title)
+                ? query
+                : _Books.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).Select(b => b.Subject).Distinct();
+        }
+
+        private IEnumerable<bool?> FilterLevels(IEnumerable<bool?> query)
+        {
+            return string.IsNullOrWhiteSpace(Input?.Title)
+                ? query
+                : _Books.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).Select(b => b.Level).Distinct();
+        }
+
+        private IQueryable<Book> ApplyFilters(IQueryable<Book> query)
+        {
+            query = ApplyTitleFilter(query);
+            query = ApplyGradeFilter(query);
+            query = ApplySubjectFilter(query);
+            query = ApplyLevelFilter(query);
+
+            return query;
+        }
+
+        private IQueryable<Book> ApplyTitleFilter(IQueryable<Book> query)
+        {
+            return string.IsNullOrWhiteSpace(Input?.Title)
+                ? query
+                : query.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private IQueryable<Book> ApplyGradeFilter(IQueryable<Book> query)
+        {
+            return string.IsNullOrWhiteSpace(Input?.Grade)
+                ? query
+                : query.Where(b => b.Grades.Any(g => g.GradeNumber == Input.Grade));
+        }
+
+        private IQueryable<Book> ApplySubjectFilter(IQueryable<Book> query)
+        {
+            return string.IsNullOrWhiteSpace(Input?.Subject)
+                ? query
+                : query.Where(b => b.Subject.Name == Input.Subject);
+        }
+
+        private IQueryable<Book> ApplyLevelFilter(IQueryable<Book> query)
+        {
+            return string.IsNullOrWhiteSpace(Input?.Level)
+                ? query
+                : query.Where(b => b.Level == Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -90,296 +267,126 @@ namespace Booker.Pages
 
             if (!IsUserAuthenticated)
             {
-                ModelState.AddModelError(string.Empty, "Musisz siê zalogowaæ, aby dodaæ og³oszenie.");
-                await OnGetAsync();
-                return Page();
+                return RedirectToPage("/Account/Login");
             }
 
             if (!ModelState.IsValid)
             {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
+            }
+
+            if (Input == null)
+            {
+                ModelState.AddModelError(string.Empty, "NieprawidÅ‚owe dane wejÅ›ciowe. ProszÄ™ sprÃ³bowaÄ‡ ponownie.");
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
+            }
+
+
+            if (Input.Image == null || Input.Image.Length == 0)
+            {
+                ModelState.AddModelError(nameof(Input.Image), "ProszÄ™ przesÅ‚aÄ‡ zdjÄ™cie ksiÄ…Å¼ki.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
+            }
+
+            var query = _context.Books
+                                     .Include(b => b.Subject)
+                                     .Include(b => b.Grades)
+                                     .Where(b => b.Title.Equals(Input.Title));
+
+            if (!await query.AnyAsync())
+            {
+                ModelState.AddModelError(nameof(Input.Title), "Wybrana ksiÄ…Å¼ka nie zostaÅ‚a znaleziona w bazie. ProszÄ™ wybraÄ‡ tytuÅ‚ z listy.");
                 await OnGetAsync();
                 return Page();
             }
 
-            var book = await _context.Books
-                                     .Include(b => b.Subject)
-                                     .Include(b => b.Grades)
-                                     .FirstOrDefaultAsync(b => b.Title.ToLower() == Title.ToLower());
+            var querySubject = query.Where(b => b.Subject.Name.Equals(Input.Subject, StringComparison.OrdinalIgnoreCase));
+
+            if (!await querySubject.AnyAsync())
+            {
+                ModelState.AddModelError(nameof(Input.Subject), "Wybrany przedmiot nie pasuje do wybranej ksiÄ…Å¼ki.");
+            }
+
+            var queryGrades = query.Where(b => b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade, StringComparison.OrdinalIgnoreCase)));
+
+            if (!await queryGrades.AnyAsync())
+            {
+                ModelState.AddModelError(nameof(Input.Grade), "Wybrana klasa nie pasuje do wybranej ksiÄ…Å¼ki.");
+            }
+
+            bool bookLevel = Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase);
+            var queryLevel = query.Where(b => b.Level == bookLevel);
+
+            if (!await queryLevel.AnyAsync())
+            {
+                ModelState.AddModelError(nameof(Input.Level), "Wybrany poziom nie pasuje do wybranej ksiÄ…Å¼ki.");
+            }
+
+            var book = await query.Intersect(querySubject).Intersect(queryGrades).Intersect(queryLevel).FirstOrDefaultAsync();
 
             if (book == null)
             {
-                ModelState.AddModelError(nameof(Title), "Wybrana ksi¹¿ka nie zosta³a znaleziona w bazie. Proszê wybraæ tytu³ z listy.");
-                await OnGetAsync();
-                return Page();
+                ModelState.AddModelError(string.Empty, "Nie znaleziono pasujÄ…cej ksiÄ…Å¼ki. ProszÄ™ sprawdziÄ‡ wprowadzone dane.");
             }
 
-            if (book.Subject?.Name.ToLower() != Subject.ToLower())
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError(nameof(Subject), "Wybrany przedmiot nie pasuje do wybranej ksi¹¿ki.");
-                await OnGetAsync(); return Page();
-            }
-            if (!book.Grades.Any(g => g.GradeNumber.ToLower() == Grade.ToLower()))
-            {
-                ModelState.AddModelError(nameof(Grade), "Wybrana klasa nie pasuje do wybranej ksi¹¿ki.");
-                await OnGetAsync(); return Page();
-            }
-            string bookLevelString = (book.Level ?? false) ? "Rozszerzony" : "Podstawowy";
-            if (bookLevelString.ToLower() != Level.ToLower())
-            {
-                ModelState.AddModelError(nameof(Level), "Wybrany poziom nie pasuje do wybranej ksi¹¿ki.");
-                await OnGetAsync(); return Page();
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
             }
 
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
             {
-                ModelState.AddModelError(string.Empty, "Nie znaleziono identyfikatora u¿ytkownika. Spróbuj siê przelogowaæ.");
-                await OnGetAsync();
-                return Page();
+                return RedirectToPage("/Account/Login");
             }
 
             if (!int.TryParse(userIdString, out int userId))
             {
-                ModelState.AddModelError(string.Empty, "Nieprawid³owy format identyfikatora u¿ytkownika.");
-                await OnGetAsync();
-                return Page();
+                return RedirectToPage("/Account/Login");
             }
 
             var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
             if (!userExists)
             {
-                ModelState.AddModelError(string.Empty, "U¿ytkownik nie istnieje w bazie danych. Spróbuj siê przelogowaæ.");
-                await OnGetAsync();
-                return Page();
+                return RedirectToPage("/Account/Login");
             }
 
             var item = new Item
             {
-                BookId = book.Id,
+                BookId = book!.Id,
                 UserId = userId,
-                Description = Description,
-                State = State,
-                Price = Price,
+                Description = Input.Description,
+                State = Input.State,
+                Price = Input.Price,
                 DateTime = DateTime.Now
             };
 
-            if (BookImage != null && BookImage.Length > 0)
+            var containerName = _config["AzureStorage:ContainerName"];
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+
+            await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Input.Image.FileName);
+            var blobClient = containerClient.GetBlobClient(fileName);
+
+            using (var stream = Input.Image.OpenReadStream())
             {
-                var containerName = _config["AzureStorage:ContainerName"];
-                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-                await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
-
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(BookImage.FileName);
-                var blobClient = containerClient.GetBlobClient(fileName);
-
-                using (var stream = BookImage.OpenReadStream())
-                {
-                    await blobClient.UploadAsync(stream, overwrite: true);
-                }
-
-                item.Photo = blobClient.Uri.ToString();
+                await blobClient.UploadAsync(stream, overwrite: true);
             }
-            else
-            {
-                item.Photo = "https://your_account_name.blob.core.windows.net/bookimages/default.jpg";
-            }
+            item.Photo = blobClient.Uri.ToString();
 
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("Index");
-        }
-
-        public IActionResult OnPostValidateBookImage()
-        {
-            if (BookImage == null || BookImage.Length == 0)
-            {
-                ModelState.AddModelError(nameof(BookImage), "Proszê przes³aæ zdjêcie ksi¹¿ki.");
-            }
-            return Content(GetValidationMessageForProperty(nameof(BookImage)), "text/html");
-        }
-
-        public async Task<IActionResult> OnPostValidateTitle()
-        {
-            await TryUpdateModelAsync(this, nameof(Title));
-
-            if (ModelState.GetValidationState(nameof(Title)) == ModelValidationState.Valid)
-            {
-                if (!string.IsNullOrWhiteSpace(Title))
-                {
-                    var bookExists = await _context.Books.AnyAsync(b => b.Title.ToLower() == Title.ToLower());
-                    if (!bookExists)
-                    {
-                        ModelState.AddModelError(nameof(Title), "Wybrana ksi¹¿ka nie zosta³a znaleziona w bazie. Proszê wybraæ tytu³ z listy.");
-                    }
-                }
-            }
-            return Content(GetValidationMessageForProperty(nameof(Title)), "text/html");
-        }
-
-        public async Task<IActionResult> OnPostValidateSubject([FromForm] string title)
-        {
-            await TryUpdateModelAsync(this, nameof(Subject));
-
-            if (ModelState.GetValidationState(nameof(Subject)) == ModelValidationState.Valid)
-            {
-                if (!string.IsNullOrWhiteSpace(title))
-                {
-                    var book = await _context.Books
-                                             .Include(b => b.Subject)
-                                             .FirstOrDefaultAsync(b => b.Title.ToLower() == title.ToLower());
-                    if (book == null || book.Subject?.Name.ToLower() != Subject.ToLower())
-                    {
-                        ModelState.AddModelError(nameof(Subject), "Wybrany przedmiot nie pasuje do wybranej ksi¹¿ki.");
-                    }
-                }
-            }
-            return Content(GetValidationMessageForProperty(nameof(Subject)), "text/html");
-        }
-
-        public async Task<IActionResult> OnPostValidateGrade([FromForm] string title, [FromForm] string subject)
-        {
-            await TryUpdateModelAsync(this, nameof(Grade));
-
-            if (ModelState.GetValidationState(nameof(Grade)) == ModelValidationState.Valid)
-            {
-                if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(subject))
-                {
-                    var book = await _context.Books
-                                             .Include(b => b.Grades)
-                                             .Include(b => b.Subject)
-                                             .FirstOrDefaultAsync(b => b.Title.ToLower() == title.ToLower() && b.Subject != null && b.Subject.Name.ToLower() == subject.ToLower());
-                    if (book == null || !book.Grades.Any(g => g.GradeNumber.ToLower() == Grade.ToLower()))
-                    {
-                        ModelState.AddModelError(nameof(Grade), "Wybrana klasa nie pasuje do wybranej ksi¹¿ki.");
-                    }
-                }
-            }
-            return Content(GetValidationMessageForProperty(nameof(Grade)), "text/html");
-        }
-
-        public async Task<IActionResult> OnPostValidateLevel([FromForm] string title, [FromForm] string subject, [FromForm] string grade)
-        {
-            await TryUpdateModelAsync(this, nameof(Level));
-
-            if (ModelState.GetValidationState(nameof(Level)) == ModelValidationState.Valid)
-            {
-                if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(subject) && !string.IsNullOrWhiteSpace(grade))
-                {
-                    var book = await _context.Books
-                                             .Include(b => b.Subject)
-                                             .Include(b => b.Grades)
-                                             .FirstOrDefaultAsync(b => b.Title.ToLower() == title.ToLower()
-                                                                          && b.Subject != null && b.Subject.Name.ToLower() == subject.ToLower()
-                                                                          && b.Grades.Any(g => g.GradeNumber.ToLower() == grade.ToLower()));
-                    string bookLevelString = (book?.Level ?? false) ? "Rozszerzony" : "Podstawowy";
-                    if (book == null || bookLevelString.ToLower() != Level.ToLower())
-                    {
-                        ModelState.AddModelError(nameof(Level), "Wybrany poziom nie pasuje do wybranej ksi¹¿ki.");
-                    }
-                }
-            }
-            return Content(GetValidationMessageForProperty(nameof(Level)), "text/html");
-        }
-
-        public async Task<IActionResult> OnPostValidateState()
-        {
-            await TryUpdateModelAsync(this, nameof(State));
-            return Content(GetValidationMessageForProperty(nameof(State)), "text/html");
-        }
-
-        public async Task<IActionResult> OnPostValidatePrice()
-        {
-            await TryUpdateModelAsync(this, nameof(Price));
-            return Content(GetValidationMessageForProperty(nameof(Price)), "text/html");
-        }
-
-        public async Task<IActionResult> OnPostValidateAll()
-        {
-            await TryUpdateModelAsync(this, "");
-
-            if (BookImage == null || BookImage.Length == 0)
-            {
-                ModelState.AddModelError(nameof(BookImage), "Proszê przes³aæ zdjêcie ksi¹¿ki.");
-            }
-
-            if (ModelState.GetValidationState(nameof(Title)) == ModelValidationState.Valid)
-            {
-                var book = await _context.Books
-                                         .Include(b => b.Subject)
-                                         .Include(b => b.Grades)
-                                         .FirstOrDefaultAsync(b => b.Title.ToLower() == Title.ToLower());
-
-                if (book == null)
-                {
-                    ModelState.AddModelError(nameof(Title), "Wybrana ksi¹¿ka nie zosta³a znaleziona w bazie. Proszê wybraæ tytu³ z listy.");
-                }
-                else
-                {
-                    if (string.IsNullOrWhiteSpace(Subject))
-                    {
-                        ModelState.AddModelError(nameof(Subject), "Przedmiot jest wymagany.");
-                    }
-                    else if (ModelState.GetValidationState(nameof(Subject)) == ModelValidationState.Valid && book.Subject?.Name.ToLower() != Subject.ToLower())
-                    {
-                        ModelState.AddModelError(nameof(Subject), "Wybrany przedmiot nie pasuje do wybranej ksi¹¿ki.");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(Grade))
-                    {
-                        ModelState.AddModelError(nameof(Grade), "Klasa jest wymagana.");
-                    }
-                    else if (ModelState.GetValidationState(nameof(Grade)) == ModelValidationState.Valid && !book.Grades.Any(g => g.GradeNumber.ToLower() == Grade.ToLower()))
-                    {
-                        ModelState.AddModelError(nameof(Grade), "Wybrana klasa nie pasuje do wybranej ksi¹¿ki.");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(Level))
-                    {
-                        ModelState.AddModelError(nameof(Level), "Poziom jest wymagany.");
-                    }
-                    else if (ModelState.GetValidationState(nameof(Level)) == ModelValidationState.Valid)
-                    {
-                        string bookLevelString = (book.Level ?? false) ? "Rozszerzony" : "Podstawowy";
-                        if (bookLevelString.ToLower() != Level.ToLower())
-                        {
-                            ModelState.AddModelError(nameof(Level), "Wybrany poziom nie pasuje do wybranej ksi¹¿ki.");
-                        }
-                    }
-                }
-            }
-
-            if (!ModelState.IsValid)
-            {
-                var errorHtml = new System.Text.StringBuilder();
-                errorHtml.Append("<div id='formValidationSummary' class='text-danger'>");
-                foreach (var modelStateEntry in ModelState.Values)
-                {
-                    foreach (var error in modelStateEntry.Errors)
-                    {
-                        errorHtml.Append($"<p>{error.ErrorMessage}</p>");
-                    }
-                }
-                errorHtml.Append("</div>");
-
-                Response.StatusCode = 400;
-                return Content(errorHtml.ToString(), "text/html");
-            }
-
-            return Content("", "text/html");
-        }
-
-        private string GetValidationMessageForProperty(string propertyName)
-        {
-            var stringBuilder = new System.Text.StringBuilder();
-            stringBuilder.Append($"<span id='{propertyName.ToLower()}Error' class='text-danger'>");
-            if (ModelState.TryGetValue(propertyName, out var modelStateEntry) && modelStateEntry.Errors.Any())
-            {
-                stringBuilder.Append(modelStateEntry.Errors.First().ErrorMessage);
-            }
-            stringBuilder.Append("</span>");
-            return stringBuilder.ToString();
+            return Redirect("/Book/" + item.Id);
         }
     }
 }
