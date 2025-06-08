@@ -39,8 +39,6 @@ builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-
-// Add booker services to the container
 builder.Services.AddBookerServices(configuration);
 
 builder.Services.AddDbContext<DataContext>(options =>

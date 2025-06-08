@@ -3,6 +3,7 @@ using System.Configuration;
 using Booker.Data;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Azure.Storage.Blobs;
 
 namespace Booker.Services
@@ -14,6 +15,9 @@ namespace Booker.Services
             services.AddSingleton(x => new BlobServiceClient(configuration["AzureStorage:ConnectionString"]));
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));           
             services.AddTransient<SendMailSvc>();
+            services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
+            services.AddSingleton<IEmailSender, SendMailSvc>();
+            
             return services;
         }
 
