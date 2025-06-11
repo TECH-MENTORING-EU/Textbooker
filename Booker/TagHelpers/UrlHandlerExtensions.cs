@@ -18,6 +18,6 @@ public static class UrlHandlerExtensions
             Values = routeValues
         });
 
-        return url;
+        return url ?? throw new ArgumentException("Invalid handler");
     }
 }

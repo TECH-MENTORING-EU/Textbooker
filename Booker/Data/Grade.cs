@@ -2,9 +2,9 @@
 {
     public class Grade
     {
-        public int Id { get; set; }
-        public string GradeNumber { get; set; }
+        public required int Id { get; set; }
+        public required string GradeNumber { get; set; }
 
-        public virtual ICollection<Book> Books { get; set; }
+        public virtual ICollection<Book> Books { get; set; } = new HashSet<Book>();
     }
 }

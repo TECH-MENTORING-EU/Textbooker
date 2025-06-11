@@ -39,15 +39,15 @@
             <button class="outline">
                 @(string.IsNullOrWhiteSpace(Model.Book?.Subject?.Name) ? "Nieznany przedmiot" : Model.Book.Subject?.Name)
             </button>
-            @if (Model.Book.Grades != null)
+            @if (Model.Book?.Grades != null)
             {
                 @foreach (var grade in Model.Book.Grades)
                 {
                     <button class="outline">@DisplayGrade(grade.GradeNumber)</button>
                 }
             }
-
-            @if (Model.Book.Level != null)
+            
+            @if (Model.Book?.Level != null)
             {
                 <button class="outline">@DisplayLevel(Model.Book.Level)</button>
             }
