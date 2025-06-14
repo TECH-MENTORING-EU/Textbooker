@@ -31,15 +31,15 @@
             <p>@Model.Price zł</p>
             <p>
                 <small>
-                    @(string.IsNullOrWhiteSpace(Model.User?.School) ? "Nieznana szkoła" : Model.User.School)
+                    @(string.IsNullOrWhiteSpace(Model.User.School) ? "Nieznana szkoła" : Model.User.School)
                 </small>
             </p>
         </div>
         <div class="actions">
             <button class="outline">
-                @(string.IsNullOrWhiteSpace(Model.Book?.Subject?.Name) ? "Nieznany przedmiot" : Model.Book.Subject?.Name)
+                @(string.IsNullOrWhiteSpace(Model.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Book.Subject.Name)
             </button>
-            @if (Model.Book?.Grades != null)
+            @if (Model.Book.Grades != null)
             {
                 @foreach (var grade in Model.Book.Grades)
                 {
@@ -47,7 +47,7 @@
                 }
             }
             
-            @if (Model.Book?.Level != null)
+            @if (Model.Book.Level != null)
             {
                 <button class="outline">@DisplayLevel(Model.Book.Level)</button>
             }

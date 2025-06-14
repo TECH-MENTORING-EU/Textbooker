@@ -11,7 +11,7 @@ namespace Booker.Pages
     {
         private readonly DataContext _context;
 
-        public Item? BookItem { get; set; }
+        public Item BookItem { get; set; } = null!;
 
         public BookModel(DataContext context)
         {
@@ -20,31 +20,36 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            BookItem = await _context.Items
+            var item = await _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
                 .Include(i => i.Book).ThenInclude(b => b.Subject)
                 .Include(i => i.User)
                 .FirstOrDefaultAsync(i => i.Id == id);
 
-            if (BookItem == null)
+            if (item == null)
             {
                 return NotFound();
             }
+
+            BookItem = item;
 
             return Page();
         }
 
         public async Task<IActionResult> OnGetEmailAsync(int id)
         {
-            BookItem = await _context.Items
+            var item = await _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
                 .Include(i => i.Book).ThenInclude(b => b.Subject)
                 .Include(i => i.User)
                 .FirstOrDefaultAsync(i => i.Id == id);
-            if (BookItem == null)
+
+            if (item == null)
             {
                 return NotFound();
             }
+
+            BookItem = item;
             var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
             if (!isUserAuthenticated)

@@ -17,9 +17,9 @@ namespace Booker.Pages
         public record PagedListViewModel(List<Item> Items, int Page, bool HasMorePages);
         public record FilterParameters(int PageNumber, string? Search, string? Grade, string? Subject, decimal? MinPrice, decimal? MaxPrice, string? Level);
 
-        public PagedListViewModel? ItemsList { get; set; }
-        public List<string>? Grades { get; set; }
-        public List<string>? Subjects { get; set; }
+        public PagedListViewModel ItemsList { get; set; } = null!;
+        public List<string> Grades { get; set; } = null!;
+        public List<string> Subjects { get; set; } = null!;
 
         public IndexModel(ILogger<IndexModel> logger, DataContext context, IMemoryCache cache)
         {
@@ -39,7 +39,7 @@ namespace Booker.Pages
                 _cache.Set("grades", grades, TimeSpan.FromHours(1));
             }
 
-            Grades = grades;
+            Grades = grades!;
 
             if (!_cache.TryGetValue("subjects", out List<string>? subjects))
             {
@@ -50,7 +50,7 @@ namespace Booker.Pages
                 _cache.Set("subjects", subjects, TimeSpan.FromHours(1));
             }
 
-            Subjects = subjects;
+            Subjects = subjects!;
 
             var query = _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)

@@ -21,27 +21,17 @@
             <div class="grid">
                 <select name="grade">
                     <option value="">Wszystkie klasy</option>
-                    @{
-                        if (Model.Grades != null)
-                        {
-                            foreach (var grade in Model.Grades)
-                            {
-                                <option value="@grade">Klasa @grade.</option>
-                            }
-                        }
+                    @foreach (var grade in Model.Grades)
+                    {
+                        <option value="@grade">Klasa @grade.</option>
                     }
                 </select>
 
                 <select name="subject">
                     <option value="">Wszystkie przedmioty</option>
-                    @{
-                        if (Model.Subjects != null)
-                        {
-                            foreach (var subject in Model.Subjects)
-                            {
-                                <option value="@subject">@subject</option>
-                            }
-                        }
+                    @foreach (var subject in Model.Subjects)
+                    {
+                        <option value="@subject">@subject</option>
                     }
                 </select>
 

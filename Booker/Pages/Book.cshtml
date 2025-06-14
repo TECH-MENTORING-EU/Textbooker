@@ -2,37 +2,37 @@
 @model Booker.Pages.BookModel
 
 @{
-    ViewData["Title"] = @Model.BookItem?.Book?.Title + " - Booker" ?? "Szczegóły książki";
+    ViewData["Title"] = @Model.BookItem.Book.Title + " - Booker" ?? "Szczegóły książki";
 }
 
 <article class="book-display">
     <section class="image">
-        <img src='@(Model.BookItem?.Photo ?? "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")'
+        <img src='@(Model.BookItem.Photo ?? "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")'
              alt="Zdjęcie książki" />
     </section>
 
     <section class="data">
-        <h2>@(Model.BookItem?.Book?.Title ?? "Nieznany tytuł")</h2>
+        <h2>@Model.BookItem.Book.Title</h2>
         <p>
             <small>
-                Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem?.DateTime))
+                Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.DateTime))
             </small>
         </p>
-        <p><strong>@(Model.BookItem?.Price.ToString("C") ?? "Brak ceny")</strong></p>
+        <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
 
         <ul>
             <li>
                 Klasa: @String.Join(", ", 
-                Model.BookItem?.Book?.Grades?.Select( g => g.GradeNumber ).ToList() ?? new() {"nieznana"})
+                Model.BookItem.Book.Grades.Select( g => g.GradeNumber ).ToList() ?? new() {"nieznana"})
             </li>
-            <li>Przedmiot: @(Model.BookItem?.Book?.Subject?.Name ?? "Nieznany przedmiot")</li>
+            <li>Przedmiot: @Model.BookItem.Book.Subject.Name</li>
             <li>
                 Zakres:
-                @(Model.BookItem?.Book?.Level == null
+                @(Model.BookItem.Book.Level == null
                     ? "Nieznany zakres"
                     : (Model.BookItem.Book.Level == true ? "rozszerzony" : "podstawowy"))
             </li>
-            <li>Stan: @(Model.BookItem?.State ?? "Nieznany stan")</li>
+            <li>Stan: @(Model.BookItem.State ?? "Nieznany stan")</li>
         </ul>
     </section>
 
@@ -44,7 +44,7 @@
     <section class="description">
         <h3>Opis</h3>
         <p>
-            @(Model.BookItem?.Description ?? "Brak opisu")
+            @Model.BookItem.Description
         </p>
     </section>
 
@@ -54,8 +54,8 @@
             <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
                  alt="Profil sprzedającego" />
             <div>
-                @(Model.BookItem?.User?.UserName ?? "Nieznany użytkownik")<br />
-                @(Model.BookItem?.User?.School ?? "Nieznana szkoła")<br />
+                @Model.BookItem.User.UserName<br />
+                @Model.BookItem.User.School<br />
                 <a href="#" role="button" class="outline">Więcej od tego użytkownika</a>
             </div>
         </div>
