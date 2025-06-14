@@ -8,6 +8,6 @@ namespace Booker.Data
     {
         public required string School { get; set; }
         public string? Photo {  get; set; }
-        public ICollection<Item> Items { get; set; } = new HashSet<Item>();
+        public ICollection<Item> Items { get; } = new HashSet<Item>();
     }
 }

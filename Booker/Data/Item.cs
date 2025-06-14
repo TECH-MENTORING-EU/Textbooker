@@ -7,11 +7,11 @@ namespace Booker.Data
 {
     public class Item
     {
-        public required int Id { get; set; }
-        public required int BookId { get; set; }
-        public Book Book { get; set; } = null!;
-        public required int UserId { get; set; }
-        public User User { get; set; } = null!;
+        public int Id { get; set; }
+        public int BookId { get; init; } // Set by the database, not by the user, but needed for seeding
+        public required Book Book { get; set; }
+        public int UserId { get; init; } // Set by the database, not by the user, but needed for seeding
+        public required User User { get; set; }
         [Precision(10,2)]
         public required decimal Price { get; set; }
         public required DateTime DateTime { get; set; }

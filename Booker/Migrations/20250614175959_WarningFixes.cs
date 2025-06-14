@@ -34,385 +34,385 @@ namespace Booker.Migrations
                 keyColumn: "Id",
                 keyValue: 1,
                 column: "ConcurrencyStamp",
-                value: "94085ea4-b1a7-4821-b83f-a0461f2a6ea7");
+                value: "ed35d162-1fcd-4bd0-9c5d-91eea43d742a");
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: 2,
                 column: "ConcurrencyStamp",
-                value: "09245240-08b6-48a3-a50d-ae5b4192ae3e");
+                value: "3ec5d9f6-ca4e-4011-9e9a-d9720ed87ded");
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: 3,
                 column: "ConcurrencyStamp",
-                value: "5c20fa47-97aa-458e-8c94-6ccab11ef510");
+                value: "9a5ae8da-9d64-443a-ade0-fe6bb552c61b");
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: 4,
                 column: "ConcurrencyStamp",
-                value: "8ceae1fa-aa96-485e-844a-f87a5c38d5e1");
+                value: "90c50ca1-8852-4413-a0dd-a9f1b4c85ac7");
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: 5,
                 column: "ConcurrencyStamp",
-                value: "919a5b57-05dc-4ca7-989a-7348e6b7419b");
+                value: "c76fee65-29c9-4db1-b5bd-dbac57d21e6a");
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 1,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 39, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9793), 54.714285714285714285714285714m });
+                values: new object[] { 23, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6182), 59.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 2,
-                columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 61, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9854), 51.285714285714285714285714286m });
+                columns: new[] { "DateTime", "Price" },
+                values: new object[] { new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6252), 42.857142857142857142857142857m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 3,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 56, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9858), 47.857142857142857142857142857m });
+                values: new object[] { 39, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6259), 42.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 4,
-                columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 1, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9861), 72.428571428571428571428571429m });
+                columns: new[] { "DateTime", "Price" },
+                values: new object[] { new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6263), 63m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 5,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 37, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9865), 58m });
+                values: new object[] { 72, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6267), 38.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 6,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 7, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9869), 83.42857142857142857142857143m });
+                values: new object[] { 5, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6274), 21.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 7,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 72, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9873), 38.428571428571428571428571429m });
+                values: new object[] { 39, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6278), 50.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 8,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 6, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9877), 31.857142857142857142857142857m });
+                values: new object[] { 34, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6284), 84.28571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 9,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 36, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9880), 54.428571428571428571428571429m });
+                values: new object[] { 78, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6288), 83.85714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 10,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 18, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9884), 27.285714285714285714285714286m });
+                values: new object[] { 68, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6294), 40.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 11,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 59, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9888), 83.14285714285714285714285714m });
+                values: new object[] { 49, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6299), 56.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 12,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 11, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9891), 77.142857142857142857142857143m });
+                values: new object[] { 40, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6303), 44.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 13,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 26, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9894), 38.428571428571428571428571429m });
+                values: new object[] { 48, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6308), 28.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 14,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 44, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9898), 82.71428571428571428571428571m });
+                values: new object[] { 34, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6312), 41.857142857142857142857142857m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 15,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 29, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9900), 78m });
+                values: new object[] { 48, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6316), 67.571428571428571428571428571m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 16,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 47, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9904), 58m });
+                values: new object[] { 7, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6321), 43.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 17,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 13, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9908), 27.857142857142857142857142857m });
+                values: new object[] { 73, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6326), 64.857142857142857142857142857m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 18,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 60, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9911), 60.142857142857142857142857143m });
+                values: new object[] { 66, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6355), 72.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 19,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 68, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9915), 22.714285714285714285714285714m });
+                values: new object[] { 50, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6360), 74.571428571428571428571428571m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 20,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 64, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9918), 76.571428571428571428571428571m });
+                values: new object[] { 50, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6365), 82.28571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 21,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 8, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9921), 71m });
+                values: new object[] { 29, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6370), 32.857142857142857142857142857m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 22,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 23, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9924), 31.428571428571428571428571429m });
+                values: new object[] { 61, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6374), 35.571428571428571428571428571m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 23,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 60, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9928), 76.714285714285714285714285714m });
+                values: new object[] { 19, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6378), 23.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 24,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 47, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9931), 68m });
+                values: new object[] { 1, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6383), 68.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 25,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 62, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9934), 64.714285714285714285714285714m });
+                values: new object[] { 48, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6388), 75.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 26,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 26, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9938), 55.857142857142857142857142857m });
+                values: new object[] { 37, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6392), 34.714285714285714285714285714m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 27,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 58, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9941), 82m });
+                values: new object[] { 56, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6397), 53.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 28,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 69, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9944), 59.571428571428571428571428571m });
+                values: new object[] { 29, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6401), 65.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 29,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 24, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9947), 41.714285714285714285714285714m });
+                values: new object[] { 75, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6405), 29.714285714285714285714285714m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 30,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 33, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9950), 26.285714285714285714285714286m });
+                values: new object[] { 40, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6410), 45.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 31,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 15, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9955), 30.428571428571428571428571429m });
+                values: new object[] { 8, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6415), 72.571428571428571428571428571m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 32,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 5, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9957), 51m });
+                values: new object[] { 61, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6420), 50.714285714285714285714285714m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 33,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 71, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9960), 85m });
+                values: new object[] { 26, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6424), 76m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 34,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 15, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9964), 76.142857142857142857142857143m });
+                values: new object[] { 63, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6430), 74.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 35,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 20, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9967), 74.714285714285714285714285714m });
+                values: new object[] { 8, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6435), 33.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 36,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 50, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9971), 60.571428571428571428571428571m });
+                values: new object[] { 37, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6438), 34m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 37,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 62, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9974), 54.142857142857142857142857143m });
+                values: new object[] { 17, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6441), 85m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 38,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 18, new DateTime(2025, 3, 31, 16, 52, 59, 80, DateTimeKind.Local).AddTicks(9997), 60.428571428571428571428571429m });
+                values: new object[] { 53, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6446), 74.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 39,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 50, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local), 78.428571428571428571428571429m });
+                values: new object[] { 20, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6451), 45.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 40,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 60, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(4), 76.714285714285714285714285714m });
+                values: new object[] { 41, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6455), 84.85714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 41,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 11, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(8), 33.285714285714285714285714286m });
+                values: new object[] { 66, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6460), 43.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 42,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 21, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(11), 42.714285714285714285714285714m });
+                values: new object[] { 9, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6465), 39.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 43,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 67, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(15), 85.28571428571428571428571429m });
+                values: new object[] { 71, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6468), 51m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 44,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 71, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(18), 82.57142857142857142857142857m });
+                values: new object[] { 75, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6473), 40.857142857142857142857142857m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 45,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 71, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(21), 66m });
+                values: new object[] { 46, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6477), 36.428571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 46,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 2, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(24), 56.285714285714285714285714286m });
+                values: new object[] { 31, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6482), 56.857142857142857142857142857m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 47,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 42, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(27), 77.285714285714285714285714286m });
+                values: new object[] { 10, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6486), 57.142857142857142857142857143m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 48,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 78, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(30), 63.142857142857142857142857143m });
+                values: new object[] { 58, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6491), 74.571428571428571428571428571m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 49,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 28, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(34), 27.285714285714285714285714286m });
+                values: new object[] { 39, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6495), 24.285714285714285714285714286m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 50,
                 columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 67, new DateTime(2025, 3, 31, 16, 52, 59, 81, DateTimeKind.Local).AddTicks(37), 83.14285714285714285714285714m });
+                values: new object[] { 10, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6499), 79m });
         }
 
         /// <inheritdoc />
@@ -484,8 +484,8 @@ namespace Booker.Migrations
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 2,
-                columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 72, new DateTime(2025, 2, 24, 14, 52, 33, 490, DateTimeKind.Local).AddTicks(102), 72m });
+                columns: new[] { "DateTime", "Price" },
+                values: new object[] { new DateTime(2025, 2, 24, 14, 52, 33, 490, DateTimeKind.Local).AddTicks(102), 72m });
 
             migrationBuilder.UpdateData(
                 table: "Items",
@@ -498,8 +498,8 @@ namespace Booker.Migrations
                 table: "Items",
                 keyColumn: "Id",
                 keyValue: 4,
-                columns: new[] { "BookId", "DateTime", "Price" },
-                values: new object[] { 73, new DateTime(2025, 2, 24, 14, 52, 33, 490, DateTimeKind.Local).AddTicks(109), 79.28571428571428571428571429m });
+                columns: new[] { "DateTime", "Price" },
+                values: new object[] { new DateTime(2025, 2, 24, 14, 52, 33, 490, DateTimeKind.Local).AddTicks(109), 79.28571428571428571428571429m });
 
             migrationBuilder.UpdateData(
                 table: "Items",

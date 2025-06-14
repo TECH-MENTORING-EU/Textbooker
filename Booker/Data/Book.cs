@@ -5,12 +5,12 @@ namespace Booker.Data
 {
     public class Book
     {         
-        public required int Id { get; set; }
+        public int Id { get; set; }
         public required string Title { get; set; }
-        public ICollection<Grade> Grades { get; set; } = new List<Grade>();
-        public required int SubjectId { get; set; }
-        public Subject Subject { get; set; } = null!;
+        public required ICollection<Grade> Grades { get; set; }
+        public int SubjectId { get; init; } // Set by the database, not by the user, but needed for seeding
+        public required Subject Subject { get; set; }
         public bool? Level { get; set; }
-        public ICollection<Item> Items { get; set; } = new HashSet<Item>();
+        public ICollection<Item> Items { get; } = new HashSet<Item>();
     }
 }
