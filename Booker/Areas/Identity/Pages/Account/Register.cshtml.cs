@@ -19,9 +19,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
+    [EnableRateLimiting("IpRateLimit")]
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<User> _signInManager;
