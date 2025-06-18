@@ -1,14 +1,17 @@
-using Microsoft.Extensions.Hosting.Internal;
-using Microsoft.EntityFrameworkCore;
-using Booker.Data;
-using System.Globalization;
-using Serilog;
-using Microsoft.AspNetCore.Identity;
-using Booker.Services;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Configuration;
-using System.Net;
 using Booker.Areas.Identity.Utilities;
+using Booker.Data;
+using Booker.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting.Internal;
+using Serilog;
+using System.Configuration;
+using System.Globalization;
+using System.Net;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +43,7 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddBookerServices(configuration);
+builder.Services.AddRateLimitPolicies();
 
 builder.Services.AddDbContext<DataContext>(options =>
 {
@@ -80,6 +84,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapRazorPages();
 
