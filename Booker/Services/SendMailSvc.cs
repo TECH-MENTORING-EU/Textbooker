@@ -1,13 +1,11 @@
-﻿using System.Net.Mail;
-using System.Net;
-using NuGet.Packaging;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
-using static Booker.Services.SendMailSvc;
+using System.Net;
+using System.Net.Mail;
 
 namespace Booker.Services
 {
-    public class SendMailSvc
+    public class SendMailSvc : IEmailSender
     {
         SmtpSettings _smtpSettings;
         ILogger<SendMailSvc> _log;
@@ -19,19 +17,7 @@ namespace Booker.Services
             _smtpSettings = smtpSettings.Value;
         }
 
-        /*
-        parameter example:
-
-          MailMessage message = new MailMessage();
-          MailAddress fromAddress = new MailAddress("random@textbooker.pl");
-          message.From = fromAddress;
-          message.Subject = "tytuł wiadomości";
-          message.IsBodyHtml = true;
-          message.Body = "<h1>treść wiadomości</h1>";
-          message.To.Add("wgw31336@msssg.com");     
-        
-       */
-        public async Task Send(MailMessage message)
+        private async Task Send(MailMessage message)
         {
             using SmtpClient smtpClient = new SmtpClient();
 
@@ -49,6 +35,17 @@ namespace Booker.Services
             {
                 _log.LogError(new EventId(),ex,ex.Message,ex.InnerException?.Message);
             }
+        }
+
+        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
+        {
+            var message = new MailMessage();
+            message.Subject = subject;
+            message.Body = htmlMessage;
+            message.To.Add(email);
+            message.From = new MailAddress("no-reply@textbooker.pl");
+            message.IsBodyHtml = true;
+            await this.Send(message);
         }
 
         public class SmtpSettings

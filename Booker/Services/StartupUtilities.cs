@@ -3,6 +3,8 @@ using System.Configuration;
 using Booker.Data;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using System.Threading.RateLimiting;
 using Azure.Storage.Blobs;
 
 
@@ -16,7 +18,56 @@ namespace Booker.Services
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));           
             services.AddTransient<SendMailSvc>();
+            services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
+            services.AddSingleton<IEmailSender, SendMailSvc>();
+            
             return services;
+        }
+
+        public static IServiceCollection AddRateLimitPolicies(this IServiceCollection services)
+        {
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = 429;
+
+                options.AddPolicy("IpRateLimit", context => {
+                    if (context.Request.Method == HttpMethods.Get ||
+                        context.Request.Method == HttpMethods.Head ||
+                        context.Request.Method == HttpMethods.Options
+                    )
+                    {
+                        return RateLimitPartition.GetNoLimiter("");
+                    }
+
+                    return IpRateLimit(context);
+
+                });
+
+                options.AddPolicy("IpRateLimitAllMethods", context => {
+                    return IpRateLimit(context);
+                });
+            });
+
+            return services;
+        }
+
+        private static RateLimitPartition<string> IpRateLimit(HttpContext ctx)
+        {
+            var ipAddress = ctx.Connection.RemoteIpAddress?.ToString();
+
+            if (ipAddress == null)
+            {
+                return RateLimitPartition.GetNoLimiter(""); // No IP address, no rate limiting
+            }
+
+            return RateLimitPartition.GetFixedWindowLimiter(ipAddress,
+                factory: partition => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 10,
+                    QueueLimit = 0, // No queueing, reject requests immediately
+                    Window = TimeSpan.FromMinutes(1)
+                });
         }
 
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)
