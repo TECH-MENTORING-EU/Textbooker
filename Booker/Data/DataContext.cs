@@ -80,7 +80,9 @@ namespace Booker.Data
                     {
                         Id = GetNextId(itemIdGenerator),
                         BookId = rand.Next(1, SeedData.Books.Count),
+                        Book = null!, // Book will be set by the database
                         UserId = GetNextId(userSequenceGenerator),
+                        User = null!, // User will be set by the database
                         Price = rand.Next(140, 600) / 7M,
                         DateTime = DateTime.Now,
                         Description = "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.",
@@ -136,7 +138,9 @@ namespace Booker.Data
             {
                 Id = id,
                 Title = title,
+                Grades = null!, // Grades will be set by the database
                 SubjectId = subjectId,
+                Subject = null!, // Subject will be set by the database
                 Level = level
             };
         }

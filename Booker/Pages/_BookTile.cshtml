@@ -31,13 +31,13 @@
             <p>@Model.Item.Price zł</p>
             <p>
                 <small>
-                    @(string.IsNullOrWhiteSpace(Model.Item.User?.School) ? "Nieznana szkoła" : Model.Item.User.School)
+                    @(string.IsNullOrWhiteSpace(Model.Item.User.School) ? "Nieznana szkoła" : Model.Item.User.School)
                 </small>
             </p>
         </div>
         <div class="actions">
             <button class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'>
-                @(string.IsNullOrWhiteSpace(Model.Item.Book?.Subject?.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject?.Name)
+                @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
             </button>
             @if (Model.Item.Book.Grades != null)
             {
@@ -48,7 +48,6 @@
                     </button>
                 }
             }
-
             @if (Model.Item.Book.Level != null)
             {
                 <button class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'>

@@ -11,7 +11,7 @@ public class AntiForgeryHeaderTagHelper : TagHelper
 {
     [HtmlAttributeNotBound]
     [ViewContext]
-    public ViewContext ViewContext { get; set; }
+    public required ViewContext ViewContext { get; set; }
 
     [HtmlAttributeName(AntiForgeryAttributeName)]
     public bool AntiForgery { get; set; }

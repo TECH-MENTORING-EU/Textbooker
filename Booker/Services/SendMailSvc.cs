@@ -50,10 +50,10 @@ namespace Booker.Services
 
         public class SmtpSettings
         {
-            public string Server { get; set; }
-            public int Port { get; set; }
-            public string Username { get; set; }
-            public string Password { get; set; }
+            public required string Server { get; set; }
+            public required int Port { get; set; }
+            public required string Username { get; set; }
+            public required string Password { get; set; }
         }
     }
 }

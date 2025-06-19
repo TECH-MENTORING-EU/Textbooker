@@ -304,14 +304,14 @@ namespace Booker.Pages
                 return Page();
             }
 
-            var querySubject = query.Where(b => b.Subject.Name.Equals(Input.Subject, StringComparison.OrdinalIgnoreCase));
+            var querySubject = query.Where(b => b.Subject.Name.Equals(Input.Subject));
 
             if (!await querySubject.AnyAsync())
             {
                 ModelState.AddModelError(nameof(Input.Subject), "Wybrany przedmiot nie pasuje do wybranej książki.");
             }
 
-            var queryGrades = query.Where(b => b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade, StringComparison.OrdinalIgnoreCase)));
+            var queryGrades = query.Where(b => b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade)));
 
             if (!await queryGrades.AnyAsync())
             {
@@ -326,7 +326,15 @@ namespace Booker.Pages
                 ModelState.AddModelError(nameof(Input.Level), "Wybrany poziom nie pasuje do wybranej książki.");
             }
 
-            var book = await query.Intersect(querySubject).Intersect(queryGrades).Intersect(queryLevel).FirstOrDefaultAsync();
+            var book = await _context.Books
+                .Include(b => b.Subject)
+                .Include(b => b.Grades)
+                .Where(b => b.Title.Equals(Input.Title)
+                         && b.Subject.Name.Equals(Input.Subject)
+                         && b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade))
+                         && b.Level == bookLevel)
+                .FirstOrDefaultAsync();
+
 
             if (book == null)
             {
@@ -350,35 +358,35 @@ namespace Booker.Pages
                 return Redirect("/Identity/Account/Login");
             }
 
-            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
-            if (!userExists)
+            var user= await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
             {
                 return Redirect("/Identity/Account/Login");
             }
-
-            var item = new Item
-            {
-                BookId = book!.Id,
-                UserId = userId,
-                Description = Input.Description,
-                State = Input.State,
-                Price = Input.Price,
-                DateTime = DateTime.Now
-            };
 
             var containerName = _config["AzureStorage:ContainerName"];
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
             await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
 
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Input.Image.FileName);
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Input.Image!.FileName);
             var blobClient = containerClient.GetBlobClient(fileName);
 
             using (var stream = Input.Image.OpenReadStream())
             {
                 await blobClient.UploadAsync(stream, overwrite: true);
             }
-            item.Photo = blobClient.Uri.ToString();
+
+            var item = new Item
+            {
+                Book = book!,
+                User = user,
+                Description = Input.Description,
+                State = Input.State,
+                Price = Input.Price,
+                DateTime = DateTime.Now,
+                Photo = blobClient.Uri.ToString()
+            };
 
             _context.Items.Add(item);
             await _context.SaveChangesAsync();

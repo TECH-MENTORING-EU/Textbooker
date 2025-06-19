@@ -19,7 +19,6 @@ namespace Booker.Pages
         public record PagedListViewModel(List<Item> Items, FilterParameters Params, bool HasMorePages);
         public record ItemModel(Item Item, FilterParameters Params);
         public record FilterParameters(Grade? Grade, Subject? Subject, bool? Level, int PageNumber);
-
         public PagedListViewModel? ItemsList { get; set; }
         public List<SelectListItem>? Grades { get; set; }
         private List<Grade>? _grades;
