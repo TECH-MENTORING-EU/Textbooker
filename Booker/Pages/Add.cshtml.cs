@@ -304,14 +304,14 @@ namespace Booker.Pages
                 return Page();
             }
 
-            var querySubject = query.Where(b => b.Subject.Name.Equals(Input.Subject, StringComparison.OrdinalIgnoreCase));
+            var querySubject = query.Where(b => b.Subject.Name.Equals(Input.Subject));
 
             if (!await querySubject.AnyAsync())
             {
                 ModelState.AddModelError(nameof(Input.Subject), "Wybrany przedmiot nie pasuje do wybranej książki.");
             }
 
-            var queryGrades = query.Where(b => b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade, StringComparison.OrdinalIgnoreCase)));
+            var queryGrades = query.Where(b => b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade)));
 
             if (!await queryGrades.AnyAsync())
             {
@@ -326,7 +326,15 @@ namespace Booker.Pages
                 ModelState.AddModelError(nameof(Input.Level), "Wybrany poziom nie pasuje do wybranej książki.");
             }
 
-            var book = await query.Intersect(querySubject).Intersect(queryGrades).Intersect(queryLevel).FirstOrDefaultAsync();
+            var book = await _context.Books
+                .Include(b => b.Subject)
+                .Include(b => b.Grades)
+                .Where(b => b.Title.Equals(Input.Title)
+                         && b.Subject.Name.Equals(Input.Subject)
+                         && b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade))
+                         && b.Level == bookLevel)
+                .FirstOrDefaultAsync();
+
 
             if (book == null)
             {
