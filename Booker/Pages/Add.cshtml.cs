@@ -75,7 +75,7 @@ namespace Booker.Pages
 
             if (!isUserAuthenticated)
             {
-                return RedirectToPage("/Account/Login");
+                return Redirect("/Identity/Account/Login");
             }
 
             await LoadData();
@@ -264,7 +264,7 @@ namespace Booker.Pages
 
             if (!isUserAuthenticated)
             {
-                return RedirectToPage("/Account/Login");
+                return Redirect("/Identity/Account/Login");
             }
 
             if (!ModelState.IsValid)
@@ -342,18 +342,18 @@ namespace Booker.Pages
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
             {
-                return RedirectToPage("/Account/Login");
+                return Redirect("/Identity/Account/Login");
             }
 
             if (!int.TryParse(userIdString, out int userId))
             {
-                return RedirectToPage("/Account/Login");
+                return Redirect("/Identity/Account/Login");
             }
 
             var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
             if (!userExists)
             {
-                return RedirectToPage("/Account/Login");
+                return Redirect("/Identity/Account/Login");
             }
 
             var item = new Item
