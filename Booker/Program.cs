@@ -41,7 +41,12 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages().AddViewOptions(options =>
+{
+    options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
+});
+
+// Add booker services to the container
 builder.Services.AddBookerServices(configuration);
 builder.Services.AddRateLimitPolicies();
 

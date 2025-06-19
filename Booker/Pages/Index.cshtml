@@ -5,10 +5,14 @@
 }
 
 <section class="filter">
-    <form hx-get="/" hx-trigger="input changed delay:500ms, change" hx-target=".grid-gallery" hx-push-url="true"
-          hx-include="[name='search'], [name='grade'], [name='subject'], [name='minPrice'], [name='maxPrice'], [name='level']"
-          hx-vals='{"pageNumber": 0}'>
-        <input type="search" name="search" placeholder="Wyszukaj..." />
+    <form novalidate
+        hx-get="/" 
+        hx-trigger="submit, input changed delay:500ms, change" 
+        hx-target=".grid-gallery" 
+        hx-push-url="true" 
+        hx-vals='{"pageNumber": 0}'
+    >
+        <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" />
 
         <details id="filterDetails">
             <summary id="filterSummary">
@@ -19,48 +23,28 @@
             </summary>
 
             <div class="grid">
-                <select name="grade">
+                <select name="grade" asp-for="Input.Grade" asp-items="Model?.Grades" data-val="false">
                     <option value="">Wszystkie klasy</option>
-                    @{
-                        if (Model.Grades != null)
-                        {
-                            foreach (var grade in Model.Grades)
-                            {
-                                <option value="@grade">Klasa @grade.</option>
-                            }
-                        }
-                    }
                 </select>
 
-                <select name="subject">
+                <select name="subject" asp-for="Input.Subject" asp-items="Model?.Subjects" data-val="false">
                     <option value="">Wszystkie przedmioty</option>
-                    @{
-                        if (Model.Subjects != null)
-                        {
-                            foreach (var subject in Model.Subjects)
-                            {
-                                <option value="@subject">@subject</option>
-                            }
-                        }
-                    }
                 </select>
 
-                <select name="level">
+                <select name="level" asp-for="Input.Level" asp-items="Model?.Levels">
                     <option value="">Wszystkie poziomy</option>
-                    <option value="Podstawa">Podstawa</option>
-                    <option value="Rozszerzenie">Rozszerzenie</option>
                 </select>
 
-                <input type="number" name="minPrice" placeholder="Cena min." />
-                <input type="number" name="maxPrice" placeholder="Cena max." />
+                <input type="number" name="minPrice" asp-for="Input.MinPrice" placeholder="Cena min." data-val="false" />
+                <input type="number" name="maxPrice" asp-for="Input.MaxPrice" placeholder="Cena max." data-val="false" />
+                <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
             </div>
-            <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
         </details>
     </form>
 </section>
 
 <section class="grid-gallery">
-    @await Html.PartialAsync("_ItemGallery", Model.ItemsList)
+    <partial name="_ItemGallery" for="ItemsList" />
 </section>
 
 <section>
@@ -68,6 +52,26 @@
 </section>
 
 <script>
+    function setFilter(name, value, enable) {
+        const elem = document.querySelector(`[name="${name}"]`);
+        if (elem) {
+            elem.value = enable ? value : "";
+            elem.form.requestSubmit();
+        }
+        
+    }
+
+    htmx.onLoad(function(content) {
+        content.querySelectorAll('button.subject, button.grade, button.level').forEach(button => {
+            button.addEventListener('click', function() {
+                const name = this.classList.contains('subject') ? 'subject' : this.classList.contains('grade') ? 'grade' : 'level';
+                const value = name === 'grade' ? this.textContent.trim().slice(6,7) : this.textContent.trim();
+                this.classList.toggle('outline');
+                setFilter(name, value, !this.classList.contains('outline'));
+            });
+        });
+    });
+
     document.getElementById('mobileFilterSubmit').addEventListener('click', function() {
         document.getElementById('filterDetails').removeAttribute("open");
     });
