@@ -1,7 +1,6 @@
 // $enable-transitions: false; // not really needed
 
-@use "../lib/pico/scss/pico" with ( $theme-color: "azure" );
-@use "./error.scss";
+@use "pico" with ( $theme-color: "azure" );
 
 @use "sass:map";
 
@@ -160,6 +159,25 @@
     }
 }
 
+#add-form {
+    .book-image-preview {
+        max-width: 100%;
+        height: auto;
+        display: none;
+
+        &.active {
+            display: block;
+        }
+    }
+}
+
+#summaryModal {
+    max-width: 200px;
+    max-height: 200px;
+    border: 1px solid #ddd;
+    padding: 5px;
+}
+
 /*
     Show loading indicator on div or on button
 */
@@ -195,50 +213,38 @@ div.htmx-indicator {
     }
 }
 
-details summary {
-    cursor: pointer;
-}
+.filter {
+    @keyframes slideDown {
+        0% {
+            opacity: 0;
+            transform: translateY(-0.5rem);
+        }
 
-details > form {
-    animation: slideDown 0.3s ease-out forwards;
-}
-
-@keyframes slideDown {
-    0% {
-        opacity: 0;
-        transform: translateY(-10px);
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    100% {
-        opacity: 1;
-        transform: translateY(0);
+    details summary svg {
+        height: 1rem;
+        width: 1rem;
+        transition: transform 0.3s ease-out;
     }
-}
 
-details[open] summary svg {
-    transform: rotate(90deg);
-    transition: transform 0.3s ease-out;
-    height: 20px;
-    width: 20px;
-}
+    details[open] summary svg {
+        transform: rotate(90deg);
+    }
 
-details summary svg {
-    transition: transform 0.3s ease-out;
-    height: 20px;
-    width: 20px;
-}
-
-.book-tile {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    animation: fadeIn 0.5s ease-out forwards;
+    details[open] div.grid {
+        animation: slideDown 0.3s ease-out forwards;
+    }
 }
 
 @keyframes fadeIn {
     0% {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(1rem);
     }
 
     100% {
@@ -247,28 +253,14 @@ details summary svg {
     }
 }
 
-.grid-gallery > .book-tile {
+.book-tile {
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
     animation: fadeIn 0.5s ease-out forwards;
 }
 
-summary svg {
-    height: 20px;
-    vertical-align: middle;
-}
-
-#mobileFilterSubmit {
-    display: none;
-}
-
-@media (max-width: 768px) {
+@media (min-width: map.get(map.get(pico.$breakpoints, "md"), "breakpoint")) {
     #mobileFilterSubmit {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        cursor: pointer;
+        display: none;
     }
 }
 

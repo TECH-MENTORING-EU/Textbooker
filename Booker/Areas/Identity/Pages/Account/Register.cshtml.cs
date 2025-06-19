@@ -19,9 +19,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
+    [EnableRateLimiting("IpRateLimit")]
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<User> _signInManager;
@@ -128,12 +130,22 @@ namespace Booker.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("Użytkownik utworzył nowe konto.");
 
-                    var userId = await _userManager.GetUserIdAsync(user);                    
-                                      
+                    var userId = await _userManager.GetUserIdAsync(user);
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                    var callbackUrl = Url.Page(
+                        "/Account/ConfirmEmail",
+                        pageHandler: null,
+                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                        protocol: Request.Scheme);
+
+                    await _emailSender.SendEmailAsync(Input.Email, "Potwierdź swój e-mail",
+                        $"Proszę potwierdź swoje konto klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
+
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
-                        return RedirectToPage("RegisterConfirmation", new { userName = Input.UserName, email = Input.Email, returnUrl = returnUrl });
+                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
                     }
                     else
                     {
