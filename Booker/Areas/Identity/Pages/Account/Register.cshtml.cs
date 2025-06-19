@@ -19,9 +19,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
+    [EnableRateLimiting("IpRateLimit")]
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<User> _signInManager;
@@ -139,6 +141,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
                     await _emailSender.SendEmailAsync(Input.Email, "Potwierdź swój e-mail",
                         $"Proszę potwierdź swoje konto klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
+
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {

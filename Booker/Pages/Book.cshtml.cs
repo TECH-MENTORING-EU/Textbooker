@@ -1,4 +1,5 @@
 using Booker.Data;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,28 @@ namespace Booker.Pages
             }
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnGetEmailAsync(int id)
+        {
+            BookItem = await _context.Items
+                .Include(i => i.Book).ThenInclude(b => b.Grades)
+                .Include(i => i.Book).ThenInclude(b => b.Subject)
+                .Include(i => i.User)
+                .FirstOrDefaultAsync(i => i.Id == id);
+            if (BookItem == null)
+            {
+                return NotFound();
+            }
+            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+
+            if (!isUserAuthenticated)
+            {
+                Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
+                return new NoContentResult();
+            }
+
+            return Content($"<span>Email: {BookItem.User.Email}</span>");
         }
 
         public static string FormatDateWithSpecialCases(DateTime? dateTime)
