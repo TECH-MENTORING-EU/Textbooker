@@ -1,0 +1,29 @@
+﻿@{
+    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout !=  null)
+    {
+        Layout = parentLayout.ToString();
+    }
+    else
+    {
+        Layout = "/Areas/Identity/Pages/_Layout.cshtml";
+    }
+}
+
+<h1>Zarządzaj swoim kontem</h1>
+
+<h2>Zmień ustawienia swojego konta</h2>
+<hr />
+<div class="sidebar-container">
+    <aside>
+        <nav>
+            <partial name="_ManageNav" />
+        </nav>
+    </aside>
+    <section>
+        @RenderBody()
+    </section>
+</div>
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}
