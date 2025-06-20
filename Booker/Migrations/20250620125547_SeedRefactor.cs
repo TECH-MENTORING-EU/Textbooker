@@ -263,6 +263,11 @@ namespace Booker.Migrations
                 keyColumn: "Id",
                 keyValue: 50);
 
+            migrationBuilder.Sql(
+                "DBCC CHECKIDENT('Items', RESEED, 0);" +
+                "DBCC CHECKIDENT('Items', RESEED, 0);"
+            );
+
             migrationBuilder.DeleteData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
@@ -287,6 +292,11 @@ namespace Booker.Migrations
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: 5);
+
+            migrationBuilder.Sql(
+                "DBCC CHECKIDENT('AspNetUsers', RESEED, 0);" +
+                "DBCC CHECKIDENT('AspNetUsers', RESEED, 0);"
+            );
         }
 
         /// <inheritdoc />
@@ -303,6 +313,10 @@ namespace Booker.Migrations
                     { 4, 0, "90c50ca1-8852-4413-a0dd-a9f1b4c85ac7", "user4@gmail.com", false, false, null, null, null, null, null, false, "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png", "Śl.TZN", null, false, "user4" },
                     { 5, 0, "c76fee65-29c9-4db1-b5bd-dbac57d21e6a", "user5@gmail.com", false, false, null, null, null, null, null, false, "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png", "Śl.TZN", null, false, "user5" }
                 });
+
+            migrationBuilder.Sql(
+                "DBCC CHECKIDENT('AspNetUsers', RESEED);"
+            );
 
             migrationBuilder.InsertData(
                 table: "Items",
@@ -360,6 +374,10 @@ namespace Booker.Migrations
                     { 49, 39, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6495), "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.", "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", 24.285714285714285714285714286m, "bardzo dobry", 4 },
                     { 50, 10, new DateTime(2025, 6, 14, 19, 59, 58, 431, DateTimeKind.Local).AddTicks(6499), "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.", "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", 79m, "bardzo dobry", 5 }
                 });
+
+            migrationBuilder.Sql(
+                "DBCC CHECKIDENT('Items', RESEED);"
+            );
         }
     }
 }

@@ -83,7 +83,7 @@ namespace Booker.Services
                     var migrator = dbContext.Database.GetService<IMigrator>();
 
 
-                    if (clearDatabase)
+                if (clearDatabase)
                     {
                         logger.LogWarning("WARNING: ClearDatabaseOnStartup is set to true. We will try to revert all migrations, and apply them again");
 
@@ -110,6 +110,23 @@ namespace Booker.Services
                 }
             
 
+            return app;
+        }
+
+        public static async Task<WebApplication> InitializeDatabaseAsync(this WebApplication app, int itemsCount = 50, int usersCount = 5)
+        {
+            using var scope = app.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                await DevDbInitializer.Initialize(dbContext, itemsCount, usersCount);
+                logger.LogInformation("Database initialized with {ItemsCount} items and {UsersCount} users.", itemsCount, usersCount);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Something went wrong during database initialization.");
+            }
             return app;
         }
 
