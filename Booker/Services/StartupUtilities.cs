@@ -83,7 +83,7 @@ namespace Booker.Services
                     var migrator = dbContext.Database.GetService<IMigrator>();
 
 
-                if (clearDatabase)
+                    if (clearDatabase)
                     {
                         logger.LogWarning("WARNING: ClearDatabaseOnStartup is set to true. We will try to revert all migrations, and apply them again");
 
