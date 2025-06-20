@@ -12,10 +12,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
+    [EnableRateLimiting("IpRateLimit")]
     public class EmailModel : PageModel
     {
         private readonly UserManager<User> _userManager;
