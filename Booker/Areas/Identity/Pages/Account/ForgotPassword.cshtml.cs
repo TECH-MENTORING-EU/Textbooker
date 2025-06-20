@@ -2,21 +2,23 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using Booker.Data;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Booker.Data;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
+    [EnableRateLimiting("IpRateLimit")]
     public class ForgotPasswordModel : PageModel
     {
         private readonly UserManager<User> _userManager;
@@ -45,8 +47,9 @@ namespace Booker.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required]
-            [EmailAddress]
+            [Required(ErrorMessage = "Pole {0} jest wymagane.")]
+            [EmailAddress(ErrorMessage = "Pole {0} nie jest prawidłowym adresem e-mail.")]
+            [Display(Name = "E-mail")]
             public string Email { get; set; }
         }
 
@@ -73,8 +76,8 @@ namespace Booker.Areas.Identity.Pages.Account
 
                 await _emailSender.SendEmailAsync(
                     Input.Email,
-                    "Reset Password",
-                    $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    "Reset hasła",
+                    $"Proszę zresetuj swoje hasło klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
 
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }
