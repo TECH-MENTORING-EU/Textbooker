@@ -1,6 +1,6 @@
 // $enable-transitions: false; // not really needed
 
-@use "pico";
+@use "pico"  with ( $theme-color: "azure" );
 @use "index";
 @use "book";
 @use "add";
