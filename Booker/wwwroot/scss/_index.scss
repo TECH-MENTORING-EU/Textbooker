@@ -1,0 +1,176 @@
+﻿@use "pico";
+@use "utils";
+
+@use "sass:map";
+
+// Filters
+
+.filter {
+    @keyframes slideDown {
+        0% {
+            opacity: 0;
+            transform: translateY(-0.5rem);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    details summary svg {
+        height: 1rem;
+        width: 1rem;
+        transition: transform 0.3s ease-out;
+    }
+
+    details[open] summary svg {
+        transform: rotate(90deg);
+    }
+
+    details[open] div.grid {
+        animation: slideDown 0.3s ease-out forwards;
+    }
+}
+
+@media (min-width: map.get(map.get(pico.$breakpoints, "md"), "breakpoint")) {
+    #mobileFilterSubmit {
+        display: none;
+    }
+}
+
+// Gallery
+
+.grid-gallery {
+    @include utils.auto-grid(225px);
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(1rem);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Tiles
+
+.book-tile {
+    display: flex;
+    flex-direction: column;
+    --pico-typography-spacing-vertical: 0.25rem;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    animation: fadeIn 0.5s ease-out forwards;
+
+    h2 {
+        @include utils.h5-size;
+    }
+
+    footer {
+        flex: 1;
+        display: grid;
+        gap: 0.25rem;
+        grid-template-areas:
+            "main main" "categories fav";
+        grid-template-columns: auto 1.5rem;
+        grid-template-rows: auto 3rem;
+
+        a {
+            @include utils.unstyled-link;
+        }
+
+        a::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        button {
+            position: relative;
+            z-index: 1;
+        }
+
+        .info {
+            grid-area: main;
+        }
+
+        .actions {
+            grid-area: categories;
+
+            button {
+                font-size: 0.75em;
+                padding: 0 0.5em;
+                border-radius: 100vmax;
+            }
+        }
+
+        .fav {
+            grid-area: fav;
+            align-content: end;
+
+            button {
+                border: none;
+                padding: 0;
+                width: 1.5rem;
+                height: 1.5rem;
+
+                svg {
+                    width: 100%;
+                    height: 100%;
+                }
+            }
+        }
+    }
+}
+
+// Horizontal book tiles on small screens
+
+@media (max-height: map.get(map.get(pico.$breakpoints, "sm"), "breakpoint")-1) and (min-width: 480px) {
+    .grid-gallery {
+        display: block;
+    }
+
+    #{pico.$parent-selector} article:not(:has(> form:first-child)),
+    #{pico.$parent-selector} [role="article"]:not(:has(> form:first-child)) {
+        &.book-tile {
+            flex-direction: row;
+
+            img {
+                max-width: 25%;
+            }
+
+            > header,
+            > footer {
+                margin-top: calc(var(#{pico.$css-var-prefix}block-spacing-vertical) * -1);
+                margin-bottom: calc(var(#{pico.$css-var-prefix}block-spacing-vertical) * -1);
+            }
+
+            > header {
+                border-bottom: revert;
+                border-top-right-radius: revert;
+                margin-left: calc(var(#{pico.$css-var-prefix}block-spacing-horizontal) * -1);
+                margin-right: var(#{pico.$css-var-prefix}block-spacing-horizontal);
+                border-right: var(#{pico.$css-var-prefix}border-width) solid var(#{pico.$css-var-prefix}card-border-color);
+                border-top-left-radius: var(#{pico.$css-var-prefix}border-radius);
+                border-bottom-left-radius: var(#{pico.$css-var-prefix}border-radius);
+            }
+
+            > footer {
+                border-top: revert;
+                border-bottom-left-radius: revert;
+                margin-left: var(#{pico.$css-var-prefix}block-spacing-horizontal);
+                margin-right: calc(var(#{pico.$css-var-prefix}block-spacing-horizontal) * -1);
+                border-left: var(#{pico.$css-var-prefix}border-width) solid var(#{pico.$css-var-prefix}card-border-color);
+                border-top-right-radius: var(#{pico.$css-var-prefix}border-radius);
+                border-bottom-right-radius: var(#{pico.$css-var-prefix}border-radius);
+            }
+        }
+    }
+}

@@ -1,0 +1,18 @@
+﻿#add-form {
+    .book-image-preview {
+        max-width: 100%;
+        height: auto;
+        display: none;
+
+        &.active {
+            display: block;
+        }
+    }
+}
+
+#summaryModal {
+    max-width: 200px;
+    max-height: 200px;
+    border: 1px solid #ddd;
+    padding: 5px;
+}

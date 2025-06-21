@@ -1,0 +1,62 @@
+﻿@use "pico";
+@use "settings" as *;
+
+@mixin auto-grid($col-width) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(#{$col-width}, 1fr));
+    gap: var(#{$css-var-prefix}spacing);
+}
+
+@mixin unstyled-link {
+    &:is(:where(a:not([role="button"])),[role="link"]) {
+        #{$css-var-prefix}color: unset;
+        #{$css-var-prefix}underline: unset;
+        #{$css-var-prefix}text-decoration: unset;
+
+        &:is([aria-current]:not([aria-current="false"]), :hover, :active, :focus) {
+            #{$css-var-prefix}color: unset;
+            #{$css-var-prefix}underline: unset;
+            #{$css-var-prefix}text-decoration: underline;
+        }
+
+        &:focus-visible {
+            box-shadow: none;
+        }
+    }
+}
+
+@mixin h1-size {
+    #{$css-var-prefix}font-size: 2rem;
+    #{$css-var-prefix}line-height: 1.125;
+    #{$css-var-prefix}typography-spacing-top: 3rem;
+}
+
+@mixin h2-size {
+    #{$css-var-prefix}font-size: 1.75rem;
+    #{$css-var-prefix}line-height: 1.15;
+    #{$css-var-prefix}typography-spacing-top: 2.625rem;
+}
+
+@mixin h3-size {
+    #{$css-var-prefix}font-size: 1.5rem;
+    #{$css-var-prefix}line-height: 1.175;
+    #{$css-var-prefix}typography-spacing-top: 2.25rem;
+}
+
+@mixin h4-size {
+    #{$css-var-prefix}font-size: 1.25rem;
+    #{$css-var-prefix}line-height: 1.2;
+    #{$css-var-prefix}typography-spacing-top: 1.874rem;
+}
+
+@mixin h5-size {
+    #{$css-var-prefix}font-size: 1.125rem;
+    #{$css-var-prefix}line-height: 1.225;
+    #{$css-var-prefix}typography-spacing-top: 1.6875rem;
+}
+
+@mixin h6-size {
+    #{$css-var-prefix}font-size: 1rem;
+    #{$css-var-prefix}line-height: 1.25;
+    #{$css-var-prefix}typography-spacing-top: 1.5rem;
+}
