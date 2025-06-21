@@ -11,8 +11,9 @@
 }
 
 #summaryModal {
-    max-width: 200px;
-    max-height: 200px;
-    border: 1px solid #ddd;
-    padding: 5px;
+    img {
+        border: 1px solid;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+    }
 }
