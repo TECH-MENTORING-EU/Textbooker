@@ -4,10 +4,16 @@
 
 .book-display { // book preview card
     .image {
-        aspect-ratio: 1 / 1;
-        align-content: center;
-        padding: 1em;
-        border: 1px solid;
+        img {
+            aspect-ratio: 1 / 1;
+            align-content: center;
+            padding: 0.5rem;
+            border: 1px solid var(--pico-muted-border-color);
+            height: 100%;
+            display: block;
+            margin-inline: auto;
+            object-fit: contain;
+        }
     }
 
     .actions button {
@@ -39,6 +45,7 @@
 
         .image {
             grid-row: span 2;
+            contain: size;
         }
 
         .description {
