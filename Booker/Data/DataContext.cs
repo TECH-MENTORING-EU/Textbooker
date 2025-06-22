@@ -26,10 +26,6 @@ namespace Booker.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            var userIdGenerator = GenerateAscendingIntegers().GetEnumerator();
-            var itemIdGenerator = GenerateAscendingIntegers().GetEnumerator();
-            var userSequenceGenerator = GenerateEndlessLoop(1, 6).GetEnumerator();
-            var rand = new Random();
 
             modelBuilder.Entity<Subject>().HasData(SeedData.Subjects);
 
@@ -48,51 +44,6 @@ namespace Booker.Data
                         bg.HasData(bookGrades);
                     });
             });
-
-
-
-            var users = new List<User>();
-
-            for (int i = 0; i < 5; i++)
-            {
-                users.Add(
-                    new User
-                    { 
-                        Id = GetNextId(userIdGenerator),
-                        Email = "user" + GetCurrentId(userIdGenerator) + "@gmail.com",
-                        UserName = "user" + GetCurrentId(userIdGenerator),
-                        School = "Śl.TZN",
-                        Photo = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-                    }
-                );
-            }
-
-            modelBuilder.Entity<User>().HasData(users);
-
-
-
-            var items = new List<Item>();
-
-            for (int i = 0; i < 50; i++)
-            {
-                items.Add(
-                    new Item
-                    {
-                        Id = GetNextId(itemIdGenerator),
-                        BookId = rand.Next(1, SeedData.Books.Count),
-                        Book = null!, // Book will be set by the database
-                        UserId = GetNextId(userSequenceGenerator),
-                        User = null!, // User will be set by the database
-                        Price = rand.Next(140, 600) / 7M,
-                        DateTime = DateTime.Now,
-                        Description = "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.",
-                        State = "bardzo dobry",
-                        Photo = "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                    }
-                );
-            }
-
-            modelBuilder.Entity<Item>().HasData(items);
         }
 
         public static IEnumerable<int> GenerateAscendingIntegers(int start = 1, int end = 1000)
@@ -118,11 +69,6 @@ namespace Booker.Data
         {
             if (!idGenerator.MoveNext())
                 throw new System.InvalidOperationException("Not enough IDs in the generator.");
-            return idGenerator.Current;
-        }
-
-        private static int GetCurrentId(IEnumerator<int> idGenerator)
-        {
             return idGenerator.Current;
         }
 
