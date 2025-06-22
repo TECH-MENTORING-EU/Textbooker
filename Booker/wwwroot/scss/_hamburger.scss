@@ -1,0 +1,88 @@
+﻿@use "pico";
+
+@use "sass:map";
+
+
+
+
+#hamburger-btn ~ label {
+    padding: var(--pico-nav-element-spacing-vertical) var(--pico-nav-element-spacing-horizontal);
+    margin-right: calc(var(--pico-nav-element-spacing-horizontal) * -1);
+
+    svg {
+        transition: transform var(--pico-transition);
+    }
+}
+
+#hamburger-btn:checked ~ label {
+    svg {
+        transform: rotate(90deg);
+    }
+}
+
+nav[role=navigation] > [role=list] {
+    background-color: transparent;
+}
+
+@media (max-width: map.get(map.get(pico.$breakpoints, "sm"), "viewport")) {
+    nav[role=navigation] {
+        position: sticky;
+        top: 0;
+        background-color: var(--pico-background-color);
+        border-bottom: 1px solid var(--pico-muted-border-color);
+        box-shadow: var(--pico-card-box-shadow);
+
+        #hamburger-btn ~ [role=list] {
+            display: flex;
+
+            a {
+                &[role=button] {
+                    display: block;
+                    margin: var(--pico-nav-element-spacing-vertical) var(--pico-nav-element-spacing-horizontal);
+                }
+
+                border-radius: var(--pico-border-radius);
+                border-block-end: 1px solid transparent;
+                transition: revert;
+
+                &:hover {
+                    border-bottom-color: transparent;
+                }
+            }
+        }
+
+        details.dropdown > summary + ul {
+            position: relative;
+            transform: scaleY(0);
+            opacity: 0;
+
+            li {
+                margin: 0;
+
+                &:first-of-type {
+                    margin-block-start: calc(var(--pico-form-element-spacing-vertical) * 0.5);
+                }
+
+                &:last-of-type {
+                    margin-block-end: calc(var(--pico-form-element-spacing-vertical) * 0.5);
+                    padding: calc(var(--pico-form-element-spacing-vertical)) var(--pico-form-element-spacing-horizontal);
+                }
+            }
+
+            a, button {
+                display: block;
+                padding: calc(var(--pico-form-element-spacing-vertical)) var(--pico-form-element-spacing-horizontal);
+            }
+
+            button {
+                //margin: calc(var(--pico-form-element-spacing-vertical) * 0.5) var(--pico-form-element-spacing-horizontal);
+            }
+        }
+
+        details.dropdown[open] > summary + ul {
+            transform: scaleY(1);
+            opacity: 1;
+        }
+    }
+}
+

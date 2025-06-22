@@ -10,6 +10,8 @@
 			{"si-awesome-star-o", "0 0 1664 1587"},
 			{"si-awesome-star", "0 0 1664 1587"},
 			{"si-awesome-home", "0 0 1613.3333740234375 1283"},
+			{"si-awesome-plus", "0 0 1408 1408"},
+			{"si-awesome-bars", "0 0 1536 1280"},
 		};
 	};
 }
