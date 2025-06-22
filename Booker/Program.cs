@@ -99,4 +99,10 @@ if (app.Environment.IsDevelopment())
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
 }
 await app.MigrateDatabaseAsync(configuration);
+
+if (app.Environment.IsDevelopment())
+{
+    await app.InitializeDatabaseAsync();
+}
+
 app.Run();

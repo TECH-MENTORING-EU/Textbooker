@@ -5,3 +5,10 @@
     margin-inline: auto;
     max-width: map.get(map.get(pico.$breakpoints, "sm"), "viewport")
 }
+
+.sidebar-container {
+    @media (min-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint")) {
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+    }
+}

@@ -1,0 +1,40 @@
+﻿@page
+@model EmailModel
+@{
+    ViewData["Title"] = "Zarządzaj emailem";
+    ViewData["ActivePage"] = ManageNavPages.Email;
+}
+
+<div class="login-form">
+    <form id="email-form" method="post">
+        <h3>@ViewData["Title"]</h3>
+        @if (!String.IsNullOrEmpty(Model.StatusMessage))
+        {
+            <p>
+                @Model.StatusMessage
+            </p>
+        }
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        @if (Model.IsEmailConfirmed)
+        {
+            <div>
+                <label asp-for="Email">E-mail:</label>
+                <input asp-for="Email" aria-invalid="false" placeholder="E-mail" disabled />
+            </div>
+        }
+        else
+        {
+            <div>
+                <label asp-for="Email">E-mail:</label>
+                <input asp-for="Email" placeholder="E-mail" disabled />
+                <button id="email-verification" type="submit" asp-page-handler="SendVerificationEmail" class="outline">Wyślij email weryfikacyjny</button>
+            </div>
+        }
+        <div>
+            <label asp-for="Input.NewEmail">Nowy email:</label>
+            <input asp-for="Input.NewEmail" autocomplete="email" required placeholder="Nowy email" />
+            <small><span asp-validation-for="Input.NewEmail"></span></small>
+        </div>
+        <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail">Zmień email</button>
+    </form>
+</div>
