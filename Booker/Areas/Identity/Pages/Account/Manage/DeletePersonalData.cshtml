@@ -1,0 +1,29 @@
+﻿@page
+@model DeletePersonalDataModel
+@{
+    ViewData["Title"] = "Usuń dane osobowe";
+    ViewData["ActivePage"] = ManageNavPages.PersonalData;
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<div class="alert alert-warning" role="alert">
+    <p>
+        <strong>Usunięcie tych danych spowoduje trwałe usunięcie Twojego konta, którego nie będzie można odzyskać.</strong>
+    </p>
+</div>
+
+<div class="login-form">
+    <form id="delete-user" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        @if (Model.RequirePassword)
+        {
+            <div>
+                <label asp-for="Input.Password">Hasło:</label>
+                <input asp-for="Input.Password" autocomplete="current-password" required placeholder="Hasło" />
+                <small><span asp-validation-for="Input.Password"></span></small>
+            </div>
+        }
+        <button type="submit">Usuń dane i zamknij moje konto</button>
+    </form>
+</div>

@@ -1,7 +1,7 @@
 ﻿@page
-@model ForgotPasswordModel
+@model ResendEmailConfirmationModel
 @{
-    ViewData["Title"] = "Zapomniałeś hasła?";
+    ViewData["Title"] = "Wyślij ponownie e-mail potwierdzający";
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -9,12 +9,12 @@
     <form method="post">
         <h2>Podaj swój email:</h2>
         <hr />
-        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
         <div>
             <label asp-for="Input.Email">E-mail:</label>
-            <input asp-for="Input.Email" autocomplete="email" required placeholder="E-mail" />
+            <input asp-for="Input.Email" required placeholder="E-mail" />
             <small><span asp-validation-for="Input.Email"></span></small>
         </div>
-        <button type="submit">Zresetuj hasło</button>
+        <button type="submit">Wyślij ponownie</button>
     </form>
 </section>
