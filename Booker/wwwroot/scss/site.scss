@@ -30,9 +30,15 @@
 //    }
 //}
 
+svg.icon {
+    width: 1em;
+    vertical-align: baseline;
+}
+
 /*
     Show loading indicator on div or on button
 */
+
 button.htmx-request,
 div.htmx-indicator {
     pointer-events: none;
