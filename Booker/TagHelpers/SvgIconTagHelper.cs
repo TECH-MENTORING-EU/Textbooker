@@ -19,7 +19,7 @@ namespace Booker.TagHelpers
             output.Attributes.RemoveAll("icon");
             output.Attributes.Add("class", "icon");
             output.Attributes.Add("viewBox",viewBox);
-            output.Content.SetHtmlContent("<use href=\"img/icons.svg#" + Icon + "\"></use>");
+            output.Content.SetHtmlContent("<use href=\"/img/icons.svg#" + Icon + "\"></use>");
         }
     }
 }
