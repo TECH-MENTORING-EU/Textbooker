@@ -1,0 +1,40 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Xml.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+	var xDoc = XDocument.Load("wwwroot/img/icons.svg");
+
+	XNamespace aw = xDoc.Root?.Attribute("xmlns")?.Value ?? "http://www.w3.org/2000/svg";
+
+	var icons = xDoc.Descendants(aw + "symbol")
+		.Select(x => new {
+			Id = x.Attribute("id").Value,
+			ViewBox = x.Attribute("viewBox")?.Value,
+		})
+		.Where(x => !string.IsNullOrEmpty(x.Id))
+		.ToList();
+#>
+namespace Booker.Data
+{
+	public static class Icons
+	{
+		public static IReadOnlyDictionary<string, string> ViewBoxes { get; } = new Dictionary<string, string>
+		{
+<# foreach (var icon in icons)
+			{
+				var id = icon.Id;
+				var viewBox = icon.ViewBox;
+#>
+			{<#= $"\"{id}\", \"{viewBox}\"" #>},
+<#
+			}
+#>
+		};
+	};
+}

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Razor.Runtime.TagHelpers;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Xml.Linq;
+using Booker.Data;
 
 namespace Booker.TagHelpers
 {
@@ -8,18 +8,10 @@ namespace Booker.TagHelpers
     [HtmlTargetElement("svg", Attributes = "icon")]
     public class SvgIconTagHelper : TagHelper
     {
-        private static readonly XDocument xDoc = XDocument.Load("wwwroot/img/icons.svg");
-
         public required string Icon { get; set; }
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            XNamespace aw = xDoc.Root?.Attribute("xmlns")?.Value ?? "http://www.w3.org/2000/svg";
-
-            var symbol = xDoc.Descendants(aw + "symbol")
-                 .FirstOrDefault(el => el.Attribute("id")?.Value == Icon);
-            var viewBox = symbol?.Attribute("viewBox")?.Value;
-
-            if (viewBox == null)
+            if (!Icons.ViewBoxes.TryGetValue(Icon, out var viewBox))
             {
                 throw new InvalidOperationException($"Icon '{Icon}' not found in icons.svg.");
             }
