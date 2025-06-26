@@ -4,6 +4,7 @@ using Booker.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting.Internal;
@@ -83,7 +84,22 @@ CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+if (app.Environment.IsDevelopment())
+{
+    // Enable serving of SCSS files to make sourcemap work
+
+    var provider = new FileExtensionContentTypeProvider();
+    provider.Mappings[".scss"] = "text/x-scss";
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        ContentTypeProvider = provider
+    });
+}
+else
+{
+    app.UseStaticFiles();
+}
 
 app.UseRouting();
 
