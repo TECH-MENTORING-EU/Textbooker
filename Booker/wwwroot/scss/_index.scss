@@ -19,8 +19,6 @@
     }
 
     details summary svg {
-        vertical-align: -0.1em;
-        margin-inline-end: 0.25rem;
         transition: transform 0.3s ease-out;
     }
 
@@ -114,6 +112,7 @@
         .fav {
             grid-area: fav;
             align-content: end;
+            margin-bottom: -0.25rem;
 
             button {
                 border: none;

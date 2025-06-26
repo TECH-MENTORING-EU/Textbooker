@@ -8,18 +8,36 @@ namespace Booker.TagHelpers
     [HtmlTargetElement("svg", Attributes = "icon")]
     public class SvgIconTagHelper : TagHelper
     {
+        private const string lib = "tabler";
         public required string Icon { get; set; }
+        public required string Variant { get; set; }
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            if (!Icons.ViewBoxes.TryGetValue(Icon, out var viewBox))
-            {
-                throw new InvalidOperationException($"Icon '{Icon}' not found in icons.svg.");
-            }
+            Variant = context.AllAttributes["variant"]?.Value?.ToString() ?? "outline";
 
             output.Attributes.RemoveAll("icon");
-            output.Attributes.Add("class", "icon");
-            output.Attributes.Add("viewBox",viewBox);
-            output.Content.SetHtmlContent("<use href=\"/img/icons.svg#" + Icon + "\"></use>");
+            output.Attributes.RemoveAll("variant");
+            output.Attributes.Add("class", "icon "+Variant);
+            output.Attributes.Add("viewBox", "0 0 24 24");
+
+            if (Variant.Equals("outline", StringComparison.OrdinalIgnoreCase))
+            {
+                Variant = "";
+            }
+
+            if (Variant.Equals("solid", StringComparison.OrdinalIgnoreCase))
+            {
+                Variant = "filled";
+            }
+
+            Variant = Variant.ToLowerInvariant();
+
+            if (!string.IsNullOrEmpty(Variant))
+            {
+                Variant = "-" + Variant;
+            }
+
+            output.Content.SetHtmlContent(string.Concat("<use href=\"/img/icons", Variant, ".svg#", lib, Variant, "-", Icon, "\"></use>"));
         }
     }
 }
