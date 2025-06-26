@@ -1,0 +1,23 @@
+﻿@page "{id:int?}"
+@model Booker.Pages.Profile.IndexModel
+@{
+}
+
+<h1>
+    @if (Model.RequestUser != null)
+    {
+        @("Książki użytkownika " + Model.RequestUser.UserName)
+    }
+    else
+    {
+        @("Twoje książki")
+    }
+</h1>
+
+<section class="grid-gallery">
+    <partial name="_ItemGallery" for="ItemsList" />
+</section>
+
+<section>
+    <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+</section>
