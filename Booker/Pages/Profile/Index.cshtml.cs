@@ -1,3 +1,4 @@
+﻿using Azure.Storage.Blobs.Models;
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -25,36 +26,39 @@ namespace Booker.Pages.Profile
         public PagedListViewModel? ItemsList { get; set; }
         public FilterParameters? Params { get; set; }
 
-        public User? RequestUser { get; set; }
+        public User RequestUser { get; set; } = null!;
+        public bool IsCurrentUser;
         public async Task<IActionResult> OnGetAsync(int? id, int pageNumber)
         {
             var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
+
             if (!int.TryParse(currentUserIdString, out int currentUserId))
             {
                 currentUserId = 0; // Default to 0 if parsing fails
             }
 
-            if (!id.HasValue && currentUserId == 0)
-            {
-                return Redirect("/Identity/Account/Login");
-            }
-
-            if (id.HasValue && id.Value == currentUserId)
-            {
-                id = null; // If the requested user is the current user, set id to null to fetch their own items
-            }
-
-            RequestUser = await _context.Users
-                .Include(u => u.Items)
-                .FirstOrDefaultAsync(u => u.Id == id);
-
             if (!id.HasValue)
             {
+                if (currentUserId == 0)
+                {
+                    return Redirect("/Identity/Account/Login");
+                }
+
                 id = currentUserId;
             }
 
-            
+            IsCurrentUser = (currentUserId == id);
+
+            var user = await _context.Users
+                .Include(u => u.Items)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            RequestUser = user;
 
             var query = _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
