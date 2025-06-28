@@ -90,6 +90,10 @@ function showSummary(event) {
     }
 }
 
-
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
+
+document.querySelectorAll("button").forEach(button => {
+    button.addEventListener("htmx:beforeRequest", function () { this.ariaBusy = true; })
+    button.addEventListener("htmx:afterRequest", function () { this.ariaBusy = false; })
+});
