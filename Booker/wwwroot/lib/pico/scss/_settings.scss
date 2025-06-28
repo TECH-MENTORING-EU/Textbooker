@@ -1,32 +1,10 @@
 @use "sass:map";
-@use "sass:math";
-@use "sass:list";
 
 // Settings
 // ––––––––––––––––––––
 
-// Theme colors
-$yo-themes: (
-  "amber",
-  "azure",
-  "blue",
-  "cyan",
-  "fuchsia",
-  "green",
-  "indigo",
-  "jade",
-  "lime",
-  "orange",
-  "pink",
-  "pumpkin",
-  "purple",
-  "red",
-  "violet",
-  "yellow"
-);
-$random: list.nth($yo-themes, math.random(list.length($yo-themes)));
-// picks a random theme to use as default
-$theme-color: $random !default; // amber, azure, blue, cyan, fuchsia, green, grey, indigo, jade, lime, orange, pink, pumpkin, purple, red, sand, slate, violet, yellow, zinc
+// Theme color
+$theme-color: "azure" !default; // amber, azure, blue, cyan, fuchsia, green, grey, indigo, jade, lime, orange, pink, pumpkin, purple, red, sand, slate, violet, yellow, zinc
 
 // Prefix for CSS variables
 $css-var-prefix: "--pico-" !default; // Must start with "--"
@@ -64,8 +42,6 @@ $enable-important: true !default;
 // If defined, all HTML tags are wrapped with this selector
 // :root is not wrapped
 $parent-selector: "" !default;
-
-$row-columns: 12 !default;
 
 // Breakpoints, viewports and root font size
 $breakpoints: () !default;
@@ -126,14 +102,7 @@ $modules: map.merge(
     "layout/landmarks": true,
     "layout/container": true,
     "layout/section": true,
-
-    // V3 Notes
-    // Add <aside> to layout folder, and have it auto build the a grid system
-    // will add notes someplace about idea on how to enable.
-    // use grid-template
-    // maybe only then keep the grid and remove the row system.
     "layout/grid": true,
-    "layout/row": true,
     "layout/overflow-auto": true,
 
     // Content
@@ -154,43 +123,17 @@ $modules: map.merge(
     "forms/input-file": true,
     "forms/input-range": true,
     "forms/input-search": true,
-    "forms/floating": true,
-    // V3 Notes
-    // Remove original pico validation in favor of :user-[in]valid
-    "forms/validation": true,
 
     // Components
     "components/accordion": true,
     "components/card": true,
-    // V3 Notes
-    // Allow for sub-menus in dropdown
     "components/dropdown": true,
     "components/group": true,
     "components/loading": true,
     "components/modal": true,
-    // V3 Notes
-    // incorperate the <menu> tag into navigations.
     "components/nav": true,
     "components/progress": true,
-    "components/tab": true,
-
-    // [role=tablist]
-    // I wish role="tablist|tab|tabpanel" could be used on <details> and <summary> tag.
-    "components/tab-region": false,
-    // DOES NOT WORK IN CHROME
     "components/tooltip": true,
-    // V3 Notes
-    // might find a new way to do this, I'll wait to hear feedback on this approach.
-    "components/nav-hamburger": true,
-
-    // V3 Notes
-    // Notification should be redone to be more in line with Pico's design
-    "components/notification": false,
-    "components/popover": true,
-    // V3 Notes
-    // timeline disabled by default because its more out of the scope of this project,
-    // and should be moved to a separate "extras" repository, to be included.
-    "components/timeline": true,
 
     // Utilities
     "utilities/accessibility": true,

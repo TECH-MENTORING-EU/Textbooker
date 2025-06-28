@@ -1,5 +1,5 @@
-@use "sass:map";
 @use "sass:color";
+@use "sass:map";
 @use "../../colors" as *;
 @use "../../settings" as *;
 @use "../../helpers/functions";
@@ -58,14 +58,6 @@
 
   // Box shadow
   #{$css-var-prefix}box-shadow: functions.shadow(color.mix($black, $slate-950));
-
-  // Make Accent Colors
-  // colors used in: dropdowns, modals, cards,
-  //                blockquote, tabs, timeline, ect
-  #{$css-var-prefix}accent-bg-color: #{$slate-900};
-  #{$css-var-prefix}accent-section-bg-color: #{color.mix($slate-900, $slate-850, 75%)};
-  #{$css-var-prefix}accent-border-color: var(#{$css-var-prefix}muted-border-color);
-  #{$css-var-prefix}accent-box-shadow: var(#{$css-var-prefix}box-shadow);
 
   // Typography
   @if map.get($modules, "content/typography") {
@@ -175,7 +167,7 @@
   // Card (<article>)
   @if map.get($modules, "components/card") {
     #{$css-var-prefix}card-background-color: #{$slate-900};
-    #{$css-var-prefix}card-border-color: var(#{$css-var-prefix}muted-border-color);
+    #{$css-var-prefix}card-border-color: var(#{$css-var-prefix}card-background-color);
     #{$css-var-prefix}card-box-shadow: var(#{$css-var-prefix}box-shadow);
     #{$css-var-prefix}card-sectioning-background-color: #{color.mix($slate-900, $slate-850, 75%)};
   }
@@ -192,23 +184,6 @@
   // Loading ([aria-busy=true])
   @if map.get($modules, "components/loading") {
     #{$css-var-prefix}loading-spinner-opacity: 0.5;
-    // Loading icon (animated)
-    // Change the icon color to black for .contrast buttons
-    @if $enable-classes {
-      #{$parent-selector} [aria-busy="true"]:not(input, select, textarea) {
-        &.contrast:is(
-            button,
-            [type="submit"],
-            [type="button"],
-            [type="reset"],
-            [role="button"]
-          ):not(.outline) {
-          &::before {
-            filter: brightness(0);
-          }
-        }
-      }
-    }
   }
 
   // Modal (<dialog>)
@@ -224,8 +199,8 @@
 
   // Tooltip ([data-tooltip])
   @if map.get($modules, "components/tooltip") {
-    #{$css-var-prefix}tooltip-background-color: var(#{$css-var-prefix}contrast-inverse);
-    #{$css-var-prefix}tooltip-color: var(#{$css-var-prefix}contrast-background);
+    #{$css-var-prefix}tooltip-background-color: var(#{$css-var-prefix}contrast-background);
+    #{$css-var-prefix}tooltip-color: var(#{$css-var-prefix}contrast-inverse);
   }
 
   // Form validation icons
@@ -248,47 +223,16 @@
     }
   }
 
-  // Yohn, I think I took care of this in the _styles.scss
   // Chevron icons
-  //@if map.get($modules, "components/accordion") or map.get($modules, "components/dropdown") {
-  //  // Change the icon color to black for accordion and dropdown .contrast buttons
-  //  @if $enable-classes {
-  //    #{$parent-selector} details {
-  //      summary {
-  //        &[role="button"].contrast:not(.outline) {
-  //          &::after {
-  //            filter: brightness(0);
-  //          }
-  //        }
-  //      }
-  //    }
-  //  }
-  //}
-
-  // Chevron icons
-  // Change the icon color to white for accordion and dropdown buttons
   @if map.get($modules, "components/accordion") or map.get($modules, "components/dropdown") {
-    #{$parent-selector} details {
-      summary {
-        $selector: '&[role="button"]';
-        @if $enable-classes {
-          $selector: "#{$selector}:not(.outline,.contrast,.secondary)";
-        }
-        #{$selector} {
-          &::after {
-            @if theme-colors.get("primary-inverse", "dark") == $black {
-              filter: brightness(100) invert(1);
-            } @else {
-              filter: brightness(100) invert(0);
+    // Change the icon color to black for accordion and dropdown .contrast buttons
+    @if $enable-classes {
+      #{$parent-selector} details {
+        summary {
+          &[role="button"].contrast:not(.outline) {
+            &::after {
+              filter: brightness(0);
             }
-          }
-        }
-        @if $enable-classes {
-          &.secondary[role="button"]::after {
-            filter: brightness(100) invert(0);
-          }
-          &.contrast[role="button"]::after {
-            filter: brightness(100) invert(1);
           }
         }
       }
@@ -297,35 +241,21 @@
 
   // Loading icon (animated)
   @if map.get($modules, "components/loading") {
-    // Change the icon color to white for buttons
-    #{$parent-selector} [aria-busy="true"]:not(input, select, textarea, html, form) {
-      $selector: '&:is(button, [type="submit"], [type="button"], [type="reset"], [role="button"])';
-      @if $enable-classes {
-        $selector: "#{$selector}:not(.outline)";
-      }
-      #{$selector} {
-        &::before {
-          @if theme-colors.get("primary-inverse", "dark") == $white {
-            filter: brightness(100) invert(1);
-          } @else {
-            filter: brightness(100) invert(0);
+    // Change the icon color to black for .contrast buttons
+    @if $enable-classes {
+      #{$parent-selector} [aria-busy="true"]:not(input, select, textarea) {
+        &.contrast:is(
+            button,
+            [type="submit"],
+            [type="button"],
+            [type="reset"],
+            [role="button"]
+          ):not(.outline) {
+          &::before {
+            filter: brightness(0);
           }
         }
       }
-    }
-  }
-
-  // Timeline
-  @if map.get($modules, "components/timeline") {
-    #{$css-var-prefix}timeline-line-color: var(#{$css-var-prefix}primary-background);
-    #{$css-var-prefix}timeline-dot-background-color: var(#{$css-var-prefix}primary-inverse);
-    #{$css-var-prefix}timeline-dot-border-color: var(#{$css-var-prefix}primary-background);
-    @if map.get($modules, "components/card") {
-      #{$css-var-prefix}timeline-arrow-color: var(
-        #{$css-var-prefix}card-sectioning-background-color
-      );
-    } @else {
-      #{$css-var-prefix}timeline-arrow-color: #{color.mix($slate-900, $slate-850, 75%)};
     }
   }
 }

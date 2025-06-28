@@ -1,5 +1,5 @@
-@use "sass:map";
 @use "sass:color";
+@use "sass:map";
 @use "../../colors" as *;
 @use "../../settings" as *;
 @use "../../helpers/functions";
@@ -58,14 +58,6 @@
 
   // Box shadow
   #{$css-var-prefix}box-shadow: functions.shadow($slate-400);
-
-  // Make Accent Colors
-  // colors used in: dropdowns, modals, cards,
-  //                blockquote, tabs, timeline, ect
-  #{$css-var-prefix}accent-bg-color: var(#{$css-var-prefix}background-color);
-  #{$css-var-prefix}accent-section-bg-color: #{color.mix($slate-50, $white, 25%)};
-  #{$css-var-prefix}accent-border-color: var(#{$css-var-prefix}muted-border-color);
-  #{$css-var-prefix}accent-box-shadow: var(#{$css-var-prefix}box-shadow);
 
   // Typography
   @if map.get($modules, "content/typography") {
@@ -188,75 +180,6 @@
   // Loading ([aria-busy=true])
   @if map.get($modules, "components/loading") {
     #{$css-var-prefix}loading-spinner-opacity: 0.5;
-
-    // Loading icon (animated)
-    // Yohn, I think I took care of this in the _styles.scss
-    // Change the icon color to white for .contrast buttons
-    //@if $enable-classes {
-    //  #{$parent-selector} [aria-busy="true"]:not(input, select, textarea) {
-    //    &.contrast:is(
-    //        button,
-    //        [type="submit"],
-    //        [type="button"],
-    //        [type="reset"],
-    //        [role="button"]
-    //      ):not(.outline) {
-    //      &::before {
-    //        filter: invert(1) !important;
-    //      }
-    //    }
-    //  }
-    //}
-  } //
-
-  // Chevron icons
-  // Change the icon color to white for accordion and dropdown buttons
-  @if map.get($modules, "components/accordion") or map.get($modules, "components/dropdown") {
-    #{$parent-selector} details {
-      summary {
-        $selector: '&[role="button"]';
-        @if $enable-classes {
-          $selector: "#{$selector}:not(.outline,.contrast,.secondary)";
-        }
-        #{$selector} {
-          &::after {
-            @if theme-colors.get("primary-inverse", "light") == $white {
-              filter: brightness(100) invert(0);
-            } @else {
-              filter: brightness(100) invert(1);
-            }
-          }
-        }
-        @if $enable-classes {
-          &.secondary[role="button"]::after {
-            filter: brightness(100) invert(1);
-          }
-          &.contrast[role="button"]::after {
-            filter: brightness(100) invert(0);
-          }
-        }
-      }
-    }
-  }
-
-  // Loading icon (animated)
-  @if map.get($modules, "components/loading") {
-    // Change the icon color to white for buttons
-    #{$parent-selector} [aria-busy="true"]:not(input, select, textarea, html, form) {
-      $selector: '&:is(button, [type="submit"], [type="button"], [type="reset"], [role="button"])';
-      @if $enable-classes {
-        $selector: "#{$selector}:not(.outline)";
-      }
-      #{$selector} {
-        &::before {
-          @if theme-colors.get("primary-inverse", "light") == $black {
-            filter: brightness(0) invert(1);
-          } @else {
-            filter: brightness(100) invert(0);
-          }
-        }
-      }
-    }
   }
 
   // Modal (<dialog>)
@@ -293,20 +216,6 @@
         [type="file"]
       ) {
       #{$css-var-prefix}form-element-focus-color: var(#{$css-var-prefix}primary-focus);
-    }
-  }
-
-  // Timeline
-  @if map.get($modules, "components/timeline") {
-    #{$css-var-prefix}timeline-line-color: var(#{$css-var-prefix}primary-background);
-    #{$css-var-prefix}timeline-dot-background-color: var(#{$css-var-prefix}primary-inverse);
-    #{$css-var-prefix}timeline-dot-border-color: var(#{$css-var-prefix}primary-background);
-    @if map.get($modules, "components/card") {
-      #{$css-var-prefix}timeline-arrow-color: var(
-        #{$css-var-prefix}card-sectioning-background-color
-      );
-    } @else {
-      #{$css-var-prefix}timeline-arrow-color: #{color.mix($slate-50, $white, 25%)};
     }
   }
 }

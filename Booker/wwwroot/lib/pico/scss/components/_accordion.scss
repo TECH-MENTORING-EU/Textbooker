@@ -5,30 +5,19 @@
   /**
    * Accordion (<details>)
    */
+
   #{$parent-selector} details {
     display: block;
-    margin-block-end: var(#{$css-var-prefix}spacing);
-
-    @if $enable-classes {
-      &.hide-arrow > summary::after {
-        display: none;
-        content: none;
-      }
-    }
-
-    &:not(.hide-arrow) > summary {
-      padding-inline-end: calc(var(#{$css-var-prefix}nav-link-spacing-horizontal) * 3.25);
-    }
+    margin-bottom: var(#{$css-var-prefix}spacing);
 
     summary {
-      position: relative;
-      //padding-inline-end: var(#{$css-var-prefix}block-spacing-horizontal);
       line-height: 1rem;
       list-style-type: none;
       cursor: pointer;
-      //@if $enable-transitions {
-      //transition: color var(#{$css-var-prefix}transition);
-      //}
+
+      @if $enable-transitions {
+        transition: color var(#{$css-var-prefix}transition);
+      }
 
       &:not([role]) {
         color: var(#{$css-var-prefix}accordion-close-summary-color);
@@ -50,12 +39,10 @@
       // Marker
       &::after {
         display: block;
-        position: absolute;
-        top: calc(var(#{$css-var-prefix}block-spacing-vertical) * 0.5);
-        right: calc(var(#{$css-var-prefix}block-spacing-horizontal) * 0.5);
         width: 1rem;
         height: 1rem;
         margin-inline-start: calc(var(#{$css-var-prefix}spacing, 1rem) * 0.5);
+        float: right;
         transform: rotate(-90deg);
         background-image: var(#{$css-var-prefix}icon-chevron);
         background-position: right center;
@@ -99,10 +86,12 @@
     // Open
     &[open] {
       > summary {
-        margin-block-end: var(#{$css-var-prefix}spacing);
+        margin-bottom: var(#{$css-var-prefix}spacing);
 
-        &:not([role]):not(:focus) {
-          color: var(#{$css-var-prefix}accordion-open-summary-color);
+        &:not([role]) {
+          &:not(:focus) {
+            color: var(#{$css-var-prefix}accordion-open-summary-color);
+          }
         }
 
         &::after {
@@ -119,15 +108,7 @@
 
         &::after {
           float: left;
-          transform: rotate(90deg);
           background-position: left center;
-        }
-      }
-      &[open] {
-        > summary {
-          &::after {
-            transform: rotate(0);
-          }
         }
       }
     }
