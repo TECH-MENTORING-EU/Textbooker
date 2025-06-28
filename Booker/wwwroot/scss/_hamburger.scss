@@ -144,8 +144,14 @@ nav[role=navigation] > [role=list] {
         box-shadow: var(--pico-card-box-shadow);
 
         #hamburger-btn ~ [role=list] {
-            display: flex;
             flex-direction: column-reverse;
+            transition: max-height var(#{$css-var-prefix}transition), opacity var(#{$css-var-prefix}transition), display var(#{$css-var-prefix}transition);
+            transition-behavior: allow-discrete;
+
+            @starting-style {
+                max-height: 0;
+                opacity: 0;
+            }
 
             a {
                 &[role=button] {
@@ -163,7 +169,12 @@ nav[role=navigation] > [role=list] {
             }
         }
 
+        #hamburger-btn:checked ~ [role=list] {
+            display: flex;
+        }
+
         details.dropdown > summary + ul {
+            pointer-events: none;
             position: relative;
             transform: scaleY(0);
             opacity: 0;
