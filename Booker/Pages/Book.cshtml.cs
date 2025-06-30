@@ -58,7 +58,7 @@ namespace Booker.Pages
                 return new NoContentResult();
             }
 
-            return Content($"<span>Email: {BookItem.User.Email}</span>");
+            return Partial("_ContactDetails", BookItem.User);
         }
 
         public static string FormatDateWithSpecialCases(DateTime? dateTime)

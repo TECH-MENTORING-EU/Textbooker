@@ -11,7 +11,7 @@ else
         @await Html.PartialAsync("_BookTile", new IndexModel.ItemModel(item, Model.Params))
         @if (item == Model.Items.Last() && Model.HasMorePages)
         {
-            <div hx-get="/"
+            <div hx-get=""
                  hx-trigger="revealed"
                  hx-swap="outerHTML"
                  hx-indicator="#ind"
