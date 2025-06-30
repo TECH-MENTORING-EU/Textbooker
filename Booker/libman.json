@@ -3,7 +3,7 @@
   "defaultProvider": "jsdelivr",
   "libraries": [
     {
-      "library": "htmx.org@2.0.4",
+      "library": "htmx.org@2.0.6",
       "destination": "wwwroot/lib/htmx/",
       "files": [
         "dist/htmx.min.js"
@@ -13,7 +13,7 @@
       "library": "@picocss/pico@2.1.1",
       "destination": "wwwroot/lib/pico/",
       "files": [
-        "scss/**"
+        "scss/**/*.scss"
       ]
     }
   ]
