@@ -203,6 +203,7 @@ nav[role=navigation] > [role=list] {
         }
 
         details.dropdown[open] > summary + ul {
+            pointer-events: auto;
             transform: scaleY(1);
             opacity: 1;
         }
