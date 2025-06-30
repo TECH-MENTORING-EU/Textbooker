@@ -1,0 +1,59 @@
+﻿@use "pico";
+
+@use "sass:map";
+
+.book-display { // book preview card
+    .image {
+        img {
+            aspect-ratio: 1 / 1;
+            align-content: center;
+            padding: 0.5rem;
+            border: 1px solid var(--pico-muted-border-color);
+            height: 100%;
+            display: block;
+            margin-inline: auto;
+            object-fit: contain;
+        }
+    }
+
+    .actions button {
+        margin: 0.5em;
+    }
+
+    .seller > div {
+        display: flex;
+
+        img {
+            width: 50px;
+            height: 50px;
+            margin-block: 0.5em;
+            margin-right: 1em;
+            border-radius: 100%;
+        }
+
+        a[role="button"] {
+            margin-top: 0.5em;
+        }
+    }
+
+    @media (min-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint")) {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: min-content 1fr;
+
+
+        .image {
+            grid-row: span 2;
+            contain: size;
+        }
+
+        .description {
+            grid-column: span 2;
+        }
+
+        .seller {
+            grid-column: span 2;
+        }
+    }
+}

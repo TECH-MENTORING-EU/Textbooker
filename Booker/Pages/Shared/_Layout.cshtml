@@ -9,7 +9,7 @@
     <script src="~/lib/htmx/dist/htmx.min.js" asp-append-version="true"></script>
 </head>
 <body>
-    <nav class="container-fluid">
+    <nav class="container-fluid" role="navigation">
         <ul>
             <li>
                 <strong>
@@ -17,10 +17,9 @@
                 </strong>
             </li>
             <li>
-                <a asp-area="" asp-page="/Index">Strona główna</a>
-            </li>
-            <li>
-                <a asp-area="" asp-page="/Add">Dodaj ogłoszenie</a>
+                <a asp-area="" asp-page="/Index" aria-label="Strona główna" title="Strona główna">
+                    <svg icon="home" variant="solid" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+                </a>
             </li>
         </ul>
         @* <ul> *@

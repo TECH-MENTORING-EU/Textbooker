@@ -1,0 +1,5 @@
+# CSS is managed by Sass
+wwwroot/css/
+
+# Libraries managed by LibMan
+wwwroot/lib/

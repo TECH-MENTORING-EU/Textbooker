@@ -4,16 +4,35 @@
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
-<ul>
+<input type="checkbox" id="hamburger-btn">
+<label for="hamburger-btn" aria-label="Menu"
+       aria-controls="hamburger">
+    <svg icon="menu-2" aria-hidden="true"></svg>
+</label>
+<ul role="list" id="hamburger">
 @if (SignInManager.IsSignedIn(User))
 {
     <li>
-        <a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index" title="Zarządzaj">Witaj @UserManager.GetUserName(User)!</a>
+        <details class="dropdown">
+                <summary role="button" class="outline" style="border-color: transparent;">Witaj @UserManager.GetUserName(User)!</summary>
+                <ul>
+                    <li><a href="/Profile">Profil</a></li>
+                    <li><a href="#">Ulubione</a></li>
+                    <li><a href="#">Wiadomości</a></li>
+                    <li><a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index">Ustawienia</a></li>
+                    <li>
+                        <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
+                            <button id="logout">Wyloguj</button>
+                        </form>
+                    </li>
+                </ul>
+        </details>
     </li>
     <li>
-        <form style="display: contents;" id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
-            <button id="logout">Wyloguj</button>
-        </form>
+            <a role="button" asp-area="" asp-page="/Add" style="margin-top: 0;">
+            <svg icon="plus" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+            <span>Dodaj ogłoszenie</span>
+        </a>
     </li>
 }
 else
