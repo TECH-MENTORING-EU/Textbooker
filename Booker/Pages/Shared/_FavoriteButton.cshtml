@@ -1,0 +1,38 @@
+﻿@model Profile.FavoritesModel.ButtonState
+
+@if (Model.IsFavorite && !Model.FullSize)
+{
+    <button class="outline" aria-label="Usuń z ulubionych" title="Usuń z ulubionych"
+            hx-post="@Url.Page("/Profile/Favorites", "Remove")"
+            hx-vals='{"itemId" : @Model.Id, "fullsize" : false}' hx-swap="outerHTML" antiforgery>
+        <svg>
+            <use href="img/icons.svg#si-awesome-star" />
+        </svg>
+    </button>
+}
+else if (!Model.IsFavorite && !Model.FullSize)
+{
+    <button class="outline" aria-label="Dodaj do ulubionych" title="Dodaj do ulubionych"
+            hx-post="@Url.Page("/Profile/Favorites", "Add")"
+            hx-vals='{"itemId" : @Model.Id, "fullsize" : false}' hx-swap="outerHTML" antiforgery>
+        <svg>
+            <use href="img/icons.svg#si-awesome-star-o" />
+        </svg>
+    </button>
+}
+else if (Model.IsFavorite && Model.FullSize)
+{
+    <button class="secondary"
+            hx-post="@Url.Page("/Profile/Favorites", "Remove")"
+            hx-vals='{"itemId" : @Model.Id, "fullsize" : true}' hx-swap="outerHTML" antiforgery>
+        Usuń z ulubionych
+    </button>
+}
+else
+{
+    // (!Model.IsFavorite && Model.FullSize)
+    <button hx-post="@Url.Page("/Profile/Favorites", "Add")"
+    hx-vals='{"itemId" : @Model.Id, "fullsize" : true}' hx-swap="outerHTML" antiforgery>
+        Dodaj do ulubionych
+    </button>
+}

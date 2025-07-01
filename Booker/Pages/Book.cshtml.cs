@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Security.Claims;
 
 namespace Booker.Pages
 {
@@ -12,6 +13,7 @@ namespace Booker.Pages
         private readonly DataContext _context;
 
         public Item BookItem { get; set; } = null!;
+        public bool IsFavorite { get; set; } = false;
 
         public BookModel(DataContext context)
         {
@@ -20,6 +22,16 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            {
+                userId = 0;
+            }
+
+            IsFavorite = await _context.Users
+                .Where(u => u.Id == userId)
+                .SelectMany(u => u.Favorites.Select(f => f.Id))
+                .AnyAsync(n => n == id);
+
             var item = await _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
                 .Include(i => i.Book).ThenInclude(b => b.Subject)
