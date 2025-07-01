@@ -5,9 +5,7 @@
     <button class="outline" aria-label="Usuń z ulubionych" title="Usuń z ulubionych"
             hx-post="@Url.Page("/Profile/Favorites", "Remove")"
             hx-vals='{"itemId" : @Model.Id, "fullsize" : false}' hx-swap="outerHTML" antiforgery>
-        <svg>
-            <use href="img/icons.svg#si-awesome-star" />
-        </svg>
+        <svg icon="star" variant="filled" aria-hidden="true"></svg>
     </button>
 }
 else if (!Model.IsFavorite && !Model.FullSize)
@@ -15,9 +13,7 @@ else if (!Model.IsFavorite && !Model.FullSize)
     <button class="outline" aria-label="Dodaj do ulubionych" title="Dodaj do ulubionych"
             hx-post="@Url.Page("/Profile/Favorites", "Add")"
             hx-vals='{"itemId" : @Model.Id, "fullsize" : false}' hx-swap="outerHTML" antiforgery>
-        <svg>
-            <use href="img/icons.svg#si-awesome-star-o" />
-        </svg>
+        <svg icon="star" variant="outline" aria-hidden="true"></svg>
     </button>
 }
 else if (Model.IsFavorite && Model.FullSize)

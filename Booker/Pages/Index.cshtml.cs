@@ -6,6 +6,7 @@ using Booker.TagHelpers;
 using Microsoft.Extensions.Caching.Memory;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
 
 namespace Booker.Pages
 {
@@ -16,8 +17,8 @@ namespace Booker.Pages
         private readonly IMemoryCache _cache;
         const int PageSize = 25;
 
-        public record PagedListViewModel(List<Item> Items, FilterParameters Params, bool HasMorePages);
-        public record ItemModel(Item Item, FilterParameters Params);
+        public record PagedListViewModel(List<ItemModel> Items, FilterParameters Params, bool HasMorePages);
+        public record ItemModel(Item Item, bool IsFavorite, FilterParameters Params);
         public record FilterParameters(Grade? Grade, Subject? Subject, bool? Level, int PageNumber);
         public PagedListViewModel? ItemsList { get; set; }
         public List<SelectListItem>? Grades { get; set; }
@@ -69,13 +70,30 @@ namespace Booker.Pages
             var totalItems = await query.CountAsync();
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            {
+                userId = 0;
+            }
+
+            var userFavorites = await _context.Users
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.Favorites.Select(f => f.Id))
+            .ToListAsync();
+
             var items = await query
                 .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
+
+            var items2 = items.Select(i => new ItemModel
+            (
+                i,
+                userFavorites.Contains(i.Id),
+                Params
+            )).ToList();
             
-            ItemsList = new PagedListViewModel(items, Params, hasMorePages);
+            ItemsList = new PagedListViewModel(items2, Params, hasMorePages);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

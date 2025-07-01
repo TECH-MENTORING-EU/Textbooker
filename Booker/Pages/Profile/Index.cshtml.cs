@@ -71,12 +71,25 @@ namespace Booker.Pages.Profile
             var totalItems = await query.CountAsync();
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
+            var userFavorites = await _context.Users
+            .Where(u => u.Id == currentUserId)
+            .SelectMany(u => u.Favorites.Select(f => f.Id))
+            .ToListAsync();
+
             var items = await query
                 .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
-            ItemsList = new PagedListViewModel(items, Params, hasMorePages);
+
+            var items2 = items.Select(i => new ItemModel
+            (
+                i,
+                userFavorites.Contains(i.Id),
+                Params
+            )).ToList();
+
+            ItemsList = new PagedListViewModel(items2, Params, hasMorePages);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
