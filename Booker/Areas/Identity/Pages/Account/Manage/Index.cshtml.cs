@@ -59,6 +59,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             [Phone(ErrorMessage = "Pole {0} nie jest prawidłowym numerem telefonu.")]
             [Display(Name = "Numer telefonu")]
             public string PhoneNumber { get; set; }
+
+            [Display(Name = "Pokaż moje ulubione innym użytkownikom")]
+            public bool AreFavoritesPublic { get; set; }
         }
 
         private async Task LoadAsync(User user)
@@ -66,11 +69,13 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             var userName = await _userManager.GetUserNameAsync(user);
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
 
+
             Username = userName;
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                AreFavoritesPublic = user.AreFavoritesPublic
             };
         }
 
@@ -109,6 +114,12 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                     StatusMessage = "Wystąpił nieznany błąd podczas próby zmiany numeru telefonu.";
                     return RedirectToPage();
                 }
+            }
+
+            if (user.AreFavoritesPublic != Input.AreFavoritesPublic)
+            {
+                user.AreFavoritesPublic = Input.AreFavoritesPublic;
+                await _userManager.UpdateAsync(user);
             }
 
             await _signInManager.RefreshSignInAsync(user);

@@ -24,6 +24,12 @@
             <input asp-for="Input.PhoneNumber" placeholder="Numer telefonu"/>
             <small><span asp-validation-for="Input.PhoneNumber"></span></small>
         </div>
+        <div>
+            <label asp-for="Input.AreFavoritesPublic">
+                <input role="switch" asp-for="Input.AreFavoritesPublic" />
+                Pokaż moje ulubione innym użytkownikom
+            </label>
+        </div>
         <button id="update-profile-button" type="submit">Zapisz</button>
     </form>
 </div>
