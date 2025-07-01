@@ -4,29 +4,7 @@
     ViewData["Title"] = "Profil";
 }
 
-<section class="profile-heading">
-    <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" alt="Zdjęcie książki" />
-    <hgroup>
-        <h1>@Model.RequestUser.UserName</h1>
-        <p> @{ /* TODO: Add user profile description */ } </p>
-    </hgroup>
-    @if (Model.IsCurrentUser)
-    {
-        <a role="button" class="outline" href="/Identity/Account/Manage">Ustawienia konta</a>
-    }
-</section>
-
-<h2>Kontakt</h2>
-<section>
-    @if (User.Identity?.IsAuthenticated != true)
-    {
-        @("Zaloguj się, aby zobaczyć dane kontaktowe użytkownika.")
-    }
-    else
-    {
-        <partial name="_ContactDetails" for="RequestUser" />
-    }
-</section>
+<partial name="_Heading" for="UserInfo" />
 
 <h2>Ogłoszenia</h2>
 <section class="grid-gallery">

@@ -25,9 +25,8 @@ namespace Booker.Pages.Profile
 
         public PagedListViewModel? ItemsList { get; set; }
         public FilterParameters? Params { get; set; }
-
-        public User RequestUser { get; set; } = null!;
-        public bool IsCurrentUser;
+        public record UserModel(User RequestUser, bool IsCurrentUser);
+        public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int? id, int pageNumber)
         {
             var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -45,9 +44,7 @@ namespace Booker.Pages.Profile
                 }
 
                 id = currentUserId;
-            }
-
-            IsCurrentUser = (currentUserId == id);
+            }            
 
             var user = await _context.Users
                 .Include(u => u.Items)
@@ -57,8 +54,6 @@ namespace Booker.Pages.Profile
             {
                 return NotFound();
             }
-
-            RequestUser = user;
 
             var query = _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
@@ -90,6 +85,7 @@ namespace Booker.Pages.Profile
             )).ToList();
 
             ItemsList = new PagedListViewModel(items2, Params, hasMorePages);
+            UserInfo = new UserModel(user, user.Id == currentUserId);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

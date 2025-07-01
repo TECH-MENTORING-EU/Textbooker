@@ -4,3 +4,13 @@
     ViewData["Title"] = "Ulubione - Booker";
 }
 
+<partial name="_Heading" for="UserInfo" />
+
+<h2>Ulubione</h2>
+<section class="grid-gallery">
+    <partial name="_ItemGallery" for="ItemsList" />
+</section>
+
+<section>
+    <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+</section>
