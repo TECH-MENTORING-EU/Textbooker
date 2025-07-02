@@ -6,12 +6,11 @@
 
 <section class="filter">
     <form novalidate
-        hx-get="/" 
-        hx-trigger="submit, input changed delay:500ms, change" 
-        hx-target=".grid-gallery" 
-        hx-push-url="true" 
-        hx-vals='{"pageNumber": 0}'
-    >
+          hx-get="/"
+          hx-trigger="submit, input changed delay:500ms, change"
+          hx-target=".grid-gallery"
+          hx-push-url="true"
+          hx-vals='{"pageNumber": 0}'>
         <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" />
 
         <details id="filterDetails">
@@ -56,12 +55,12 @@
             elem.value = enable ? value : "";
             elem.form.requestSubmit();
         }
-        
     }
 
     htmx.onLoad(function(content) {
         content.querySelectorAll('button.subject, button.grade, button.level').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function(event) {
+                event.stopPropagation();
                 const name = this.classList.contains('subject') ? 'subject' : this.classList.contains('grade') ? 'grade' : 'level';
                 const value = name === 'grade' ? this.textContent.trim().slice(6,7) : this.textContent.trim();
                 this.classList.toggle('outline');

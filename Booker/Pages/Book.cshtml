@@ -21,8 +21,8 @@
 
         <ul>
             <li>
-                Klasa: @String.Join(", ", 
-                Model.BookItem.Book.Grades.Select( g => g.GradeNumber ).ToList() ?? new() {"nieznana"})
+                Klasa: @String.Join(", ",
+                Model.BookItem.Book.Grades.Select(g => g.GradeNumber).ToList() ?? new() { "nieznana" })
             </li>
             <li>Przedmiot: @Model.BookItem.Book.Subject.Name</li>
             <li>
@@ -36,8 +36,15 @@
     </section>
 
     <section class="actions">
-        <button>Dodaj do ulubionych</button>
-        <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
+        @if (Model.IsCurrentUserOwner)
+        {
+            <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button">Edytuj ogłoszenie</a>
+        }
+        else
+        {
+            <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
+            <button role="button">Dodaj do ulubionych</button>
+        }
     </section>
 
     <section class="description">

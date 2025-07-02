@@ -6,6 +6,7 @@ using Booker.TagHelpers;
 using Microsoft.Extensions.Caching.Memory;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
 
 namespace Booker.Pages
 {
@@ -16,9 +17,10 @@ namespace Booker.Pages
         private readonly IMemoryCache _cache;
         const int PageSize = 25;
 
-        public record PagedListViewModel(List<Item> Items, FilterParameters Params, bool HasMorePages);
-        public record ItemModel(Item Item, FilterParameters Params);
+        public record PagedListViewModel(List<ItemModel> Items, FilterParameters Params, bool HasMorePages);
+        public record ItemModel(Item Item, FilterParameters Params, bool IsCurrentUserOwner);
         public record FilterParameters(Grade? Grade, Subject? Subject, bool? Level, int PageNumber);
+
         public PagedListViewModel? ItemsList { get; set; }
         public List<SelectListItem>? Grades { get; set; }
         private List<Grade>? _grades;
@@ -69,13 +71,26 @@ namespace Booker.Pages
             var totalItems = await query.CountAsync();
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
-            var items = await query
+            var itemsFromDb = await query
                 .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
-            
-            ItemsList = new PagedListViewModel(items, Params, hasMorePages);
+
+            int? currentUserId = null;
+            var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(currentUserIdString) && int.TryParse(currentUserIdString, out int parsedUserId))
+            {
+                currentUserId = parsedUserId;
+            }
+
+            var itemModels = itemsFromDb.Select(item => new ItemModel(
+                item,
+                Params,
+                currentUserId.HasValue && item.User.Id == currentUserId.Value
+            )).ToList();
+
+            ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

@@ -27,7 +27,7 @@
             <a asp-page="/Book" asp-route-id="@Model.Item.Id">
                 <h2>@Model.Item.Book.Title</h2>
             </a>
-        
+
             <p>@Model.Item.Price zł</p>
             <p>
                 <small>
@@ -56,9 +56,35 @@
             }
         </div>
         <div class="fav">
-            <button class="outline" aria-label="Dodaj do ulubionych" title="Dodaj do ulubionych">
-                <svg icon="star" variant="outline" aria-hidden="true"></svg>
-            </button>
+            @if (Model.IsCurrentUserOwner)
+            {
+                <button class="outline fav-action-button edit-action-button"
+                        aria-label="Edytuj ogłoszenie"
+                        title="Edytuj ogłoszenie"
+                        data-book-id="@Model.Item.Id">
+                    <svg aria-hidden="true" class="icon outline" viewBox="0 0 24 24"><use href="/img/icons.svg#tabler-pencil"></use></svg>
+                </button>
+            }
+            else
+            {
+                <button class="outline fav-action-button" aria-label="Dodaj do ulubionych" title="Dodaj do ulubionych">
+                    <svg aria-hidden="true" class="icon outline" viewBox="0 0 24 24"><use href="/img/icons.svg#tabler-star"></use></svg>
+                </button>
+            }
         </div>
     </footer>
 </article>
+
+<script>
+    document.querySelectorAll('.edit-action-button').forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const bookId = this.dataset.bookId;
+            if (bookId) {
+                window.location.href = `/Edit/${bookId}`;
+            }
+        });
+    });
+</script>

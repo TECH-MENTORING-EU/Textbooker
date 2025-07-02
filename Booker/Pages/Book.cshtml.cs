@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Security.Claims;
 
 namespace Booker.Pages
 {
@@ -12,6 +13,7 @@ namespace Booker.Pages
         private readonly DataContext _context;
 
         public Item BookItem { get; set; } = null!;
+        public bool IsCurrentUserOwner { get; set; }
 
         public BookModel(DataContext context)
         {
@@ -33,6 +35,16 @@ namespace Booker.Pages
 
             BookItem = item;
 
+            IsCurrentUserOwner = false;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (int.TryParse(currentUserIdString, out int currentUserId))
+                {
+                    IsCurrentUserOwner = (BookItem.User.Id == currentUserId);
+                }
+            }
+
             return Page();
         }
 
@@ -52,7 +64,17 @@ namespace Booker.Pages
             BookItem = item;
             var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
-            if (!isUserAuthenticated)
+            int? currentUserId = null;
+            if (isUserAuthenticated)
+            {
+                var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (int.TryParse(currentUserIdString, out int parsedUserId))
+                {
+                    currentUserId = parsedUserId;
+                }
+            }
+
+            if (!isUserAuthenticated || (currentUserId.HasValue && BookItem.User.Id == currentUserId.Value))
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
                 return new NoContentResult();

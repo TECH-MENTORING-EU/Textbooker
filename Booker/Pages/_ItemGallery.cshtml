@@ -6,10 +6,11 @@
 }
 else
 {
-    @foreach (var item in Model.Items)
+    @foreach (var itemModel in Model.Items)
     {
-        @await Html.PartialAsync("_BookTile", new IndexModel.ItemModel(item, Model.Params))
-        @if (item == Model.Items.Last() && Model.HasMorePages)
+        @await Html.PartialAsync("_BookTile", itemModel)
+
+        @if (itemModel == Model.Items.Last() && Model.HasMorePages)
         {
             <div hx-get=""
                  hx-trigger="revealed"
