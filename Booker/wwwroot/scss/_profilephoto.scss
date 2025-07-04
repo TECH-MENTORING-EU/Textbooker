@@ -1,0 +1,149 @@
+.profile-page-title {
+    text-align: left;
+    margin-bottom: 1.5em;
+    max-width: 600px;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.main-profile-section {
+    background-color: var(--card-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5em;
+    box-shadow: var(--shadow);
+    max-width: 600px;
+    margin-left: 0;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1em;
+}
+
+#profile-picture-form {
+    .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 2em;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    section {
+        background-color: var(--card-background-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5em;
+        box-shadow: var(--shadow);
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 1em;
+            color: var(--h1-color);
+        }
+    }
+}
+
+
+.profile-circle-preview {
+    width: 20em;
+    height: 20em;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0;
+    border: 2px solid var(--primary);
+    background-color: var(--secondary-background-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: auto;
+    margin-left: auto;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+}
+
+.custom-file-upload {
+    display: block;
+    width: 100%;
+    padding: 0.8em 1.2em;
+    cursor: pointer;
+    text-align: center;
+    box-sizing: border-box;
+    margin-bottom: 1em;
+
+    &:hover {
+        background-color: var(--primary-hover);
+    }
+}
+
+.change-photo-button {
+    width: auto;
+    align-self: flex-start;
+    margin-top: 1em;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+
+#imageInput {
+    display: none;
+}
+
+.canvas-container {
+    width: 100%;
+    max-width: 400px;
+    height: 400px;
+    margin: 1em auto;
+    border: 1px dashed var(--border-color);
+    background-color: var(--secondary-background-color);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#croppingCanvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.controls-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    justify-content: center;
+    margin-top: 1em;
+
+    button {
+        flex-grow: 1;
+        min-width: 80px;
+        padding: 0.6em 1em;
+    }
+}
+
+.alert {
+    padding: 1em;
+    margin-bottom: 1em;
+    border-radius: var(--border-radius);
+    text-align: center;
+
+    &-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    &-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+}

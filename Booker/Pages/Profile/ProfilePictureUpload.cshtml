@@ -1,0 +1,355 @@
+﻿@page
+@model Booker.Pages.Profile.ProfilePictureUploadModel
+@{
+    ViewData["Title"] = "Prześlij zdjęcie profilowe";
+}
+
+<h1 class="profile-page-title">Twoje zdjęcie profilowe</h1>
+
+@if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+@if (!ViewData.ModelState.IsValid && ViewData.ModelState.Any(m => m.Value.Errors.Any()))
+{
+    <div class="alert alert-danger" role="alert">
+        <h6 class="alert-heading">Wystąpiły błędy:</h6>
+        <ul>
+            @foreach (var modelState in ViewData.ModelState.Values)
+            {
+                foreach (var error in modelState.Errors)
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            }
+        </ul>
+    </div>
+}
+
+<section class="main-profile-section">
+    <div class="profile-circle-preview">
+        <img id="currentProfilePictureDisplay"
+             src="@(string.IsNullOrEmpty(Model.CurrentProfilePictureUrl) ? "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" : Model.CurrentProfilePictureUrl)"
+             alt="Aktualne zdjęcie profilowe">
+    </div>
+    <button type="button" class="primary change-photo-button" onclick="document.getElementById('editPhotoModal').showModal()">Zmień zdjęcie profilowe</button>
+</section>
+
+<dialog id="editPhotoModal">
+    <article>
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('editPhotoModal').close(); resetCroppingState();"></button>
+            <h2>Edytuj i prześlij nowe zdjęcie</h2>
+        </header>
+        <form method="post" enctype="multipart/form-data" id="profile-picture-form">
+            <div class="grid">
+                <section>
+                    <label for="imageInput" class="custom-file-upload" tabindex="0" role="button">
+                        Wybierz plik ze zdjęciem
+                    </label>
+                    <input type="file" id="imageInput" accept="image/*">
+                    <small><span asp-validation-for="Input.Image"></span></small>
+
+                    <div class="canvas-container">
+                        <canvas id="croppingCanvas"></canvas>
+                    </div>
+
+                    <div class="controls-group">
+                        <button type="button" class="contrast" id="zoomIn">Powiększ</button>
+                        <button type="button" class="contrast" id="zoomOut">Zmniejsz</button>
+                        <button type="button" class="secondary" id="resetPosition">Resetuj pozycję</button>
+                    </div>
+                    <p style="text-align: center; font-size: 0.9em; color: var(--secondary);">Przeciągnij zdjęcie w kółku, aby je wyśrodkować.</p>
+
+                    <input type="hidden" name="Input.Image" id="processedImageInput">
+                    <input type="hidden" name="Input.FileName" id="fileNameInput">
+                </section>
+            </div>
+            <footer>
+                <button type="submit" class="primary" id="submitButton">Prześlij i zapisz zdjęcie</button>
+            </footer>
+        </form>
+    </article>
+</dialog>
+
+@section Scripts {
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const croppingCanvas = document.getElementById('croppingCanvas');
+        const ctx = croppingCanvas.getContext('2d');
+        const currentProfilePictureDisplay = document.getElementById('currentProfilePictureDisplay');
+        const processedImageInput = document.getElementById('processedImageInput');
+        const fileNameInput = document.getElementById('fileNameInput');
+        const submitButton = document.getElementById('submitButton');
+        const editPhotoModal = document.getElementById('editPhotoModal');
+
+        let originalImage = new Image();
+        let imageScale = 1;
+        let imageX = 0;
+        let imageY = 0;
+        let isDragging = false;
+        let startX, startY;
+        let currentBlob = null;
+
+        const CANVAS_SIZE = 400;
+        const CROP_SIZE = 200;
+
+        croppingCanvas.width = CANVAS_SIZE;
+        croppingCanvas.height = CANVAS_SIZE;
+
+        function drawImageOnCanvas() {
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            if (originalImage.src) {
+                const scaledWidth = originalImage.width * imageScale;
+                const scaledHeight = originalImage.height * imageScale;
+
+                ctx.drawImage(
+                    originalImage,
+                    imageX,
+                    imageY,
+                    scaledWidth,
+                    scaledHeight
+                );
+            }
+            ctx.beginPath();
+            ctx.arc(CANVAS_SIZE / 2, CANVAS_SIZE / 2, CROP_SIZE / 2, 0, Math.PI * 2, true);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        function resetImagePosition() {
+            if (originalImage.src) {
+                const aspectRatioCanvas = CANVAS_SIZE / CANVAS_SIZE;
+                const aspectRatioImage = originalImage.width / originalImage.height;
+
+                if (aspectRatioImage > aspectRatioCanvas) {
+                    imageScale = CANVAS_SIZE / originalImage.height;
+                } else {
+                    imageScale = CANVAS_SIZE / originalImage.width;
+                }
+                const minScaleNeededForCrop = CROP_SIZE / Math.min(originalImage.width, originalImage.height);
+                if (imageScale < minScaleNeededForCrop) {
+                    imageScale = minScaleNeededForCrop;
+                }
+
+                imageX = (CANVAS_SIZE - (originalImage.width * imageScale)) / 2;
+                imageY = (CANVAS_SIZE - (originalImage.height * imageScale)) / 2;
+            }
+            drawImageOnCanvas();
+            generateFinalImage();
+        }
+
+        function generateFinalImage() {
+            if (!originalImage.src) {
+                currentProfilePictureDisplay.src = currentProfilePictureDisplay.dataset.defaultSrc || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+                processedImageInput.value = '';
+                submitButton.disabled = true;
+                currentBlob = null;
+                return;
+            }
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = CROP_SIZE;
+            tempCanvas.height = CROP_SIZE;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            tempCtx.beginPath();
+            tempCtx.arc(CROP_SIZE / 2, CROP_SIZE / 2, CROP_SIZE / 2, 0, Math.PI * 2, true);
+            tempCtx.closePath();
+            tempCtx.clip();
+
+            const sourceX = (CANVAS_SIZE - CROP_SIZE) / 2;
+            const sourceY = (CANVAS_SIZE - CROP_SIZE) / 2;
+
+            tempCtx.drawImage(
+                croppingCanvas,
+                sourceX,
+                sourceY,
+                CROP_SIZE,
+                CROP_SIZE,
+                0,
+                0,
+                CROP_SIZE,
+                CROP_SIZE
+            );
+
+            currentProfilePictureDisplay.src = tempCanvas.toDataURL('image/png');
+
+            tempCanvas.toBlob((blob) => {
+                currentBlob = blob;
+                console.log('Blob generated and stored:', currentBlob);
+                submitButton.disabled = false;
+            }, 'image/png', 0.8);
+        }
+
+        function resetCroppingState() {
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            originalImage.src = '';
+            imageInput.value = '';
+            fileNameInput.value = '';
+            processedImageInput.value = '';
+            submitButton.disabled = true;
+            croppingCanvas.style.display = 'none';
+            currentProfilePictureDisplay.src = currentProfilePictureDisplay.dataset.defaultSrc || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+            currentBlob = null;
+            console.log('Cropping state reset.');
+        }
+
+        imageInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                const maxSize = 5 * 1024 * 1024;
+
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Dozwolone są tylko pliki JPG, PNG lub GIF.');
+                    this.value = '';
+                    resetCroppingState();
+                    return;
+                }
+
+                if (file.size > maxSize) {
+                    alert('Plik jest zbyt duży (maks. 5MB).');
+                    this.value = '';
+                    resetCroppingState();
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    originalImage.onload = () => {
+                        resetImagePosition();
+                    };
+                    originalImage.src = e.target.result;
+                    fileNameInput.value = file.name;
+                    croppingCanvas.style.display = 'block';
+                    console.log('Image loaded and ready for cropping.');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                resetCroppingState();
+            }
+        });
+
+        croppingCanvas.addEventListener('mousedown', (e) => {
+            if (originalImage.src) {
+                isDragging = true;
+                startX = e.clientX - croppingCanvas.getBoundingClientRect().left - imageX;
+                startY = e.clientY - croppingCanvas.getBoundingClientRect().top - imageY;
+            }
+        });
+
+        croppingCanvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const newX = e.clientX - croppingCanvas.getBoundingClientRect().left - startX;
+                const newY = e.clientY - croppingCanvas.getBoundingClientRect().top - startY;
+
+                const scaledWidth = originalImage.width * imageScale;
+                const scaledHeight = originalImage.height * imageScale;
+
+                const minX = CANVAS_SIZE - scaledWidth;
+                const minY = CANVAS_SIZE - scaledHeight;
+
+                imageX = Math.max(minX, Math.min(0, newX));
+                imageY = Math.max(minY, Math.min(0, newY));
+
+                drawImageOnCanvas();
+                generateFinalImage();
+            }
+        });
+
+        croppingCanvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        croppingCanvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            if (originalImage.src) {
+                imageScale *= 1.1;
+                drawImageOnCanvas();
+                generateFinalImage();
+            }
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            if (originalImage.src) {
+                imageScale /= 1.1;
+                const minScaleNeededForCrop = CROP_SIZE / Math.min(originalImage.width, originalImage.height);
+                if (imageScale < minScaleNeededForCrop) {
+                    imageScale = minScaleNeededForCrop;
+                }
+                drawImageOnCanvas();
+                generateFinalImage();
+            }
+        });
+
+        document.getElementById('resetPosition').addEventListener('click', () => {
+            if (originalImage.src) {
+                resetImagePosition();
+                generateFinalImage();
+            }
+        });
+
+        document.getElementById('profile-picture-form').addEventListener('submit', async function (event) {
+            console.log('Submit button clicked, form submission initiated.');
+            event.preventDefault();
+
+            if (!currentBlob) {
+                alert('Proszę wybrać i dostosować zdjęcie przed przesłaniem.');
+                console.error('No blob found for submission. Submission aborted.');
+                return;
+            }
+            console.log('Blob found, proceeding with fetch.', currentBlob);
+
+            const formData = new FormData();
+            formData.append('Input.Image', currentBlob, fileNameInput.value || 'profile_picture.png');
+
+            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (antiForgeryToken) {
+                formData.append('__RequestVerificationToken', antiForgeryToken);
+            }
+            console.log('FormData prepared:', formData);
+
+            try {
+                const response = await fetch(this.action, {
+                    method: this.method,
+                    body: formData
+                });
+                console.log('Fetch response received:', response);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server responded with an error:', response.status, errorText);
+                    throw new Error(errorText);
+                }
+
+                editPhotoModal.close();
+                window.location.href = window.location.href;
+                console.log('Form submitted successfully, page reloading.');
+            } catch (error) {
+                console.error('Błąd podczas przesyłania zdjęcia:', error);
+                alert('Wystąpił błąd podczas przesyłania zdjęcia. Spróbuj ponownie.\nSzczegóły: ' + error.message);
+            }
+        });
+
+        croppingCanvas.style.display = 'none';
+        submitButton.disabled = true;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentProfilePictureDisplay.dataset.defaultSrc = currentProfilePictureDisplay.src;
+            if (!currentProfilePictureDisplay.src || currentProfilePictureDisplay.src.includes('placeholder.com')) {
+                currentProfilePictureDisplay.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+            }
+        });
+    </script>
+}
