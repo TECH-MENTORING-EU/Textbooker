@@ -22,12 +22,14 @@ namespace Booker.Pages.Profile
             _context = context;
             _cache = cache;
         }
+        [FromRoute]
+        public int? Id { get; set; }
 
         public PagedListViewModel? ItemsList { get; set; }
         public FilterParameters? Params { get; set; }
         public record UserModel(User RequestUser, bool IsCurrentUser);
         public UserModel UserInfo { get; set; } = null!;
-        public async Task<IActionResult> OnGetAsync(int? id, int pageNumber)
+        public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
             var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -36,19 +38,19 @@ namespace Booker.Pages.Profile
                 currentUserId = 0; // Default to 0 if parsing fails
             }
 
-            if (!id.HasValue)
+            if (!Id.HasValue)
             {
                 if (currentUserId == 0)
                 {
                     return Redirect("/Identity/Account/Login");
                 }
 
-                id = currentUserId;
+                Id = currentUserId;
             }            
 
             var user = await _context.Users
                 .Include(u => u.Items)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == Id);
 
             if (user == null)
             {
@@ -58,7 +60,7 @@ namespace Booker.Pages.Profile
             var query = _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
                 .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User).Where(i => i.UserId == id.Value)
+                .Include(i => i.User).Where(i => i.UserId == Id.Value)
                 .AsQueryable();
 
             Params = new FilterParameters(null, null, null, pageNumber);

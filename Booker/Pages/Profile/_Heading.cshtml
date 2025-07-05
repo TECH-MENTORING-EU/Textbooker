@@ -1,4 +1,5 @@
 ﻿@model Profile.IndexModel.UserModel
+@using Profile
 
 <section class="profile-heading">
     <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" alt="Zdjęcie książki" />
@@ -24,3 +25,17 @@
     }
 </section>
 
+<nav>
+    <ul>
+        @if (Model.IsCurrentUser)
+        {
+            <li><a aria-current="@ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Ogłoszenia</a></li>
+            <li><a aria-current="@ManageNavPages.FavoritesNavClass(ViewContext)" id="favorites" asp-page="./Favorites">Ulubione</a></li>
+        }
+        else
+        {
+            <li><a aria-current="@ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index" asp-route-id="@Model.RequestUser.Id">Ogłoszenia</a></li>
+            <li><a aria-current="@ManageNavPages.FavoritesNavClass(ViewContext)" id="favorites" asp-page="./Favorites" asp-route-id="@Model.RequestUser.Id">Ulubione</a></li>
+        }
+    </ul>
+</nav>
