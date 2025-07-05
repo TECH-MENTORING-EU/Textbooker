@@ -8,10 +8,21 @@
 <partial name="_Heading" for="UserInfo" />
 
 <h2>Ulubione</h2>
-<section class="grid-gallery">
-    <partial name="_ItemGallery" for="ItemsList" />
-</section>
+@if (Model.User.Identity?.IsAuthenticated != true)
+{
+    <p>Zaloguj się, aby zobaczyć ulubione.</p>
+}
+else if (Model.UserInfo.IsCurrentUser || Model.UserInfo.RequestUser.AreFavoritesPublic)
+{
+    <section class="grid-gallery">
+        <partial name="_ItemGallery" for="ItemsList" />
+    </section>
 
-<section>
-    <div aria-busy="true" class="htmx-indicator" id="ind"></div>
-</section>
+    <section>
+        <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+    </section>
+}
+else
+{
+    <p>Lista ulubionych tego użytkownika jest prywatna.</p>
+}
