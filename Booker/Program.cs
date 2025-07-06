@@ -14,6 +14,8 @@ using System.Globalization;
 using System.Net;
 using System.Threading.RateLimiting;
 
+ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
+
 var builder = WebApplication.CreateBuilder(args);
 
 IConfiguration configuration = new ConfigurationBuilder()
