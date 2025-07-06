@@ -4,7 +4,7 @@
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
-<input type="checkbox" id="hamburger-btn">
+<input type="checkbox" id="hamburger-btn" hx-on:change="toggleHamburgerMenu(this)">
 <label for="hamburger-btn" aria-label="Menu"
        aria-controls="hamburger">
     <svg icon="menu-2" aria-hidden="true"></svg>
