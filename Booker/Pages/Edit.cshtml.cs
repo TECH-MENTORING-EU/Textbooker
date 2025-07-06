@@ -1,4 +1,4 @@
-using Azure.Storage.Blobs;
+ï»¿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -43,23 +43,23 @@ namespace Booker.Pages
         {
             public int ItemId { get; set; }
 
-            [Required(ErrorMessage = "Proszê wybraæ tytu³ ksi¹¿ki.")]
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ tytuÅ‚ ksiÄ…Å¼ki.")]
             public string Title { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszê wybraæ przedmiot.")]
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ przedmiot.")]
             public string Subject { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszê wybraæ klasê.")]
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ klasÄ™.")]
             public string Grade { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszê wybraæ poziom.")]
+            [Required(ErrorMessage = "ProszÄ™ wybraÄ‡ poziom.")]
             public string Level { get; set; } = string.Empty;
             public string Description { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszê opisaæ stan ksi¹¿ki.")]
-            [StringLength(40, ErrorMessage = "Opis stanu ksi¹¿ki nie mo¿e przekraczaæ 40 znaków.")]
+            [Required(ErrorMessage = "ProszÄ™ opisaÄ‡ stan ksiÄ…Å¼ki.")]
+            [StringLength(40, ErrorMessage = "Opis stanu ksiÄ…Å¼ki nie moÅ¼e przekraczaÄ‡ 40 znakÃ³w.")]
             public string State { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszê podaæ cenê.")]
-            [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi byæ wiêksza od zera.")]
+            [Required(ErrorMessage = "ProszÄ™ podaÄ‡ cenÄ™.")]
+            [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi byÄ‡ wiÄ™ksza od zera.")]
             public decimal Price { get; set; } = 0;
 
-            [Display(Name = "Zdjêcie ksi¹¿ki")]
+            [Display(Name = "ZdjÄ™cie ksiÄ…Å¼ki")]
             public IFormFile? Image { get; set; }
 
             [BindNever]
@@ -196,9 +196,9 @@ namespace Booker.Pages
                         .OrderBy(v => v.Value)
                         .ToList();
 
-            if (!Books.Any(i => string.IsNullOrEmpty(i.Value))) Books.Insert(0, new SelectListItem { Value = "", Text = "Wybierz ksi¹¿kê", Selected = true, Disabled = true });
+            if (!Books.Any(i => string.IsNullOrEmpty(i.Value))) Books.Insert(0, new SelectListItem { Value = "", Text = "Wybierz ksiÄ…Å¼kÄ™", Selected = true, Disabled = true });
             if (!Subjects.Any(i => string.IsNullOrEmpty(i.Value))) Subjects.Insert(0, new SelectListItem { Value = "", Text = "Wybierz przedmiot", Selected = true, Disabled = true });
-            if (!Grades.Any(i => string.IsNullOrEmpty(i.Value))) Grades.Insert(0, new SelectListItem { Value = "", Text = "Wybierz klasê", Selected = true, Disabled = true });
+            if (!Grades.Any(i => string.IsNullOrEmpty(i.Value))) Grades.Insert(0, new SelectListItem { Value = "", Text = "Wybierz klasÄ™", Selected = true, Disabled = true });
             if (!Levels.Any(i => string.IsNullOrEmpty(i.Value))) Levels.Insert(0, new SelectListItem { Value = "", Text = "Wybierz poziom", Selected = true, Disabled = true });
         }
 
@@ -249,7 +249,7 @@ namespace Booker.Pages
                 Books.Add(new SelectListItem
                 {
                     Value = "null",
-                    Text = "Brak dostêpnych ksi¹¿ek",
+                    Text = "Brak dostÄ™pnych ksiÄ…Å¼ek",
                     Disabled = true
                 });
             }
@@ -424,7 +424,7 @@ namespace Booker.Pages
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"B³¹d podczas usuwania starego zdjêcia: {ex.Message}");
+                        Console.WriteLine($"BÅ‚Ä…d podczas usuwania starego zdjÄ™cia: {ex.Message}");
                     }
                 }
 
@@ -458,7 +458,7 @@ namespace Booker.Pages
 
             if (book == null)
             {
-                ModelState.AddModelError(string.Empty, "Nie znaleziono pasuj¹cej ksi¹¿ki. Proszê sprawdziæ wprowadzone dane.");
+                ModelState.AddModelError(string.Empty, "Nie znaleziono pasujÄ…cej ksiÄ…Å¼ki. ProszÄ™ sprawdziÄ‡ wprowadzone dane.");
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 await LoadAllDropdownOptions();
                 Books.ForEach(b => b.Selected = b.Value == Input.Title);
@@ -516,7 +516,7 @@ namespace Booker.Pages
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"B³¹d podczas usuwania zdjêcia z Azure Blob Storage: {ex.Message}");
+                    Console.WriteLine($"BÅ‚Ä…d podczas usuwania zdjÄ™cia z Azure Blob Storage: {ex.Message}");
                 }
             }
 
