@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
 using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+
 
 
 namespace Booker.Services
@@ -68,6 +70,73 @@ namespace Booker.Services
                     QueueLimit = 0, // No queueing, reject requests immediately
                     Window = TimeSpan.FromMinutes(1)
                 });
+        }
+
+        public static IMvcBuilder AddCustomRoutes(this IMvcBuilder builder)
+        {
+            return builder.AddRazorPagesOptions(options => {
+
+                options.Conventions.AddPageRouteModelConvention("/Profile/Index", model =>
+                {
+                    model.Selectors.Clear();
+
+                    model.Selectors.Add(new SelectorModel
+                    {
+                        AttributeRouteModel = new AttributeRouteModel
+                        {
+                            Template = "Profile/{id:int}"
+                        }
+                    });
+                    model.Selectors.Add(new SelectorModel
+                    {
+                        AttributeRouteModel = new AttributeRouteModel
+                        {
+                            Template = "Profile/{id:int}/Index",
+                            SuppressLinkGeneration = true
+                        }
+                    });
+                    model.Selectors.Add(new SelectorModel
+                    {
+                        AttributeRouteModel = new AttributeRouteModel
+                        {
+                            Template = "Profile"
+                        }
+                    });
+                    model.Selectors.Add(new SelectorModel
+                    {
+                        AttributeRouteModel = new AttributeRouteModel
+                        {
+                            Template = "Profile/Index",
+                            SuppressLinkGeneration = true
+                        }
+                    });
+                });
+
+                options.Conventions.AddPageRouteModelConvention("/Profile/Favorites", model =>
+                {
+                    model.Selectors.Clear();
+
+                    model.Selectors.Add(new SelectorModel
+                    {
+                        AttributeRouteModel = new AttributeRouteModel
+                        {
+                            Template = "Profile/{id:int}/Favorites"
+                        }
+                    });
+
+                    model.Selectors.Add(new SelectorModel
+                    {
+                        AttributeRouteModel = new AttributeRouteModel
+                        {
+                            Template = "Profile/Favorites",
+                            Order = 1 // Ensure this route is processed after the default route
+                        }
+                    });
+                    
+                });
+
+            });
+
         }
 
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)

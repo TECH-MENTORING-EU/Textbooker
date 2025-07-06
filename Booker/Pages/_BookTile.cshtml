@@ -1,4 +1,4 @@
-﻿@model Booker.Pages.IndexModel.ItemModel
+﻿@model IndexModel.ItemModel
 
 @functions {
     private string DisplayLevel(bool? level)
@@ -56,9 +56,12 @@
             }
         </div>
         <div class="fav">
-            <button class="outline" aria-label="Dodaj do ulubionych" title="Dodaj do ulubionych">
-                <svg icon="star" variant="outline" aria-hidden="true"></svg>
-            </button>
+            @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
+            (
+                Model.Item.Id,
+                Model.IsFavorite,
+                false
+            ))
         </div>
     </footer>
 </article>
