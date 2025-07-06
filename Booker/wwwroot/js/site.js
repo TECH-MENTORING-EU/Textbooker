@@ -100,6 +100,15 @@ function showSummary(event) {
     }
 }
 
+function toggleHamburgerMenu(check) {
+    const hamburger = document.getElementById('hamburger').querySelector('details');
+    if (check.checked) {
+        hamburger.setAttribute("open","");
+    } else {
+        hamburger.removeAttribute("open");
+    }
+}
+
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
 
