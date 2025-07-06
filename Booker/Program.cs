@@ -102,6 +102,7 @@ else
 }
 
 app.UseRouting();
+app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
 app.UseAuthorization();
