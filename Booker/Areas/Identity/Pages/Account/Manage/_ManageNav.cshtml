@@ -3,14 +3,13 @@
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
 } *@
 <ul>
-    <li><a aria-current="@ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Ustawienia</a></li>
-    <li><a aria-current="@ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">Email</a></li>
-    <li><a aria-current="@ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Hasło</a></li>
+    <li><a aria-current="@ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Ustawienia profilu</a></li>
+    <li><a aria-current="@ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">Zmień e-mail</a></li>
+    <li><a aria-current="@ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Zmień hasło</a></li>
     @* @if (hasExternalLogins)
     {
         <li id="external-logins" class="nav-item"><a id="external-login" class="nav-link @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">External logins</a></li>
     } *@
     @* <li><a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">Two-factor authentication</a></li> *@
     <li><a aria-current="@ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">Dane osobowe</a></li>
-    <li><a href="/Profile" role="button" class="outline">Mój profil</a></li>
 </ul>

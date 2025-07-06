@@ -13,6 +13,7 @@ namespace Booker.Pages
         private readonly DataContext _context;
 
         public Item BookItem { get; set; } = null!;
+        public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
 
         public BookModel(DataContext context)
@@ -45,6 +46,16 @@ namespace Booker.Pages
 
             BookItem = item;
 
+            IsCurrentUserOwner = false;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (int.TryParse(currentUserIdString, out int currentUserId))
+                {
+                    IsCurrentUserOwner = (BookItem.User.Id == currentUserId);
+                }
+            }
+
             return Page();
         }
 
@@ -64,9 +75,24 @@ namespace Booker.Pages
             BookItem = item;
             var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
+            int? currentUserId = null;
+            if (isUserAuthenticated)
+            {
+                var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (int.TryParse(currentUserIdString, out int parsedUserId))
+                {
+                    currentUserId = parsedUserId;
+                }
+            }
+
             if (!isUserAuthenticated)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
+                return new NoContentResult();
+            }
+
+            if (currentUserId.HasValue && BookItem.User.Id == currentUserId.Value)
+            {
                 return new NoContentResult();
             }
 
@@ -86,7 +112,7 @@ namespace Booker.Pages
             if (date.Date == now.Date.AddDays(-1))
                 return $"wczoraj o {date:HH:mm}";
 
-            return date.ToString("d MMMM yyyy 'o' HH:mm", new CultureInfo("pl-PL"));
+            return date.ToString("d MMMM 'o' HH:mm", new CultureInfo("pl-PL"));
         }
     }
 }

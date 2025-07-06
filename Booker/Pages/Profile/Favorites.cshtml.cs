@@ -78,8 +78,9 @@ namespace Booker.Pages.Profile
             var items2 = items.Select(i => new ItemModel
             (
                 i,
+                Params,
                 userFavorites.Contains(i.Id),
-                Params
+                currentUserId == i.Id
             )).ToList();
 
             ItemsList = new PagedListViewModel(items2, Params, hasMorePages);

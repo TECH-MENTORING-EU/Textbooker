@@ -3,8 +3,6 @@
 
 @use "sass:map";
 
-// Filters
-
 .filter {
     @keyframes slideDown {
         0% {
@@ -37,8 +35,6 @@
     }
 }
 
-// Gallery
-
 .grid-gallery {
     @include utils.auto-grid(225px);
 }
@@ -54,8 +50,6 @@
         transform: translateY(0);
     }
 }
-
-// Tiles
 
 .book-tile {
     display: flex;
@@ -77,11 +71,11 @@
         grid-template-columns: auto 1rem;
         grid-template-rows: auto 3rem;
 
-        a {
+        .info a {
             @include utils.unstyled-link;
         }
 
-        a::after {
+        .info a::after {
             content: "";
             position: absolute;
             top: 0;
@@ -90,7 +84,7 @@
             height: 100%;
         }
 
-        button {
+        button, [role="button"] {
             position: relative;
             z-index: 1;
         }
@@ -114,7 +108,7 @@
             align-content: end;
             margin-bottom: -0.25rem;
 
-            button {
+            button, [role=button] {
                 border: none;
                 padding: 0;
                 width: 1.5rem;
@@ -130,8 +124,6 @@
         }
     }
 }
-
-// Horizontal book tiles on small screens
 
 @media (max-height: map.get(map.get(pico.$breakpoints, "sm"), "breakpoint")-1) and (min-width: 480px) {
     .grid-gallery {

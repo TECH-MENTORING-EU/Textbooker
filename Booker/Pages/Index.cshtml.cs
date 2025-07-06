@@ -18,8 +18,9 @@ namespace Booker.Pages
         const int PageSize = 25;
 
         public record PagedListViewModel(List<ItemModel> Items, FilterParameters Params, bool HasMorePages);
-        public record ItemModel(Item Item, bool IsFavorite, FilterParameters Params);
+        public record ItemModel(Item Item, FilterParameters Params, bool IsFavorite, bool IsCurrentUserOwner);
         public record FilterParameters(Grade? Grade, Subject? Subject, bool? Level, int PageNumber);
+
         public PagedListViewModel? ItemsList { get; set; }
         public List<SelectListItem>? Grades { get; set; }
         private List<Grade>? _grades;
@@ -80,20 +81,27 @@ namespace Booker.Pages
             .SelectMany(u => u.Favorites.Select(f => f.Id))
             .ToListAsync();
 
-            var items = await query
+            var itemsFromDb = await query
                 .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
 
-            var items2 = items.Select(i => new ItemModel
-            (
-                i,
-                userFavorites.Contains(i.Id),
-                Params
+            int? currentUserId = null;
+            var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(currentUserIdString) && int.TryParse(currentUserIdString, out int parsedUserId))
+            {
+                currentUserId = parsedUserId;
+            }
+
+            var itemModels = itemsFromDb.Select(item => new ItemModel(
+                item,
+                Params,
+                userFavorites.Contains(item.Id),
+                currentUserId.HasValue && item.User.Id == currentUserId.Value
             )).ToList();
-            
-            ItemsList = new PagedListViewModel(items2, Params, hasMorePages);
+
+            ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

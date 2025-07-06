@@ -35,7 +35,7 @@ namespace Booker.Pages.Profile
 
             if (!int.TryParse(currentUserIdString, out int currentUserId))
             {
-                currentUserId = 0; // Default to 0 if parsing fails
+                currentUserId = 0;
             }
 
             if (!Id.HasValue)
@@ -57,13 +57,14 @@ namespace Booker.Pages.Profile
                 return NotFound();
             }
 
+            Params = new FilterParameters(null, null, null, pageNumber);
+
             var query = _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
                 .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User).Where(i => i.UserId == Id.Value)
+                .Include(i => i.User)
+                .Where(i => i.UserId == Id.Value)
                 .AsQueryable();
-
-            Params = new FilterParameters(null, null, null, pageNumber);
 
             var totalItems = await query.CountAsync();
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
@@ -73,20 +74,20 @@ namespace Booker.Pages.Profile
             .SelectMany(u => u.Favorites.Select(f => f.Id))
             .ToListAsync();
 
-            var items = await query
+            var itemsFromDb = await query
                 .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
 
-            var items2 = items.Select(i => new ItemModel
-            (
-                i,
-                userFavorites.Contains(i.Id),
-                Params
+            var itemModels = itemsFromDb.Select(item => new ItemModel(
+                item,
+                Params,
+                userFavorites.Contains(item.Id),
+                currentUserId == Id
             )).ToList();
 
-            ItemsList = new PagedListViewModel(items2, Params, hasMorePages);
+            ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
             UserInfo = new UserModel(user, user.Id == currentUserId);
 
             if (Request.Headers.ContainsKey("HX-Request"))

@@ -2,7 +2,7 @@
 @model Booker.Pages.BookModel
 
 @{
-    ViewData["Title"] = @Model.BookItem.Book.Title + " - Booker" ?? "Szczegóły książki";
+    ViewData["Title"] = @Model.BookItem.Book.Title + " - TextBooker" ?? "Szczegóły książki";
 }
 
 <article class="book-display">
@@ -21,8 +21,8 @@
 
         <ul>
             <li>
-                Klasa: @String.Join(", ", 
-                Model.BookItem.Book.Grades.Select( g => g.GradeNumber ).ToList() ?? new() {"nieznana"})
+                Klasa: @String.Join(", ",
+                Model.BookItem.Book.Grades.Select(g => g.GradeNumber).ToList() ?? new() { "nieznana" })
             </li>
             <li>Przedmiot: @Model.BookItem.Book.Subject.Name</li>
             <li>
@@ -36,13 +36,20 @@
     </section>
 
     <section class="actions">
-        @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
-        (
-            Model.BookItem.Id,
-            Model.IsFavorite,
-            true
-        ))
-        <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
+        @if (Model.IsCurrentUserOwner)
+        {
+            <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button">Edytuj ogłoszenie</a>
+        }
+        else
+        {
+            @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
+            (
+                Model.BookItem.Id,
+                Model.IsFavorite,
+                true
+            ))
+            <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
+        }
     </section>
 
     <section class="description">
