@@ -45,7 +45,7 @@ builder.Host.UseSerilog();
 builder.Services.AddRazorPages().AddViewOptions(options =>
 {
     options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
-});
+}).AddCustomRoutes();
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);

@@ -8,7 +8,7 @@ else
 {
     @foreach (var item in Model.Items)
     {
-        @await Html.PartialAsync("_BookTile", new IndexModel.ItemModel(item, Model.Params))
+        @await Html.PartialAsync("_BookTile", item)
         @if (item == Model.Items.Last() && Model.HasMorePages)
         {
             <div hx-get=""

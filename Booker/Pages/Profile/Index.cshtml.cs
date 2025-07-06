@@ -22,13 +22,14 @@ namespace Booker.Pages.Profile
             _context = context;
             _cache = cache;
         }
+        [FromRoute]
+        public int? Id { get; set; }
 
         public PagedListViewModel? ItemsList { get; set; }
         public FilterParameters? Params { get; set; }
-
-        public User RequestUser { get; set; } = null!;
-        public bool IsCurrentUser;
-        public async Task<IActionResult> OnGetAsync(int? id, int pageNumber)
+        public record UserModel(User RequestUser, bool IsCurrentUser);
+        public UserModel UserInfo { get; set; } = null!;
+        public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
             var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -37,33 +38,29 @@ namespace Booker.Pages.Profile
                 currentUserId = 0; // Default to 0 if parsing fails
             }
 
-            if (!id.HasValue)
+            if (!Id.HasValue)
             {
                 if (currentUserId == 0)
                 {
                     return Redirect("/Identity/Account/Login");
                 }
 
-                id = currentUserId;
-            }
-
-            IsCurrentUser = (currentUserId == id);
+                Id = currentUserId;
+            }            
 
             var user = await _context.Users
                 .Include(u => u.Items)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == Id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            RequestUser = user;
-
             var query = _context.Items
                 .Include(i => i.Book).ThenInclude(b => b.Grades)
                 .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User).Where(i => i.UserId == id.Value)
+                .Include(i => i.User).Where(i => i.UserId == Id.Value)
                 .AsQueryable();
 
             Params = new FilterParameters(null, null, null, pageNumber);
@@ -71,12 +68,26 @@ namespace Booker.Pages.Profile
             var totalItems = await query.CountAsync();
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
+            var userFavorites = await _context.Users
+            .Where(u => u.Id == currentUserId)
+            .SelectMany(u => u.Favorites.Select(f => f.Id))
+            .ToListAsync();
+
             var items = await query
                 .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
-            ItemsList = new PagedListViewModel(items, Params, hasMorePages);
+
+            var items2 = items.Select(i => new ItemModel
+            (
+                i,
+                userFavorites.Contains(i.Id),
+                Params
+            )).ToList();
+
+            ItemsList = new PagedListViewModel(items2, Params, hasMorePages);
+            UserInfo = new UserModel(user, user.Id == currentUserId);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

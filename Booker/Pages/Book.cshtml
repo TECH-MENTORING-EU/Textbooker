@@ -36,7 +36,12 @@
     </section>
 
     <section class="actions">
-        <button>Dodaj do ulubionych</button>
+        @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
+        (
+            Model.BookItem.Id,
+            Model.IsFavorite,
+            true
+        ))
         <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
     </section>
 
