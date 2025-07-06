@@ -4,21 +4,31 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png" />
+    <link rel="manifest" href="/favicons/site.webmanifest" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", false)
     <script src="~/lib/htmx/dist/htmx.min.js" asp-append-version="true"></script>
 </head>
 <body>
-    <nav class="container-fluid" role="navigation">
+    <nav class="container-fluid" role="navigation" data-breakpoint="md">
         <ul>
             <li>
-                <strong>
-                    <a asp-area="" asp-page="/Index">Booker</a>
-                </strong>
+                <a asp-area="" asp-page="/Index">
+                    <svg viewBox="0 0 1504 376" height="1.5lh" style="vertical-align: 0;">
+                        <use href="/img/logo-text.svg" />
+                    </svg>
+                </a>
             </li>
             <li>
                 <a asp-area="" asp-page="/Index" aria-label="Strona główna" title="Strona główna">
-                    <svg icon="home" variant="solid" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+                    <svg icon="home" variant="solid" aria-hidden="true" style="vertical-align: -0.2em; width: auto;"></svg>
                 </a>
             </li>
         </ul>

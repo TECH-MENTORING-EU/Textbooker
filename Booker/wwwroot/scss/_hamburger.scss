@@ -122,6 +122,8 @@
 
     svg {
         transition: transform var(--pico-transition);
+        width: 2em;
+        height: 100%;
     }
 }
 
