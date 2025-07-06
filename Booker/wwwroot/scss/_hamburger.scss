@@ -207,6 +207,10 @@ nav[role=navigation] > [role=list] {
             transform: scaleY(1);
             opacity: 1;
         }
+
+        details.dropdown[open] > summary::before {
+            display: none;
+        }
     }
 }
 
