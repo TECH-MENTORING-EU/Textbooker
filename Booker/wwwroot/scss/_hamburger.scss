@@ -137,16 +137,16 @@ nav[role=navigation] > [role=list] {
     background-color: transparent;
 }
 
-@media (max-width: map.get(map.get(pico.$breakpoints, "sm"), "viewport")) {
+@media (max-width: map.get(map.get(pico.$breakpoints, "md"), "viewport")) {
     nav[role=navigation] {
         position: sticky;
         top: 0;
-        background-color: var(--pico-background-color);
         border-bottom: 1px solid var(--pico-muted-border-color);
         box-shadow: var(--pico-card-box-shadow);
 
         #hamburger-btn ~ [role=list] {
             flex-direction: column-reverse;
+            background-color: var(--pico-background-color);
             transition: max-height var(#{$css-var-prefix}transition), opacity var(#{$css-var-prefix}transition), display var(#{$css-var-prefix}transition);
             transition-behavior: allow-discrete;
 
