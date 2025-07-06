@@ -4,7 +4,7 @@
 // Write your JavaScript code.
 
 function handleImageUpload(input) {
-    const preview = input.closest("section").querySelector("img")
+    const preview = input.closest("section").querySelector("img");
     const file = input.files[0];
     const imageErrorSpan = input.closest("section").querySelector("small span");
 
@@ -64,6 +64,16 @@ function handleImageUpload(input) {
         preview.classList.remove('active');
     }
 }
+
+function updateCharCount() {
+    const count = this.value.length;
+    const max = this.getAttribute('maxlength');
+    const charCountElement = this.nextElementSibling?.querySelector(".char-count");
+    if (charCountElement) {
+        charCountElement.textContent = `${count} / ${max}`;
+    }
+}
+
 
 function showSummary(event) {
     event.preventDefault(); // Prevent form submission for validation

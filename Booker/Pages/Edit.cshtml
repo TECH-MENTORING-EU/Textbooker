@@ -107,12 +107,6 @@
 
 @section Scripts {
     <script>
-        function updateCharCount(e) {
-            const count = this.value.length;
-            const max = this.getAttribute('maxlength') || 200;
-            this.nextElementSibling.querySelector(".char-count").textContent = `${count} / ${max}`;
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('textarea').forEach(ta => {
                 ta.addEventListener("input", updateCharCount);
@@ -124,16 +118,6 @@
                 document.querySelector('.book-image-preview').src = existingImageUrl;
             }
         });
-
-        function handleImageUpload(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    document.querySelector('.book-image-preview').src = e.target.result;
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
 
         function showConfirmSaveModal(event) {
             document.getElementById('confirmSaveModal').showModal();
