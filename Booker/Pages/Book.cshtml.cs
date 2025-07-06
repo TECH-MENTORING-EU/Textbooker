@@ -74,9 +74,14 @@ namespace Booker.Pages
                 }
             }
 
-            if (!isUserAuthenticated || (currentUserId.HasValue && BookItem.User.Id == currentUserId.Value))
+            if (!isUserAuthenticated)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
+                return new NoContentResult();
+            }
+
+            if (currentUserId.HasValue && BookItem.User.Id == currentUserId.Value)
+            {
                 return new NoContentResult();
             }
 
@@ -96,7 +101,7 @@ namespace Booker.Pages
             if (date.Date == now.Date.AddDays(-1))
                 return $"wczoraj o {date:HH:mm}";
 
-            return date.ToString("d MMMM yyyy 'o' HH:mm", new CultureInfo("pl-PL"));
+            return date.ToString("d MMMM 'o' HH:mm", new CultureInfo("pl-PL"));
         }
     }
 }
