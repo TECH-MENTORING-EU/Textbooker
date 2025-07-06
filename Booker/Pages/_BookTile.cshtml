@@ -58,12 +58,12 @@
         <div class="fav">
             @if (Model.IsCurrentUserOwner)
             {
-                <button class="outline fav-action-button edit-action-button"
-                        aria-label="Edytuj ogłoszenie"
-                        title="Edytuj ogłoszenie"
-                        data-book-id="@Model.Item.Id">
+                <a class="outline" role="button"
+                   aria-label="Edytuj ogłoszenie"
+                   title="Edytuj ogłoszenie"
+                   href="/Edit/@Model.Item.Id">
                     <svg icon="pencil" variant="outline" aria-hidden="true"></svg>
-                </button>
+                </a>
             }
             else
             {
@@ -74,17 +74,3 @@
         </div>
     </footer>
 </article>
-
-<script>
-    document.querySelectorAll('.edit-action-button').forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const bookId = this.dataset.bookId;
-            if (bookId) {
-                window.location.href = `/Edit/${bookId}`;
-            }
-        });
-    });
-</script>
