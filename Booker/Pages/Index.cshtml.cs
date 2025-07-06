@@ -18,7 +18,7 @@ namespace Booker.Pages
         const int PageSize = 25;
 
         public record PagedListViewModel(List<ItemModel> Items, FilterParameters Params, bool HasMorePages);
-        public record ItemModel(Item Item, FilterParameters Params, bool IsCurrentUserOwner);
+        public record ItemModel(Item Item, FilterParameters Params, bool IsFavorite, bool IsCurrentUserOwner);
         public record FilterParameters(Grade? Grade, Subject? Subject, bool? Level, int PageNumber);
 
         public PagedListViewModel? ItemsList { get; set; }
@@ -71,6 +71,16 @@ namespace Booker.Pages
             var totalItems = await query.CountAsync();
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            {
+                userId = 0;
+            }
+
+            var userFavorites = await _context.Users
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.Favorites.Select(f => f.Id))
+            .ToListAsync();
+
             var itemsFromDb = await query
                 .OrderByDescending(i => i.DateTime)
                 .Skip(pageNumber * PageSize)
@@ -87,6 +97,7 @@ namespace Booker.Pages
             var itemModels = itemsFromDb.Select(item => new ItemModel(
                 item,
                 Params,
+                userFavorites.Contains(item.Id),
                 currentUserId.HasValue && item.User.Id == currentUserId.Value
             )).ToList();
 
