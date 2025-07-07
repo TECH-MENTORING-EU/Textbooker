@@ -128,7 +128,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                     protocol: Request.Scheme);
                 await _emailSender.SendEmailAsync(
                     Input.NewEmail,
-                    "Zmiana e-mail w apliakcji TextBooker przebiegła pomyślnie🎉",
+                    "Zmiana e-mail w aplikacji TextBooker przebiegła pomyślnie🎉",
                     $"Cześć! <br />Twój e-mail został pomyślnie zmieniony. <br /> Kliknij w <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>, aby aktywować konto.");
 
                 StatusMessage = "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.";
