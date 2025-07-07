@@ -76,8 +76,8 @@ namespace Booker.Areas.Identity.Pages.Account
 
                 await _emailSender.SendEmailAsync(
                     Input.Email,
-                    "Reset hasła",
-                    $"Proszę zresetuj swoje hasło klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
+                    "Zmień swoje hasło TextBooker✏️⚙️",
+                    $"Klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> zresetujesz hasło.🔑 <br /> <br /> 🛑To nie Ty zmieniasz hasło? Nie klikaj w link i skontaktuj się z naszym zespołem. <br /><br /> Zespół TextBooker");
 
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }

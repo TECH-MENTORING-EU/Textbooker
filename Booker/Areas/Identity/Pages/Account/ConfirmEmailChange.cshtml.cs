@@ -49,7 +49,7 @@ namespace Booker.Areas.Identity.Pages.Account
             var result = await _userManager.ChangeEmailAsync(user, email, code);
             if (!result.Succeeded)
             {
-                StatusMessage = "Błąd zmiany adresu email.";
+                StatusMessage = "Błąd zmiany adresu e-mail.";
                 return Page();
             }
 
@@ -63,7 +63,7 @@ namespace Booker.Areas.Identity.Pages.Account
             //}
 
             await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Dziękujemy za potwierdzenie zmiany adresu email.";
+            StatusMessage = "Twój adres e-mail został pomyślnie zmieniony😉.";
             return Page();
         }
     }

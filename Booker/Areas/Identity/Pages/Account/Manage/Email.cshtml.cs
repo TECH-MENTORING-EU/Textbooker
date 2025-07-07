@@ -72,7 +72,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             /// </summary>
             [Required]
             [EmailAddress]
-            [Display(Name = "Nowy email")]
+            [Display(Name = "Nowy e-mail")]
             public string NewEmail { get; set; }
         }
 
@@ -128,14 +128,14 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                     protocol: Request.Scheme);
                 await _emailSender.SendEmailAsync(
                     Input.NewEmail,
-                    "Potwierdź swój e-mail",
-                    $"Proszę potwierdź swoje konto klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
+                    "Zmiana e-mail w apliakcji TextBooker przebiegła pomyślnie🎉",
+                    $"Cześć! <br />Twój e-mail został pomyślnie zmieniony. <br /> Kliknij w <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>, aby aktywować konto.");
 
-                StatusMessage = "Email z linkiem potwierdzającym został wysłany. Sprawdź swoją skrzynkę.";
+                StatusMessage = "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.";
                 return RedirectToPage();
             }
 
-            StatusMessage = "Twój email nie został zmieniony.";
+            StatusMessage = "Twój e-mail nie został zmieniony.";
             return RedirectToPage();
         }
 
@@ -164,10 +164,10 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 protocol: Request.Scheme);
             await _emailSender.SendEmailAsync(
                 email,
-                "Potwierdź swój e-mail",
-                $"Proszę potwierdź swoje konto klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
+                "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
+                $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie utworzone. <br /> Kliknij w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> aby aktywować konto. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
 
-            StatusMessage = "Email został wysłany. Sprawdź swoją skrzynkę.";
+            StatusMessage = "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.";
             return RedirectToPage();
         }
     }
