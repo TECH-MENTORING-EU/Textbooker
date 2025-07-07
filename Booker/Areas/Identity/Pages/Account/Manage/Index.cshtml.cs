@@ -56,9 +56,22 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
+            /// 
+            [Display(Name = "Pokaż mój e-mail jako dostępną formę kontaktu")]
+            public bool DisplayEmail { get; set; }
+
             [Phone]
             [Display(Name = "Numer telefonu")]
             public string PhoneNumber { get; set; }
+
+            [Display(Name = "Pokaż WhatsApp jako dostępną formę kontaktu")]
+            public bool DisplayWhatsapp { get; set; }
+
+            [Display(Name = "Messenger (nazwa użytkownika)")]
+            public string FbMessenger { get; set; }
+
+            [Display(Name = "Instagram (nazwa użytkownika)")]
+            public string Instagram { get; set; }
 
             [Display(Name = "Pokaż moje ulubione innym użytkownikom")]
             public bool AreFavoritesPublic { get; set; }
@@ -75,7 +88,11 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             Input = new InputModel
             {
                 PhoneNumber = phoneNumber,
-                AreFavoritesPublic = user.AreFavoritesPublic
+                AreFavoritesPublic = user.AreFavoritesPublic,
+                DisplayEmail = user.DisplayEmail,
+                DisplayWhatsapp = user.DisplayWhatsapp,
+                FbMessenger = user.FbMessenger,
+                Instagram = user.Instagram
             };
         }
 
@@ -99,6 +116,19 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Nie znaleziono użytkownika o ID '{_userManager.GetUserId(User)}'.");
             }
 
+            if (!Input.DisplayEmail 
+                && string.IsNullOrEmpty(Input.PhoneNumber) 
+                && string.IsNullOrEmpty(Input.FbMessenger) 
+                && string.IsNullOrEmpty(Input.Instagram))
+            {
+                ModelState.AddModelError(string.Empty, "Musisz wybrać przynajmniej jedną formę kontaktu.");
+            }
+
+            if (Input.DisplayWhatsapp && string.IsNullOrEmpty(Input.PhoneNumber))
+            {
+                ModelState.AddModelError("Input.PhoneNumber", "Aby wybrać WhatsApp jako formę kontaktu, musisz podać numer telefonu.");
+            }
+
             if (!ModelState.IsValid)
             {
                 await LoadAsync(user);
@@ -116,11 +146,14 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            if (user.AreFavoritesPublic != Input.AreFavoritesPublic)
-            {
-                user.AreFavoritesPublic = Input.AreFavoritesPublic;
-                await _userManager.UpdateAsync(user);
-            }
+            
+            user.AreFavoritesPublic = Input.AreFavoritesPublic;
+            user.DisplayEmail = Input.DisplayEmail;
+            user.DisplayWhatsapp = Input.DisplayWhatsapp;
+            user.FbMessenger = Input.FbMessenger?.Trim();
+            user.Instagram = Input.Instagram?.Trim();
+
+            await _userManager.UpdateAsync(user);
 
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Twój profil został zaktualizowany.";
