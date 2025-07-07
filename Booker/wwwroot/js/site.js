@@ -112,6 +112,13 @@ function toggleHamburgerMenu(check) {
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
 
+document.querySelector(".input-validation-error").scrollIntoView({behavior: "smooth"});
+
+document.querySelectorAll(".input-validation-error").forEach(element => {
+    element.ariaInvalid = true;
+    element.classList.remove("input-validation-error");
+});
+
 document.querySelectorAll("button").forEach(button => {
     button.addEventListener("htmx:beforeRequest", function () { this.ariaBusy = true; })
     button.addEventListener("htmx:afterRequest", function () { this.ariaBusy = false; })
