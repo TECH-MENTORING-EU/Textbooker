@@ -22,6 +22,9 @@ namespace Booker.Services
             services.AddTransient<SendMailSvc>();
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddSingleton<IEmailSender, SendMailSvc>();
+
+            services.AddScoped<ItemManager>();
+            services.AddScoped<FavoritesManager>();
             
             return services;
         }

@@ -3,42 +3,36 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using System.Globalization;
 using System.Security.Claims;
+using Booker.Services;
+using Booker.Areas.Identity.Utilities;
+using Booker.Utilities;
+
 
 namespace Booker.Pages
 {
     public class BookModel : PageModel
     {
-        private readonly DataContext _context;
+        private readonly UserManager<User> _userManager;
+        private readonly ItemManager _itemManager;
+        private readonly FavoritesManager _favoritesManager;
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
 
-        public BookModel(DataContext context)
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager)
         {
-            _context = context;
+            _userManager = userManager;
+            _itemManager = itemManager;
+            _favoritesManager = favoritesManager;
         }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
-            {
-                userId = 0;
-            }
-
-            IsFavorite = await _context.Users
-                .Where(u => u.Id == userId)
-                .SelectMany(u => u.Favorites.Select(f => f.Id))
-                .AnyAsync(n => n == id);
-
-            var item = await _context.Items
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .FirstOrDefaultAsync(i => i.Id == id);
-
+            var item = await _itemManager.GetItemAsync(id);
             if (item == null)
             {
                 return NotFound();
@@ -46,26 +40,18 @@ namespace Booker.Pages
 
             BookItem = item;
 
-            IsCurrentUserOwner = false;
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (int.TryParse(currentUserIdString, out int currentUserId))
-                {
-                    IsCurrentUserOwner = (BookItem.User.Id == currentUserId);
-                }
-            }
+            var userId = _userManager.GetUserId(User).IntOrDefault();
+
+            IsFavorite = await _favoritesManager.IsFavoriteAsync(userId, id);
+
+            IsCurrentUserOwner = userId == BookItem.User.Id;
 
             return Page();
         }
 
         public async Task<IActionResult> OnGetEmailAsync(int id)
         {
-            var item = await _context.Items
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .FirstOrDefaultAsync(i => i.Id == id);
+            var item = await _itemManager.GetItemAsync(id);
 
             if (item == null)
             {
@@ -73,25 +59,16 @@ namespace Booker.Pages
             }
 
             BookItem = item;
-            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            
+            var userId = _userManager.GetUserId(User).IntOrDefault();
 
-            int? currentUserId = null;
-            if (isUserAuthenticated)
-            {
-                var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (int.TryParse(currentUserIdString, out int parsedUserId))
-                {
-                    currentUserId = parsedUserId;
-                }
-            }
-
-            if (!isUserAuthenticated)
+            if (userId == -1)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
                 return new NoContentResult();
             }
 
-            if (currentUserId.HasValue && BookItem.User.Id == currentUserId.Value)
+            if (BookItem.User.Id == userId)
             {
                 return new NoContentResult();
             }
