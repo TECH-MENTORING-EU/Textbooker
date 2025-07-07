@@ -1,13 +1,13 @@
 ﻿@page
 @model ResendEmailConfirmationModel
 @{
-    ViewData["Title"] = "Wyślij ponownie e-mail potwierdzający";
+    ViewData["Title"] = "Wyślij ponownie e-mail z linkiem aktywacyjnym";
 }
 
 <h1>@ViewData["Title"]</h1>
 <section class="login-form">
     <form method="post">
-        <h2>Podaj swój email:</h2>
+        <h2>Podaj swój e-mail:</h2>
         <hr />
         <div asp-validation-summary="All" class="text-danger" role="alert"></div>
         <div>
