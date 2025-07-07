@@ -27,3 +27,13 @@
         }
     }
 }
+
+.contact-details {
+    display: flex;
+    flex-wrap: wrap;
+
+    p {
+        padding: var(--pico-spacing);
+        margin-bottom: 0;
+    }
+}
