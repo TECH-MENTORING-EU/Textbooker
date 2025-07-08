@@ -7,6 +7,9 @@ using Microsoft.Extensions.Caching.Memory;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
+using Booker.Services;
+using Booker.Utilities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Booker.Pages
 {
@@ -15,6 +18,12 @@ namespace Booker.Pages
         private readonly ILogger<IndexModel> _logger;
         private readonly DataContext _context;
         private readonly IMemoryCache _cache;
+        private readonly ItemManager _itemManager;
+        private readonly FavoritesManager _favoritesManager;
+        private readonly StaticDataManager _staticDataManager;
+        private readonly UserManager<User> _userManager;
+
+
         const int PageSize = 25;
 
         public record PagedListViewModel(List<ItemModel> Items, FilterParameters Params, bool HasMorePages);
@@ -34,11 +43,15 @@ namespace Booker.Pages
 
         public FilterParameters? Params { get; set; }
 
-        public IndexModel(ILogger<IndexModel> logger, DataContext context, IMemoryCache cache)
+        public IndexModel(ILogger<IndexModel> logger, DataContext context, IMemoryCache cache, ItemManager itemManager, FavoritesManager favoritesManager, StaticDataManager staticDataManager, UserManager<User> userManager)
         {
             _logger = logger;
             _context = context;
             _cache = cache;
+            _itemManager = itemManager;
+            _favoritesManager = favoritesManager;
+            _staticDataManager = staticDataManager;
+            _userManager = userManager;
         }
 
         [FromQuery]
@@ -56,49 +69,43 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
-            await LoadCache();
+            await LoadSelects();
 
-            var query = _context.Items
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .AsQueryable();
+            var convParams = await _staticDataManager.ConvertParametersAsync(
+                Input?.Grade,
+                Input?.Subject,
+                Input?.Level
+                );
 
-            Params = GetFilterParameters(pageNumber);
+            Params = new FilterParameters(
+                convParams.Grade,
+                convParams.Subject,
+                convParams.Level,
+                pageNumber
+                );
 
-            query = ApplyFilters(query);
+            var params2 = new ItemManager.Parameters(
+                Input?.Search,
+                convParams.Grade,
+                convParams.Subject,
+                convParams.Level,
+                Input?.MinPrice,
+                Input?.MaxPrice
+                );
 
-            var totalItems = await query.CountAsync();
+            var totalItems = await _itemManager.GetItemsCountByParamsAsync(params2);
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
-            {
-                userId = 0;
-            }
+            var userId = _userManager.GetUserId(User).IntOrDefault();
+            var userFavorites = await _favoritesManager.GetFavoriteIdsAsync(userId);
 
-            var userFavorites = await _context.Users
-            .Where(u => u.Id == userId)
-            .SelectMany(u => u.Favorites.Select(f => f.Id))
-            .ToListAsync();
-
-            var itemsFromDb = await query
-                .OrderByDescending(i => i.DateTime)
-                .Skip(pageNumber * PageSize)
-                .Take(PageSize)
-                .ToListAsync();
-
-            int? currentUserId = null;
-            var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!string.IsNullOrEmpty(currentUserIdString) && int.TryParse(currentUserIdString, out int parsedUserId))
-            {
-                currentUserId = parsedUserId;
-            }
+            var itemsFromDb = await _itemManager.GetPagedItemsByParamsAsync(params2, pageNumber, PageSize);
 
             var itemModels = itemsFromDb.Select(item => new ItemModel(
                 item,
                 Params,
                 userFavorites.Contains(item.Id),
-                currentUserId.HasValue && item.User.Id == currentUserId.Value
+                item.User.Id == userId
             )).ToList();
 
             ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
@@ -110,17 +117,10 @@ namespace Booker.Pages
             return Page();
         }
 
-        private async Task LoadCache()
+        private async Task LoadSelects()
         {
-            if (!_cache.TryGetValue("grades", out List<Grade>? grades))
-            {
-                grades = await _context.Grades
-                    .OrderBy(g => g.Id)
-                    .ToListAsync();
-                _cache.Set("grades", grades, TimeSpan.FromHours(1));
-            }
-
-            _grades = grades;
+            _grades = await _staticDataManager.GetGradesAsync();
+            _subjects = await _staticDataManager.GetSubjectsAsync();
 
             Grades = _grades?.Select(g => new SelectListItem
             {
@@ -128,77 +128,11 @@ namespace Booker.Pages
                 Text = $"Klasa {g.GradeNumber}."
             }).ToList();
 
-            if (!_cache.TryGetValue("subjects", out List<Subject>? subjects))
-            {
-                subjects = await _context.Subjects
-                    .OrderBy(s => s.Name)
-                    .ToListAsync();
-                _cache.Set("subjects", subjects, TimeSpan.FromHours(1));
-            }
-
-            _subjects = subjects;
-
             Subjects = _subjects?.Select(s => new SelectListItem
             {
                 Value = s.Name,
                 Text = s.Name
             }).ToList();
-        }
-
-        private FilterParameters GetFilterParameters(int pageNumber)
-        {
-            return new FilterParameters
-            (
-                string.IsNullOrWhiteSpace(Input?.Grade) ? null : _grades?.FirstOrDefault(g => g.GradeNumber == Input.Grade),
-                string.IsNullOrWhiteSpace(Input?.Subject) ? null : _subjects?.FirstOrDefault(s => s.Name == Input.Subject),
-                string.IsNullOrWhiteSpace(Input?.Level) ? null : Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase),
-                pageNumber
-            );
-        }
-
-        private IQueryable<Item> ApplyFilters(IQueryable<Item> query)
-        {
-            query = ApplySearchFilter(query, Input?.Search);
-            query = ApplyGradeFilter(query, Input?.Grade);
-            query = ApplySubjectFilter(query, Input?.Subject);
-            query = ApplyPriceFilters(query, Input?.MinPrice, Input?.MaxPrice);
-            query = ApplyLevelFilter(query, Input?.Level);
-
-            return query;
-        }
-
-        private IQueryable<Item> ApplySearchFilter(IQueryable<Item> query, string? search)
-        {
-            return string.IsNullOrWhiteSpace(search)
-                ? query
-                : query.Where(i => i.Book.Title.Contains(search.ToLower()));
-        }
-
-        private IQueryable<Item> ApplyGradeFilter(IQueryable<Item> query, string? grade)
-        {
-            return string.IsNullOrWhiteSpace(grade)
-                ? query
-                : query.Where(i => i.Book.Grades.Any(g => g.GradeNumber == grade));
-        }
-
-        private IQueryable<Item> ApplySubjectFilter(IQueryable<Item> query, string? subject)
-        {
-            return string.IsNullOrWhiteSpace(subject)
-                ? query
-                : query.Where(i => i.Book.Subject.Name == subject);
-        }
-
-        private IQueryable<Item> ApplyPriceFilters(IQueryable<Item> query, decimal? minPrice, decimal? maxPrice)
-        {
-            return query.Where(i => !minPrice.HasValue || i.Price >= minPrice.Value)
-                        .Where(i => !maxPrice.HasValue || i.Price <= maxPrice.Value);
-        }
-
-        private IQueryable<Item> ApplyLevelFilter(IQueryable<Item> query, string? level)
-        {
-            return string.IsNullOrWhiteSpace(level)
-                ? query
-                : query.Where(i => i.Book.Level == level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase));
         }
     }
 }
