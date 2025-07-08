@@ -52,7 +52,7 @@ public class StaticDataManager
         (
             _grades.FirstOrDefault(g => g.GradeNumber == grade),
             _subjects.FirstOrDefault(s => s.Name == subject),
-            level?.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase) ?? false
+            level?.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase)
         );
     }
 }
