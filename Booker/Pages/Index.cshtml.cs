@@ -16,13 +16,10 @@ namespace Booker.Pages
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
-        private readonly DataContext _context;
-        private readonly IMemoryCache _cache;
         private readonly ItemManager _itemManager;
         private readonly FavoritesManager _favoritesManager;
         private readonly StaticDataManager _staticDataManager;
         private readonly UserManager<User> _userManager;
-
 
         const int PageSize = 25;
 
@@ -32,9 +29,7 @@ namespace Booker.Pages
 
         public PagedListViewModel? ItemsList { get; set; }
         public List<SelectListItem>? Grades { get; set; }
-        private List<Grade>? _grades;
         public List<SelectListItem>? Subjects { get; set; }
-        private List<Subject>? _subjects;
         public List<SelectListItem> Levels => new List<SelectListItem>
         {
             new SelectListItem { Value = "Podstawa", Text = "Podstawa" },
@@ -43,11 +38,15 @@ namespace Booker.Pages
 
         public FilterParameters? Params { get; set; }
 
-        public IndexModel(ILogger<IndexModel> logger, DataContext context, IMemoryCache cache, ItemManager itemManager, FavoritesManager favoritesManager, StaticDataManager staticDataManager, UserManager<User> userManager)
+        public IndexModel(
+            ILogger<IndexModel> logger,
+            ItemManager itemManager,
+            FavoritesManager favoritesManager,
+            StaticDataManager staticDataManager,
+            UserManager<User> userManager
+            )
         {
             _logger = logger;
-            _context = context;
-            _cache = cache;
             _itemManager = itemManager;
             _favoritesManager = favoritesManager;
             _staticDataManager = staticDataManager;
@@ -56,7 +55,6 @@ namespace Booker.Pages
 
         [FromQuery]
         public InputModel? Input { get; set; }
-
         public class InputModel
         {
             public string? Search { get; set; }
@@ -119,8 +117,8 @@ namespace Booker.Pages
 
         private async Task LoadSelects()
         {
-            _grades = await _staticDataManager.GetGradesAsync();
-            _subjects = await _staticDataManager.GetSubjectsAsync();
+            var _grades = await _staticDataManager.GetGradesAsync();
+            var _subjects = await _staticDataManager.GetSubjectsAsync();
 
             Grades = _grades?.Select(g => new SelectListItem
             {
