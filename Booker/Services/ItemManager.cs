@@ -73,6 +73,31 @@ public class ItemManager
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Item>> GetUserItemsAsync(int userId)
+    {
+        return await GetAllItemsQueryable()
+            .Where(i => i.UserId == userId)
+            .OrderByDescending(i => i.DateTime)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetUserItemsCountAsync(int userId)
+    {
+        return await GetAllItemsQueryable()
+            .Where(i => i.UserId == userId)
+            .CountAsync();
+    }
+
+    public async Task<IEnumerable<Item>> GetPagedUserItemsAsync(int userId, int pageNumber, int pageSize)
+    {
+        return await GetAllItemsQueryable()
+            .Where(i => i.UserId == userId)
+            .OrderByDescending(i => i.DateTime)
+            .Skip(pageNumber * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+    }
+
     public async Task AddItemAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));

@@ -1,10 +1,13 @@
 ﻿using Azure.Storage.Blobs.Models;
 using Booker.Data;
+using Booker.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
+using Booker.Utilities;
 using static Booker.Pages.IndexModel;
 
 namespace Booker.Pages.Profile
@@ -12,15 +15,17 @@ namespace Booker.Pages.Profile
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
-        private readonly DataContext _context;
-        private readonly IMemoryCache _cache;
+        private readonly UserManager<User> _userManager;
+        private readonly FavoritesManager _favoritesManager;
+        private readonly ItemManager _itemManager;
         const int PageSize = 25;
 
-        public IndexModel(ILogger<IndexModel> logger, DataContext context, IMemoryCache cache)
+        public IndexModel(ILogger<IndexModel> logger, UserManager<User> userManager, FavoritesManager favoritesManager, ItemManager itemManager)
         {
             _logger = logger;
-            _context = context;
-            _cache = cache;
+            _userManager = userManager;
+            _favoritesManager = favoritesManager;
+            _itemManager = itemManager;
         }
         [FromRoute]
         public int? Id { get; set; }
@@ -31,12 +36,7 @@ namespace Booker.Pages.Profile
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
-            var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(currentUserIdString, out int currentUserId))
-            {
-                currentUserId = 0;
-            }
+            var currentUserId = _userManager.GetUserId(User).IntOrDefault();
 
             if (!Id.HasValue)
             {
@@ -48,9 +48,7 @@ namespace Booker.Pages.Profile
                 Id = currentUserId;
             }            
 
-            var user = await _context.Users
-                .Include(u => u.Items)
-                .FirstOrDefaultAsync(u => u.Id == Id);
+            var user = await _userManager.FindByIdAsync(Id.Value.ToString());
 
             if (user == null)
             {
@@ -59,26 +57,12 @@ namespace Booker.Pages.Profile
 
             Params = new FilterParameters(null, null, null, pageNumber);
 
-            var query = _context.Items
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .Where(i => i.UserId == Id.Value)
-                .AsQueryable();
-
-            var totalItems = await query.CountAsync();
+            var totalItems = await _itemManager.GetUserItemsCountAsync(Id.Value);
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
-            var userFavorites = await _context.Users
-            .Where(u => u.Id == currentUserId)
-            .SelectMany(u => u.Favorites.Select(f => f.Id))
-            .ToListAsync();
+            var userFavorites = await _favoritesManager.GetFavoriteIdsAsync(currentUserId);
 
-            var itemsFromDb = await query
-                .OrderByDescending(i => i.DateTime)
-                .Skip(pageNumber * PageSize)
-                .Take(PageSize)
-                .ToListAsync();
+            var itemsFromDb = await _itemManager.GetPagedUserItemsAsync(Id.Value, pageNumber, PageSize);
 
             var itemModels = itemsFromDb.Select(item => new ItemModel(
                 item,
