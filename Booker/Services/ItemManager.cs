@@ -42,6 +42,24 @@ public class ItemManager
             .CountAsync();
     }
 
+    public async Task<IEnumerable<Item>> GetItemsByIdsAsync(IEnumerable<int> ids)
+    {
+        return await GetAllItemsQueryable()
+            .Where(i => ids.Contains(i.Id))
+            .OrderByDescending(i => i.DateTime)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Item>> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize)
+    {
+        return await GetAllItemsQueryable()
+            .Where(i => ids.Contains(i.Id))
+            .OrderByDescending(i => i.DateTime)
+            .Skip(pageNumber * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+    }       
+
     public async Task<IEnumerable<Item>> GetItemsByParamsAsync(Parameters input)
     {
         var query = GetAllItemsQueryable();

@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Booker.Services;
+using Booker.Utilities;
+using Microsoft.AspNetCore.Identity;
 using static Booker.Pages.IndexModel;
 using static Booker.Pages.Profile.IndexModel;
 
@@ -11,10 +14,16 @@ namespace Booker.Pages.Profile
     public class FavoritesModel : PageModel
     {
         private readonly DataContext _context;
+        private readonly UserManager<User> _userManager;
+        private readonly FavoritesManager _favoritesManager;
+        private readonly ItemManager _itemManager;
         const int PageSize = 25;
-        public FavoritesModel(DataContext context)
+        public FavoritesModel(DataContext context, UserManager<User> userManager, FavoritesManager favoritesManager, ItemManager itemManager)
         {
             _context = context;
+            _userManager = userManager;
+            _favoritesManager = favoritesManager;
+            _itemManager = itemManager;
         }
 
         public record ButtonState(int Id, bool IsFavorite, bool FullSize);
@@ -25,12 +34,7 @@ namespace Booker.Pages.Profile
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
-            var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(currentUserIdString, out int currentUserId))
-            {
-                currentUserId = 0; // Default to 0 if parsing fails
-            }
+            var currentUserId = _userManager.GetUserId(User).IntOrDefault();
 
             if (!Id.HasValue)
             {
@@ -42,40 +46,25 @@ namespace Booker.Pages.Profile
                 Id = currentUserId;
             }
 
-            var user = await _context.Users
-                .Include(u => u.Favorites)
-                .FirstOrDefaultAsync(u => u.Id == Id);
+            var user = await _userManager.FindByIdAsync(Id.Value.ToString());
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            var query = _context.Users
-                .Where(u => u.Id == Id)
-                .SelectMany(u => u.Favorites)
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .AsQueryable();
-
             Params = new FilterParameters(null, null, null, pageNumber);
 
-            var totalItems = await query.CountAsync();
+            var itemIds = await _favoritesManager.GetFavoriteIdsAsync(Id.Value);
+
+            var totalItems = itemIds.Count();
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
 
-            var userFavorites = await _context.Users
-            .Where(u => u.Id == currentUserId)
-            .SelectMany(u => u.Favorites.Select(f => f.Id))
-            .ToListAsync();
+            var userFavorites = await _favoritesManager.GetFavoriteIdsAsync(currentUserId);
 
-            var items = await query
-                .OrderByDescending(i => i.DateTime)
-                .Skip(pageNumber * PageSize)
-                .Take(PageSize)
-                .ToListAsync();
+            var itemsFromDb = await _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, PageSize);
 
-            var items2 = items.Select(i => new ItemModel
+            var itemModels = itemsFromDb.Select(i => new ItemModel
             (
                 i,
                 Params,
@@ -83,7 +72,7 @@ namespace Booker.Pages.Profile
                 currentUserId == i.Id
             )).ToList();
 
-            ItemsList = new PagedListViewModel(items2, Params, hasMorePages);
+            ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
             UserInfo = new UserModel(user, user.Id == currentUserId);
 
             if (Request.Headers.ContainsKey("HX-Request"))
@@ -93,91 +82,45 @@ namespace Booker.Pages.Profile
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAddAsync(int itemId, bool fullSize)
+        public Task<IActionResult> OnPostAddAsync(int itemId, bool fullSize)
+            => HandleFavoriteAsync(itemId, fullSize, _favoritesManager.AddFavoriteAsync, true);
+        
+        public Task<IActionResult> OnPostRemoveAsync(int itemId, bool fullSize)
+            => HandleFavoriteAsync(itemId, fullSize, _favoritesManager.RemoveFavoriteAsync, false);
+        
+        private async Task<IActionResult> HandleFavoriteAsync(
+            int itemId, 
+            bool fullSize, 
+            Func<int, int, Task<FavoritesManager.Status>> action, 
+            bool isAdding)
         {
             if (Id != null)
             {
                 return BadRequest();
             }
-
-            if (User.Identity?.IsAuthenticated != true)
+        
+            var userId = _userManager.GetUserId(User).IntOrDefault();
+        
+            if (userId == -1)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
                 return StatusCode(403); // Forbidden, but will redirect via HTMX
             }
-
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+        
+            var status = await action(userId, itemId);
+        
+            switch (status)
             {
-                return Forbid();
+                case FavoritesManager.Status.NotFound:
+                    return NotFound();
+                case FavoritesManager.Status.Forbidden:
+                    return Forbid();
+                case FavoritesManager.Status.NotModified:
+                    return StatusCode(204);
+                case FavoritesManager.Status.Success:
+                    return Partial("_FavoriteButton", new ButtonState(itemId, isAdding, fullSize));
             }
-
-            var user = await _context.Users
-                .Include(u => u.Favorites)
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            if (user == null)
-            {
-                return Forbid();
-            }
-
-            var item = await _context.Items.FindAsync(itemId);
-
-            if (item == null)
-            {
-                return NotFound();
-            }
-
-            if (user.Favorites.Any(f => f.Id == itemId))
-            {
-                return StatusCode(204);
-            }
-
-            user.Favorites.Add(item);
-            await _context.SaveChangesAsync();
-            return Partial("_FavoriteButton", new ButtonState(itemId, true, fullSize));
-        }
-        public async Task<IActionResult> OnPostRemoveAsync(int itemId, bool fullSize)
-        {
-            if (Id != null)
-            {
-                return BadRequest();
-            }
-
-            if (User.Identity?.IsAuthenticated != true)
-            {
-                Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
-                return StatusCode(403); // Forbidden, but will redirect via HTMX
-            }
-
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
-            {
-                return Forbid();
-            }
-
-            var user = await _context.Users
-                .Include(u => u.Favorites)
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            if (user == null)
-            {
-                return Forbid();
-            }
-
-            var item = await _context.Items.FindAsync(itemId);
-
-            if (item == null)
-            {
-                return NotFound();
-            }
-
-            if (!user.Favorites.Any(f => f.Id == itemId))
-            {
-                return StatusCode(204);
-            }
-
-            user.Favorites.Remove(item);
-            await _context.SaveChangesAsync();
-            return Partial("_FavoriteButton", new ButtonState(itemId, false, fullSize));
+            return BadRequest();
         }
     }
 }
