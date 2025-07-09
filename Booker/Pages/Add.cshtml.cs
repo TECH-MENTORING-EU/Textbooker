@@ -1,6 +1,8 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Booker.Data;
+using Booker.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
@@ -23,14 +25,12 @@ namespace Booker.Pages
         private readonly BlobServiceClient _blobServiceClient;
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
+        private readonly UserManager<User> _userManager;
+        private readonly StaticDataManager _staticDataManager;
 
         public bool IsFirstLoad { get; set; } = false;
-
-        public required List<Book> _Books { get; set; } = new();
         public required List<SelectListItem> Books { get; set; } = new();
-        public required List<Subject> _Subjects { get; set; } = new();
         public required List<SelectListItem> Subjects { get; set; } = new();
-        public required List<Grade> _Grades { get; set; } = new();
         public required List<SelectListItem> Grades { get; set; } = new();
         public required List<SelectListItem> Levels { get; set; } = new();
 
@@ -61,12 +61,14 @@ namespace Booker.Pages
             public required IFormFile Image { get; set; } = null!;
         }
 
-        public BookAddingModel(DataContext context, BlobServiceClient blobServiceClient, IConfiguration config, IMemoryCache cache)
+        public BookAddingModel(DataContext context, BlobServiceClient blobServiceClient, IConfiguration config, IMemoryCache cache, UserManager<User> userManager, StaticDataManager staticDataManager)
         {
             _context = context;
             _blobServiceClient = blobServiceClient;
             _config = config;
             _cache = cache;
+            _userManager = userManager;
+            _staticDataManager = staticDataManager;
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -78,7 +80,7 @@ namespace Booker.Pages
                 return Redirect("/Identity/Account/Login");
             }
 
-            await LoadData();
+            await LoadSelects();
             
             return Page();
         }
@@ -87,34 +89,31 @@ namespace Booker.Pages
         {
             Input = input;
             IsFirstLoad = firstLoad;
-            await LoadData();
+            await LoadSelects();
 
             return Partial("_FormSelects", this);
         }
 
-        public async Task LoadData()
+        public async Task LoadSelects()
         {
-            await LoadBooks();
-            await LoadGrades();
-            await LoadSubjects();
-            await LoadLevels();
+            await LoadBooksSelect();
+            await LoadGradesSelect();
+            await LoadSubjectsSelect();
+            await LoadLevelsSelect();
         }
 
-        private async Task LoadBooks()
+        private async Task LoadBooksSelect()
         {
-            if (!_cache.TryGetValue("books", out List<Book>? books))
-            {
-                books = await _context.Books
-                    .Include(b => b.Grades)
-                    .Include(b => b.Subject)
-                    .OrderBy(g => g.Id)
-                    .ToListAsync();
-                _cache.Set("books", books, TimeSpan.FromHours(1));
-            }
+            var books = await _staticDataManager.GetBooksByParamsAsync(
+                await _staticDataManager.ConvertParametersAsync(
+                    Input?.Title,
+                    Input?.Grade,
+                    Input?.Subject,
+                    Input?.Level
+                )
+            );
 
-            _Books = books!;
-
-            Books = ApplyFilters(_Books.AsQueryable())
+            Books = books
                    .OrderBy(b => b.Title)
                    .Select(b => b.Title)
                    .Distinct()
@@ -135,18 +134,13 @@ namespace Booker.Pages
             }
         }
 
-        private async Task LoadGrades()
+        private async Task LoadGradesSelect()
         {
-            if (!_cache.TryGetValue("grades", out List<Grade>? grades))
-            {
-                grades = await _context.Grades
-                    .OrderBy(g => g.Id)
-                    .ToListAsync();
-                _cache.Set("grades", grades, TimeSpan.FromHours(1));
-            }
-            _Grades = grades!;
+            var grades = await (string.IsNullOrWhiteSpace(Input?.Title)
+                ? _staticDataManager.GetGradesAsync()
+                : _staticDataManager.GetGradesByBookTitleAsync(Input.Title));
 
-            Grades = FilterGrades(_Grades).Select(g => new SelectListItem
+            Grades = grades.Select(g => new SelectListItem
             {
                 Value = g.GradeNumber,
                 Text = $"Klasa {g.GradeNumber}."
@@ -155,108 +149,49 @@ namespace Booker.Pages
             if (Grades.Count == 1)
             {
                 ModelState.Remove("Input.Grade");
-                Input.Grade = Grades[0].Value;
+                Input!.Grade = Grades[0].Value;
             }
         }
 
-        private async Task LoadSubjects()
+        private async Task LoadSubjectsSelect()
         {
-            if (!_cache.TryGetValue("subjects", out List<Subject>? subjects))
-            {
-                subjects = await _context.Subjects
-                    .OrderBy(s => s.Name)
-                    .ToListAsync();
-                _cache.Set("subjects", subjects, TimeSpan.FromHours(1));
-            }
-            _Subjects = subjects!;
-            Subjects = FilterSubjects(_Subjects).Select(s => new SelectListItem
+            var subjects = await (string.IsNullOrWhiteSpace(Input?.Title)
+                ? _staticDataManager.GetSubjectsAsync()
+                : _staticDataManager.GetSubjectsByBookTitleAsync(Input.Title));
+
+            Subjects = subjects.Select(s => new SelectListItem
             {
                 Value = s.Name,
                 Text = s.Name
             }).ToList();
+
             if (Subjects.Count == 1)
             {
                 ModelState.Remove("Input.Subject");
-                Input.Subject = Subjects[0].Value;
+                Input!.Subject = Subjects[0].Value;
             }
         }
 
-        private async Task LoadLevels()
+        private async Task LoadLevelsSelect()
         {
-            var levels = await _context.Books
-                .Select(b => b.Level)
-                .Distinct()
-                .ToListAsync();
-            Levels = FilterLevels(levels).Select(l => new SelectListItem
+            var levels = string.IsNullOrWhiteSpace(Input?.Title)
+                ? new() { false, true }
+                : await _staticDataManager.GetLevelsByBookTitleAsync(Input.Title);
+
+            Levels = levels.Select(l => new SelectListItem
             {
                 Value = (l == true) ? "Rozszerzenie" : "Podstawa",
                 Text = (l == true) ? "Rozszerzenie" : "Podstawa"
             }).OrderBy(v => v.Value).ToList();
+
             if (Levels.Count == 1)
             {
                 ModelState.Remove("Input.Level");
-                Input.Level = Levels[0].Value;
+                Input!.Level = Levels[0].Value;
             }
         }
 
-        private IEnumerable<Grade> FilterGrades(IEnumerable<Grade> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : _Books.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).SelectMany(b => b.Grades).Distinct();
-        }
-
-        private IEnumerable<Subject> FilterSubjects(IEnumerable<Subject> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : _Books.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).Select(b => b.Subject).Distinct();
-        }
-
-        private IEnumerable<bool?> FilterLevels(IEnumerable<bool?> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : _Books.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).Select(b => b.Level).Distinct();
-        }
-
-        private IQueryable<Book> ApplyFilters(IQueryable<Book> query)
-        {
-            query = ApplyTitleFilter(query);
-            query = ApplyGradeFilter(query);
-            query = ApplySubjectFilter(query);
-            query = ApplyLevelFilter(query);
-
-            return query;
-        }
-
-        private IQueryable<Book> ApplyTitleFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : query.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private IQueryable<Book> ApplyGradeFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Grade)
-                ? query
-                : query.Where(b => b.Grades.Any(g => g.GradeNumber == Input.Grade));
-        }
-
-        private IQueryable<Book> ApplySubjectFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Subject)
-                ? query
-                : query.Where(b => b.Subject.Name == Input.Subject);
-        }
-
-        private IQueryable<Book> ApplyLevelFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Level)
-                ? query
-                : query.Where(b => b.Level == Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase));
-        }
+        
 
         public async Task<IActionResult> OnPostAsync()
         {
