@@ -33,31 +33,7 @@ namespace Booker.Pages
         public required List<SelectListItem> Levels { get; set; } = new();
 
         [BindProperty]
-        public InputModel Input { get; set; } = null!;
-
-        public class InputModel
-        {
-            [Required(ErrorMessage = "Proszę wybrać tytuł książki.")]
-            public required string Title { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę wybrać przedmiot.")]
-            public required string Subject { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę wybrać klasę.")]
-            public required string Grade { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę wybrać poziom.")]
-            public required string Level { get; set; } = string.Empty;
-            public required string Description { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę opisać stan książki.")]
-            [StringLength(40, ErrorMessage = "Opis stanu książki nie może przekraczać 40 znaków.")]
-            public required string State { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę podać cenę.")]
-            [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi być większa od zera.")]
-            public required decimal Price { get; set; } = 0;
-            [Required(ErrorMessage = "Proszę przesłać zdjęcie książki.")]
-            //[FileExtensions(Extensions = "jpg,jpeg,png,gif", ErrorMessage = "Dozwolone są tylko pliki graficzne (jpg, jpeg, png, gif).")]
-            //[Length(0, 5 * 1024 * 1024, ErrorMessage = "Plik nie może przekraczać 5 MB.")]
-            [Display(Name = "Zdjęcie książki")]
-            public required IFormFile Image { get; set; } = null!;
-        }
+        public Shared.ItemAddModel Input { get; set; } = null!;
 
         public BookAddingModel(UserManager<User> userManager, StaticDataManager staticDataManager, ItemManager itemManager)
         {
@@ -80,7 +56,7 @@ namespace Booker.Pages
             return Page();
         }
 
-        public async Task<IActionResult> OnGetParamsAsync(bool firstLoad, [ValidateNever] InputModel input)
+        public async Task<IActionResult> OnGetParamsAsync(bool firstLoad, [ValidateNever] Shared.ItemAddModel input)
         {
             Input = input;
             IsFirstLoad = firstLoad;
@@ -259,7 +235,7 @@ namespace Booker.Pages
                 return Page();
             }
 
-            return Redirect("/Book/" + result.ItemId);
+            return Redirect("/Book/" + result.Id);
         }
     }
 }

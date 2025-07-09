@@ -19,6 +19,9 @@ public class StaticDataManager
         _cache = cache;
     }
 
+    public async Task<Book?> GetBookAsync(int id) =>
+        (await GetBooksAsync()).FirstOrDefault(b => b.Id == id);
+
     public async Task<List<Book>> GetBooksAsync()
     {
         if (!_cache.TryGetValue("books", out List<Book>? books))

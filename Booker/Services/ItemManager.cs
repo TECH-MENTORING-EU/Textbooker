@@ -26,10 +26,10 @@ public class ItemManager
         NotFound = 32
     }
 
-    public record Result(Status Status, int ItemId)
+    public record Result(Status Status, int Id)
     {
         public static implicit operator Result(Status status) => new Result(status, -1);
-        public static implicit operator Result(int itemId) => new Result(Status.Success, itemId);
+        public static implicit operator Result(int Id) => new Result(Status.Success, Id);
     };
     
 
@@ -41,8 +41,9 @@ public class ItemManager
         string Description,
         string State,
         decimal Price,
-        Stream ImageStream,
-        string ImageFileExtension
+        Stream? ImageStream,
+        string? ImageFileExtension,
+        string? ExistingImageBlobName = null
     );
 
     public ItemManager(DataContext context, IMemoryCache cache, StaticDataManager staticDataManager, PhotosManager photosManager)
@@ -149,10 +150,8 @@ public class ItemManager
             .ToListAsync();
     }
 
-    public async Task<Result> AddItemAsync(ItemModel model)
+    private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
-        if (model == null) throw new ArgumentNullException(nameof(model));
-
         if (model.Parameters.Title == null
             || model.Parameters.Grade == null
             || model.Parameters.Subject == null)
@@ -177,12 +176,22 @@ public class ItemManager
         var book = (await _staticDataManager.GetBooksByParamsAsync(model.Parameters)).FirstOrDefault();
         if (book == null) status |= Status.NotFound | Status.Error;
 
-        if ((status & Status.Error) != 0) return status;
+        if (status.HasFlag(Status.Error)) return status;
 
-        var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream, model.ImageFileExtension);
+        return book!.Id;
+    }
+
+    public async Task<Result> AddItemAsync(ItemModel model)
+    {
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var validationResult = await ValidateItemModelAsync(model);
+        if (validationResult.Status.HasFlag(Status.Error)) return validationResult;     
+
+        var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!);
         var item = new Item
         {
-            Book = book!,
+            Book = (await _staticDataManager.GetBookAsync(validationResult.Id))!,
             User = model.User,
             Description = model.Description,
             State = model.State,
@@ -202,7 +211,36 @@ public class ItemManager
         return item.Id;
     }
 
-    public async Task UpdateItemAsync(Item item)
+    public async Task<Status> UpdateItemAsync(int id, ItemModel model)
+    {
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var validationResult = await ValidateItemModelAsync(model);
+        if (validationResult.Status.HasFlag(Status.Error)) return validationResult.Status;
+
+        var photoUri = model.ExistingImageBlobName;
+
+        if (model.ImageStream != null)
+        {
+            await _photosManager.DeletePhotoAsync(model.ExistingImageBlobName!);
+            photoUri = (await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!)).ToString();
+        }
+
+        var item = new Item
+        {
+            Id = id,
+            Book = (await _staticDataManager.GetBookAsync(validationResult.Id))!,
+            User = model.User,
+            Description = model.Description,
+            State = model.State,
+            Price = model.Price,
+            DateTime = DateTime.Now,
+            Photo = photoUri!
+        };
+        await UpdateItemNVAsync(item);
+        return Status.Success;
+    }
+    private async Task UpdateItemNVAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
         _context.Items.Update(item);

@@ -13,6 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Linq;
+using Microsoft.AspNetCore.Identity;
+using Booker.Services;
 
 namespace Booker.Pages
 {
@@ -22,7 +24,9 @@ namespace Booker.Pages
         private readonly BlobServiceClient _blobServiceClient;
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
-
+        private readonly UserManager<User> _userManager;
+        private readonly ItemManager _itemManager;
+        private readonly StaticDataManager _staticDataManager;
         public bool IsFirstLoad { get; set; } = false;
 
         public List<Book> _BooksRaw { get; set; } = new();
@@ -35,214 +39,92 @@ namespace Booker.Pages
         public List<SelectListItem> Levels { get; set; } = new();
 
         [BindProperty]
-        public InputModel Input { get; set; } = null!;
+        public Shared.ItemEditModel Input { get; set; } = null!;
 
         public Item? ItemToEdit { get; set; }
 
-        public class InputModel
-        {
-            public int ItemId { get; set; }
-
-            [Required(ErrorMessage = "Proszę wybrać tytuł książki.")]
-            public string Title { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę wybrać przedmiot.")]
-            public string Subject { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę wybrać klasę.")]
-            public string Grade { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę wybrać poziom.")]
-            public string Level { get; set; } = string.Empty;
-            public string Description { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę opisać stan książki.")]
-            [StringLength(40, ErrorMessage = "Opis stanu książki nie może przekraczać 40 znaków.")]
-            public string State { get; set; } = string.Empty;
-            [Required(ErrorMessage = "Proszę podać cenę.")]
-            [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi być większa od zera.")]
-            public decimal Price { get; set; } = 0;
-
-            [Display(Name = "Zdjęcie książki")]
-            public IFormFile? Image { get; set; }
-
-            [BindNever]
-            public string? ExistingImageBlobName { get; set; } = string.Empty;
-        }
-
-        public EditModel(DataContext context, BlobServiceClient blobServiceClient, IConfiguration config, IMemoryCache cache)
+        public EditModel(DataContext context, BlobServiceClient blobServiceClient, IConfiguration config, IMemoryCache cache, UserManager<User> userManager, ItemManager itemManager, StaticDataManager staticDataManager)
         {
             _context = context;
             _blobServiceClient = blobServiceClient;
             _config = config;
             _cache = cache;
+            _userManager = userManager;
+            _itemManager = itemManager;
+            _staticDataManager = staticDataManager;
         }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            var user = await _userManager.GetUserAsync(User);
 
-            if (!isUserAuthenticated)
+            if (user == null)
             {
                 return Redirect("/Identity/Account/Login");
             }
 
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            {
-                return Redirect("/Identity/Account/Login");
-            }
-
-            ItemToEdit = await _context.Items
-                .Include(i => i.Book)
-                    .ThenInclude(b => b.Subject)
-                .Include(i => i.Book)
-                    .ThenInclude(b => b.Grades)
-                .Include(i => i.User)
-                .FirstOrDefaultAsync(i => i.Id == id && i.User.Id == userId);
+            ItemToEdit = await _itemManager.GetItemAsync(id);
 
             if (ItemToEdit == null)
             {
                 return NotFound();
             }
 
-            Input = new InputModel
+            if (ItemToEdit.User.Id != user.Id)
             {
-                ItemId = ItemToEdit.Id,
-                Title = ItemToEdit.Book.Title ?? string.Empty,
-                Subject = ItemToEdit.Book.Subject.Name ?? string.Empty,
-                Grade = ItemToEdit.Book.Grades.Any() ? ItemToEdit.Book.Grades.First().GradeNumber ?? string.Empty : string.Empty,
+                return Forbid();
+            }
+
+            Input = new Shared.ItemEditModel
+            {
+                Title = ItemToEdit.Book.Title,
+                Subject = ItemToEdit.Book.Subject.Name,
+                Grade = ItemToEdit.Book.Grades.First().GradeNumber,
                 Level = ItemToEdit.Book.Level == true ? "Rozszerzenie" : "Podstawa",
-                Description = ItemToEdit.Description ?? string.Empty,
-                State = ItemToEdit.State ?? string.Empty,
+                Description = ItemToEdit.Description,
+                State = ItemToEdit.State,
                 Price = ItemToEdit.Price,
-                ExistingImageBlobName = ItemToEdit.Photo
+                Image = null!
             };
 
-            await LoadAllDropdownOptions();
+            await LoadSelects();
+
+            return Page();
+        }
+
+        public async Task LoadSelects()
+        {
+            await LoadBooksSelect();
+            await LoadGradesSelect();
+            await LoadSubjectsSelect();
+            await LoadLevelsSelect();
 
             Books.ForEach(b => b.Selected = b.Value == Input.Title);
             Subjects.ForEach(s => s.Selected = s.Value == Input.Subject);
             Grades.ForEach(g => g.Selected = g.Value == Input.Grade);
             Levels.ForEach(l => l.Selected = l.Value == Input.Level);
-
-            return Page();
         }
 
-        public async Task LoadAllDropdownOptions()
+        private async Task LoadBooksSelect()
         {
-            if (!_cache.TryGetValue("allBooks", out List<Book>? allBooks))
-            {
-                allBooks = await _context.Books
-                    .Include(b => b.Grades)
-                    .Include(b => b.Subject)
-                    .OrderBy(b => b.Id)
-                    .ToListAsync();
-                _cache.Set("allBooks", allBooks, TimeSpan.FromHours(1));
-            }
-            _BooksRaw = allBooks!;
+            var books = await _staticDataManager.GetBooksByParamsAsync(
+                await _staticDataManager.ConvertParametersAsync(
+                    Input?.Title,
+                    Input?.Grade,
+                    Input?.Subject,
+                    Input?.Level
+                )
+            );
 
-            if (!_cache.TryGetValue("allSubjects", out List<Subject>? allSubjects))
-            {
-                allSubjects = await _context.Subjects
-                    .OrderBy(s => s.Name)
-                    .ToListAsync();
-                _cache.Set("allSubjects", allSubjects, TimeSpan.FromHours(1));
-            }
-            _SubjectsRaw = allSubjects!;
-
-            if (!_cache.TryGetValue("allGrades", out List<Grade>? allGrades))
-            {
-                allGrades = await _context.Grades
-                    .OrderBy(g => g.Id)
-                    .ToListAsync();
-                _cache.Set("allGrades", allGrades, TimeSpan.FromHours(1));
-            }
-            _GradesRaw = allGrades!;
-
-            Books = _BooksRaw
-                        .OrderBy(b => b.Title)
-                        .Select(b => b.Title)
-                        .Distinct()
-                        .Select(t => new SelectListItem
-                        {
-                            Value = t,
-                            Text = t
-                        }).ToList();
-
-            Subjects = _SubjectsRaw
-                        .OrderBy(s => s.Name)
-                        .Select(s => new SelectListItem
-                        {
-                            Value = s.Name,
-                            Text = s.Name
-                        }).ToList();
-
-            Grades = _GradesRaw
-                        .OrderBy(g => g.GradeNumber)
-                        .Select(g => new SelectListItem
-                        {
-                            Value = g.GradeNumber,
-                            Text = $"Klasa {g.GradeNumber}"
-                        }).ToList();
-
-            var allLevelsRaw = _BooksRaw
-                                .Select(b => b.Level)
-                                .Distinct()
-                                .ToList();
-
-            Levels = allLevelsRaw
-                        .Select(l => new SelectListItem
-                        {
-                            Value = (l == true) ? "Rozszerzenie" : "Podstawa",
-                            Text = (l == true) ? "Rozszerzenie" : "Podstawa"
-                        })
-                        .OrderBy(v => v.Value)
-                        .ToList();
-
-            if (!Books.Any(i => string.IsNullOrEmpty(i.Value))) Books.Insert(0, new SelectListItem { Value = "", Text = "Wybierz książkę", Selected = true, Disabled = true });
-            if (!Subjects.Any(i => string.IsNullOrEmpty(i.Value))) Subjects.Insert(0, new SelectListItem { Value = "", Text = "Wybierz przedmiot", Selected = true, Disabled = true });
-            if (!Grades.Any(i => string.IsNullOrEmpty(i.Value))) Grades.Insert(0, new SelectListItem { Value = "", Text = "Wybierz klasę", Selected = true, Disabled = true });
-            if (!Levels.Any(i => string.IsNullOrEmpty(i.Value))) Levels.Insert(0, new SelectListItem { Value = "", Text = "Wybierz poziom", Selected = true, Disabled = true });
-        }
-
-        public async Task LoadFilteredDropdownOptions()
-        {
-            if (!_cache.TryGetValue("allBooks", out List<Book>? allBooks))
-            {
-                allBooks = await _context.Books
-                    .Include(b => b.Grades)
-                    .Include(b => b.Subject)
-                    .OrderBy(b => b.Id)
-                    .ToListAsync();
-                _cache.Set("allBooks", allBooks, TimeSpan.FromHours(1));
-            }
-            _BooksRaw = allBooks!;
-
-            if (!_cache.TryGetValue("allSubjects", out List<Subject>? allSubjects))
-            {
-                allSubjects = await _context.Subjects
-                    .OrderBy(s => s.Name)
-                    .ToListAsync();
-                _cache.Set("allSubjects", allSubjects, TimeSpan.FromHours(1));
-            }
-            _SubjectsRaw = allSubjects!;
-
-            if (!_cache.TryGetValue("allGrades", out List<Grade>? allGrades))
-            {
-                allGrades = await _context.Grades
-                    .OrderBy(g => g.Id)
-                    .ToListAsync();
-                _cache.Set("allGrades", allGrades, TimeSpan.FromHours(1));
-            }
-            _GradesRaw = allGrades!;
-
-            Books = ApplyFilters(_BooksRaw.AsQueryable())
-                         .OrderBy(b => b.Title)
-                         .Select(b => b.Title)
-                         .Distinct()
-                         .Select(t => new SelectListItem
-                         {
-                             Value = t,
-                             Text = t,
-                             Selected = t == Input.Title
-                         }).ToList();
+            Books = books
+                   .OrderBy(b => b.Title)
+                   .Select(b => b.Title)
+                   .Distinct()
+                   .Select(t => new SelectListItem
+                   {
+                       Value = t,
+                       Text = t
+                   }).ToList();
 
             if (Books.IsNullOrEmpty())
             {
@@ -253,229 +135,158 @@ namespace Booker.Pages
                     Disabled = true
                 });
             }
+        }
 
-            Grades = FilterGrades(_GradesRaw).Select(g => new SelectListItem
+        private async Task LoadGradesSelect()
+        {
+            var grades = await (string.IsNullOrWhiteSpace(Input?.Title)
+                ? _staticDataManager.GetGradesAsync()
+                : _staticDataManager.GetGradesByBookTitleAsync(Input.Title));
+
+            Grades = grades.Select(g => new SelectListItem
             {
                 Value = g.GradeNumber,
-                Text = $"Klasa {g.GradeNumber}.",
-                Selected = g.GradeNumber == Input.Grade
+                Text = $"Klasa {g.GradeNumber}."
             }).ToList();
 
-            if (Grades.Count == 1 && string.IsNullOrEmpty(Input.Grade))
+            if (Grades.Count == 1)
             {
                 ModelState.Remove("Input.Grade");
-                Input.Grade = Grades[0].Value;
+                Input!.Grade = Grades[0].Value;
             }
+        }
 
-            Subjects = FilterSubjects(_SubjectsRaw).Select(s => new SelectListItem
+        private async Task LoadSubjectsSelect()
+        {
+            var subjects = await (string.IsNullOrWhiteSpace(Input?.Title)
+                ? _staticDataManager.GetSubjectsAsync()
+                : _staticDataManager.GetSubjectsByBookTitleAsync(Input.Title));
+
+            Subjects = subjects.Select(s => new SelectListItem
             {
                 Value = s.Name,
-                Text = s.Name,
-                Selected = s.Name == Input.Subject
+                Text = s.Name
             }).ToList();
-            if (Subjects.Count == 1 && string.IsNullOrEmpty(Input.Subject))
+
+            if (Subjects.Count == 1)
             {
                 ModelState.Remove("Input.Subject");
-                Input.Subject = Subjects[0].Value;
+                Input!.Subject = Subjects[0].Value;
             }
+        }
 
-            var levelsRaw = FilterLevels(_BooksRaw.Select(b => b.Level).Distinct()).ToList();
-            Levels = levelsRaw.Select(l => new SelectListItem
+        private async Task LoadLevelsSelect()
+        {
+            var levels = string.IsNullOrWhiteSpace(Input?.Title)
+                ? new() { false, true }
+                : await _staticDataManager.GetLevelsByBookTitleAsync(Input.Title);
+
+            Levels = levels.Select(l => new SelectListItem
             {
                 Value = (l == true) ? "Rozszerzenie" : "Podstawa",
-                Text = (l == true) ? "Rozszerzenie" : "Podstawa",
-                Selected = ((l == true) ? "Rozszerzenie" : "Podstawa") == Input.Level
+                Text = (l == true) ? "Rozszerzenie" : "Podstawa"
             }).OrderBy(v => v.Value).ToList();
-            if (Levels.Count == 1 && string.IsNullOrEmpty(Input.Level))
+
+            if (Levels.Count == 1)
             {
                 ModelState.Remove("Input.Level");
-                Input.Level = Levels[0].Value;
+                Input!.Level = Levels[0].Value;
             }
         }
 
-        public async Task<IActionResult> OnGetParamsAsync(bool firstLoad, [ValidateNever] InputModel input)
+        public async Task<IActionResult> OnGetParamsAsync(bool firstLoad, [ValidateNever] Shared.ItemEditModel input)
         {
-            if (input != null)
-            {
-                Input = input;
-                if (Input.ItemId > 0)
-                {
-                    var item = await _context.Items.FindAsync(Input.ItemId);
-                    if (item != null)
-                    {
-                        Input.ExistingImageBlobName = item.Photo;
-                    }
-                }
-            }
+            Input = input;
+
             IsFirstLoad = firstLoad;
-            await LoadFilteredDropdownOptions();
-            return Partial("_FormSelectsEdit", this);
+            await LoadSelects();
+            return Partial("_FormSelects", this);
         }
 
-        private IEnumerable<Grade> FilterGrades(IEnumerable<Grade> query)
+        public async Task<IActionResult> OnPostAsync(int id)
         {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : _BooksRaw.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).SelectMany(b => b.Grades).Distinct();
-        }
+            var user = await _userManager.GetUserAsync(User);
 
-        private IEnumerable<Subject> FilterSubjects(IEnumerable<Subject> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : _BooksRaw.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).Select(b => b.Subject).Distinct();
-        }
-
-        private IEnumerable<bool?> FilterLevels(IEnumerable<bool?> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : _BooksRaw.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase)).Select(b => b.Level).Distinct();
-        }
-
-        private IQueryable<Book> ApplyFilters(IQueryable<Book> query)
-        {
-            query = ApplyTitleFilter(query);
-            query = ApplyGradeFilter(query);
-            query = ApplySubjectFilter(query);
-            query = ApplyLevelFilter(query);
-
-            return query;
-        }
-
-        private IQueryable<Book> ApplyTitleFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Title)
-                ? query
-                : query.Where(b => b.Title.Equals(Input.Title, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private IQueryable<Book> ApplyGradeFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Grade)
-                ? query
-                : query.Where(b => b.Grades.Any(g => g.GradeNumber == Input.Grade));
-        }
-
-        private IQueryable<Book> ApplySubjectFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Subject)
-                ? query
-                : query.Where(b => b.Subject.Name == Input.Subject);
-        }
-
-        private IQueryable<Book> ApplyLevelFilter(IQueryable<Book> query)
-        {
-            return string.IsNullOrWhiteSpace(Input?.Level)
-                ? query
-                : query.Where(b => b.Level == Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase));
-        }
-
-        public async Task<IActionResult> OnPostAsync()
-        {
-            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
-
-            if (!isUserAuthenticated)
+            if (user == null)
             {
                 return Redirect("/Identity/Account/Login");
             }
 
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            if (Input == null)
             {
-                return Redirect("/Identity/Account/Login");
+                ModelState.AddModelError(string.Empty, "Nieprawidłowe dane wejściowe. Proszę spróbować ponownie.");
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
             }
 
-            ItemToEdit = await _context.Items
-                .Include(i => i.Book)
-                .Include(i => i.User)
-                .FirstOrDefaultAsync(i => i.Id == Input.ItemId && i.User.Id == userId);
+            if (!ModelState.IsValid)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
+            }            
+
+            ItemToEdit = await _itemManager.GetItemAsync(id);
 
             if (ItemToEdit == null)
             {
                 return NotFound();
             }
 
-            Input.ExistingImageBlobName = ItemToEdit.Photo;
+            if (ItemToEdit.User.Id != user.Id)
+            {
+                return Forbid();
+            }
 
             if (!ModelState.IsValid)
             {
                 Response.StatusCode = StatusCodes.Status400BadRequest;
-                await LoadAllDropdownOptions();
-                Books.ForEach(b => b.Selected = b.Value == Input.Title);
-                Subjects.ForEach(s => s.Selected = s.Value == Input.Subject);
-                Grades.ForEach(g => g.Selected = g.Value == Input.Grade);
-                Levels.ForEach(l => l.Selected = l.Value == Input.Level);
                 return Page();
             }
+            
+            var parameters = await _staticDataManager.ConvertParametersAsync(
+                Input.Title,
+                Input.Grade,
+                Input.Subject,
+                Input.Level
+            );
 
-            if (Input.Image != null && Input.Image.Length > 0)
+            var result = await _itemManager.UpdateItemAsync(ItemToEdit.Id, new ItemManager.ItemModel(
+                user,
+                parameters,
+                Input.Description,
+                Input.State,
+                Input.Price,
+                Input.Image?.OpenReadStream(),
+                Path.GetExtension(Input.Image?.FileName),
+                ItemToEdit.Photo
+            ));
+
+            if (result.HasFlag(ItemManager.Status.Error))
             {
-                var containerName = _config["AzureStorage:ContainerName"];
-                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-                if (!string.IsNullOrEmpty(ItemToEdit.Photo))
+                if (result.HasFlag(ItemManager.Status.InvalidTitle))
                 {
-                    try
-                    {
-                        var oldBlobName = Path.GetFileName(new Uri(ItemToEdit.Photo).LocalPath);
-                        var oldBlobClient = containerClient.GetBlobClient(oldBlobName);
-                        await oldBlobClient.DeleteIfExistsAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Błąd podczas usuwania starego zdjęcia: {ex.Message}");
-                    }
+                    ModelState.AddModelError("Input.Title", "Wybrana książka nie została znaleziona w bazie. Proszę wybrać tytuł z listy.");
+                }
+                if (result.HasFlag(ItemManager.Status.InvalidSubject))
+                {
+                    ModelState.AddModelError("Input.Subject", "Wybrany przedmiot nie pasuje do wybranej książki.");
+                }
+                if (result.HasFlag(ItemManager.Status.InvalidGrade))
+                {
+                    ModelState.AddModelError("Input.Grade", "Wybrana klasa nie pasuje do wybranej książki.");
+                }
+                if (result.HasFlag(ItemManager.Status.InvalidLevel))
+                {
+                    ModelState.AddModelError("Input.Level", "Wybrany poziom nie pasuje do wybranej książki.");
+                }
+                if (result.HasFlag(ItemManager.Status.NotFound))
+                {
+                    ModelState.AddModelError(string.Empty, "Nie znaleziono pasującej książki. Proszę sprawdzić wprowadzone dane.");
                 }
 
-                await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Input.Image.FileName);
-                var blobClient = containerClient.GetBlobClient(fileName);
-
-                using (var stream = Input.Image.OpenReadStream())
-                {
-                    await blobClient.UploadAsync(stream, overwrite: true);
-                }
-                ItemToEdit.Photo = blobClient.Uri.ToString();
-            }
-            else if (!string.IsNullOrEmpty(Input.ExistingImageBlobName))
-            {
-                ItemToEdit.Photo = Input.ExistingImageBlobName;
-            }
-            else
-            {
-                ItemToEdit.Photo = string.Empty;
-            }
-
-            var book = await _context.Books
-                .Include(b => b.Subject)
-                .Include(b => b.Grades)
-                .Where(b => b.Title.Equals(Input.Title)
-                            && b.Subject.Name.Equals(Input.Subject)
-                            && b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade))
-                            && b.Level == Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefaultAsync();
-
-            if (book == null)
-            {
-                ModelState.AddModelError(string.Empty, "Nie znaleziono pasującej książki. Proszę sprawdzić wprowadzone dane.");
                 Response.StatusCode = StatusCodes.Status400BadRequest;
-                await LoadAllDropdownOptions();
-                Books.ForEach(b => b.Selected = b.Value == Input.Title);
-                Subjects.ForEach(s => s.Selected = s.Value == Input.Subject);
-                Grades.ForEach(g => g.Selected = g.Value == Input.Grade);
-                Levels.ForEach(l => l.Selected = l.Value == Input.Level);
                 return Page();
             }
-
-            ItemToEdit.Book = book!;
-            ItemToEdit.Description = Input.Description;
-            ItemToEdit.State = Input.State;
-            ItemToEdit.Price = Input.Price;
-            ItemToEdit.DateTime = DateTime.Now;
-
-            _context.Items.Update(ItemToEdit);
-            await _context.SaveChangesAsync();
 
             return RedirectToPage("/Book", new { id = ItemToEdit.Id });
         }
