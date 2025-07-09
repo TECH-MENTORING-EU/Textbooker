@@ -11,13 +11,46 @@ public class ItemManager
 {
     private readonly DataContext _context;
     private readonly IMemoryCache _cache;
+    private readonly StaticDataManager _staticDataManager;
+    private readonly PhotosManager _photosManager;
+
+    [Flags]
+    public enum Status
+    {
+        Success = 0,
+        Error = 1,
+        InvalidTitle = 2,
+        InvalidSubject = 4,
+        InvalidGrade = 8,
+        InvalidLevel = 16,
+        NotFound = 32
+    }
+
+    public record Result(Status Status, int ItemId)
+    {
+        public static implicit operator Result(Status status) => new Result(status, -1);
+        public static implicit operator Result(int itemId) => new Result(Status.Success, itemId);
+    };
+    
+
 
     public record Parameters(string? Search, Grade? Grade, Subject? Subject, bool? Level, decimal? MinPrice, decimal? MaxPrice);
+    public record ItemModel(
+        User User,
+        StaticDataManager.Parameters Parameters,
+        string Description,
+        string State,
+        decimal Price,
+        Stream ImageStream,
+        string ImageFileExtension
+    );
 
-    public ItemManager(DataContext context, IMemoryCache cache)
+    public ItemManager(DataContext context, IMemoryCache cache, StaticDataManager staticDataManager, PhotosManager photosManager)
     {
         _context = context;
         _cache = cache;
+        _staticDataManager = staticDataManager;
+        _photosManager = photosManager;
     }
 
     public async Task<Item?> GetItemAsync(int id)
@@ -116,11 +149,57 @@ public class ItemManager
             .ToListAsync();
     }
 
-    public async Task AddItemAsync(Item item)
+    public async Task<Result> AddItemAsync(ItemModel model)
+    {
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        if (model.Parameters.Title == null
+            || model.Parameters.Grade == null
+            || model.Parameters.Subject == null)
+            return Status.Error;
+
+        var title = model.Parameters.Title;
+
+        var books = await _staticDataManager.GetBooksByTitleAsync(title);
+        if (books.Count == 0) return Status.InvalidTitle;
+
+        Status status = 0;
+
+        var subjects = await _staticDataManager.GetSubjectsByBookTitleAsync(title);
+        if (!subjects.Contains(model.Parameters.Subject)) status |= Status.InvalidSubject | Status.Error;
+
+        var grades = await _staticDataManager.GetGradesByBookTitleAsync(title);
+        if (!grades.Contains(model.Parameters.Grade)) status |= Status.InvalidGrade | Status.Error;
+
+        var levels = await _staticDataManager.GetLevelsByBookTitleAsync(title);
+        if (!levels.Contains(model.Parameters.Level)) status |= Status.InvalidLevel | Status.Error;
+
+        var book = (await _staticDataManager.GetBooksByParamsAsync(model.Parameters)).FirstOrDefault();
+        if (book == null) status |= Status.NotFound | Status.Error;
+
+        if ((status & Status.Error) != 0) return status;
+
+        var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream, model.ImageFileExtension);
+        var item = new Item
+        {
+            Book = book!,
+            User = model.User,
+            Description = model.Description,
+            State = model.State,
+            Price = model.Price,
+            DateTime = DateTime.Now,
+            Photo = photoUri.ToString()
+        };
+
+        return await AddItemNVAsync(item);
+    }
+
+    private async Task<int> AddItemNVAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
         _context.Items.Add(item);
         await _context.SaveChangesAsync();
+        return item.Id;
     }
 
     public async Task UpdateItemAsync(Item item)

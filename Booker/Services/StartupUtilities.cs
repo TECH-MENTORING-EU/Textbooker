@@ -26,6 +26,7 @@ namespace Booker.Services
             services.AddScoped<ItemManager>();
             services.AddScoped<FavoritesManager>();
             services.AddScoped<StaticDataManager>();
+            services.AddScoped<PhotosManager>();
             
             return services;
         }

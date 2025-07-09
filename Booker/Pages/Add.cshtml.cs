@@ -21,12 +21,10 @@ namespace Booker.Pages
 {
     public class BookAddingModel : PageModel
     {
-        private readonly DataContext _context;
-        private readonly BlobServiceClient _blobServiceClient;
-        private readonly IConfiguration _config;
-        private readonly IMemoryCache _cache;
         private readonly UserManager<User> _userManager;
         private readonly StaticDataManager _staticDataManager;
+        private readonly ItemManager _itemManager;
+
 
         public bool IsFirstLoad { get; set; } = false;
         public required List<SelectListItem> Books { get; set; } = new();
@@ -61,14 +59,11 @@ namespace Booker.Pages
             public required IFormFile Image { get; set; } = null!;
         }
 
-        public BookAddingModel(DataContext context, BlobServiceClient blobServiceClient, IConfiguration config, IMemoryCache cache, UserManager<User> userManager, StaticDataManager staticDataManager)
+        public BookAddingModel(UserManager<User> userManager, StaticDataManager staticDataManager, ItemManager itemManager)
         {
-            _context = context;
-            _blobServiceClient = blobServiceClient;
-            _config = config;
-            _cache = cache;
             _userManager = userManager;
             _staticDataManager = staticDataManager;
+            _itemManager = itemManager;
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -195,17 +190,11 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            var user = await _userManager.GetUserAsync(User);
 
-            if (!isUserAuthenticated)
+            if (user == null)
             {
                 return Redirect("/Identity/Account/Login");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                Response.StatusCode = StatusCodes.Status400BadRequest;
-                return Page();
             }
 
             if (Input == null)
@@ -215,10 +204,9 @@ namespace Booker.Pages
                 return Page();
             }
 
-
             if (Input.Image == null || Input.Image.Length == 0)
             {
-                ModelState.AddModelError(nameof(Input.Image), "Proszę przesłać zdjęcie książki.");
+                ModelState.AddModelError("Input.Image", "Proszę przesłać zdjęcie książki.");
             }
 
             if (!ModelState.IsValid)
@@ -227,106 +215,51 @@ namespace Booker.Pages
                 return Page();
             }
 
-            var query = _context.Books
-                                     .Include(b => b.Subject)
-                                     .Include(b => b.Grades)
-                                     .Where(b => b.Title.Equals(Input.Title));
+            var parameters = await _staticDataManager.ConvertParametersAsync(
+                Input.Title,
+                Input.Grade,
+                Input.Subject,
+                Input.Level
+            );
 
-            if (!await query.AnyAsync())
+            var result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
+                user,
+                parameters,
+                Input.Description,
+                Input.State,
+                Input.Price,
+                Input.Image!.OpenReadStream(),
+                Path.GetExtension(Input.Image.FileName)
+            ));
+
+            if (result.Status.HasFlag(ItemManager.Status.Error))
             {
-                ModelState.AddModelError(nameof(Input.Title), "Wybrana książka nie została znaleziona w bazie. Proszę wybrać tytuł z listy.");
-                await OnGetAsync();
-                return Page();
-            }
+                if (result.Status.HasFlag(ItemManager.Status.InvalidTitle))
+                {
+                    ModelState.AddModelError("Input.Title", "Wybrana książka nie została znaleziona w bazie. Proszę wybrać tytuł z listy.");
+                }
+                if (result.Status.HasFlag(ItemManager.Status.InvalidSubject))
+                {
+                    ModelState.AddModelError("Input.Subject", "Wybrany przedmiot nie pasuje do wybranej książki.");
+                }
+                if (result.Status.HasFlag(ItemManager.Status.InvalidGrade))
+                {
+                    ModelState.AddModelError("Input.Grade", "Wybrana klasa nie pasuje do wybranej książki.");
+                }
+                if (result.Status.HasFlag(ItemManager.Status.InvalidLevel))
+                {
+                    ModelState.AddModelError("Input.Level", "Wybrany poziom nie pasuje do wybranej książki.");
+                }
+                if (result.Status.HasFlag(ItemManager.Status.NotFound))
+                {
+                    ModelState.AddModelError(string.Empty, "Nie znaleziono pasującej książki. Proszę sprawdzić wprowadzone dane.");
+                }
 
-            var querySubject = query.Where(b => b.Subject.Name.Equals(Input.Subject));
-
-            if (!await querySubject.AnyAsync())
-            {
-                ModelState.AddModelError(nameof(Input.Subject), "Wybrany przedmiot nie pasuje do wybranej książki.");
-            }
-
-            var queryGrades = query.Where(b => b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade)));
-
-            if (!await queryGrades.AnyAsync())
-            {
-                ModelState.AddModelError(nameof(Input.Grade), "Wybrana klasa nie pasuje do wybranej książki.");
-            }
-
-            bool bookLevel = Input.Level.Equals("Rozszerzenie", StringComparison.OrdinalIgnoreCase);
-            var queryLevel = query.Where(b => b.Level == bookLevel);
-
-            if (!await queryLevel.AnyAsync())
-            {
-                ModelState.AddModelError(nameof(Input.Level), "Wybrany poziom nie pasuje do wybranej książki.");
-            }
-
-            var book = await _context.Books
-                .Include(b => b.Subject)
-                .Include(b => b.Grades)
-                .Where(b => b.Title.Equals(Input.Title)
-                         && b.Subject.Name.Equals(Input.Subject)
-                         && b.Grades.Any(g => g.GradeNumber.Equals(Input.Grade))
-                         && b.Level == bookLevel)
-                .FirstOrDefaultAsync();
-
-
-            if (book == null)
-            {
-                ModelState.AddModelError(string.Empty, "Nie znaleziono pasującej książki. Proszę sprawdzić wprowadzone dane.");
-            }
-
-            if (!ModelState.IsValid)
-            {
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return Page();
             }
 
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString))
-            {
-                return Redirect("/Identity/Account/Login");
-            }
-
-            if (!int.TryParse(userIdString, out int userId))
-            {
-                return Redirect("/Identity/Account/Login");
-            }
-
-            var user= await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                return Redirect("/Identity/Account/Login");
-            }
-
-            var containerName = _config["AzureStorage:ContainerName"];
-            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-            await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
-
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Input.Image!.FileName);
-            var blobClient = containerClient.GetBlobClient(fileName);
-
-            using (var stream = Input.Image.OpenReadStream())
-            {
-                await blobClient.UploadAsync(stream, overwrite: true);
-            }
-
-            var item = new Item
-            {
-                Book = book!,
-                User = user,
-                Description = Input.Description,
-                State = Input.State,
-                Price = Input.Price,
-                DateTime = DateTime.Now,
-                Photo = blobClient.Uri.ToString()
-            };
-
-            _context.Items.Add(item);
-            await _context.SaveChangesAsync();
-
-            return Redirect("/Book/" + item.Id);
+            return Redirect("/Book/" + result.ItemId);
         }
     }
 }

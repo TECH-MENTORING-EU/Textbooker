@@ -70,17 +70,18 @@ namespace Booker.Pages
             await LoadSelects();
 
             var convParams = await _staticDataManager.ConvertParametersAsync(
+                null,
                 Input?.Grade,
                 Input?.Subject,
                 Input?.Level
-                );
+            );
 
             Params = new FilterParameters(
                 convParams.Grade,
                 convParams.Subject,
                 convParams.Level,
                 pageNumber
-                );
+            );
 
             var params2 = new ItemManager.Parameters(
                 Input?.Search,
@@ -89,7 +90,7 @@ namespace Booker.Pages
                 convParams.Level,
                 Input?.MinPrice,
                 Input?.MaxPrice
-                );
+            );
 
             var totalItems = await _itemManager.GetItemsCountByParamsAsync(params2);
             bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
