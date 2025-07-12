@@ -20,10 +20,6 @@ namespace Booker.Pages
 {
     public class EditModel : PageModel
     {
-        private readonly DataContext _context;
-        private readonly BlobServiceClient _blobServiceClient;
-        private readonly IConfiguration _config;
-        private readonly IMemoryCache _cache;
         private readonly UserManager<User> _userManager;
         private readonly ItemManager _itemManager;
         private readonly StaticDataManager _staticDataManager;
@@ -43,12 +39,8 @@ namespace Booker.Pages
 
         public Item? ItemToEdit { get; set; }
 
-        public EditModel(DataContext context, BlobServiceClient blobServiceClient, IConfiguration config, IMemoryCache cache, UserManager<User> userManager, ItemManager itemManager, StaticDataManager staticDataManager)
+        public EditModel(UserManager<User> userManager, ItemManager itemManager, StaticDataManager staticDataManager)
         {
-            _context = context;
-            _blobServiceClient = blobServiceClient;
-            _config = config;
-            _cache = cache;
             _userManager = userManager;
             _itemManager = itemManager;
             _staticDataManager = staticDataManager;
@@ -293,46 +285,26 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostDeleteAsync(int itemId)
         {
-            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            var user = await _userManager.GetUserAsync(User);
 
-            if (!isUserAuthenticated)
+            if (user == null)
             {
                 return Redirect("/Identity/Account/Login");
             }
 
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            {
-                return Redirect("/Identity/Account/Login");
-            }
-
-            var itemToDelete = await _context.Items
-                .Include(i => i.User)
-                .FirstOrDefaultAsync(i => i.Id == itemId && i.User.Id == userId);
+            var itemToDelete = await _itemManager.GetItemAsync(itemId);
 
             if (itemToDelete == null)
             {
                 return NotFound();
             }
 
-            if (!string.IsNullOrEmpty(itemToDelete.Photo))
+            if (itemToDelete.User.Id != user.Id)
             {
-                try
-                {
-                    var containerName = _config["AzureStorage:ContainerName"];
-                    var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-                    var blobName = Path.GetFileName(new Uri(itemToDelete.Photo).LocalPath);
-                    var blobClient = containerClient.GetBlobClient(blobName);
-                    await blobClient.DeleteIfExistsAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Błąd podczas usuwania zdjęcia z Azure Blob Storage: {ex.Message}");
-                }
+                return Forbid();
             }
 
-            _context.Items.Remove(itemToDelete);
-            await _context.SaveChangesAsync();
+            await _itemManager.DeleteItemAsync(itemId);
 
             return RedirectToPage("/Index");
         }

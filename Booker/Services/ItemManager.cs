@@ -251,6 +251,7 @@ public class ItemManager
     {
         var item = await GetItemAsync(id);
         if (item == null) return;
+        await _photosManager.DeletePhotoAsync(item.Photo);
         _context.Items.Remove(item);
         await _context.SaveChangesAsync();
     }
