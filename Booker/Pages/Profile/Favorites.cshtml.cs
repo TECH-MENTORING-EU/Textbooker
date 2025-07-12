@@ -13,14 +13,12 @@ namespace Booker.Pages.Profile
 {
     public class FavoritesModel : PageModel
     {
-        private readonly DataContext _context;
         private readonly UserManager<User> _userManager;
         private readonly FavoritesManager _favoritesManager;
         private readonly ItemManager _itemManager;
         const int PageSize = 25;
-        public FavoritesModel(DataContext context, UserManager<User> userManager, FavoritesManager favoritesManager, ItemManager itemManager)
+        public FavoritesModel(UserManager<User> userManager, FavoritesManager favoritesManager, ItemManager itemManager)
         {
-            _context = context;
             _userManager = userManager;
             _favoritesManager = favoritesManager;
             _itemManager = itemManager;

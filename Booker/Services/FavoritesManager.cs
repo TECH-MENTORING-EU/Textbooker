@@ -87,4 +87,17 @@ public class FavoritesManager
         return Status.Success;
     }
 
+    public async Task RemoveAllFavoritesAsync(int userId)
+    {
+        var user = await _context.Users.Include(u => u.Favorites).FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            return;
+        }
+
+        user.Favorites.Clear();
+        await _context.SaveChangesAsync();
+    }
+
 }
