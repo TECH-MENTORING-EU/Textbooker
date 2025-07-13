@@ -33,16 +33,27 @@ public class FavoritesManager
             .AsQueryable();
     }
 
-    public async Task<IEnumerable<int>> GetFavoriteIdsAsync(int userId)
+    public async Task<List<int>> GetFavoriteIdsAsync(int userId)
     {
-        return await GetFavoriteIdsQueryable(userId)
-            .ToListAsync();
+        if (!_cache.TryGetValue("favorites" + userId, out List<int>? ids))
+        {
+            ids = await GetFavoriteIdsQueryable(userId)
+                .ToListAsync();
+            _cache.Set("favorites" + userId, ids, TimeSpan.FromHours(1));
+        }
+
+        return ids!;
     }
 
+    private void InvalidateCache(int userId)
+    {
+        _cache.Remove("favorites" + userId);
+    }
+    
     public async Task<bool> IsFavoriteAsync(int userId, int itemId)
     {
-        return await GetFavoriteIdsQueryable(userId)
-            .AnyAsync(n => n == itemId);
+        return (await GetFavoriteIdsAsync(userId))
+            .Any(n => n == itemId);
     }
 
     public Task<Status> AddFavoriteAsync(int userId, int itemId)
@@ -84,6 +95,7 @@ public class FavoritesManager
         }
 
         await _context.SaveChangesAsync();
+        InvalidateCache(userId);
         return Status.Success;
     }
 
@@ -98,6 +110,7 @@ public class FavoritesManager
 
         user.Favorites.Clear();
         await _context.SaveChangesAsync();
+        InvalidateCache(userId);
     }
 
 }
