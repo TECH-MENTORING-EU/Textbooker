@@ -1,4 +1,9 @@
-﻿@model IndexModel.ItemModel
+﻿@model ItemGalleryViewComponent.ItemModel
+
+@using Microsoft.AspNetCore.Identity
+
+@inject FavoritesManager FavoritesManager
+@inject UserManager<User> UserManager
 
 @functions {
     private string DisplayLevel(bool? level)
@@ -18,6 +23,9 @@
 
         return $"Klasa {grade}";
     }
+
+    private int? _userId;
+    private int UserId {get => _userId ??= UserManager.GetUserId(User).IntOrDefault(); }
 }
 
 <article class="book-tile">
@@ -56,7 +64,7 @@
             }
         </div>
         <div class="fav">
-            @if (Model.IsCurrentUserOwner)
+            @if (UserId == Model.Item.User.Id)
             {
                 <a class="outline" role="button"
                    aria-label="Edytuj ogłoszenie"
@@ -70,7 +78,7 @@
                 @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
                 (
                     Model.Item.Id,
-                    Model.IsFavorite,
+                    await FavoritesManager.IsFavoriteAsync(UserId, Model.Item.Id),
                     false
                 ))
             }

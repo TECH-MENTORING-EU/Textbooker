@@ -21,13 +21,7 @@ namespace Booker.Pages
         private readonly StaticDataManager _staticDataManager;
         private readonly UserManager<User> _userManager;
 
-        const int PageSize = 25;
-
-        public record PagedListViewModel(List<ItemModel> Items, FilterParameters Params, bool HasMorePages);
-        public record ItemModel(Item Item, FilterParameters Params, bool IsFavorite, bool IsCurrentUserOwner);
-        public record FilterParameters(Grade? Grade, Subject? Subject, bool? Level, int PageNumber);
-
-        public PagedListViewModel? ItemsList { get; set; }
+        public List<int> ItemIds { get; set; } = null!;
         public List<SelectListItem>? Grades { get; set; }
         public List<SelectListItem>? Subjects { get; set; }
         public List<SelectListItem> Levels => new List<SelectListItem>
@@ -35,8 +29,6 @@ namespace Booker.Pages
             new SelectListItem { Value = "Podstawa", Text = "Podstawa" },
             new SelectListItem { Value = "Rozszerzenie", Text = "Rozszerzenie" }
         };
-
-        public FilterParameters? Params { get; set; }
 
         public IndexModel(
             ILogger<IndexModel> logger,
@@ -76,13 +68,6 @@ namespace Booker.Pages
                 Input?.Level
             );
 
-            Params = new FilterParameters(
-                convParams.Grade,
-                convParams.Subject,
-                convParams.Level,
-                pageNumber
-            );
-
             var params2 = new ItemManager.Parameters(
                 Input?.Search,
                 convParams.Grade,
@@ -92,26 +77,16 @@ namespace Booker.Pages
                 Input?.MaxPrice
             );
 
-            var totalItems = await _itemManager.GetItemsCountByParamsAsync(params2);
-            bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
-
-            var userId = _userManager.GetUserId(User).IntOrDefault();
-            var userFavorites = await _favoritesManager.GetFavoriteIdsAsync(userId);
-
-            var itemsFromDb = await _itemManager.GetPagedItemsByParamsAsync(params2, pageNumber, PageSize);
-
-            var itemModels = itemsFromDb.Select(item => new ItemModel(
-                item,
-                Params,
-                userFavorites.Contains(item.Id),
-                item.User.Id == userId
-            )).ToList();
-
-            ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
+            ItemIds = (await _itemManager.GetItemsByParamsAsync(params2)).Select(i => i.Id).ToList();       
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
-                return Partial("_ItemGallery", ItemsList);
+                return ViewComponent("ItemGalleryViewComponent", new
+                {
+                    itemIds = ItemIds,
+                    parameters = params2,
+                    pageNumber = pageNumber
+                });
             }
             return Page();
         }
