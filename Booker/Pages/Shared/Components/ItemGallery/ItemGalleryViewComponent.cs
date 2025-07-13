@@ -2,6 +2,7 @@ using System;
 using Booker.Services;
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace Booker.Pages.Shared.Components.ItemGallery;
 
@@ -11,7 +12,7 @@ public class ItemGalleryViewComponent : ViewComponent
     const int PageSize = 25;
 
     public record ItemsListModel(
-        List<Item> Items,
+        IEnumerable<Item> Items,
         StaticDataManager.Parameters Params,
         int PageNumber,
         bool HasMorePages
@@ -34,7 +35,13 @@ public class ItemGalleryViewComponent : ViewComponent
         int pageSize = PageSize
     )
     {
-        var itemsFromDb = (await _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize)).ToList();
+        if (!itemIds.Any())
+        {
+            return Content("<p>Brak wyników...</p>");
+        }
+
+        var itemsFromDb = await _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize).ToListAsync();
+
 
         return View(
             new ItemsListModel(

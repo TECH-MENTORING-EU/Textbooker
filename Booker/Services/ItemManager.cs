@@ -54,100 +54,118 @@ public class ItemManager
         _photosManager = photosManager;
     }
 
-    public async Task<Item?> GetItemAsync(int id)
+    public Task<Item?> GetItemAsync(int id)
     {
-        return await _context.Items
+        return _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.User)
             .FirstOrDefaultAsync(i => i.Id == id);
     }
 
-    public async Task<IEnumerable<Item>> GetAllItemsAsync()
+    public IAsyncEnumerable<Item> GetAllItemsAsync()
     {
-        return await GetAllItemsQueryable()
+        return GetAllItemsQueryable()
             .OrderByDescending(i => i.DateTime)
-            .ToListAsync();
+            .AsAsyncEnumerable();
     }
 
-    public async Task<int> GetAllItemsCountAsync()
+    public Task<int> GetAllItemsCountAsync()
     {
-        return await GetAllItemsQueryable()
+        return GetAllItemsQueryable()
             .CountAsync();
     }
 
-    public async Task<IEnumerable<Item>> GetItemsByIdsAsync(IEnumerable<int> ids)
+    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids)
     {
-        return await GetAllItemsQueryable()
+        return GetAllItemsQueryable()
             .Where(i => ids.Contains(i.Id))
             .OrderByDescending(i => i.DateTime)
-            .ToListAsync();
+            .AsAsyncEnumerable();
     }
 
-    public async Task<IEnumerable<Item>> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize)
+    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize)
     {
-        return await GetAllItemsQueryable()
+        return GetAllItemsQueryable()
             .Where(i => ids.Contains(i.Id))
             .OrderByDescending(i => i.DateTime)
             .Skip(pageNumber * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .AsAsyncEnumerable();
     }       
 
-    public async Task<IEnumerable<Item>> GetItemsByParamsAsync(Parameters input)
+    public IAsyncEnumerable<Item> GetItemsByParamsAsync(Parameters input)
     {
         var query = GetAllItemsQueryable();
         query = ApplyFilters(query, input);
 
-        return await query
+        return query
             .OrderByDescending(i => i.DateTime)
-            .ToListAsync();
+            .AsAsyncEnumerable();
     }
 
-    public async Task<int> GetItemsCountByParamsAsync(Parameters input)
+    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input)
     {
         var query = GetAllItemsQueryable();
         query = ApplyFilters(query, input);
 
-        return await query
-            .CountAsync();
+        return query
+            .Select(i => i.Id)
+            .AsAsyncEnumerable();
     }
+        
 
-    public async Task<IEnumerable<Item>> GetPagedItemsByParamsAsync(Parameters input, int pageNumber, int pageSize)
+    public Task<int> GetItemsCountByParamsAsync(Parameters input)
     {
         var query = GetAllItemsQueryable();
         query = ApplyFilters(query, input);
 
-        return await query
+        return query.CountAsync();
+    }
+
+    public IAsyncEnumerable<Item> GetPagedItemsByParamsAsync(Parameters input, int pageNumber, int pageSize)
+    {
+        var query = GetAllItemsQueryable();
+        query = ApplyFilters(query, input);
+
+        return query
             .OrderByDescending(i => i.DateTime)
             .Skip(pageNumber * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .AsAsyncEnumerable();
     }
 
-    public async Task<IEnumerable<Item>> GetUserItemsAsync(int userId)
+    public IAsyncEnumerable<Item> GetUserItemsAsync(int userId)
     {
-        return await GetAllItemsQueryable()
+        return GetAllItemsQueryable()
             .Where(i => i.UserId == userId)
             .OrderByDescending(i => i.DateTime)
-            .ToListAsync();
+            .AsAsyncEnumerable();
     }
 
-    public async Task<int> GetUserItemsCountAsync(int userId)
+    public IAsyncEnumerable<int> GetUserItemIdsAsync(int userId)
     {
-        return await GetAllItemsQueryable()
+        return GetAllItemsQueryable()
+            .Where(i => i.UserId == userId)
+            .Select(i => i.Id)
+            .AsAsyncEnumerable();
+    }
+
+    public Task<int> GetUserItemsCountAsync(int userId)
+    {
+        return GetAllItemsQueryable()
             .Where(i => i.UserId == userId)
             .CountAsync();
     }
 
-    public async Task<IEnumerable<Item>> GetPagedUserItemsAsync(int userId, int pageNumber, int pageSize)
+    public IAsyncEnumerable<Item> GetPagedUserItemsAsync(int userId, int pageNumber, int pageSize)
     {
-        return await GetAllItemsQueryable()
+        return GetAllItemsQueryable()
             .Where(i => i.UserId == userId)
             .OrderByDescending(i => i.DateTime)
             .Skip(pageNumber * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .AsAsyncEnumerable();
     }
 
     private async Task<Result> ValidateItemModelAsync(ItemModel model)

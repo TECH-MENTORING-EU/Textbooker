@@ -53,7 +53,7 @@ namespace Booker.Pages.Profile
 
             Params = new StaticDataManager.Parameters(null, null, null, null);
 
-            ItemIds = (await _favoritesManager.GetFavoriteIdsAsync(Id.Value)).ToList();
+            ItemIds = await _favoritesManager.GetFavoriteIdsAsync(Id.Value);
 
             UserInfo = new UserModel(user, user.Id == currentUserId);
 

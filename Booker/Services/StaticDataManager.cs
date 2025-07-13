@@ -1,5 +1,6 @@
 using System;
 using Booker.Data;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -105,7 +106,7 @@ public class StaticDataManager
     }
 
 
-    private IEnumerable<Book> ApplyFilters(IEnumerable<Book> query, Parameters input)
+    private static IEnumerable<Book> ApplyFilters(IEnumerable<Book> query, Parameters input)
     {
         query = ApplyTitleFilter(query, input.Title);
         query = ApplyGradeFilter(query, input.Grade);
@@ -115,28 +116,28 @@ public class StaticDataManager
         return query;
     }
 
-    private IEnumerable<Book> ApplyTitleFilter(IEnumerable<Book> query, string? title)
+    private static IEnumerable<Book> ApplyTitleFilter(IEnumerable<Book> query, string? title)
     {
         return string.IsNullOrWhiteSpace(title)
             ? query
             : query.Where(b => b.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
     }
 
-    private IEnumerable<Book> ApplyGradeFilter(IEnumerable<Book> query, Grade? grade)
+    private static IEnumerable<Book> ApplyGradeFilter(IEnumerable<Book> query, Grade? grade)
     {
         return grade == null
             ? query
             : query.Where(b => b.Grades.Any(g => g.Id == grade.Id));
     }
 
-    private IEnumerable<Book> ApplySubjectFilter(IEnumerable<Book> query, Subject? subject)
+    private static IEnumerable<Book> ApplySubjectFilter(IEnumerable<Book> query, Subject? subject)
     {
         return subject == null
             ? query
             : query.Where(b => b.Subject.Id == subject.Id);
     }
 
-    private IEnumerable<Book> ApplyLevelFilter(IEnumerable<Book> query, bool? level)
+    private static IEnumerable<Book> ApplyLevelFilter(IEnumerable<Book> query, bool? level)
     {
         return level == null
             ? query

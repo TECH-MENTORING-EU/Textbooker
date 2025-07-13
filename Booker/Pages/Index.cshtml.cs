@@ -78,7 +78,7 @@ namespace Booker.Pages
                 Input?.MaxPrice
             );
 
-            ItemIds = (await _itemManager.GetItemsByParamsAsync(params2)).Select(i => i.Id).ToList();       
+            ItemIds = await _itemManager.GetItemIdsByParamsAsync(params2).ToListAsync();
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

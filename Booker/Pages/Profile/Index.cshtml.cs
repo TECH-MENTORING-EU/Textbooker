@@ -56,7 +56,7 @@ namespace Booker.Pages.Profile
                 return NotFound();
             }
 
-            var itemsIds = (await _itemManager.GetUserItemsAsync(Id.Value)).Select(i => i.Id).ToList();
+            ItemIds = await _itemManager.GetUserItemIdsAsync(Id.Value).ToListAsync();
 
             Params = new StaticDataManager.Parameters(null, null, null, null);
 
