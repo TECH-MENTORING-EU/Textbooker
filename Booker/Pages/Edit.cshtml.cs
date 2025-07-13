@@ -99,13 +99,16 @@ namespace Booker.Pages
                 Input.Level
             );
 
+            using var stream = Input.Image?.OpenReadStream();
+
+
             var result = await _itemManager.UpdateItemAsync(ItemToEdit.Id, new ItemManager.ItemModel(
                 user,
                 parameters,
                 Input.Description,
                 Input.State,
                 Input.Price,
-                Input.Image?.OpenReadStream(),
+                stream,
                 Path.GetExtension(Input.Image?.FileName),
                 ItemToEdit.Photo
             ));

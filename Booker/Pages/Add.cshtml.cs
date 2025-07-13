@@ -2,6 +2,7 @@
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
 
 
 namespace Booker.Pages
@@ -61,13 +62,15 @@ namespace Booker.Pages
                 Input.Level
             );
 
+            using var stream = Input.Image!.OpenReadStream();
+
             var result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
                 user,
                 parameters,
                 Input.Description,
                 Input.State,
                 Input.Price,
-                Input.Image!.OpenReadStream(),
+                stream,
                 Path.GetExtension(Input.Image.FileName)
             ));
 
