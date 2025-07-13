@@ -1,7 +1,7 @@
-﻿@model BookAddingModel
+﻿@model Shared.IBookForm
 
 @{
-    const string include = "#add-form :not([name = '__RequestVerificationToken'])";
+    const string include = ":is(#add-form,#edit-form) :not([name = '__RequestVerificationToken'])";
     string onLoad = Model.IsFirstLoad ? string.Empty : "v.isFieldValid(this)";
 }
 
