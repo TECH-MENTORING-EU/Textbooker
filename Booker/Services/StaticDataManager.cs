@@ -126,14 +126,14 @@ public class StaticDataManager
     {
         return grade == null
             ? query
-            : query.Where(b => b.Grades.Any(g => g == grade));
+            : query.Where(b => b.Grades.Any(g => g.Id == grade.Id));
     }
 
     private IEnumerable<Book> ApplySubjectFilter(IEnumerable<Book> query, Subject? subject)
     {
         return subject == null
             ? query
-            : query.Where(b => b.Subject == subject);
+            : query.Where(b => b.Subject.Id == subject.Id);
     }
 
     private IEnumerable<Book> ApplyLevelFilter(IEnumerable<Book> query, bool? level)

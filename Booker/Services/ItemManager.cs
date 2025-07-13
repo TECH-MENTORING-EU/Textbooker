@@ -287,14 +287,14 @@ public class ItemManager
     {
         return grade == null
             ? query
-            : query.Where(i => i.Book.Grades.Any(g => g == grade));
+            : query.Where(i => i.Book.Grades.Any(g => g.Id == grade.Id));
     }
 
     private static IQueryable<Item> ApplySubjectFilter(IQueryable<Item> query, Subject? subject)
     {
         return subject == null
             ? query
-            : query.Where(i => i.Book.Subject == subject);
+            : query.Where(i => i.Book.Subject.Id == subject.Id);
     }
 
     private static IQueryable<Item> ApplyPriceFilters(IQueryable<Item> query, decimal? minPrice, decimal? maxPrice)
