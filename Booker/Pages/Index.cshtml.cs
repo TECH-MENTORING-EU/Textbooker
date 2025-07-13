@@ -22,6 +22,7 @@ namespace Booker.Pages
         private readonly UserManager<User> _userManager;
 
         public List<int> ItemIds { get; set; } = null!;
+        public StaticDataManager.Parameters Params { get; set; } = null!;
         public List<SelectListItem>? Grades { get; set; }
         public List<SelectListItem>? Subjects { get; set; }
         public List<SelectListItem> Levels => new List<SelectListItem>
@@ -61,7 +62,7 @@ namespace Booker.Pages
         {
             await LoadSelects();
 
-            var convParams = await _staticDataManager.ConvertParametersAsync(
+            Params = await _staticDataManager.ConvertParametersAsync(
                 null,
                 Input?.Grade,
                 Input?.Subject,
@@ -70,9 +71,9 @@ namespace Booker.Pages
 
             var params2 = new ItemManager.Parameters(
                 Input?.Search,
-                convParams.Grade,
-                convParams.Subject,
-                convParams.Level,
+                Params.Grade,
+                Params.Subject,
+                Params.Level,
                 Input?.MinPrice,
                 Input?.MaxPrice
             );
@@ -84,7 +85,7 @@ namespace Booker.Pages
                 return ViewComponent("ItemGalleryViewComponent", new
                 {
                     itemIds = ItemIds,
-                    parameters = params2,
+                    parameters = Params,
                     pageNumber = pageNumber
                 });
             }

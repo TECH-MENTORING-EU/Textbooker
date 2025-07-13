@@ -27,8 +27,8 @@ namespace Booker.Pages.Profile
         public record ButtonState(int Id, bool IsFavorite, bool FullSize);
         [FromRoute]
         public int? Id { get; set; }
-        public PagedListViewModel? ItemsList { get; set; }
-        public FilterParameters? Params { get; set; }
+        public List<int>? ItemIds { get; set; }
+        public StaticDataManager.Parameters Params { get; set; } = null!;
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
@@ -51,31 +51,20 @@ namespace Booker.Pages.Profile
                 return NotFound();
             }
 
-            Params = new FilterParameters(null, null, null, pageNumber);
+            Params = new StaticDataManager.Parameters(null, null, null, null);
 
-            var itemIds = await _favoritesManager.GetFavoriteIdsAsync(Id.Value);
+            ItemIds = (await _favoritesManager.GetFavoriteIdsAsync(Id.Value)).ToList();
 
-            var totalItems = itemIds.Count();
-            bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
-
-            var userFavorites = await _favoritesManager.GetFavoriteIdsAsync(currentUserId);
-
-            var itemsFromDb = await _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, PageSize);
-
-            var itemModels = itemsFromDb.Select(i => new ItemModel
-            (
-                i,
-                Params,
-                userFavorites.Contains(i.Id),
-                currentUserId == i.Id
-            )).ToList();
-
-            ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
             UserInfo = new UserModel(user, user.Id == currentUserId);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
-                return Partial("_ItemGallery", ItemsList);
+                return ViewComponent("ItemGalleryViewComponent", new
+                {
+                    itemIds = ItemIds,
+                    parameters = Params,
+                    pageNumber = pageNumber
+                });
             }
             return Page();
         }

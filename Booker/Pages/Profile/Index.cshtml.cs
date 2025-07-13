@@ -30,8 +30,9 @@ namespace Booker.Pages.Profile
         [FromRoute]
         public int? Id { get; set; }
 
-        public PagedListViewModel? ItemsList { get; set; }
-        public FilterParameters? Params { get; set; }
+        public List<int>? ItemIds { get; set; }
+        public StaticDataManager.Parameters Params { get; set; } = null!;
+
         public record UserModel(User RequestUser, bool IsCurrentUser);
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
@@ -55,28 +56,20 @@ namespace Booker.Pages.Profile
                 return NotFound();
             }
 
-            Params = new FilterParameters(null, null, null, pageNumber);
+            var itemsIds = (await _itemManager.GetUserItemsAsync(Id.Value)).Select(i => i.Id).ToList();
 
-            var totalItems = await _itemManager.GetUserItemsCountAsync(Id.Value);
-            bool hasMorePages = totalItems > (pageNumber + 1) * PageSize;
+            Params = new StaticDataManager.Parameters(null, null, null, null);
 
-            var userFavorites = await _favoritesManager.GetFavoriteIdsAsync(currentUserId);
-
-            var itemsFromDb = await _itemManager.GetPagedUserItemsAsync(Id.Value, pageNumber, PageSize);
-
-            var itemModels = itemsFromDb.Select(item => new ItemModel(
-                item,
-                Params,
-                userFavorites.Contains(item.Id),
-                currentUserId == Id
-            )).ToList();
-
-            ItemsList = new PagedListViewModel(itemModels, Params, hasMorePages);
             UserInfo = new UserModel(user, user.Id == currentUserId);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
-                return Partial("_ItemGallery", ItemsList);
+                return ViewComponent("ItemGalleryViewComponent", new
+                {
+                    itemIds = ItemIds,
+                    parameters = Params,
+                    pageNumber = pageNumber
+                });
             }
             return Page();
         }
