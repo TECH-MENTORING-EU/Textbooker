@@ -1,13 +1,9 @@
 using Booker.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System.Globalization;
-using System.Security.Claims;
 using Booker.Services;
-using Booker.Areas.Identity.Utilities;
 using Booker.Utilities;
 
 

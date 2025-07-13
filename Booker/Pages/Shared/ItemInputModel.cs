@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Configuration;
 
 namespace Booker.Pages.Shared;
 

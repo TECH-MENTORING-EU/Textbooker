@@ -1,14 +1,10 @@
-﻿using Azure.Storage.Blobs.Models;
-using Booker.Data;
+﻿using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using System.Security.Claims;
 using Booker.Utilities;
-using static Booker.Pages.IndexModel;
 
 namespace Booker.Pages.Profile
 {
@@ -16,15 +12,13 @@ namespace Booker.Pages.Profile
     {
         private readonly ILogger<IndexModel> _logger;
         private readonly UserManager<User> _userManager;
-        private readonly FavoritesManager _favoritesManager;
         private readonly ItemManager _itemManager;
         const int PageSize = 25;
 
-        public IndexModel(ILogger<IndexModel> logger, UserManager<User> userManager, FavoritesManager favoritesManager, ItemManager itemManager)
+        public IndexModel(ILogger<IndexModel> logger, UserManager<User> userManager, ItemManager itemManager)
         {
             _logger = logger;
             _userManager = userManager;
-            _favoritesManager = favoritesManager;
             _itemManager = itemManager;
         }
         [FromRoute]

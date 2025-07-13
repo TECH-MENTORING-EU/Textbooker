@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Booker.Data;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using Booker.Services;
 using Booker.Utilities;
 using Microsoft.AspNetCore.Identity;
-using static Booker.Pages.IndexModel;
+
 using static Booker.Pages.Profile.IndexModel;
 
 namespace Booker.Pages.Profile
@@ -15,13 +13,10 @@ namespace Booker.Pages.Profile
     {
         private readonly UserManager<User> _userManager;
         private readonly FavoritesManager _favoritesManager;
-        private readonly ItemManager _itemManager;
-        const int PageSize = 25;
-        public FavoritesModel(UserManager<User> userManager, FavoritesManager favoritesManager, ItemManager itemManager)
+        public FavoritesModel(UserManager<User> userManager, FavoritesManager favoritesManager)
         {
             _userManager = userManager;
             _favoritesManager = favoritesManager;
-            _itemManager = itemManager;
         }
 
         public record ButtonState(int Id, bool IsFavorite, bool FullSize);

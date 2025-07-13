@@ -2,13 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Booker.TagHelpers;
-using Microsoft.Extensions.Caching.Memory;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Security.Claims;
 using Booker.Services;
-using Booker.Utilities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Booker.Pages
@@ -17,9 +12,7 @@ namespace Booker.Pages
     {
         private readonly ILogger<IndexModel> _logger;
         private readonly ItemManager _itemManager;
-        private readonly FavoritesManager _favoritesManager;
         private readonly StaticDataManager _staticDataManager;
-        private readonly UserManager<User> _userManager;
 
         public List<int> ItemIds { get; set; } = null!;
         public StaticDataManager.Parameters Params { get; set; } = null!;
@@ -34,16 +27,12 @@ namespace Booker.Pages
         public IndexModel(
             ILogger<IndexModel> logger,
             ItemManager itemManager,
-            FavoritesManager favoritesManager,
-            StaticDataManager staticDataManager,
-            UserManager<User> userManager
+            StaticDataManager staticDataManager
             )
         {
             _logger = logger;
             _itemManager = itemManager;
-            _favoritesManager = favoritesManager;
             _staticDataManager = staticDataManager;
-            _userManager = userManager;
         }
 
         [FromQuery]

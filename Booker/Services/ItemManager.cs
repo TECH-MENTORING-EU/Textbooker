@@ -1,7 +1,4 @@
-using System;
-using System.Drawing.Imaging;
 using Booker.Data;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -10,7 +7,6 @@ namespace Booker.Services;
 public class ItemManager
 {
     private readonly DataContext _context;
-    private readonly IMemoryCache _cache;
     private readonly StaticDataManager _staticDataManager;
     private readonly PhotosManager _photosManager;
 
@@ -32,8 +28,6 @@ public class ItemManager
         public static implicit operator Result(int Id) => new Result(Status.Success, Id);
     };
     
-
-
     public record Parameters(string? Search, Grade? Grade, Subject? Subject, bool? Level, decimal? MinPrice, decimal? MaxPrice);
     public record ItemModel(
         User User,
@@ -46,10 +40,9 @@ public class ItemManager
         string? ExistingImageBlobName = null
     );
 
-    public ItemManager(DataContext context, IMemoryCache cache, StaticDataManager staticDataManager, PhotosManager photosManager)
+    public ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager)
     {
         _context = context;
-        _cache = cache;
         _staticDataManager = staticDataManager;
         _photosManager = photosManager;
     }
@@ -92,16 +85,6 @@ public class ItemManager
             .Skip(pageNumber * pageSize)
             .Take(pageSize)
             .AsAsyncEnumerable();
-    }       
-
-    public IAsyncEnumerable<Item> GetItemsByParamsAsync(Parameters input)
-    {
-        var query = GetAllItemsQueryable();
-        query = ApplyFilters(query, input);
-
-        return query
-            .OrderByDescending(i => i.DateTime)
-            .AsAsyncEnumerable();
     }
 
     public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input)
@@ -113,7 +96,6 @@ public class ItemManager
             .Select(i => i.Id)
             .AsAsyncEnumerable();
     }
-        
 
     public Task<int> GetItemsCountByParamsAsync(Parameters input)
     {
@@ -121,26 +103,6 @@ public class ItemManager
         query = ApplyFilters(query, input);
 
         return query.CountAsync();
-    }
-
-    public IAsyncEnumerable<Item> GetPagedItemsByParamsAsync(Parameters input, int pageNumber, int pageSize)
-    {
-        var query = GetAllItemsQueryable();
-        query = ApplyFilters(query, input);
-
-        return query
-            .OrderByDescending(i => i.DateTime)
-            .Skip(pageNumber * pageSize)
-            .Take(pageSize)
-            .AsAsyncEnumerable();
-    }
-
-    public IAsyncEnumerable<Item> GetUserItemsAsync(int userId)
-    {
-        return GetAllItemsQueryable()
-            .Where(i => i.UserId == userId)
-            .OrderByDescending(i => i.DateTime)
-            .AsAsyncEnumerable();
     }
 
     public IAsyncEnumerable<int> GetUserItemIdsAsync(int userId)
@@ -156,16 +118,6 @@ public class ItemManager
         return GetAllItemsQueryable()
             .Where(i => i.UserId == userId)
             .CountAsync();
-    }
-
-    public IAsyncEnumerable<Item> GetPagedUserItemsAsync(int userId, int pageNumber, int pageSize)
-    {
-        return GetAllItemsQueryable()
-            .Where(i => i.UserId == userId)
-            .OrderByDescending(i => i.DateTime)
-            .Skip(pageNumber * pageSize)
-            .Take(pageSize)
-            .AsAsyncEnumerable();
     }
 
     private async Task<Result> ValidateItemModelAsync(ItemModel model)

@@ -1,8 +1,6 @@
-using System;
 using Booker.Services;
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace Booker.Pages.Shared.Components.ItemGallery;
 
