@@ -15,7 +15,7 @@
 else if (Model.UserInfo.IsCurrentUser || Model.UserInfo.RequestUser.AreFavoritesPublic)
 {
     <section class="grid-gallery">
-        <partial name="_ItemGallery" for="ItemsList" />
+        <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
     </section>
 
     <section>

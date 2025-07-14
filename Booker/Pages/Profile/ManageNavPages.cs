@@ -5,7 +5,7 @@
 using System;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace  Booker.Pages.Profile
+namespace Booker.Pages.Profile
 {
     public static class ManageNavPages
     {

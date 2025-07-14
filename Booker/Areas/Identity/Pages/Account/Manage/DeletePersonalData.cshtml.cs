@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Booker.Data;
+using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -18,18 +19,18 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<DeletePersonalDataModel> _logger;
-        private readonly DataContext _context;
+        private readonly FavoritesManager _favoritesManager;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ILogger<DeletePersonalDataModel> logger,
-            DataContext context)
+            FavoritesManager favoritesManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
-            _context = context;
+            _favoritesManager = favoritesManager;
         }
 
         /// <summary>
@@ -91,11 +92,8 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             }
 
             var userId = await _userManager.GetUserIdAsync(user);
-            _context.Attach(user);
+            await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
 
-            await _context.Entry(user).Collection(u => u.Favorites).LoadAsync();
-            user.Favorites.Clear();
-            await _context.SaveChangesAsync();
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)

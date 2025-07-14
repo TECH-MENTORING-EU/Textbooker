@@ -2,6 +2,7 @@
 @model Booker.Pages.EditModel
 @{
     ViewData["Title"] = "Edytuj ogłoszenie";
+    const string include = "#edit-form :not([name = '__RequestVerificationToken'])";
 }
 
 <article>
@@ -15,15 +16,11 @@
     }
     else
     {
-        <form method="post" enctype="multipart/form-data" id="edit-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">
-            <input type="hidden" asp-for="Input.ItemId" />
-            <input type="hidden" asp-for="Input.ExistingImageBlobName" />
-
-            <div class="grid">
+        <form method="post" enctype="multipart/form-data" id="edit-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">            <div class="grid">
                 <section>
-                    @if (!string.IsNullOrEmpty(Model.Input.ExistingImageBlobName))
+                    @if (!string.IsNullOrEmpty(Model.ItemToEdit.Photo))
                     {
-                        <img src="@Model.Input.ExistingImageBlobName" alt="Podgląd obecnego zdjęcia książki" class="book-image-preview">
+                        <img src="@Model.ItemToEdit.Photo" alt="Podgląd obecnego zdjęcia książki" class="book-image-preview">
                     }
                     else
                     {
@@ -37,6 +34,8 @@
                 </section>
 
                 <section>
+                    <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
+
                     <label asp-for="Input.Title">Tytuł książki:</label>
                     <select asp-for="Input.Title" asp-items="Model.Books"></select>
                     <small><span asp-validation-for="Input.Title"></span></small>
