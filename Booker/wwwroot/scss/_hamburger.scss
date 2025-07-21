@@ -122,6 +122,8 @@
 
     svg {
         transition: transform var(--pico-transition);
+        width: 2em;
+        height: 100%;
     }
 }
 
@@ -135,7 +137,7 @@ nav[role=navigation] > [role=list] {
     background-color: transparent;
 }
 
-@media (max-width: map.get(map.get(pico.$breakpoints, "sm"), "viewport")) {
+@media (max-width: map.get(map.get(pico.$breakpoints, "md"), "viewport")) {
     nav[role=navigation] {
         position: sticky;
         top: 0;
@@ -145,6 +147,7 @@ nav[role=navigation] > [role=list] {
 
         #hamburger-btn ~ [role=list] {
             flex-direction: column-reverse;
+            background-color: var(--pico-background-color);
             transition: max-height var(#{$css-var-prefix}transition), opacity var(#{$css-var-prefix}transition), display var(#{$css-var-prefix}transition);
             transition-behavior: allow-discrete;
 
@@ -206,6 +209,10 @@ nav[role=navigation] > [role=list] {
             pointer-events: auto;
             transform: scaleY(1);
             opacity: 1;
+        }
+
+        details.dropdown[open] > summary::before {
+            display: none;
         }
     }
 }

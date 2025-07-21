@@ -1,17 +1,16 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Booker";
+    ViewData["Title"] = "TextBooker";
 }
 
 <section class="filter">
     <form novalidate
-        hx-get="/" 
-        hx-trigger="submit, input changed delay:500ms, change" 
-        hx-target=".grid-gallery" 
-        hx-push-url="true" 
-        hx-vals='{"pageNumber": 0}'
-    >
+          hx-get="/"
+          hx-trigger="submit, input changed delay:500ms, change"
+          hx-target=".grid-gallery"
+          hx-push-url="true"
+          hx-vals='{"pageNumber": 0}'>
         <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" />
 
         <details id="filterDetails">
@@ -56,7 +55,6 @@
             elem.value = enable ? value : "";
             elem.form.requestSubmit();
         }
-        
     }
 
     htmx.onLoad(function(content) {

@@ -14,6 +14,8 @@ using System.Globalization;
 using System.Net;
 using System.Threading.RateLimiting;
 
+ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
+
 var builder = WebApplication.CreateBuilder(args);
 
 IConfiguration configuration = new ConfigurationBuilder()
@@ -45,7 +47,7 @@ builder.Host.UseSerilog();
 builder.Services.AddRazorPages().AddViewOptions(options =>
 {
     options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
-});
+}).AddCustomRoutes();
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -102,6 +104,7 @@ else
 }
 
 app.UseRouting();
+app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,5 +1,5 @@
-﻿using Azure.Storage.Blobs; // Dodaj to using
-using Azure.Storage.Blobs.Models; // Dodaj to using
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration; // Dodaj to using
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;

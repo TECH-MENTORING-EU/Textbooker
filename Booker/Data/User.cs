@@ -7,7 +7,13 @@ namespace Booker.Data
     public class User : IdentityUser<int>
     {
         public required string School { get; set; }
-        public string? Photo {  get; set; }
+        public string? Photo { get; set; }
         public ICollection<Item> Items { get; } = new HashSet<Item>();
+        public ICollection<Item> Favorites { get; } = new HashSet<Item>();
+        public bool AreFavoritesPublic { get; set; } = false;
+        public bool DisplayEmail { get; set; } = true;
+        public bool DisplayWhatsapp { get; set; } = false;
+        public string? FbMessenger { get; set; }
+        public string? Instagram { get; set; }
     }
 }

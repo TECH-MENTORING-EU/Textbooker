@@ -18,15 +18,18 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<DeletePersonalDataModel> _logger;
+        private readonly DataContext _context;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            ILogger<DeletePersonalDataModel> logger)
+            ILogger<DeletePersonalDataModel> logger,
+            DataContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _context = context;
         }
 
         /// <summary>
@@ -46,7 +49,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required(ErrorMessage = "Pole {0} jest wymagane.")]
+            [Required]
             [DataType(DataType.Password)]
             public string Password { get; set; }
         }
@@ -87,8 +90,14 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            var result = await _userManager.DeleteAsync(user);
             var userId = await _userManager.GetUserIdAsync(user);
+            _context.Attach(user);
+
+            await _context.Entry(user).Collection(u => u.Favorites).LoadAsync();
+            user.Favorites.Clear();
+            await _context.SaveChangesAsync();
+
+            var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException($"Nieoczekiwany błąd przy usuwaniu użytkownika.");

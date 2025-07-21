@@ -1,4 +1,4 @@
-﻿@model Booker.Pages.IndexModel.ItemModel
+﻿@model IndexModel.ItemModel
 
 @functions {
     private string DisplayLevel(bool? level)
@@ -27,7 +27,7 @@
             <a asp-page="/Book" asp-route-id="@Model.Item.Id">
                 <h2>@Model.Item.Book.Title</h2>
             </a>
-        
+
             <p>@Model.Item.Price zł</p>
             <p>
                 <small>
@@ -56,9 +56,24 @@
             }
         </div>
         <div class="fav">
-            <button class="outline" aria-label="Dodaj do ulubionych" title="Dodaj do ulubionych">
-                <svg icon="star" variant="outline" aria-hidden="true"></svg>
-            </button>
+            @if (Model.IsCurrentUserOwner)
+            {
+                <a class="outline" role="button"
+                   aria-label="Edytuj ogłoszenie"
+                   title="Edytuj ogłoszenie"
+                   href="/Edit/@Model.Item.Id">
+                    <svg icon="pencil" variant="outline" aria-hidden="true"></svg>
+                </a>
+            }
+            else
+            {
+                @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
+                (
+                    Model.Item.Id,
+                    Model.IsFavorite,
+                    false
+                ))
+            }
         </div>
     </footer>
 </article>

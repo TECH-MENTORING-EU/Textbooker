@@ -1,0 +1,104 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "TextBooker Chat";
+}
+
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+        body > main {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+    .chat-header {
+        text-align: center;
+        margin-bottom: 1rem;
+        padding-top: 1rem;
+        flex-shrink: 0;
+    }
+
+    .chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding: 0 1rem;
+    }
+
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 15px;
+        border: 1px solid var(--pico-border-color);
+        border-radius: var(--pico-border-radius);
+        background-color: var(--pico-background-color);
+        flex-grow: 1;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .message {
+        max-width: 80%;
+        padding: 10px 15px;
+        border-radius: 15px;
+        word-wrap: break-word;
+    }
+
+        .message.left {
+            align-self: flex-start;
+            background-color: var(--pico-secondary-background);
+            color: var(--pico-secondary-color);
+        }
+
+        .message.right {
+            align-self: flex-end;
+            background-color: var(--pico-primary-background);
+            color: var(--pico-primary-color);
+        }
+
+    .chat-footer {
+        text-align: center;
+        margin-top: 15px;
+        padding-bottom: 15px;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="chat-header">
+    <h3>Wiadomości: Karol (k) - Ania (s) </h3>
+</div>
+
+<div class="chat-wrapper">
+    <div class="chat-container">
+        <div class="message right">
+            Cześć! Słyszałeś, że w końcu robią ten czat na stronie?📩
+        </div>
+        <div class="message left">
+            Noo, w końcu! Ile można czekać, serio. Mam nadzieję, że będzie jakiś ogarnięty, a nie jak te stare platformy.
+        </div>
+        <div class="message right">
+            Też mam taką nadzieję! Marzy mi się coś z emoji, reakcjami, może nawet GIF-ami? Byłoby czadowo.😅
+        </div>
+        <div class="message left">
+            Dokładnie! I żeby był mega szybki. Bez żadnych lagów i zawieszek, wiesz, żeby wszystko śmigało płynnie. To podstawa.
+        </div>
+        <div class="message right">
+            To by było super do komunikacji pomiędzy kupującym, a sprzedającym.💰
+        </div>
+        <div class="message left">
+            Totalnie! Oby tylko nie zapomnieli o wersji mobilnej, bo większość i tak siedzi na fonie. To musi być chat marzenie, wszędzie dostępny.
+        </div>
+        <div class="chat-footer">
+            <small>Chat zostanie zaimplementowany w niedalekiej przyszłości😉</small>
+        </div>
+    </div>
+</div>

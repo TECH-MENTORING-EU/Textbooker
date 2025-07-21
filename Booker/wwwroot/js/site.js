@@ -4,7 +4,7 @@
 // Write your JavaScript code.
 
 function handleImageUpload(input) {
-    const preview = input.closest("section").querySelector("img")
+    const preview = input.closest("section").querySelector("img");
     const file = input.files[0];
     const imageErrorSpan = input.closest("section").querySelector("small span");
 
@@ -65,6 +65,16 @@ function handleImageUpload(input) {
     }
 }
 
+function updateCharCount() {
+    const count = this.value.length;
+    const max = this.getAttribute('maxlength');
+    const charCountElement = this.nextElementSibling?.querySelector(".char-count");
+    if (charCountElement) {
+        charCountElement.textContent = `${count} / ${max}`;
+    }
+}
+
+
 function showSummary(event) {
     event.preventDefault(); // Prevent form submission for validation
     if (v.isValid(event.target)) {
@@ -90,8 +100,24 @@ function showSummary(event) {
     }
 }
 
+function toggleHamburgerMenu(check) {
+    const hamburger = document.getElementById('hamburger').querySelector('details');
+    if (check.checked) {
+        hamburger.setAttribute("open","");
+    } else {
+        hamburger.removeAttribute("open");
+    }
+}
+
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
+
+document.querySelector(".input-validation-error").scrollIntoView({behavior: "smooth"});
+
+document.querySelectorAll(".input-validation-error").forEach(element => {
+    element.ariaInvalid = true;
+    element.classList.remove("input-validation-error");
+});
 
 document.querySelectorAll("button").forEach(button => {
     button.addEventListener("htmx:beforeRequest", function () { this.ariaBusy = true; })

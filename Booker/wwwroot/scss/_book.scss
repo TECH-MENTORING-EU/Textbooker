@@ -2,7 +2,7 @@
 
 @use "sass:map";
 
-.book-display { // book preview card
+.book-display {
     .image {
         img {
             aspect-ratio: 1 / 1;
@@ -41,7 +41,6 @@
         gap: 1rem;
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: min-content 1fr;
-
 
         .image {
             grid-row: span 2;

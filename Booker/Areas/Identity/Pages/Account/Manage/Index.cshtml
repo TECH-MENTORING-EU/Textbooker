@@ -18,11 +18,56 @@
         <div>
             <label asp-for="Username">Nazwa użytkownika</label>
             <input asp-for="Username" placeholder="Nazwa użytkownika" disabled />
+            <small>
+                Aby zmienić nazwę użytkownika, skontaktuj się z administracją.
+            </small>
+        </div>
+        <div>
+            <label asp-for="Input.AreFavoritesPublic">
+                <input role="switch" asp-for="Input.AreFavoritesPublic" />
+                Pokaż moje ulubione innym użytkownikom
+            </label>
+        </div>
+        <hr />
+        <h4>Formy kontaktu</h4>
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Input.DisplayEmail">
+                <input role="switch" asp-for="Input.DisplayEmail" />
+                Pokaż mój e-mail jako dostępną formę kontaktu
+            </label>
+            <small>
+                Swój e-mail możesz zmienić <a asp-page="./Email">tutaj</a>.
+            </small>
         </div>
         <div>
             <label asp-for="Input.PhoneNumber">Numer telefonu:</label>
             <input asp-for="Input.PhoneNumber" placeholder="Numer telefonu"/>
-            <small><span asp-validation-for="Input.PhoneNumber"></span></small>
+            <small>
+                Podany numer telefonu będzie automatycznie publiczny.<br />
+                <span asp-validation-for="Input.PhoneNumber"></span>
+            </small>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Input.DisplayWhatsapp">
+                <input role="switch" asp-for="Input.DisplayWhatsapp" />
+                Pokaż WhatsApp jako dostępną formę kontaktu
+            </label>
+        </div>
+        <div>
+            <label asp-for="Input.FbMessenger">Messenger (nazwa użytkownika):</label>
+            <input asp-for="Input.FbMessenger" placeholder="Messenger (nazwa użytkownika)" />
+            <small>
+                Podane konto będzie automatycznie publiczne.<br />
+                <span asp-validation-for="Input.FbMessenger"></span>
+            </small>
+        </div>
+        <div>
+            <label asp-for="Input.Instagram">Instagram (nazwa użytkownika):</label>
+            <input asp-for="Input.Instagram" placeholder="Instagram (nazwa użytkownika)" />
+            <small>
+                Podane konto będzie automatycznie publiczne.<br />
+                <span asp-validation-for="Input.Instagram"></span>
+            </small>
         </div>
         <button id="update-profile-button" type="submit">Zapisz</button>
     </form>

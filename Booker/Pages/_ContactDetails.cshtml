@@ -1,5 +1,61 @@
 ﻿@model Booker.Data.User
 
-Email: @Model.Email
+@functions {
+    private string WhatsappPhoneNumber()
+    {
+        if (string.IsNullOrEmpty(Model.PhoneNumber))
+        {
+            return string.Empty;
+        }
 
-@{ /* TODO: Add more items here: phone, IMs etc. and icons */ }
+        return (Model.PhoneNumber.StartsWith("+") ? Model.PhoneNumber : $"+48{Model.PhoneNumber}").Replace("+","");
+    }
+}
+
+<div class="contact-details">
+    @if (Model.DisplayEmail)
+    {
+        <p>
+            <svg icon="mail" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+            <a href="mailto:@Model.Email" target="_blank" rel="noreferrer noopener" aria-label="E-mail">
+                @Model.Email
+            </a>
+        </p>
+    }
+    @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+    {
+        <p>
+            <svg icon="phone" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+            <a href="tel:@Model.PhoneNumber" target="_blank" rel="noreferrer noopener" aria-label="Numer telefonu">
+                @Model.PhoneNumber
+            </a>
+        </p>
+    }
+    @if (Model.DisplayWhatsapp)
+    {
+        <p>
+            <svg icon="brand-whatsapp" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+            <a href="https://wa.me/@WhatsappPhoneNumber()" target="_blank" rel="noreferrer noopener">
+                WhatsApp
+            </a>
+        </p>
+    }
+    @if (!string.IsNullOrEmpty(Model.FbMessenger))
+    {
+        <p>
+            <svg icon="brand-messenger" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+            <a href="https://m.me/@Model.FbMessenger" target="_blank" rel="noreferrer noopener" aria-label="Messenger">
+                @Model.FbMessenger
+            </a>
+        </p>
+    }
+    @if (!string.IsNullOrEmpty(Model.Instagram))
+    {
+        <p>
+            <svg icon="brand-instagram" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
+            <a href="https://ig.me/m/@Model.Instagram" target="_blank" rel="noreferrer noopener" aria-label="Instagram">
+                @Model.Instagram
+            </a>
+        </p>
+    }
+</div>
