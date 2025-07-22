@@ -102,6 +102,9 @@ function showSummary(event) {
 
 function toggleHamburgerMenu(check) {
     const hamburger = document.getElementById('hamburger').querySelector('details');
+    if (hamburger == null) {
+        return;
+    }
     if (check.checked) {
         hamburger.setAttribute("open","");
     } else {
@@ -112,7 +115,7 @@ function toggleHamburgerMenu(check) {
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
 
-document.querySelector(".input-validation-error").scrollIntoView({behavior: "smooth"});
+document.querySelector(".input-validation-error")?.scrollIntoView({behavior: "smooth"});
 
 document.querySelectorAll(".input-validation-error").forEach(element => {
     element.ariaInvalid = true;

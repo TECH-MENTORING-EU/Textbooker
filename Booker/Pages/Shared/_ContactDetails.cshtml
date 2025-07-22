@@ -8,7 +8,7 @@
             return string.Empty;
         }
 
-        return (Model.PhoneNumber.StartsWith("+") ? Model.PhoneNumber : $"+48{Model.PhoneNumber}").Replace("+","");
+        return (Model.PhoneNumber.StartsWith("+") ? Model.PhoneNumber.Replace("+","") : $"+48{Model.PhoneNumber}").Replace("+","");
     }
 }
 
