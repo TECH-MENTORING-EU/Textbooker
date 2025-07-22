@@ -2,7 +2,7 @@
 @using Profile
 
 <section class="profile-heading">
-    <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" alt="Zdjęcie książki" />
+    <img src="@Model.RequestUser.Photo"Zdjęcie profilowe użytkownika" />
     <hgroup>
         <h1>@Model.RequestUser.UserName</h1>
         <p> @{ /* TODO: Add user profile description */ } </p>

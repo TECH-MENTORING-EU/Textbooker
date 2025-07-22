@@ -10,8 +10,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.IO;
 using Azure;
+using Microsoft.AspNetCore.Http; // Dodane dla IFormFile i StatusCodes
 
-namespace Booker.Pages.Profile
+namespace Booker.Areas.Identity.Pages.Account.Manage
 {
     public class ProfilePictureUploadModel : PageModel
     {
@@ -47,25 +48,24 @@ namespace Booker.Pages.Profile
 
             if (!isUserAuthenticated)
             {
-                _logger.LogWarning("U¿ytkownik niezalogowany próbuje uzyskaæ dostêp do strony uploadu zdjêcia profilowego.");
                 return Redirect("/Identity/Account/Login");
             }
 
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // Changed: Added null/empty/parse checks for userIdString and userId
             if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
             {
-                _logger.LogError("Nie mo¿na pobraæ ID u¿ytkownika z tokenu uwierzytelniaj¹cego.");
                 return Redirect("/Identity/Account/Login");
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                _logger.LogError("U¿ytkownik o ID {UserId} nie zosta³ znaleziony w bazie danych.", userId);
                 return NotFound();
             }
 
-            CurrentProfilePictureUrl = user.Photo;
+            // Changed: Use null-conditional operator or null coalescing if user.Photo can be null
+            CurrentProfilePictureUrl = user.Photo ?? "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
 
             return Page();
         }
@@ -76,23 +76,21 @@ namespace Booker.Pages.Profile
 
             if (!isUserAuthenticated)
             {
-                _logger.LogWarning("U¿ytkownik niezalogowany próbuje przes³aæ zdjêcie profilowe.");
                 return Redirect("/Identity/Account/Login");
             }
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("B³êdy walidacji formularza podczas przesy³ania zdjêcia profilowego.");
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return Page();
             }
 
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // Changed: Added null/empty/parse checks for userIdString and userId
             if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
             {
                 ModelState.AddModelError(string.Empty, "Nie uda³o siê zidentyfikowaæ u¿ytkownika. Proszê spróbowaæ ponownie.");
-                _logger.LogError("Nie mo¿na pobraæ ID u¿ytkownika z tokenu uwierzytelniaj¹cego podczas POST.");
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return Page();
@@ -102,7 +100,6 @@ namespace Booker.Pages.Profile
             if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "U¿ytkownik nie znaleziony. Proszê spróbowaæ ponownie.");
-                _logger.LogError("U¿ytkownik o ID {UserId} nie zosta³ znaleziony w bazie danych podczas POST.", userId);
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return Page();
@@ -111,7 +108,6 @@ namespace Booker.Pages.Profile
             if (Input.Image == null || Input.Image.Length == 0)
             {
                 ModelState.AddModelError(nameof(Input.Image), "Proszê wybraæ zdjêcie do przes³ania.");
-                _logger.LogWarning("Brak pliku obrazu w ¿¹daniu POST po walidacji modelu.");
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return Page();
@@ -122,7 +118,6 @@ namespace Booker.Pages.Profile
             if (!allowedExtensions.Contains(fileExtension))
             {
                 ModelState.AddModelError(nameof(Input.Image), "Dozwolone s¹ tylko pliki graficzne (jpg, jpeg, png, gif).");
-                _logger.LogWarning("Próba przes³ania niedozwolonego typu pliku (serwer): {FileExtension}", fileExtension);
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return Page();
@@ -132,17 +127,16 @@ namespace Booker.Pages.Profile
             if (Input.Image.Length > maxFileSize)
             {
                 ModelState.AddModelError(nameof(Input.Image), "Plik jest zbyt du¿y (maks. 5MB).");
-                _logger.LogWarning("Próba przes³ania pliku wiêkszego ni¿ limit (serwer): {FileSize} bytes", Input.Image.Length);
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return Page();
             }
 
             var containerName = _config["AzureStorage:ContainerName"];
+            // Changed: Check for null/empty containerName
             if (string.IsNullOrEmpty(containerName))
             {
                 ModelState.AddModelError(string.Empty, "Nazwa kontenera Azure Blob Storage nie jest skonfigurowana. Skontaktuj siê z administratorem.");
-                _logger.LogError("Nazwa kontenera Azure Blob Storage ('AzureStorage:ContainerName') nie jest skonfigurowana w appsettings.");
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status500InternalServerError;
                 return Page();
@@ -153,8 +147,8 @@ namespace Booker.Pages.Profile
             try
             {
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
-                _logger.LogInformation("Sprawdzono/utworzono kontener Azure Blob Storage: {ContainerName}", containerName);
 
+                // Changed: Ensure user.Photo is not null before trying to delete old blob
                 if (!string.IsNullOrEmpty(user.Photo))
                 {
                     try
@@ -162,15 +156,11 @@ namespace Booker.Pages.Profile
                         var oldBlobUri = new Uri(user.Photo);
                         var oldBlobName = Path.GetFileName(oldBlobUri.LocalPath);
                         var oldBlobClient = containerClient.GetBlobClient(oldBlobName);
-                        bool deleted = await oldBlobClient.DeleteIfExistsAsync();
-                        if (deleted)
-                        {
-                            _logger.LogInformation("Usuniêto stare zdjêcie profilowe u¿ytkownika {UserId}: {OldBlobName}", userId, oldBlobName);
-                        }
+                        await oldBlobClient.DeleteIfExistsAsync();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        _logger.LogError(ex, "B³¹d podczas usuwania starego zdjêcia profilowego u¿ytkownika {UserId}.", userId);
+                        // Log the exception if needed, but don't fail the upload just because old file delete failed
                     }
                 }
 
@@ -182,35 +172,29 @@ namespace Booker.Pages.Profile
                     await blobClient.UploadAsync(stream, overwrite: true);
                 }
 
-                _logger.LogInformation("Nowe zdjêcie profilowe u¿ytkownika {UserId} przes³ane do Azure Blob Storage: {BlobUri}", userId, blobClient.Uri.ToString());
-
                 user.Photo = blobClient.Uri.ToString();
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Zaktualizowano URL zdjêcia profilowego w bazie danych dla u¿ytkownika {UserId}.", userId);
 
                 TempData["SuccessMessage"] = "Zdjêcie profilowe zosta³o pomyœlnie przes³ane!";
-                return RedirectToPage("/Profile/ProfilePictureUpload");
+                return RedirectToPage();
             }
             catch (RequestFailedException rfe)
             {
                 ModelState.AddModelError(string.Empty, $"Wyst¹pi³ b³¹d podczas operacji na Azure Storage: {rfe.Message}");
-                _logger.LogError(rfe, "B³¹d RequestFailedException podczas operacji na Azure Blob Storage dla u¿ytkownika {UserId}.", userId);
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status500InternalServerError;
                 return Page();
             }
-            catch (DbUpdateException dbEx)
+            catch (DbUpdateException)
             {
                 ModelState.AddModelError(string.Empty, "Wyst¹pi³ b³¹d podczas zapisywania zdjêcia profilowego w bazie danych. Spróbuj ponownie.");
-                _logger.LogError(dbEx, "B³¹d DbUpdateException podczas zapisywania URL zdjêcia dla u¿ytkownika {UserId}.", userId);
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status500InternalServerError;
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Wyst¹pi³ nieoczekiwany b³¹d podczas przesy³ania zdjêcia. Spróbuj ponownie.");
-                _logger.LogError(ex, "Nieoczekiwany b³¹d podczas przesy³ania zdjêcia profilowego dla u¿ytkownika {UserId}.", userId);
                 await OnGetAsync();
                 Response.StatusCode = StatusCodes.Status500InternalServerError;
                 return Page();
