@@ -51,11 +51,12 @@
                     </label>
                     <input type="file" id="imageInput" accept="image/*">
                     <small><span asp-validation-for="Input.Image"></span></small>
+                    <button type="submit" class="primary" id="submitButton" disabled>Prześlij i zapisz zdjęcie 💾</button>
 
                     <div class="canvas-container">
                         <img id="imageToCrop" style="max-width: 100%;">
                     </div>
-
+         
                     <div class="controls-group">
                         <button type="button" class="secondary" id="zoomIn">Powiększ ➕</button>
                         <button type="button" class="secondary" id="zoomOut">Zmniejsz ➖</button>
@@ -67,9 +68,6 @@
                     <input type="hidden" name="Input.FileName" id="fileNameInput">
                 </section>
             </div>
-            <footer>
-                <button type="submit" class="primary" id="submitButton" disabled>Prześlij i zapisz zdjęcie 💾</button>
-            </footer>
         </form>
     </article>
 </dialog>
