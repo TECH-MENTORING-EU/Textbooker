@@ -156,12 +156,18 @@ public class ItemManager
         if (model == null) throw new ArgumentNullException(nameof(model));
 
         var validationResult = await ValidateItemModelAsync(model);
-        if (validationResult.Status.HasFlag(Status.Error)) return validationResult;     
+        if (validationResult.Status.HasFlag(Status.Error)) return validationResult;
+
+        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        if (book == null) return Status.Error | Status.NotFound;
+
+        _context.Attach(book);
+        _context.Attach(model.User);
 
         var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!);
         var item = new Item
         {
-            Book = (await _staticDataManager.GetBookAsync(validationResult.Id))!,
+            Book = book,
             User = model.User,
             Description = model.Description,
             State = model.State,
@@ -181,12 +187,15 @@ public class ItemManager
         return item.Id;
     }
 
-    public async Task<Status> UpdateItemAsync(int id, ItemModel model)
+    public async Task<Status> UpdateItemAsync(Item item, ItemModel model)
     {
         if (model == null) throw new ArgumentNullException(nameof(model));
 
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult.Status;
+
+        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        if (book == null) return Status.Error | Status.NotFound;
 
         var photoUri = model.ExistingImageBlobName;
 
@@ -196,17 +205,18 @@ public class ItemManager
             photoUri = (await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!)).ToString();
         }
 
-        var item = new Item
+        if (item.Book.Id != book.Id)
         {
-            Id = id,
-            Book = (await _staticDataManager.GetBookAsync(validationResult.Id))!,
-            User = model.User,
-            Description = model.Description,
-            State = model.State,
-            Price = model.Price,
-            DateTime = DateTime.Now,
-            Photo = photoUri!
-        };
+            _context.Attach(book);
+            item.Book = book;
+        }
+
+        item.Description = model.Description;
+        item.State = model.State;
+        item.Price = model.Price;
+        item.Photo = photoUri!;
+        item.DateTime = DateTime.Now;
+
         await UpdateItemNVAsync(item);
         return Status.Success;
     }
