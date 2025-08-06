@@ -1,0 +1,19 @@
+﻿#add-form {
+    .book-image-preview {
+        max-width: 100%;
+        height: auto;
+        display: none;
+
+        &.active {
+            display: block;
+        }
+    }
+}
+
+#summaryModal {
+    img {
+        border: 1px solid;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+    }
+}

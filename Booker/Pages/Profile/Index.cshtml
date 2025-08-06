@@ -1,0 +1,17 @@
+﻿@page
+@* Custom routes defined in StartupUtilities *@
+@model Booker.Pages.Profile.IndexModel
+@{
+    ViewData["Title"] = "Profil";
+}
+
+<partial name="_Heading" for="UserInfo" />
+
+<h2>Ogłoszenia</h2>
+<section class="grid-gallery">
+    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
+</section>
+
+<section>
+    <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+</section>

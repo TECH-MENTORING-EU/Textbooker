@@ -48,8 +48,8 @@ namespace Booker.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required(ErrorMessage = "Pole {0} jest wymagane.")]
-            [EmailAddress(ErrorMessage = "Pole {0} nie jest prawidłowym adresem e-mail.")]
+            [Required]
+            [EmailAddress]
             public string Email { get; set; }
         }
 
@@ -67,7 +67,7 @@ namespace Booker.Areas.Identity.Pages.Account
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Email został wysłany. Sprawdź swoją skrzynkę.");
+                ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail..");
                 return Page();
             }
 
@@ -81,10 +81,10 @@ namespace Booker.Areas.Identity.Pages.Account
                 protocol: Request.Scheme);
             await _emailSender.SendEmailAsync(
                 Input.Email,
-                "Potwierdź swój e-mail",
-                $"Proszę potwierdź swoje konto klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
+                "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
+                $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie utworzone. <br /> Kliknij w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> aby aktywować konto. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
 
-            ModelState.AddModelError(string.Empty, "Email został wysłany. Sprawdź swoją skrzynkę.");
+            ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.");
             return Page();
         }
     }

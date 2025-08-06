@@ -1,6 +1,12 @@
 // $enable-transitions: false; // not really needed
 
-@use "pico" with ( $theme-color: "azure" );
+@use "pico"  with ( $theme-color: "azure" );
+@use "index";
+@use "book";
+@use "add";
+@use "identity";
+@use "hamburger";
+@use "profile";
 
 @use "sass:map";
 
@@ -26,299 +32,43 @@
 //    }
 //}
 
-.sidebar-container {
-    @media (min-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint")) {
-        display: grid;
-        grid-template-columns: 1fr 3fr;
-    }
-}
-
-.grid-gallery { // gallery on index page
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
-    gap: 1rem;
-}
-
-.book-tile {
-    display: flex;
-    flex-direction: column;
-    #{pico.$css-var-prefix}typography-spacing-vertical: 0.25rem;
-
-    h2 { // set the size to h5
-        #{pico.$css-var-prefix}font-size: 1.125rem;
-        #{pico.$css-var-prefix}line-height: 1.225;
-        #{pico.$css-var-prefix}typography-spacing-top: 1.6875rem;
-    }
-
-    footer {
-        flex: 1;
-        display: grid;
-        gap: 0.25rem;
-        grid-template-areas:
-            "main main" "categories fav";
-        grid-template-columns: auto 1.5rem;
-        grid-template-rows: auto 3rem;
-
-        a::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        button {
-            position: relative;
-            z-index: 1;
-        }
-
-        .info {
-            grid-area: main;
-        }
-
-        .actions {
-            grid-area: categories;
-
-            button {
-                font-size: 0.75em;
-                padding: 0 0.5em;
-                border-radius: 100vmax;
-            }
-        }
-
-        .fav {
-            grid-area: fav;
-            align-content: end;
-
-            button {
-                border: none;
-                padding: 0;
-                width: 1.5rem;
-                height: 1.5rem;
-
-                svg {
-                    width: 100%;
-                    height: 100%;
-                }
-            }
-        }
-    }
-}
-
-.book-tile a { // card link, this code is needed because of pico
-    #{pico.$css-var-prefix}color: unset;
-    #{pico.$css-var-prefix}background-color: unset;
-    #{pico.$css-var-prefix}underline: unset;
-    #{pico.$css-var-prefix}text-decoration: unset;
-
-    &:is([aria-current]:not([aria-current="false"]), :hover, :active, :focus) {
-        #{pico.$css-var-prefix}color: unset;
-        #{pico.$css-var-prefix}underline: unset;
-        #{pico.$css-var-prefix}text-decoration: underline;
-    }
-}
-
-.book-display { // book preview card
-    .image {
-        aspect-ratio: 1 / 1;
-        align-content: center;
-        padding: 1em;
-        border: 1px solid;
-    }
-
-    .actions button {
-        margin: 0.5em;
-    }
-
-    .seller > div {
-        display: flex;
-        img {
-            width: 50px;
-            height: 50px;
-            margin-block: 0.5em;
-            margin-right: 1em;
-            border-radius: 100%;
-        }
-        a[role="button"] {
-            margin-top: 0.5em;
-        }
-    }
-
-    @media (min-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint")) {
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: min-content 1fr;
-        
-
-        .image {
-            grid-row: span 2;
-        }
-
-        .description {
-            grid-column: span 2;
-        }
-
-        .seller {
-            grid-column: span 2;
-        }
-    }
-}
-
-#add-form {
-    .book-image-preview {
-        max-width: 100%;
-        height: auto;
-        display: none;
-
-        &.active {
-            display: block;
-        }
-    }
-}
-
-#summaryModal {
-    max-width: 200px;
-    max-height: 200px;
-    border: 1px solid #ddd;
-    padding: 5px;
+svg.icon {
+    width: 1em;
+    height: 1.5rem;
 }
 
 /*
     Show loading indicator on div or on button
 */
-button.htmx-request,
-div.htmx-indicator {
-    pointer-events: none;
 
-    &::before {
-        display: inline-block;
-        width: 1em;
-        height: 1em;
-        border: 0.1875em solid currentColor;
-        border-radius: 1em;
-        border-right-color: transparent;
-        content: "";
-        vertical-align: text-bottom;
-        vertical-align: -.125em; // Visual alignment
-        animation: spinner 0.75s linear infinite;
-        opacity: var(--loading-spinner-opacity);
-    }
+//button.htmx-request,
+//div.htmx-indicator {
+//    pointer-events: none;
 
-    &:not(:empty) {
-        &::before {
-            margin-right: calc(var(--spacing) * 0.5);
-            margin-left: 0;
-            margin-inline-start: 0;
-            margin-inline-end: calc(var(--spacing) * 0.5);
-        }
-    }
+//    &::before {
+//        display: inline-block;
+//        width: 1em;
+//        height: 1em;
+//        border: 0.1875em solid currentColor;
+//        border-radius: 1em;
+//        border-right-color: transparent;
+//        content: "";
+//        vertical-align: text-bottom;
+//        vertical-align: -.125em; // Visual alignment
+//        animation: spinner 0.75s linear infinite;
+//        opacity: var(--loading-spinner-opacity);
+//    }
 
-    &:empty {
-        text-align: center;
-    }
-}
+//    &:not(:empty) {
+//        &::before {
+//            margin-right: calc(var(--spacing) * 0.5);
+//            margin-left: 0;
+//            margin-inline-start: 0;
+//            margin-inline-end: calc(var(--spacing) * 0.5);
+//        }
+//    }
 
-.filter {
-    @keyframes slideDown {
-        0% {
-            opacity: 0;
-            transform: translateY(-0.5rem);
-        }
-
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    details summary svg {
-        height: 1rem;
-        width: 1rem;
-        transition: transform 0.3s ease-out;
-    }
-
-    details[open] summary svg {
-        transform: rotate(90deg);
-    }
-
-    details[open] div.grid {
-        animation: slideDown 0.3s ease-out forwards;
-    }
-}
-
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
-        transform: translateY(1rem);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.book-tile {
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    animation: fadeIn 0.5s ease-out forwards;
-}
-
-@media (min-width: map.get(map.get(pico.$breakpoints, "md"), "breakpoint")) {
-    #mobileFilterSubmit {
-        display: none;
-    }
-}
-
-.login-form {
-    margin-inline: auto;
-    max-width: map.get(map.get(pico.$breakpoints, "sm"), "viewport")
-}
-
-
-// horizontal book tiles on small screens
-
-@media (max-height: map.get(map.get(pico.$breakpoints, "sm"), "breakpoint")-1) and (min-width: 480px) {
-    .grid-gallery {
-        display: block;
-    }
-
-
-    #{pico.$parent-selector} article:not(:has(> form:first-child)),
-    #{pico.$parent-selector} [role="article"]:not(:has(> form:first-child)) {
-        &.book-tile {
-            flex-direction: row;
-
-            img {
-                max-width: 25%;
-            }
-
-            > header,
-            > footer {
-                margin-top: calc(var(#{pico.$css-var-prefix}block-spacing-vertical) * -1);
-                margin-bottom: calc(var(#{pico.$css-var-prefix}block-spacing-vertical) * -1);
-            }
-
-            > header {
-                border-bottom: revert;
-                border-top-right-radius: revert;
-                margin-left: calc(var(#{pico.$css-var-prefix}block-spacing-horizontal) * -1);
-                margin-right: var(#{pico.$css-var-prefix}block-spacing-horizontal);
-                border-right: var(#{pico.$css-var-prefix}border-width) solid var(#{pico.$css-var-prefix}card-border-color);
-                border-top-left-radius: var(#{pico.$css-var-prefix}border-radius);
-                border-bottom-left-radius: var(#{pico.$css-var-prefix}border-radius);
-            }
-
-            > footer {
-                border-top: revert;
-                border-bottom-left-radius: revert;
-                margin-left: var(#{pico.$css-var-prefix}block-spacing-horizontal);
-                margin-right: calc(var(#{pico.$css-var-prefix}block-spacing-horizontal) * -1);
-                border-left: var(#{pico.$css-var-prefix}border-width) solid var(#{pico.$css-var-prefix}card-border-color);
-                border-top-right-radius: var(#{pico.$css-var-prefix}border-radius);
-                border-bottom-right-radius: var(#{pico.$css-var-prefix}border-radius);
-            }
-        }
-    }
-}
+//    &:empty {
+//        text-align: center;
+//    }
+//}

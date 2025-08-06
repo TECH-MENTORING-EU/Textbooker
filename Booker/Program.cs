@@ -4,6 +4,7 @@ using Booker.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting.Internal;
@@ -12,6 +13,8 @@ using System.Configuration;
 using System.Globalization;
 using System.Net;
 using System.Threading.RateLimiting;
+
+ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,7 +47,7 @@ builder.Host.UseSerilog();
 builder.Services.AddRazorPages().AddViewOptions(options =>
 {
     options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
-});
+}).AddCustomRoutes();
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -56,7 +59,11 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<User>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = true;
+    options.User.RequireUniqueEmail = true;
+})
     .AddEntityFrameworkStores<DataContext>()
         .AddErrorDescriber<ErrorDescriber>();
 
@@ -83,9 +90,25 @@ CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+if (app.Environment.IsDevelopment())
+{
+    // Enable serving of SCSS files to make sourcemap work
+
+    var provider = new FileExtensionContentTypeProvider();
+    provider.Mappings[".scss"] = "text/x-scss";
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        ContentTypeProvider = provider
+    });
+}
+else
+{
+    app.UseStaticFiles();
+}
 
 app.UseRouting();
+app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
 app.UseAuthorization();

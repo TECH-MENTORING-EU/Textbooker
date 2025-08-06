@@ -1,0 +1,28 @@
+﻿@page
+@* Custom route defined in StartupUtilities *@
+@model Profile.FavoritesModel
+@{
+    ViewData["Title"] = "Ulubione - Booker";
+}
+
+<partial name="_Heading" for="UserInfo" />
+
+<h2>Ulubione</h2>
+@if (Model.User.Identity?.IsAuthenticated != true)
+{
+    <p>Zaloguj się, aby zobaczyć ulubione.</p>
+}
+else if (Model.UserInfo.IsCurrentUser || Model.UserInfo.RequestUser.AreFavoritesPublic)
+{
+    <section class="grid-gallery">
+        <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
+    </section>
+
+    <section>
+        <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+    </section>
+}
+else
+{
+    <p>Lista ulubionych tego użytkownika jest prywatna.</p>
+}

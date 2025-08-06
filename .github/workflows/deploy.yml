@@ -54,6 +54,26 @@ jobs:
           $MSDEPLOY_IIS_APP_PATH = az keyvault secret show --name "MSDEPLOY-IIS-APP-PATH" --vault-name "Booker" --query value -o tsv
           echo "MSDEPLOY_IIS_APP_PATH=$MSDEPLOY_IIS_APP_PATH" >> $env:GITHUB_ENV
 
+          # Retrieve SMTP Username
+          $SMTP_USERNAME = az keyvault secret show --name "SMTP-USERNAME" --vault-name "Booker" --query value -o tsv
+          Write-Host "::add-mask::$SMTP_USERNAME"
+          echo "SMTP_USERNAME=$SMTP_USERNAME" >> $env:GITHUB_ENV    
+
+          # Retrieve SMTP Password
+          $SMTP_PASSWORD= az keyvault secret show --name "SMTP-PASSWORD" --vault-name "Booker" --query value -o tsv
+          Write-Host "::add-mask::$SMTP_PASSWORD"
+          echo "SMTP_PASSWORD=$SMTP_PASSWORD" >> $env:GITHUB_ENV    
+
+          # Retrieve Storage ConnectionString
+          $STORAGE_CS = az keyvault secret show --name "STORAGE-CS" --vault-name "Booker" --query value -o tsv
+          Write-Host "::add-mask::$STORAGE_CS"
+          echo "STORAGE_CS=$STORAGE_CS" >> $env:GITHUB_ENV    
+
+          # Retrieve Storage Container Name
+          $STORAGE_NAME= az keyvault secret show --name "STORAGE-NAME" --vault-name "Booker" --query value -o tsv
+          Write-Host "::add-mask::$STORAGE_NAME"
+          echo "STORAGE_NAME=$STORAGE_NAME" >> $env:GITHUB_ENV          
+
           # Retrieve Database Connection Details
           $DB_HOST = az keyvault secret show --name "DB-HOST" --vault-name "Booker" --query value -o tsv
           $DB_PORT = az keyvault secret show --name "DB-PORT" --vault-name "Booker" --query value -o tsv
@@ -88,10 +108,15 @@ jobs:
       - name: Replace db_connection_string token in appsettings.json
         shell: pwsh
         run: |
-          (Get-Content .\Booker\appsettings.json) |
-            ForEach-Object { $_ -replace '{#db-connection-string#}', "$env:DB_CONNECTION_STRING" } |
-            Set-Content .\Booker\appsettings.json
-
+          $filePath = ".\Booker\appsettings.json"
+            (Get-Content $filePath -Raw) `
+            -replace '\{#db-connection-string#\}', "$env:DB_CONNECTION_STRING" `
+            -replace '\{#storage-connection-string#\}', "$env:STORAGE_CS" `
+            -replace '\{#container-name#\}', "$env:STORAGE_NAME" `
+            -replace '\{smtp-username\}', "$env:SMTP_USERNAME" `
+            -replace '#\{smtp-password\}#', "$env:SMTP_PASSWORD" |
+            Set-Content $filePath
+          
       - name: Build and Deploy
         shell: pwsh
         run: |   

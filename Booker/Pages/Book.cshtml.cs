@@ -1,48 +1,53 @@
 using Booker.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using System.Globalization;
+using Booker.Services;
+using Booker.Utilities;
+
 
 namespace Booker.Pages
 {
     public class BookModel : PageModel
     {
-        private readonly DataContext _context;
+        private readonly UserManager<User> _userManager;
+        private readonly ItemManager _itemManager;
+        private readonly FavoritesManager _favoritesManager;
 
         public Item BookItem { get; set; } = null!;
+        public bool IsCurrentUserOwner { get; set; }
+        public bool IsFavorite { get; set; } = false;
 
-        public BookModel(DataContext context)
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager)
         {
-            _context = context;
+            _userManager = userManager;
+            _itemManager = itemManager;
+            _favoritesManager = favoritesManager;
         }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var item = await _context.Items
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .FirstOrDefaultAsync(i => i.Id == id);
-
+            var item = await _itemManager.GetItemAsync(id);
             if (item == null)
             {
                 return NotFound();
             }
 
             BookItem = item;
+
+            var userId = _userManager.GetUserId(User).IntOrDefault();
+
+            IsFavorite = await _favoritesManager.IsFavoriteAsync(userId, id);
+
+            IsCurrentUserOwner = userId == BookItem.User.Id;
 
             return Page();
         }
 
         public async Task<IActionResult> OnGetEmailAsync(int id)
         {
-            var item = await _context.Items
-                .Include(i => i.Book).ThenInclude(b => b.Grades)
-                .Include(i => i.Book).ThenInclude(b => b.Subject)
-                .Include(i => i.User)
-                .FirstOrDefaultAsync(i => i.Id == id);
+            var item = await _itemManager.GetItemAsync(id);
 
             if (item == null)
             {
@@ -50,15 +55,21 @@ namespace Booker.Pages
             }
 
             BookItem = item;
-            var isUserAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            
+            var userId = _userManager.GetUserId(User).IntOrDefault();
 
-            if (!isUserAuthenticated)
+            if (userId == -1)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
                 return new NoContentResult();
             }
 
-            return Content($"<span>Email: {BookItem.User.Email}</span>");
+            if (BookItem.User.Id == userId)
+            {
+                return new NoContentResult();
+            }
+
+            return Partial("_ContactDetails", BookItem.User);
         }
 
         public static string FormatDateWithSpecialCases(DateTime? dateTime)
@@ -74,7 +85,7 @@ namespace Booker.Pages
             if (date.Date == now.Date.AddDays(-1))
                 return $"wczoraj o {date:HH:mm}";
 
-            return date.ToString("d MMMM yyyy 'o' HH:mm", new CultureInfo("pl-PL"));
+            return date.ToString("d MMMM 'o' HH:mm", new CultureInfo("pl-PL"));
         }
     }
 }

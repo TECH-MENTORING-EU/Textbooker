@@ -47,8 +47,8 @@ namespace Booker.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required(ErrorMessage = "Pole {0} jest wymagane.")]
-            [EmailAddress(ErrorMessage = "Pole {0} nie jest prawidłowym adresem e-mail.")]
+            [Required]
+            [EmailAddress]
             [Display(Name = "E-mail")]
             public string Email { get; set; }
         }
@@ -76,8 +76,8 @@ namespace Booker.Areas.Identity.Pages.Account
 
                 await _emailSender.SendEmailAsync(
                     Input.Email,
-                    "Reset hasła",
-                    $"Proszę zresetuj swoje hasło klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>.");
+                    "Zmień swoje hasło TextBooker✏️⚙️",
+                    $"Klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> zresetujesz hasło.🔑 <br /> <br /> 🛑To nie Ty zmieniasz hasło? Nie klikaj w link i skontaktuj się z naszym zespołem. <br /><br /> Zespół TextBooker");
 
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }

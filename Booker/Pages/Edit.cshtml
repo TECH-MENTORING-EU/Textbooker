@@ -1,0 +1,130 @@
+﻿@page "{id:int}"
+@model Booker.Pages.EditModel
+@{
+    ViewData["Title"] = "Edytuj ogłoszenie";
+    const string include = "#edit-form :not([name = '__RequestVerificationToken'])";
+}
+
+<article>
+    <h1>Edytuj ogłoszenie:</h1>
+
+    @if (Model.ItemToEdit == null)
+    {
+        <div class="alert alert-danger" role="alert">
+            Ogłoszenie nie zostało znalezione lub nie masz uprawnień do jego edycji.
+        </div>
+    }
+    else
+    {
+        <form method="post" enctype="multipart/form-data" id="edit-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">            <div class="grid">
+                <section>
+                    @if (!string.IsNullOrEmpty(Model.ItemToEdit.Photo))
+                    {
+                        <img src="@Model.ItemToEdit.Photo" alt="Podgląd obecnego zdjęcia książki" class="book-image-preview">
+                    }
+                    else
+                    {
+                        <img src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
+                    }
+                    <label asp-for="Input.Image">Zmień zdjęcie swojej książki (opcjonalnie):</label>
+                    <input type="file" asp-for="Input.Image" accept="image/*" hx-on:change="handleImageUpload(this)">
+                    <small><span asp-validation-for="Input.Image"></span></small>
+
+                    <div asp-validation-summary="ModelOnly"></div>
+                </section>
+
+                <section>
+                    <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
+
+                    <label asp-for="Input.Title">Tytuł książki:</label>
+                    <select asp-for="Input.Title" asp-items="Model.Books"></select>
+                    <small><span asp-validation-for="Input.Title"></span></small>
+
+                    <label asp-for='Input.Subject'>Przedmiot:</label>
+                    <select asp-for='Input.Subject' asp-items="Model.Subjects"></select>
+                    <small><span asp-validation-for="Input.Subject"></span></small>
+
+                    <label asp-for='Input.Grade'>Klasa:</label>
+                    <select asp-for='Input.Grade' asp-items="Model.Grades"></select>
+                    <small><span asp-validation-for="Input.Grade"></span></small>
+
+                    <label asp-for='Input.Level'>Poziom:</label>
+                    <select asp-for='Input.Level' asp-items="Model.Levels"></select>
+                    <small><span asp-validation-for="Input.Level"></span></small>
+
+                    <label asp-for="Input.Description">Opis ogłoszenia:</label>
+                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
+                    <small><span class="char-count">0 / 200</span></small>
+
+                    <label asp-for="Input.State">Stan książki:</label>
+                    <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…"></textarea>
+                    <small>
+                        <span asp-validation-for="Input.State"></span>
+                        <span class="char-count" style="text-align: right;">0 / 40</span>
+                    </small>
+
+                    <label asp-for="Input.Price">Cena:</label>
+                    <input asp-for="Input.Price" placeholder="PLN">
+                    <small><span asp-validation-for="Input.Price"></span></small>
+
+                    <div class="grid">
+                        <button type="submit" role="button">Zapisz zmiany</button>
+                        <button type="button" role="button" class="secondary" onclick="showConfirmDeleteModal(@Model.ItemToEdit.Id)">Usuń ogłoszenie</button>
+                    </div>
+                </section>
+            </div>
+        </form>
+    }
+</article>
+
+<dialog id="confirmSaveModal" aria-labelledby="confirm-save-title" aria-modal="true">
+    <article>
+        <h2 id="confirm-save-title">Potwierdź zapis</h2>
+        <p>Czy na pewno chcesz zapisać zmiany w tym ogłoszeniu?</p>
+        <footer>
+            <button onclick="this.closest('dialog').close();" class="secondary">Anuluj</button>
+            <button onclick="document.getElementById('edit-form').submit();">Zapisz</button>
+        </footer>
+    </article>
+</dialog>
+
+<dialog id="confirmDeleteModal" aria-labelledby="confirm-delete-title" aria-modal="true">
+    <article>
+        <h2 id="confirm-delete-title">Potwierdź usunięcie</h2>
+        <p>Czy na pewno chcesz trwale usunąć to ogłoszenie? Tej operacji nie można cofnąć.</p>
+        <footer>
+            <div class="grid">
+                <button onclick="this.closest('dialog').close();" class="secondary">Anuluj</button>
+                <form method="post" asp-page-handler="Delete" id="delete-form-confirm" style="display: contents;">
+                    <input type="hidden" name="ItemId" id="deleteItemId" />
+                    <button type="submit" role="button">Usuń</button>
+                </form>
+            </div>
+        </footer>
+    </article>
+</dialog>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.addEventListener("input", updateCharCount);
+                ta.dispatchEvent(new Event("input"));
+            });
+
+            const existingImageUrl = document.querySelector('input[name="Input.ExistingImageBlobName"]')?.value;
+            if (existingImageUrl) {
+                document.querySelector('.book-image-preview').src = existingImageUrl;
+            }
+        });
+
+        function showConfirmSaveModal(event) {
+            document.getElementById('confirmSaveModal').showModal();
+        }
+
+        function showConfirmDeleteModal(itemId) {
+            document.getElementById('deleteItemId').value = itemId;
+            document.getElementById('confirmDeleteModal').showModal();
+        }
+    </script>
+}

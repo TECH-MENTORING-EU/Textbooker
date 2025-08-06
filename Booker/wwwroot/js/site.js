@@ -5,6 +5,7 @@
 
 function handleImageUpload(input) {
     const preview = input.closest("section").querySelector(".image-preview-container");
+
     const imageErrorSpan = input.closest("section").querySelector("small span");
     const files = Array.from(input.files).slice(0, 6);
     const dataTransfer = new DataTransfer();
@@ -181,7 +182,14 @@ function applyStyling(imageAmount, preview) {
     preview.appendChild(mainWrapper);
 }
 
-
+function updateCharCount() {
+    const count = this.value.length;
+    const max = this.getAttribute('maxlength');
+    const charCountElement = this.nextElementSibling?.querySelector(".char-count");
+    if (charCountElement) {
+        charCountElement.textContent = `${count} / ${max}`;
+    }
+}
 
 
 function showSummary(event) {
@@ -209,6 +217,29 @@ function showSummary(event) {
     }
 }
 
+function toggleHamburgerMenu(check) {
+    const hamburger = document.getElementById('hamburger').querySelector('details');
+    if (hamburger == null) {
+        return;
+    }
+    if (check.checked) {
+        hamburger.setAttribute("open","");
+    } else {
+        hamburger.removeAttribute("open");
+    }
+}
 
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
+
+document.querySelector(".input-validation-error")?.scrollIntoView({behavior: "smooth"});
+
+document.querySelectorAll(".input-validation-error").forEach(element => {
+    element.ariaInvalid = true;
+    element.classList.remove("input-validation-error");
+});
+
+document.querySelectorAll("button").forEach(button => {
+    button.addEventListener("htmx:beforeRequest", function () { this.ariaBusy = true; })
+    button.addEventListener("htmx:afterRequest", function () { this.ariaBusy = false; })
+});
