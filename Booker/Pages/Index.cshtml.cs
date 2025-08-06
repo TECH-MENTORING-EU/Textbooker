@@ -71,7 +71,7 @@ namespace Booker.Pages
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
-                return ViewComponent("ItemGalleryViewComponent", new
+                return ViewComponent("ItemGallery", new
                 {
                     itemIds = ItemIds,
                     parameters = Params,
