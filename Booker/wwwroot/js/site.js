@@ -43,10 +43,14 @@ function handleImageUpload(input) {
                     canvas.toBlob(blob => {
                         if (!blob) return reject("Compression failed");
 
-                        const compressedFile = new File([blob], "canvasblob.jpg", {
+                        const originalName = file.name;
+                        const newName = originalName.replace(/\.[^/.]+$/, ".jpg");
+
+                        const compressedFile = new File([blob], newName, {
                             type: "image/jpeg",
                             lastModified: Date.now()
                         });
+
 
                         dataTransfer.items.add(compressedFile);
 
