@@ -101,7 +101,6 @@ function applyStyling(imageAmount, preview) {
     mainWrapper.style.flexDirection = 'column';
     mainWrapper.style.gap = '10px';
     mainWrapper.style.maxWidth = '800px';
-    mainWrapper.style.marginBottom = '20px';
     mainWrapper.style.marginRight = '20px';
 
 
@@ -146,7 +145,7 @@ function applyStyling(imageAmount, preview) {
     for (let i = 1; i < Math.min(3, images.length); i++) {
         const img = images[i];
         img.style.width = '100%';
-        img.style.height = '50%';
+        img.style.height = images.length == 2 ? '100%' : '50%';
         img.style.objectFit = 'cover';
         img.style.borderRadius = '6px';
         sideWrapper.appendChild(img);
