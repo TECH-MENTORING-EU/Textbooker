@@ -102,7 +102,7 @@ namespace Booker.Pages
             using var stream = Input.Image?.OpenReadStream();
 
 
-            var result = await _itemManager.UpdateItemAsync(ItemToEdit.Id, new ItemManager.ItemModel(
+            var result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
                 user,
                 parameters,
                 Input.Description,
