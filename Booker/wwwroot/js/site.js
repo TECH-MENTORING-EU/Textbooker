@@ -5,11 +5,18 @@
 
 function handleImageUpload(input) {
     const preview = input.closest("section").querySelector(".image-preview-container");
-    const imageErrorSpan = input.closest("section").querySelector("small span");
-    const files = Array.from(input.files).slice(0, 6);
+    preview.innerHTML = "";
+    const imageErrorSpan = input.closest("section").querySelector("#imageErrorMsg");
+    if (input.files.length > 6) {
+        imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
+        return;
+    } else {
+        imageErrorSpan.textContent = "";
+    }
+    const files = Array.from(input.files);
     const dataTransfer = new DataTransfer();
 
-    preview.innerHTML = "";
+    
 
     const processingPromises = files.map((file, index) => {
         return new Promise((resolve, reject) => {
@@ -63,7 +70,6 @@ function handleImageUpload(input) {
                             imageElement.id = `Image${index + 1}`;
                             imageElement.classList.add("book-image-preview", "active");
                             preview.appendChild(imageElement);
-                            imageErrorSpan.style.display = "none";
                             resolve();
                         };
                         newReader.readAsDataURL(compressedFile);
@@ -84,11 +90,6 @@ function handleImageUpload(input) {
             input.files = dataTransfer.files;
             applyStyling(files.length, preview);
         })
-        .catch(err => {
-            console.error("Image upload failed:", err);
-            imageErrorSpan.textContent = "Błąd przetwarzania obrazu.";
-            imageErrorSpan.style.display = "block";
-        });
 }
 
 function applyStyling(imageAmount, preview) {
@@ -101,87 +102,51 @@ function applyStyling(imageAmount, preview) {
     if (images.length < 2) return;
 
     const mainWrapper = document.createElement('div');
-    mainWrapper.style.display = 'flex';
-    mainWrapper.style.flexDirection = 'column';
-    mainWrapper.style.gap = '10px';
-    mainWrapper.style.maxWidth = '800px';
-    mainWrapper.style.marginRight = '20px';
-
+    mainWrapper.classList.add('books-image-layout');
 
     const topWrapper = document.createElement('div');
-    topWrapper.style.display = 'flex';
-    topWrapper.style.gap = '10px';
-    topWrapper.style.height = '300px';
-
+    topWrapper.classList.add('books-image-layout__top');
 
     const mainImageWrapper = document.createElement('div');
-    mainImageWrapper.style.width = 'calc(2 * ((100% - 20px) / 3) + 10px)';
-    mainImageWrapper.style.position = 'relative';
-    mainImageWrapper.style.display = 'flex';
+    mainImageWrapper.classList.add('books-image-layout__main');
 
     const mainImage = images[0];
-    mainImage.style.width = '100%';
-    mainImage.style.height = '100%';
-    mainImage.style.objectFit = 'cover';
-    mainImage.style.borderRadius = '6px';
-
     const label = document.createElement('span');
-    label.textContent = 'Główny obrazek';
-    label.style.position = 'absolute';
-    label.style.bottom = '5%';
-    label.style.left = '5%';
-    label.style.backgroundColor = 'rgba(15,15,15,0.8)';
-    label.style.color = 'white';
-    label.style.fontSize = '12px';
-    label.style.padding = '4px 6px';
-    label.style.borderRadius = '4px';
+    label.textContent = 'Główne zdjęcie';
 
-    mainImageWrapper.appendChild(label);
     mainImageWrapper.appendChild(mainImage);
-
+    mainImageWrapper.appendChild(label);
 
     const sideWrapper = document.createElement('div');
-    sideWrapper.style.width = 'calc((100% - 20px) / 3)';
-    sideWrapper.style.display = 'flex';
-    sideWrapper.style.flexDirection = 'column';
-    sideWrapper.style.gap = '10px';
+    sideWrapper.classList.add('books-image-layout__side');
 
     for (let i = 1; i < Math.min(3, images.length); i++) {
-        const img = images[i];
-        img.style.width = '100%';
-        img.style.height = images.length == 2 ? '100%' : '50%';
-        img.style.objectFit = 'cover';
-        img.style.borderRadius = '6px';
-        sideWrapper.appendChild(img);
+        sideWrapper.appendChild(images[i]);
     }
 
     topWrapper.appendChild(mainImageWrapper);
     topWrapper.appendChild(sideWrapper);
     mainWrapper.appendChild(topWrapper);
 
-
     if (images.length > 3) {
         const bottomWrapper = document.createElement('div');
-        bottomWrapper.style.display = 'flex';
-        bottomWrapper.style.gap = '10px';
-        bottomWrapper.style.height = '150px';
-
+        bottomWrapper.classList.add('books-image-layout__bottom');
         const remaining = images.slice(3, 6);
-        for (const img of remaining) {
-            img.style.width = 'calc((100% - 20px) / 3)';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '6px';
-            bottomWrapper.appendChild(img);
-        }
-
+        bottomWrapper.append(...remaining);
         mainWrapper.appendChild(bottomWrapper);
     }
 
     preview.appendChild(mainWrapper);
 }
 
-
+function updateCharCount() {
+    const count = this.value.length;
+    const max = this.getAttribute('maxlength');
+    const charCountElement = this.nextElementSibling?.querySelector(".char-count");
+    if (charCountElement) {
+        charCountElement.textContent = `${count} / ${max}`;
+    }
+}
 
 
 function showSummary(event) {
@@ -209,6 +174,29 @@ function showSummary(event) {
     }
 }
 
+function toggleHamburgerMenu(check) {
+    const hamburger = document.getElementById('hamburger').querySelector('details');
+    if (hamburger == null) {
+        return;
+    }
+    if (check.checked) {
+        hamburger.setAttribute("open", "");
+    } else {
+        hamburger.removeAttribute("open");
+    }
+}
 
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
+
+document.querySelector(".input-validation-error")?.scrollIntoView({ behavior: "smooth" });
+
+document.querySelectorAll(".input-validation-error").forEach(element => {
+    element.ariaInvalid = true;
+    element.classList.remove("input-validation-error");
+});
+
+document.querySelectorAll("button").forEach(button => {
+    button.addEventListener("htmx:beforeRequest", function () { this.ariaBusy = true; })
+    button.addEventListener("htmx:afterRequest", function () { this.ariaBusy = false; })
+});

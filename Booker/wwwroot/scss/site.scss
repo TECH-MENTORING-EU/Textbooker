@@ -169,9 +169,7 @@
 #add-form {
     .book-image-preview {
         max-width: 100%;
-        height: auto;
         display: none;
-
         &.active {
             display: block;
         }
@@ -322,3 +320,6 @@ div.htmx-indicator {
         }
     }
 }
+
+
+@import "_add.scss";

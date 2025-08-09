@@ -1,4 +1,4 @@
-﻿﻿@page
+﻿@page
 @model Booker.Pages.BookAddingModel
 @{
     ViewData["Title"] = "Booker";
@@ -6,16 +6,18 @@
 }
 
 
+
 <h1>Nowe ogłoszenie:</h1>
 <form method="post" enctype="multipart/form-data" id="add-form" data-in-summary="" hx-on:submit="this.dataset.inSummary ? this.submit() : showSummary(event)">
     <div class="grid">
         <section>
             <label asp-for="Input.Image">Prześlij zdjęcia swojej książki:</label>
+            
             <input type="file" asp-for="Input.Image" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
             <div class="image-preview-container">
             </div>
             <small><span asp-validation-for="Input.Image"></span></small>
-
+            <small id="imageErrorMsg"></small>
             <div asp-validation-summary="ModelOnly"></div>
         </section>
 
