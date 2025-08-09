@@ -148,7 +148,6 @@ function updateCharCount() {
     }
 }
 
-
 function showSummary(event) {
     event.preventDefault(); // Prevent form submission for validation
     if (v.isValid(event.target)) {

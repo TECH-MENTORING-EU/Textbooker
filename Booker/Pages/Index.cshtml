@@ -1,24 +1,21 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Booker";
+    ViewData["Title"] = "TextBooker";
 }
 
 <section class="filter">
     <form novalidate
-        hx-get="/" 
-        hx-trigger="submit, input changed delay:500ms, change" 
-        hx-target=".grid-gallery" 
-        hx-push-url="true" 
-        hx-vals='{"pageNumber": 0}'
-    >
+          hx-get="/"
+          hx-trigger="submit, input changed delay:500ms, change"
+          hx-target=".grid-gallery"
+          hx-push-url="true"
+          hx-vals='{"pageNumber": 0}'>
         <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" />
 
         <details id="filterDetails">
             <summary id="filterSummary">
-                <svg>
-                    <use href="img/icons.svg#si-awesome-sliders" />
-                </svg>
+                <svg icon="adjustments-horizontal" aria-hidden="true" style="vertical-align: -0.15em;"></svg>
                 Filtry
             </summary>
 
@@ -44,7 +41,7 @@
 </section>
 
 <section class="grid-gallery">
-    <partial name="_ItemGallery" for="ItemsList" />
+    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
 </section>
 
 <section>
@@ -58,7 +55,6 @@
             elem.value = enable ? value : "";
             elem.form.requestSubmit();
         }
-        
     }
 
     htmx.onLoad(function(content) {

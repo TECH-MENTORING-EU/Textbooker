@@ -1,0 +1,42 @@
+﻿@model Shared.IBookForm
+
+@{
+    const string include = ":is(#add-form,#edit-form) :not([name = '__RequestVerificationToken'])";
+    string onLoad = Model.IsFirstLoad ? string.Empty : "v.isFieldValid(this)";
+}
+
+<select asp-for="Input.Title" asp-items="Model.Books" hx-on::load="@onLoad"
+        hx-get="?handler=Params"
+        hx-trigger="change"
+        hx-include="@include"
+        hx-swap-oob="true"
+>
+    <option value="">Wybierz książkę</option>
+</select>
+
+<select asp-for='Input.Subject' asp-items="Model.Subjects" hx-on::load="@onLoad"
+        hx-get="?handler=Params"
+        hx-trigger="change"
+        hx-include="@include"
+        hx-swap-oob="true"
+>
+    <option value="" disabled="@(Model.Subjects?.Count == 1)">Wybierz przedmiot</option>
+</select>
+
+<select asp-for='Input.Grade' asp-items="Model.Grades" hx-on::load="@onLoad"
+        hx-get="?handler=Params"
+        hx-trigger="change"
+        hx-include="@include"
+        hx-swap-oob="true"
+>
+    <option value="" disabled="@(Model.Grades?.Count == 1)">Wybierz klasę</option>
+</select>
+
+<select asp-for='Input.Level' asp-items="Model.Levels" hx-on::load="@onLoad"
+        hx-get="?handler=Params"
+        hx-trigger="change"
+        hx-include="@include"
+        hx-swap-oob="true"
+>
+    <option value="" disabled="@(Model.Levels?.Count == 1)">Wybierz poziom</option>
+</select>

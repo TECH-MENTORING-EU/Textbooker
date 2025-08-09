@@ -44,6 +44,19 @@ namespace Booker.Data
                         bg.HasData(bookGrades);
                     });
             });
+
+            modelBuilder.Entity<User>(u =>
+            {
+                u.HasMany(u => u.Items).WithOne(i => i.User);
+                u.HasMany(u => u.Favorites).WithMany()
+                    .UsingEntity("UserFavorites",
+                    i => i.HasOne(typeof(Item)).WithMany().HasForeignKey("ItemId").HasPrincipalKey(nameof(Item.Id)),
+                    u => u.HasOne(typeof(User)).WithMany().HasForeignKey("UserId").HasPrincipalKey(nameof(User.Id)).OnDelete(DeleteBehavior.Restrict), // to avoid cycles
+                    uf =>
+                    {
+                        uf.HasKey("UserId", "ItemId");
+                    });
+            });
         }
 
         public static IEnumerable<int> GenerateAscendingIntegers(int start = 1, int end = 1000)

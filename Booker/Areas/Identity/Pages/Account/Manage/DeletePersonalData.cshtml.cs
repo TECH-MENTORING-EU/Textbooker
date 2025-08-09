@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Booker.Data;
+using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -18,15 +19,18 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<DeletePersonalDataModel> _logger;
+        private readonly FavoritesManager _favoritesManager;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            ILogger<DeletePersonalDataModel> logger)
+            ILogger<DeletePersonalDataModel> logger,
+            FavoritesManager favoritesManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _favoritesManager = favoritesManager;
         }
 
         /// <summary>
@@ -46,7 +50,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required(ErrorMessage = "Pole {0} jest wymagane.")]
+            [Required]
             [DataType(DataType.Password)]
             public string Password { get; set; }
         }
@@ -87,8 +91,11 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            var result = await _userManager.DeleteAsync(user);
             var userId = await _userManager.GetUserIdAsync(user);
+            await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+
+
+            var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException($"Nieoczekiwany błąd przy usuwaniu użytkownika.");

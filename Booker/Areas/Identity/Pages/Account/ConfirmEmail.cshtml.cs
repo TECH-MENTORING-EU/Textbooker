@@ -45,7 +45,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
             code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
             var result = await _userManager.ConfirmEmailAsync(user, code);
-            StatusMessage = result.Succeeded ? "Dziękujemy za potwierdzenie adresu e-mail." : "Błąd potwierdzenia adresu e-mail.";
+            StatusMessage = result.Succeeded ? "Twoje konto zostało pomyślnie aktywowane😉." : "Błąd aktywacji konta.";
             return Page();
         }
     }
