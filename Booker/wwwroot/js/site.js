@@ -10,17 +10,14 @@ function handleImageUpload(input) {
     if (input.files.length > 6) {
         imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
         return;
-    } else {
-        imageErrorSpan.textContent = "";
     }
+    imageErrorSpan.textContent = "";
     const files = Array.from(input.files);
     const dataTransfer = new DataTransfer();
 
-    
 
     const processingPromises = files.map((file, index) => {
         return new Promise((resolve, reject) => {
-            console.log(index);
             const reader = new FileReader();
 
             reader.onload = function (e) {
@@ -63,7 +60,6 @@ function handleImageUpload(input) {
 
                         const newReader = new FileReader();
                         newReader.onloadend = () => {
-                            console.log("Imagecreation");
                             const imageElement = document.createElement("img");
                             imageElement.src = newReader.result;
                             imageElement.alt = `Podgląd zdjęcia książki numer ${index + 1}.`;
