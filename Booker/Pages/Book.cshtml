@@ -3,13 +3,34 @@
 
 @{
     ViewData["Title"] = @Model.BookItem.Book.Title + " - TextBooker" ?? "Szczegóły książki";
+
+ 
+    var images = (Model.BookItem.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+    var mainImage = images.FirstOrDefault();
+    var otherImages = images.Skip(1).ToList();
 }
 
 <article class="book-display">
+
+  
     <section class="image">
-        <img src="@Model.BookItem.Photo" alt="Zdjęcie książki: @Model.BookItem.Book.Title" />
+        @if (!string.IsNullOrEmpty(mainImage))
+        {
+            <img src="@mainImage" alt="Główne zdjęcie książki: @Model.BookItem.Book.Title" class="main-book-photo" />
+        }
+
+        @if (otherImages.Any())
+        {
+            <div class="thumbnail-images">
+                @foreach (var img in otherImages)
+                {
+                    <img src="@img" alt="Dodatkowe zdjęcie książki" class="thumbnail-book-photo" />
+                }
+            </div>
+        }
     </section>
 
+  
     <section class="data">
         <h2>@Model.BookItem.Book.Title</h2>
         <p>
@@ -35,6 +56,7 @@
         </ul>
     </section>
 
+ 
     <section class="actions">
         @if (Model.IsCurrentUserOwner)
         {
@@ -43,21 +65,21 @@
         else
         {
             @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
-            (
-                Model.BookItem.Id,
-                Model.IsFavorite,
-                true
-            ))
+                     (
+                     Model.BookItem.Id,
+                     Model.IsFavorite,
+                     true
+                     ))
             <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
         }
     </section>
 
+
     <section class="description">
         <h3>Opis</h3>
-        <p>
-            @Model.BookItem.Description
-        </p>
+        <p>@Model.BookItem.Description</p>
     </section>
+
 
     <section class="seller">
         <h3>Sprzedaje</h3>
@@ -71,4 +93,44 @@
             </div>
         </div>
     </section>
+
 </article>
+
+<!-- Will be moved later -->
+<style>
+    .main-book-photo {
+        width: 100%;
+        max-width: 500px;
+        height: auto;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .thumbnail-images {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .thumbnail-book-photo {
+        width: 100px;
+        height: auto;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+</style>
+
+<script>
+    // Optional: click thumbnail to change main image
+    document.addEventListener("DOMContentLoaded", () => {
+        const mainImg = document.querySelector(".main-book-photo");
+        const thumbnails = document.querySelectorAll(".thumbnail-book-photo");
+
+        thumbnails.forEach(th => {
+            th.addEventListener("click", () => {
+                mainImg.src = th.src;
+            });
+        });
+    });
+</script>

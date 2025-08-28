@@ -23,18 +23,15 @@ public abstract class ItemInputModel
 
     //[FileExtensions(Extensions = "jpg,jpeg,png,gif", ErrorMessage = "Dozwolone są tylko pliki graficzne (jpg, jpeg, png, gif).")]
     //[Length(0, 5 * 1024 * 1024, ErrorMessage = "Plik nie może przekraczać 5 MB.")]
-    [Display(Name = "Zdjęcie książki")]
-    public virtual IFormFile? Image { get; set; }
+    [Display(Name = "Zdjęcia książki")]
+    public virtual List<IFormFile> Images { get; set; } = new();
 }
 
 public class ItemAddModel : ItemInputModel
 {
-    [Required(ErrorMessage = "Proszę przesłać zdjęcie książki.")]
-    public required override IFormFile? Image { get; set; }
 }
 
 public class ItemEditModel : ItemInputModel
 {
 
 }
-
