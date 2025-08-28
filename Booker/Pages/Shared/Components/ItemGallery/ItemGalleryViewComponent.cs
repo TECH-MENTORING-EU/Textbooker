@@ -1,6 +1,8 @@
 using Booker.Services;
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewComponents;
+using Microsoft.AspNetCore.Html;
 
 namespace Booker.Pages.Shared.Components.ItemGallery;
 
@@ -35,7 +37,9 @@ public class ItemGalleryViewComponent : ViewComponent
     {
         if (!itemIds.Any())
         {
-            return Content("<p>Brak wyników...</p>");
+            return new HtmlContentViewComponentResult(
+                new HtmlString("<p>Brak wyników...</p>")
+            );
         }
 
         var itemsFromDb = await _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize).ToListAsync();
