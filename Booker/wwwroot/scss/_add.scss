@@ -2,7 +2,7 @@
     .books-image-layout {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: 300px 150px;
+        grid-template-rows: auto 150px;
         gap: 10px;
         max-width: 800px;
         margin-right: 20px;
@@ -10,11 +10,12 @@
         &__top {
             grid-column: 1 / 4;
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
         }
 
         &__main {
+            grid-column: span 2;
             position: relative;
             display: flex;
 
@@ -23,6 +24,7 @@
                 height: 100%;
                 object-fit: cover;
                 border-radius: 6px;
+                display: block;
             }
 
             span {
@@ -38,8 +40,9 @@
         }
 
         &__side {
+            grid-column: span 1;
             display: grid;
-            grid-template-rows: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 150px);
             gap: 10px;
 
             img {
@@ -47,6 +50,7 @@
                 height: 100%;
                 object-fit: cover;
                 border-radius: 6px;
+                display: block;
             }
         }
 
@@ -56,7 +60,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            height: 150px;
+            height: 150px; 
 
             img {
                 width: 100%;
