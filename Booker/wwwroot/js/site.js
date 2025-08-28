@@ -145,7 +145,8 @@ function updateCharCount() {
 }
 
 function showSummary(event) {
-    event.preventDefault(); // Prevent form submission for validation
+    event.preventDefault(); // Prevent form submission
+
     if (v.isValid(event.target)) {
         document.getElementById('summaryTitle').textContent = document.getElementById('Input_Title').value;
         document.getElementById('summarySubject').textContent = document.getElementById('Input_Subject').value;
@@ -155,19 +156,25 @@ function showSummary(event) {
         document.getElementById('summaryState').textContent = document.getElementById('Input_State').value;
         document.getElementById('summaryPrice').textContent = document.getElementById('Input_Price').value + " PLN";
 
-        const bookImagePreviewSrc = document.getElementById('Input_Image').closest('section').querySelector('img').src;
-        if (document.getElementById('Input_Image').closest('section').querySelector('img').classList.contains('active') && bookImagePreviewSrc && bookImagePreviewSrc !== window.location.href + '#') {
-            document.getElementById('summaryImage').src = bookImagePreviewSrc;
+        
+        const firstPreviewImg = document.querySelector('.image-preview-container img');
+        if (firstPreviewImg) {
+            document.getElementById('summaryImage').src = firstPreviewImg.src;
             document.getElementById('summaryImage').style.display = 'block';
         } else {
+            document.getElementById('summaryImage').src = '';
             document.getElementById('summaryImage').style.display = 'none';
-            document.getElementById('summaryImage').src = "";
         }
 
         event.target.dataset.inSummary = true;
-        document.querySelector("main dialog").showModal();
+        const dialog = document.querySelector("main dialog");
+        if (dialog) dialog.showModal();
     }
 }
+
+
+
+
 
 function toggleHamburgerMenu(check) {
     const hamburger = document.getElementById('hamburger').querySelector('details');
