@@ -32,6 +32,8 @@ namespace Booker.Data
 
             modelBuilder.Entity<Grade>().HasData(SeedData.Grades);
 
+            modelBuilder.Entity<Level>().HasData(SeedData.Levels);
+
             modelBuilder.Entity<Book>(b =>
             {
                 b.HasData(SeedData.Books);

@@ -37,7 +37,7 @@
 
         public static List<Level> Levels = new List<Level>
         {
-            new Level { Id = 0, Name = "Brak" },
+            new Level { Id = -1, Name = "Brak" },
             new Level { Id = 1, Name = "Podstawa" },
             new Level { Id = 2, Name = "Rozszerzenie" },
             new Level { Id = 3, Name = "Podstawa+Rozszerzenie" },
@@ -153,10 +153,10 @@
             CreateBook(title: "W centrum uwagi 2", subjectId: 16, levelId: 1, grades: new() { 5 }),
 
             // Angielski zawodowy
-            CreateBook(title: "Electronics", subjectId: 17, levelId: 0, grades: new() { 3 }),
-            CreateBook(title: "Electrician", subjectId: 17, levelId: 0, grades: new() { 3 }),
-            CreateBook(title: "Software engineering", subjectId: 17, levelId: 0, grades: new() { 3 }),
-            CreateBook(title: "IT [english for IT]", subjectId: 17, levelId: 0, grades: new() { 3 }),
+            CreateBook(title: "Electronics", subjectId: 17, levelId: -1, grades: new() { 3 }),
+            CreateBook(title: "Electrician", subjectId: 17, levelId: -1, grades: new() { 3 }),
+            CreateBook(title: "Software engineering", subjectId: 17, levelId: -1, grades: new() { 3 }),
+            CreateBook(title: "IT [english for IT]", subjectId: 17, levelId: -1, grades: new() { 3 }),
 
             // Informatyka
             CreateBook(title: "Informatyka w praktyce", subjectId: 11, levelId: 2, grades: new() { 3 })
