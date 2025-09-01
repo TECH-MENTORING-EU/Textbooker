@@ -11,6 +11,7 @@ namespace Booker.Data
         public DbSet<Item> Items { get; set; }
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Subject> Subjects { get; set; }
+        public DbSet<Level> Levels { get; set; }
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -85,7 +86,7 @@ namespace Booker.Data
             return idGenerator.Current;
         }
 
-        public static Book CreateBook(string title, int subjectId, bool level, List<int> grades)
+        public static Book CreateBook(string title, int subjectId, int levelId, List<int> grades)
         {
             var id = GetNextId(bookIdGenerator);
             foreach (var grade in grades)
@@ -100,7 +101,8 @@ namespace Booker.Data
                 Grades = null!, // Grades will be set by the database
                 SubjectId = subjectId,
                 Subject = null!, // Subject will be set by the database
-                Level = level
+                LevelId = levelId,
+                Level = null!, // Level will be set by the database
             };
         }
     }
