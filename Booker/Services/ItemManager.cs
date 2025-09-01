@@ -28,7 +28,7 @@ public class ItemManager
         public static implicit operator Result(int Id) => new Result(Status.Success, Id);
     };
     
-    public record Parameters(string? Search, Grade? Grade, Subject? Subject, bool? Level, decimal? MinPrice, decimal? MaxPrice);
+    public record Parameters(string? Search, Grade? Grade, Subject? Subject, Level? Level, decimal? MinPrice, decimal? MaxPrice);
     public record ItemModel(
         User User,
         StaticDataManager.Parameters Parameters,
@@ -52,6 +52,7 @@ public class ItemManager
         return _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User)
             .FirstOrDefaultAsync(i => i.Id == id);
     }
@@ -124,7 +125,8 @@ public class ItemManager
     {
         if (model.Parameters.Title == null
             || model.Parameters.Grade == null
-            || model.Parameters.Subject == null)
+            || model.Parameters.Subject == null
+            || model.Parameters.Level == null)
             return Status.Error;
 
         var title = model.Parameters.Title;
@@ -241,6 +243,7 @@ public class ItemManager
         return _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User)
             .AsQueryable();
     }
@@ -283,10 +286,10 @@ public class ItemManager
                     .Where(i => !maxPrice.HasValue || i.Price <= maxPrice.Value);
     }
 
-    private static IQueryable<Item> ApplyLevelFilter(IQueryable<Item> query, bool? level)
+    private static IQueryable<Item> ApplyLevelFilter(IQueryable<Item> query, Level? level)
     {
         return level == null
             ? query
-            : query.Where(i => i.Book.Level == level);
+            : query.Where(i => i.Book.Level.Id == level.Id);
     }
 }
