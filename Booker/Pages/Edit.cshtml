@@ -18,7 +18,6 @@
     {
         <form method="post" enctype="multipart/form-data" id="edit-form" class="upload-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">
             <div class="grid">
-                <!-- LEFT: Image Preview -->
                 <section>
                     <label asp-for="Input.Images">Zmień zdjęcia książki (opcjonalnie):</label>
                     <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
@@ -28,7 +27,6 @@
                     </small>
 
                     <div class="image-preview-container">
-                        @* Render existing images using same layout as Add page *@
                         <div class="books-image-layout">
                             <div class="books-image-layout__top">
                                 <div class="books-image-layout__main">
@@ -68,7 +66,6 @@
                     <div asp-validation-summary="ModelOnly"></div>
                 </section>
 
-                <!-- RIGHT: Form Inputs -->
                 <section>
                     <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
 
