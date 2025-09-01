@@ -27,7 +27,7 @@
                         <img src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
                     }
                     <label asp-for="Input.Images">Zmień zdjęcie swojej książki (opcjonalnie):</label>
-                    <input type="file" asp-for="Input.Images" accept="image/*" hx-on:change="handleImageUpload(this)">
+                    <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
                     <small><span asp-validation-for="Input.Images"></span></small>
 
                     <div asp-validation-summary="ModelOnly"></div>

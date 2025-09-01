@@ -13,9 +13,12 @@
         <section>
             <label asp-for="Input.Images">Prześlij zdjęcia swojej książki:</label>
             <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
-            <div class="image-preview-container">
-            </div>
-            <small><span asp-validation-for="Input.Images"></span></small>
+            <small>
+                <span asp-validation-for="Input.Images"></span>
+                <span id="imageErrorMsg"></span>
+            </small>
+            <div class="image-preview-container"></div>
+
             <small id="imageErrorMsg"></small>
             <div asp-validation-summary="ModelOnly"></div>
         </section>

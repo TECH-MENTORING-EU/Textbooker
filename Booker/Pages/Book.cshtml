@@ -4,59 +4,46 @@
 @{
     ViewData["Title"] = @Model.BookItem.Book.Title + " - TextBooker" ?? "Szczegóły książki";
 
- 
-    var images = (Model.BookItem.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+    var images = (Model.BookItem.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
     var mainImage = images.FirstOrDefault();
-    var otherImages = images.Skip(1).ToList();
 }
 
 <article class="book-display">
 
-  
     <section class="image">
-        @if (!string.IsNullOrEmpty(mainImage))
+        @if (images.Any())
         {
             <img src="@mainImage" alt="Główne zdjęcie książki: @Model.BookItem.Book.Title" class="main-book-photo" />
-        }
 
-        @if (otherImages.Any())
-        {
             <div class="thumbnail-images">
-                @foreach (var img in otherImages)
+                @foreach (var img in images)
                 {
-                    <img src="@img" alt="Dodatkowe zdjęcie książki" class="thumbnail-book-photo" />
+                    <img src="@img" alt="Zdjęcie książki" class="thumbnail-book-photo" />
                 }
             </div>
         }
     </section>
 
-  
     <section class="data">
         <h2>@Model.BookItem.Book.Title</h2>
         <p>
-            <small>
-                Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.DateTime))
-            </small>
+            <small>Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.DateTime))</small>
         </p>
         <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
 
         <ul>
-            <li>
-                Klasa: @String.Join(", ",
-                Model.BookItem.Book.Grades.Select(g => g.GradeNumber).ToList() ?? new() { "nieznana" })
-            </li>
+            <li>Klasa: @String.Join(", ", Model.BookItem.Book.Grades.Select(g => g.GradeNumber).ToList() ?? new() { "nieznana" })</li>
             <li>Przedmiot: @Model.BookItem.Book.Subject.Name</li>
-            <li>
-                Zakres:
-                @(Model.BookItem.Book.Level == null
-                    ? "Nieznany zakres"
-                    : (Model.BookItem.Book.Level == true ? "rozszerzony" : "podstawowy"))
-            </li>
+            <li>Zakres: @(Model.BookItem.Book.Level == null ? "Nieznany zakres" : (Model.BookItem.Book.Level == true ? "rozszerzony" : "podstawowy"))</li>
             <li>Stan: @(Model.BookItem.State ?? "Nieznany stan")</li>
         </ul>
     </section>
 
- 
+    <section class="description">
+        <h3>Opis</h3>
+        <p>@Model.BookItem.Description</p>
+    </section>
+
     <section class="actions">
         @if (Model.IsCurrentUserOwner)
         {
@@ -64,28 +51,15 @@
         }
         else
         {
-            @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState
-                     (
-                     Model.BookItem.Id,
-                     Model.IsFavorite,
-                     true
-                     ))
+            @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState(Model.BookItem.Id, Model.IsFavorite, true))
             <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
         }
     </section>
 
-
-    <section class="description">
-        <h3>Opis</h3>
-        <p>@Model.BookItem.Description</p>
-    </section>
-
-
     <section class="seller">
         <h3>Sprzedaje</h3>
         <div>
-            <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-                 alt="Profil sprzedającego" />
+            <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" alt="Profil sprzedającego" />
             <div>
                 @Model.BookItem.User.UserName<br />
                 @Model.BookItem.User.School<br />
@@ -96,33 +70,7 @@
 
 </article>
 
-<!-- Will be moved later -->
-<style>
-    .main-book-photo {
-        width: 100%;
-        max-width: 500px;
-        height: auto;
-        display: block;
-        margin-bottom: 10px;
-    }
-
-    .thumbnail-images {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .thumbnail-book-photo {
-        width: 100px;
-        height: auto;
-        cursor: pointer;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-</style>
-
 <script>
-    // Optional: click thumbnail to change main image
     document.addEventListener("DOMContentLoaded", () => {
         const mainImg = document.querySelector(".main-book-photo");
         const thumbnails = document.querySelectorAll(".thumbnail-book-photo");
