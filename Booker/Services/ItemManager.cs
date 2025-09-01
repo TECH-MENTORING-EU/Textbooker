@@ -160,11 +160,8 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult;
 
-        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
-
-        _context.Attach(book);
-        _context.Attach(model.User);
 
         var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!);
         var item = new Item
@@ -196,7 +193,7 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult.Status;
 
-        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
         var photoUri = model.ExistingImageBlobName;
@@ -207,12 +204,7 @@ public class ItemManager
             photoUri = (await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!)).ToString();
         }
 
-        if (item.Book.Id != book.Id)
-        {
-            _context.Attach(book);
-            item.Book = book;
-        }
-
+        item.Book = book;
         item.Description = model.Description;
         item.State = model.State;
         item.Price = model.Price;
