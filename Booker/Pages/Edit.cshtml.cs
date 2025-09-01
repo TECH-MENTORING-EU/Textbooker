@@ -40,7 +40,7 @@ namespace Booker.Pages
                 Title = ItemToEdit.Book.Title,
                 Subject = ItemToEdit.Book.Subject.Name,
                 Grade = ItemToEdit.Book.Grades.First().GradeNumber,
-                Level = ItemToEdit.Book.Level == true ? "Rozszerzenie" : "Podstawa",
+                Level = ItemToEdit.Book.Level.Name,
                 Description = ItemToEdit.Description,
                 State = ItemToEdit.State,
                 Price = ItemToEdit.Price,
