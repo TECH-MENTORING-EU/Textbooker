@@ -70,6 +70,7 @@ builder.Services.AddDefaultIdentity<User>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
 })
+    .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<DataContext>()
         .AddErrorDescriber<ErrorDescriber>();
 
@@ -133,5 +134,7 @@ if (app.Environment.IsDevelopment())
 {
     await app.InitializeDatabaseAsync();
 }
+
+await app.InitializeRolesAsync();
 
 app.Run();

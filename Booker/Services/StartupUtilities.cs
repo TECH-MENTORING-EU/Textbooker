@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using Booker.Authorization;
 
 
 
@@ -18,7 +21,7 @@ namespace Booker.Services
         {
             services.AddSingleton(x => new BlobServiceClient(configuration["AzureStorage:ConnectionString"]));
 
-            services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));           
+            services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddSingleton<IEmailSender, SendMailSvc>();
@@ -27,7 +30,9 @@ namespace Booker.Services
             services.AddScoped<FavoritesManager>();
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
-            
+
+            services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
+
             return services;
         }
 
@@ -37,7 +42,8 @@ namespace Booker.Services
             {
                 options.RejectionStatusCode = 429;
 
-                options.AddPolicy("IpRateLimit", context => {
+                options.AddPolicy("IpRateLimit", context =>
+                {
                     if (context.Request.Method == HttpMethods.Get ||
                         context.Request.Method == HttpMethods.Head ||
                         context.Request.Method == HttpMethods.Options
@@ -50,7 +56,8 @@ namespace Booker.Services
 
                 });
 
-                options.AddPolicy("IpRateLimitAllMethods", context => {
+                options.AddPolicy("IpRateLimitAllMethods", context =>
+                {
                     return IpRateLimit(context);
                 });
             });
@@ -79,7 +86,8 @@ namespace Booker.Services
 
         public static IMvcBuilder AddCustomRoutes(this IMvcBuilder builder)
         {
-            return builder.AddRazorPagesOptions(options => {
+            return builder.AddRazorPagesOptions(options =>
+            {
 
                 options.Conventions.AddPageRouteModelConvention("/Profile/Index", model =>
                 {
@@ -137,7 +145,7 @@ namespace Booker.Services
                             Order = 1 // Ensure this route is processed after the default route
                         }
                     });
-                    
+
                 });
 
             });
@@ -147,42 +155,42 @@ namespace Booker.Services
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)
         {
             using var scope = app.Services.CreateScope();
-            
-                bool clearDatabase = configuration.GetValue<bool>("DatabaseSettings:ClearDatabaseOnStartup");
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>(); 
 
-                try
-                {                    
-                    var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-                    var migrator = dbContext.Database.GetService<IMigrator>();
+            bool clearDatabase = configuration.GetValue<bool>("DatabaseSettings:ClearDatabaseOnStartup");
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+                var migrator = dbContext.Database.GetService<IMigrator>();
 
 
-                    if (clearDatabase)
-                    {
-                        logger.LogWarning("WARNING: ClearDatabaseOnStartup is set to true. We will try to revert all migrations, and apply them again");
-
-                        try
-                        {                           
-                            await migrator.MigrateAsync("0"); // "0" means state before migration
-                            logger.LogInformation("All migrations reverted.");    
-
-                        }
-                        catch (Exception exMigrate)
-                        {
-                            logger.LogError(exMigrate, "Something went wrong :(");
-                            throw;
-                        }
-                    }
-
-                    await migrator.MigrateAsync(); 
-                    logger.LogInformation("All migrations executed.");
-                    
-                }
-                catch (Exception ex)
+                if (clearDatabase)
                 {
-                    logger.LogError(ex, "Something went wrong :(");
+                    logger.LogWarning("WARNING: ClearDatabaseOnStartup is set to true. We will try to revert all migrations, and apply them again");
+
+                    try
+                    {
+                        await migrator.MigrateAsync("0"); // "0" means state before migration
+                        logger.LogInformation("All migrations reverted.");
+
+                    }
+                    catch (Exception exMigrate)
+                    {
+                        logger.LogError(exMigrate, "Something went wrong :(");
+                        throw;
+                    }
                 }
-            
+
+                await migrator.MigrateAsync();
+                logger.LogInformation("All migrations executed.");
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Something went wrong :(");
+            }
+
 
             return app;
         }
@@ -201,6 +209,17 @@ namespace Booker.Services
             {
                 logger.LogError(ex, "Something went wrong during database initialization.");
             }
+            return app;
+        }
+
+        public static async Task<WebApplication> InitializeRolesAsync(this WebApplication app)
+        {
+            using var scope = app.Services.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+            if (!await roleManager.RoleExistsAsync("Admin"))
+                await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
+
             return app;
         }
 
