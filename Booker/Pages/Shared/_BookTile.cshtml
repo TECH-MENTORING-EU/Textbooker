@@ -51,7 +51,7 @@
             {
                 @foreach (var grade in Model.Item.Book.Grades)
                 {
-                    <button class='@(grade.Id == Model.Params.Grade?.Id ? "" : "outline") grade'>
+                    <button class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'>
                         @DisplayGrade(grade.GradeNumber)
                     </button>
                 }

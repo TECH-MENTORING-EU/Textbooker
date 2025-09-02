@@ -60,7 +60,7 @@ namespace Booker.Pages
 
             var params2 = new ItemManager.Parameters(
                 Input?.Search,
-                Params.Grade,
+                Params.Grades,
                 Params.Subject,
                 Params.Level,
                 Input?.MinPrice,

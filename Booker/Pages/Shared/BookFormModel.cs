@@ -55,9 +55,9 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             {
                 ModelState.AddModelError("Input.Subject", "Wybrany przedmiot nie pasuje do wybranej książki.");
             }
-            if (result.HasFlag(ItemManager.Status.InvalidGrade))
+            if (result.HasFlag(ItemManager.Status.InvalidGrades))
             {
-                ModelState.AddModelError("Input.Grade", "Wybrana klasa nie pasuje do wybranej książki.");
+                ModelState.AddModelError("Input.Grade", "Wybrane klasy nie pasują do wybranej książki.");
             }
             if (result.HasFlag(ItemManager.Status.InvalidLevel))
             {
@@ -122,21 +122,39 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
     
     private async Task LoadGradesSelect()
     {
-        var grades = await (string.IsNullOrWhiteSpace(Input?.Title)
-            ? _staticDataManager.GetGradesAsync()
-            : _staticDataManager.GetGradesByBookTitleAsync(Input.Title));
+        var isTitleSet = !string.IsNullOrWhiteSpace(Input?.Title);
 
-        Grades = grades.Select(g => new SelectListItem
+        var grades = await (isTitleSet
+            ? _staticDataManager.GetGradesByBookTitleAsync(Input!.Title)
+            : _staticDataManager.GetGradesAsync());
+
+        if (isTitleSet)
         {
-            Value = g.GradeNumber,
-            Text = $"Klasa {g.GradeNumber}."
-        }).ToList();
+            Grades =
+            [
+                new SelectListItem
+                {
+                    Value = string.Join(',',grades.Select(g => g.GradeNumber)),
+                    Text = $"Klasa {string.Join(" / ", grades.Select(g => g.GradeNumber))}",
+                    Disabled = true,
+                    Selected = true
+                }
+            ];
+        }
+        else
+        {
+            Grades = grades.Select(g => new SelectListItem
+            {
+                Value = g.GradeNumber,
+                Text = $"Klasa {g.GradeNumber}."
+            }).ToList();
+        }
 
         if (Grades.Count == 1)
-        {
-            ModelState.Remove("Input.Grade");
-            Input!.Grade = Grades[0].Value;
-        }
+            {
+                ModelState.Remove("Input.Grade");
+                Input!.Grade = Grades[0].Value;
+            }
     }
 
     private async Task LoadSubjectsSelect()
