@@ -195,7 +195,7 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult.Status;
 
-        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
         var photoUri = model.ExistingImageBlobName;

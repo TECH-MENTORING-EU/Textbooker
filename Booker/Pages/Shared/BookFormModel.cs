@@ -39,7 +39,7 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         Input = input;
 
         IsFirstLoad = firstLoad;
-        await LoadSelects();
+        await LoadSelects(Request.Headers.ContainsKey("HX-Trigger-Name") ? Request.Headers["HX-Trigger-Name"].ToString() : string.Empty);
         return Partial("_FormSelects", this);
     }
 
@@ -75,8 +75,20 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         return RedirectToPage("/Book", new { id = itemId});
     }
 
-    public async Task LoadSelects()
+    public async Task LoadSelects(string trigger)
     {
+        if (trigger == "Input.Title" && string.IsNullOrWhiteSpace(Input?.Title))
+        {
+            ModelState.Remove("Input.Title");
+            Input!.Title = "";
+            ModelState.Remove("Input.Grade");
+            Input!.Grade = "";
+            ModelState.Remove("Input.Subject");
+            Input!.Subject = "";
+            ModelState.Remove("Input.Level");
+            Input!.Level = "";
+        }
+
         await LoadBooksSelect();
         await LoadGradesSelect();
         await LoadSubjectsSelect();
@@ -136,7 +148,6 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
                 {
                     Value = string.Join(',',grades.Select(g => g.GradeNumber)),
                     Text = $"Klasa {string.Join(" / ", grades.Select(g => g.GradeNumber))}",
-                    Disabled = true,
                     Selected = true
                 }
             ];

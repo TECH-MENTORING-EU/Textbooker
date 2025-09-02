@@ -39,7 +39,7 @@ namespace Booker.Pages
             {
                 Title = ItemToEdit.Book.Title,
                 Subject = ItemToEdit.Book.Subject.Name,
-                Grade = ItemToEdit.Book.Grades.First().GradeNumber,
+                Grade = string.Join(',',ItemToEdit.Book.Grades.Select(g => g.GradeNumber).OrderBy(g => g)),
                 Level = ItemToEdit.Book.Level == true ? "Rozszerzenie" : "Podstawa",
                 Description = ItemToEdit.Description,
                 State = ItemToEdit.State,
@@ -47,7 +47,7 @@ namespace Booker.Pages
                 Image = null!
             };
 
-            await LoadSelects();
+            await LoadSelects(string.Empty);
 
             return Page();
         }
