@@ -39,11 +39,6 @@
         </ul>
     </section>
 
-    <section class="description">
-        <h3>Opis</h3>
-        <p>@Model.BookItem.Description</p>
-    </section>
-
     <section class="actions">
         @if (Model.IsCurrentUserOwner)
         {
@@ -55,6 +50,13 @@
             <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
         }
     </section>
+
+    <section class="description">
+        <h3>Opis</h3>
+        <p>@Model.BookItem.Description</p>
+    </section>
+
+
 
     <section class="seller">
         <h3>Sprzedaje</h3>
