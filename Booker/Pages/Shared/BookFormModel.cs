@@ -189,15 +189,15 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
 
     private async Task LoadLevelsSelect()
     {
-        var levels = string.IsNullOrWhiteSpace(Input?.Title)
-            ? new() { false, true }
-            : await _staticDataManager.GetLevelsByBookTitleAsync(Input.Title);
+        var levels = await (string.IsNullOrWhiteSpace(Input?.Title)
+            ? _staticDataManager.GetLevelsAsync()
+            : _staticDataManager.GetLevelsByBookTitleAsync(Input.Title));
 
         Levels = levels.Select(l => new SelectListItem
         {
-            Value = (l == true) ? "Rozszerzenie" : "Podstawa",
-            Text = (l == true) ? "Rozszerzenie" : "Podstawa"
-        }).OrderBy(v => v.Value).ToList();
+            Value = l.Name,
+            Text = l.Name
+        }).ToList();
 
         if (Levels.Count == 1)
         {

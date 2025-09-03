@@ -29,7 +29,7 @@ public class ItemManager
         public static implicit operator Result(int Id) => new Result(Status.Success, Id);
     };
     
-    public record Parameters(string? Search, List<Grade> Grades, Subject? Subject, bool? Level, decimal? MinPrice, decimal? MaxPrice);
+    public record Parameters(string? Search, List<Grade> Grades, Subject? Subject, Level? Level, decimal? MinPrice, decimal? MaxPrice);
     public record ItemModel(
         User User,
         StaticDataManager.Parameters Parameters,
@@ -53,6 +53,7 @@ public class ItemManager
         return _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User)
             .FirstOrDefaultAsync(i => i.Id == id);
     }
@@ -125,7 +126,8 @@ public class ItemManager
     {
         if (model.Parameters.Title == null
             || model.Parameters.Grades.IsNullOrEmpty()
-            || model.Parameters.Subject == null)
+            || model.Parameters.Subject == null
+            || model.Parameters.Level == null)
             return Status.Error;
 
         var title = model.Parameters.Title;
@@ -159,11 +161,8 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult;
 
-        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
-
-        _context.Attach(book);
-        _context.Attach(model.User);
 
         var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!);
         var item = new Item
@@ -206,12 +205,7 @@ public class ItemManager
             photoUri = (await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!)).ToString();
         }
 
-        if (item.Book.Id != book.Id)
-        {
-            _context.Attach(book);
-            item.Book = book;
-        }
-
+        item.Book = book;
         item.Description = model.Description;
         item.State = model.State;
         item.Price = model.Price;
@@ -242,6 +236,7 @@ public class ItemManager
         return _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User)
             .AsQueryable();
     }
@@ -284,10 +279,10 @@ public class ItemManager
                     .Where(i => !maxPrice.HasValue || i.Price <= maxPrice.Value);
     }
 
-    private static IQueryable<Item> ApplyLevelFilter(IQueryable<Item> query, bool? level)
+    private static IQueryable<Item> ApplyLevelFilter(IQueryable<Item> query, Level? level)
     {
         return level == null
             ? query
-            : query.Where(i => i.Book.Level == level);
+            : query.Where(i => i.Book.Level.Id == level.Id);
     }
 }
