@@ -1,6 +1,7 @@
 using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Booker.Services;
 
@@ -17,7 +18,7 @@ public class ItemManager
         Error = 1,
         InvalidTitle = 2,
         InvalidSubject = 4,
-        InvalidGrade = 8,
+        InvalidGrades = 8,
         InvalidLevel = 16,
         NotFound = 32
     }
@@ -28,7 +29,7 @@ public class ItemManager
         public static implicit operator Result(int Id) => new Result(Status.Success, Id);
     };
     
-    public record Parameters(string? Search, Grade? Grade, Subject? Subject, Level? Level, decimal? MinPrice, decimal? MaxPrice);
+    public record Parameters(string? Search, List<Grade> Grades, Subject? Subject, Level? Level, decimal? MinPrice, decimal? MaxPrice);
     public record ItemModel(
         User User,
         StaticDataManager.Parameters Parameters,
@@ -124,7 +125,7 @@ public class ItemManager
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
         if (model.Parameters.Title == null
-            || model.Parameters.Grade == null
+            || model.Parameters.Grades.IsNullOrEmpty()
             || model.Parameters.Subject == null
             || model.Parameters.Level == null)
             return Status.Error;
@@ -140,7 +141,7 @@ public class ItemManager
         if (!subjects.Contains(model.Parameters.Subject)) status |= Status.InvalidSubject | Status.Error;
 
         var grades = await _staticDataManager.GetGradesByBookTitleAsync(title);
-        if (!grades.Contains(model.Parameters.Grade)) status |= Status.InvalidGrade | Status.Error;
+        if (!grades.SequenceEqual(model.Parameters.Grades)) status |= Status.InvalidGrades | Status.Error;
 
         var levels = await _staticDataManager.GetLevelsByBookTitleAsync(title);
         if (!levels.Contains(model.Parameters.Level)) status |= Status.InvalidLevel | Status.Error;
@@ -243,7 +244,7 @@ public class ItemManager
     private static IQueryable<Item> ApplyFilters(IQueryable<Item> query, Parameters input)
     {
         query = ApplySearchFilter(query, input.Search);
-        query = ApplyGradeFilter(query, input.Grade);
+        query = ApplyGradesFilter(query, input.Grades);
         query = ApplySubjectFilter(query, input.Subject);
         query = ApplyPriceFilters(query, input.MinPrice, input.MaxPrice);
         query = ApplyLevelFilter(query, input.Level);
@@ -258,11 +259,11 @@ public class ItemManager
             : query.Where(i => i.Book.Title.Contains(search.ToLower()));
     }
 
-    private static IQueryable<Item> ApplyGradeFilter(IQueryable<Item> query, Grade? grade)
+    private static IQueryable<Item> ApplyGradesFilter(IQueryable<Item> query, List<Grade> grades)
     {
-        return grade == null
+        return grades.IsNullOrEmpty()
             ? query
-            : query.Where(i => i.Book.Grades.Any(g => g.Id == grade.Id));
+            : query.Where(i => i.Book.Grades.Any(g => grades.Contains(g)));
     }
 
     private static IQueryable<Item> ApplySubjectFilter(IQueryable<Item> query, Subject? subject)

@@ -23,7 +23,7 @@ namespace Booker.Pages
                 return Redirect("/Identity/Account/Login");
             }
 
-            await LoadSelects();
+            await LoadSelects(string.Empty);
 
             return Page();
         }        

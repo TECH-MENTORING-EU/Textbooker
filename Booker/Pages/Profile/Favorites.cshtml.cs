@@ -46,7 +46,7 @@ namespace Booker.Pages.Profile
                 return NotFound();
             }
 
-            Params = new StaticDataManager.Parameters(null, null, null, null);
+            Params = new StaticDataManager.Parameters(null, [], null, null);
 
             ItemIds = await _favoritesManager.GetFavoriteIdsAsync(Id.Value);
 

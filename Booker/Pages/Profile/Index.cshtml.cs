@@ -52,7 +52,7 @@ namespace Booker.Pages.Profile
 
             ItemIds = await _itemManager.GetUserItemIdsAsync(Id.Value).ToListAsync();
 
-            Params = new StaticDataManager.Parameters(null, null, null, null);
+            Params = new StaticDataManager.Parameters(null, [], null, null);
 
             UserInfo = new UserModel(user, user.Id == currentUserId);
 

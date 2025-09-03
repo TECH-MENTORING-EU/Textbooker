@@ -3,6 +3,7 @@ using Booker.Data;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
 
 
 namespace Booker.Services;
@@ -12,7 +13,7 @@ public class StaticDataManager
     private readonly DataContext _context;
     private readonly IMemoryCache _cache;
 
-    public record Parameters(string? Title, Grade? Grade, Subject? Subject, Level? Level);
+    public record Parameters(string? Title, List<Grade> Grades, Subject? Subject, Level? Level);
 
     public StaticDataManager(DataContext context, IMemoryCache cache)
     {
@@ -104,16 +105,18 @@ public class StaticDataManager
         return books.Select(b => b.Level).Distinct().ToList();
     }
 
-    public async Task<Parameters> ConvertParametersAsync(string? title, string? grade, string? subject, string? level)
+    public async Task<Parameters> ConvertParametersAsync(string? title, string? grades, string? subject, string? level)
     {
         var _grades = await GetGradesAsync();
         var _subjects = await GetSubjectsAsync();
         var _levels = await GetLevelsAsync();
 
+        var gradesList = grades?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
         return new Parameters
         (
             title,
-            _grades.FirstOrDefault(g => g.GradeNumber == grade),
+            _grades.Where(g => gradesList != null && gradesList.Contains(g.GradeNumber)).ToList(),
             _subjects.FirstOrDefault(s => s.Name == subject),
             _levels.FirstOrDefault(l => l.Name == level)
         );
@@ -123,7 +126,7 @@ public class StaticDataManager
     private static IEnumerable<Book> ApplyFilters(IEnumerable<Book> query, Parameters input)
     {
         query = ApplyTitleFilter(query, input.Title);
-        query = ApplyGradeFilter(query, input.Grade);
+        query = ApplyGradesFilter(query, input.Grades);
         query = ApplySubjectFilter(query, input.Subject);
         query = ApplyLevelFilter(query, input.Level);
 
@@ -137,11 +140,11 @@ public class StaticDataManager
             : query.Where(b => b.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static IEnumerable<Book> ApplyGradeFilter(IEnumerable<Book> query, Grade? grade)
+    private static IEnumerable<Book> ApplyGradesFilter(IEnumerable<Book> query, List<Grade> grades)
     {
-        return grade == null
+        return grades.IsNullOrEmpty()
             ? query
-            : query.Where(b => b.Grades.Any(g => g.Id == grade.Id));
+            : query.Where(b => b.Grades.Any(g => grades.Contains(g)));
     }
 
     private static IEnumerable<Book> ApplySubjectFilter(IEnumerable<Book> query, Subject? subject)
