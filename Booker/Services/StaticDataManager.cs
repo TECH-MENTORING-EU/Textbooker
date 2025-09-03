@@ -144,7 +144,7 @@ public class StaticDataManager
     {
         return grades.IsNullOrEmpty()
             ? query
-            : query.Where(b => b.Grades.All(g => grades.Contains(g)));
+            : query.Where(b => b.Grades.Any(g => grades.Contains(g)));
     }
 
     private static IEnumerable<Book> ApplySubjectFilter(IEnumerable<Book> query, Subject? subject)
