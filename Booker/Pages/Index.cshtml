@@ -34,8 +34,10 @@
 
                 <input type="number" name="minPrice" asp-for="Input.MinPrice" placeholder="Cena min." data-val="false" />
                 <input type="number" name="maxPrice" asp-for="Input.MaxPrice" placeholder="Cena max." data-val="false" />
-                <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
             </div>
+
+            <button type="reset" class="secondary" hx-on:click="this.form.reset(); this.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));" style="width:100%; margin-top:0.5rem;">Wyczyść filtry</button>
+            <button type="button" id="mobileFilterSubmit" style="width:100%; margin-top:0.5rem;">Zatwierdź filtry</button>
         </details>
     </form>
 </section>

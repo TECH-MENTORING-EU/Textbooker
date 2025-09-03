@@ -17,6 +17,7 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
     protected readonly ItemManager _itemManager;
     public bool IsFirstLoad { get; set; } = false;
 
+    [BindProperty]
     public T? Input { get; set; }
     ItemInputModel? IBookForm.Input => Input;
 
