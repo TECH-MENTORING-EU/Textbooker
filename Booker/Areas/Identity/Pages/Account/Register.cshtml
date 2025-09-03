@@ -23,8 +23,19 @@
         </div>
         <div>
             <label asp-for="Input.Password">Hasło:</label>
-            <input asp-for="Input.Password" autocomplete="new-password" required placeholder="Hasło" />
+            <input asp-for="Input.Password" autocomplete="new-password" required placeholder="Hasło" 
+                   id="passwordInput"
+                   onfocus="showPasswordRequirements()"
+                   onblur="hidePasswordRequirementsIfValid()"
+                   oninput="checkPasswordRequirements()" />
             <small><span asp-validation-for="Input.Password"></span></small>
+            <ul id="passwordRequirements" style="display:none; margin-top:8px;">
+                <li id="req-length">&#10060; minimum 8 znaków</li>
+                <li id="req-special">&#10060; minimum 1 znak specjalny</li>
+                <li id="req-lower">&#10060; minimum 1 mała litera</li>
+                <li id="req-upper">&#10060; minimum 1 wielka litera</li>
+                <li id="req-digit">&#10060; minimum 1 cyfra</li>
+            </ul>
         </div>
         <div>
             <label asp-for="Input.ConfirmPassword">Potwierdź hasło:</label>
@@ -34,6 +45,75 @@
         <button id="registerSubmit" type="submit">Zarejestruj</button>
     </form>
 </section>
+
+@section Scripts {
+    <script>
+        function showPasswordRequirements() {
+            document.getElementById('passwordRequirements').style.display = 'block';
+        }
+
+        function hidePasswordRequirementsIfValid() {
+            const allMet = checkPasswordRequirements();
+            if (allMet) {
+                document.getElementById('passwordRequirements').style.display = 'none';
+            }
+        }
+
+        function checkPasswordRequirements() {
+            const password = document.getElementById('passwordInput').value;
+            let allMet = true;
+
+            if (password.length >= 8) {
+                setReq('req-length', true);
+            } else {
+                setReq('req-length', false);
+                allMet = false;
+            }
+
+            if (/[^\w\s]/.test(password)) {
+                setReq('req-special', true);
+            } else {
+                setReq('req-special', false);
+                allMet = false;
+            }
+
+            if (/[a-z]/.test(password)) {
+                setReq('req-lower', true);
+            } else {
+                setReq('req-lower', false);
+                allMet = false;
+            }
+
+            if (/[A-Z]/.test(password)) {
+                setReq('req-upper', true);
+            } else {
+                setReq('req-upper', false);
+                allMet = false;
+            }
+
+            if (/\d/.test(password)) {
+                setReq('req-digit', true);
+            } else {
+                setReq('req-digit', false);
+                allMet = false;
+            }
+
+            return allMet;
+        }
+
+        function setReq(id, met) {
+            const el = document.getElementById(id);
+            if (met) {
+                el.style.color = 'green';
+                el.innerHTML = '&#9989; ' + el.innerHTML.replace(/^.*? /, '');
+            } else {
+                el.style.color = 'gray';
+                el.innerHTML = '&#10060; ' + el.innerHTML.replace(/^.*? /, '');
+            }
+        }
+    </script>
+}
+
 
 @* <section>
     <h3>Inne sposoby rejestracji:</h3>
