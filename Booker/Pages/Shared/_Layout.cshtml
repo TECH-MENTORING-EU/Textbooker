@@ -46,6 +46,51 @@
         @RenderBody()
     </main>
 
+    <button class="float-right"
+            style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1000; padding: 0.5rem;"
+            data-target="modal-example"
+            onclick="openModal(this.dataset.target)"
+            aria-label="Pomoc"
+            title="Pomoc">
+        <svg icon="help" variant="outline" aria-hidden="true" style="width: 2rem; height: auto;"></svg>
+    </button>
+
+    <dialog id="modal-example">
+        <article>
+            <header>
+                <button aria-label="Close" rel="prev" onclick="closeModal(this.closest('dialog').id)"></button>
+                <h5>Potrzebujesz pomocy? Skontaktuj się z nami! 💬</h5>
+            </header>
+            <p>
+                Możemy pomóc na przykład w następujących przypadkach:
+                <ul>
+                    <li>Problemy z kontem, błędy lub pytania dotyczące działania aplikacji.</li>
+                    <li>Chcesz zgłosić nieodpowiednie treści zamieszczone w aplikacji.</li>
+                    <li>Propozycje i sugestie (wypełnij formularz feedback).</li>
+                </ul>
+                Bądź na bieżąco! Obserwuj nas w social mediach.
+            </p>
+            <footer>
+                <div class="grid one-col" style="grid-template-columns: 1fr;">
+                    <a href="https://www.facebook.com/profile.php?id=61578317232992" target="_blank" role="button" class="outline contrast">
+                        <svg icon="brand-facebook" variant="outline" aria-hidden="true"></svg>
+                        Facebook
+                    </a>
+                    <a href="https://www.instagram.com/textbooker.pl/" target="_blank" role="button" class="outline contrast" style="margin-left: 0;">
+                        <svg icon="brand-instagram" variant="outline" aria-hidden="true"></svg>
+                        Instagram
+                    </a>
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfWQrj0IlDS8a8y03Sy-_TFvcDP1FMCwWtoRbZxdKskqCgoxQ/viewform" target="_blank" role="button" class="contrast" style="margin-left: 0;">
+                        Formularz feedback
+                    </a>
+                    <a href="mailto:support@textbooker.pl" role="button" style="margin-left: 0;">
+                        Kontakt: support@textbooker.pl
+                    </a>
+                </div>
+            </footer>
+        </article>
+    </dialog>
+
     <footer class="container">  
     </footer>
 
