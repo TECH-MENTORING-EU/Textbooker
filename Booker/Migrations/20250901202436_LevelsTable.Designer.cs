@@ -4,6 +4,7 @@ using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booker.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250901202436_LevelsTable")]
+    partial class LevelsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,27 +62,12 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 4,
-                            GradeId = 3
-                        },
-                        new
-                        {
                             BookId = 5,
                             GradeId = 3
                         },
                         new
                         {
                             BookId = 6,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 6,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 7,
                             GradeId = 4
                         },
                         new
@@ -94,32 +82,7 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 8,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 8,
-                            GradeId = 3
-                        },
-                        new
-                        {
                             BookId = 9,
-                            GradeId = 1
-                        },
-                        new
-                        {
-                            BookId = 9,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 9,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 10,
                             GradeId = 1
                         },
                         new
@@ -129,37 +92,7 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 10,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 10,
-                            GradeId = 4
-                        },
-                        new
-                        {
                             BookId = 11,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 11,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 11,
-                            GradeId = 5
-                        },
-                        new
-                        {
-                            BookId = 12,
-                            GradeId = 1
-                        },
-                        new
-                        {
-                            BookId = 12,
                             GradeId = 2
                         },
                         new
@@ -170,31 +103,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 13,
-                            GradeId = 1
-                        },
-                        new
-                        {
-                            BookId = 13,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 13,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 14,
-                            GradeId = 1
-                        },
-                        new
-                        {
-                            BookId = 14,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 14,
                             GradeId = 3
                         },
                         new
@@ -205,21 +113,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 15,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 15,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 15,
-                            GradeId = 5
-                        },
-                        new
-                        {
-                            BookId = 16,
                             GradeId = 4
                         },
                         new
@@ -250,11 +143,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 21,
-                            GradeId = 1
-                        },
-                        new
-                        {
-                            BookId = 21,
                             GradeId = 2
                         },
                         new
@@ -269,28 +157,13 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 23,
-                            GradeId = 5
-                        },
-                        new
-                        {
                             BookId = 24,
                             GradeId = 1
                         },
                         new
                         {
-                            BookId = 24,
-                            GradeId = 2
-                        },
-                        new
-                        {
                             BookId = 25,
                             GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 25,
-                            GradeId = 3
                         },
                         new
                         {
@@ -299,18 +172,8 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 26,
-                            GradeId = 4
-                        },
-                        new
-                        {
                             BookId = 27,
                             GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 27,
-                            GradeId = 5
                         },
                         new
                         {
@@ -324,18 +187,8 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 29,
-                            GradeId = 3
-                        },
-                        new
-                        {
                             BookId = 30,
                             GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 30,
-                            GradeId = 4
                         },
                         new
                         {
@@ -355,11 +208,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 34,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 35,
                             GradeId = 1
                         },
                         new
@@ -369,27 +217,7 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 35,
-                            GradeId = 3
-                        },
-                        new
-                        {
                             BookId = 36,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 36,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 36,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 37,
                             GradeId = 1
                         },
                         new
@@ -399,28 +227,8 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 37,
-                            GradeId = 3
-                        },
-                        new
-                        {
                             BookId = 38,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 38,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 38,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 38,
-                            GradeId = 5
+                            GradeId = 1
                         },
                         new
                         {
@@ -430,56 +238,41 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 40,
-                            GradeId = 1
+                            GradeId = 2
                         },
                         new
                         {
                             BookId = 41,
-                            GradeId = 2
+                            GradeId = 3
                         },
                         new
                         {
                             BookId = 42,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 43,
                             GradeId = 4
                         },
                         new
                         {
                             BookId = 43,
-                            GradeId = 5
+                            GradeId = 1
                         },
                         new
                         {
                             BookId = 44,
-                            GradeId = 1
+                            GradeId = 2
                         },
                         new
                         {
                             BookId = 45,
-                            GradeId = 2
+                            GradeId = 3
                         },
                         new
                         {
                             BookId = 46,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 47,
                             GradeId = 4
                         },
                         new
                         {
                             BookId = 47,
-                            GradeId = 5
-                        },
-                        new
-                        {
-                            BookId = 48,
                             GradeId = 1
                         },
                         new
@@ -490,21 +283,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 49,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 49,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 49,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 50,
                             GradeId = 1
                         },
                         new
@@ -515,56 +293,36 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 51,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 51,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 51,
-                            GradeId = 4
+                            GradeId = 1
                         },
                         new
                         {
                             BookId = 52,
-                            GradeId = 1
+                            GradeId = 2
                         },
                         new
                         {
                             BookId = 53,
-                            GradeId = 2
+                            GradeId = 3
                         },
                         new
                         {
                             BookId = 54,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 55,
                             GradeId = 4
                         },
                         new
                         {
                             BookId = 55,
-                            GradeId = 5
+                            GradeId = 2
                         },
                         new
                         {
                             BookId = 56,
-                            GradeId = 2
+                            GradeId = 3
                         },
                         new
                         {
                             BookId = 57,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 58,
                             GradeId = 1
                         },
                         new
@@ -575,21 +333,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 59,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 59,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 59,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 60,
                             GradeId = 1
                         },
                         new
@@ -600,21 +343,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 61,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 61,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 61,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 62,
                             GradeId = 1
                         },
                         new
@@ -625,16 +353,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 63,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 63,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 64,
                             GradeId = 3
                         },
                         new
@@ -645,16 +363,6 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 65,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 65,
-                            GradeId = 5
-                        },
-                        new
-                        {
-                            BookId = 66,
                             GradeId = 1
                         },
                         new
@@ -665,82 +373,52 @@ namespace Booker.Migrations
                         new
                         {
                             BookId = 67,
+                            GradeId = 3
+                        },
+                        new
+                        {
+                            BookId = 68,
+                            GradeId = 4
+                        },
+                        new
+                        {
+                            BookId = 69,
                             GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 67,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 68,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 68,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 69,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 69,
-                            GradeId = 5
                         },
                         new
                         {
                             BookId = 70,
-                            GradeId = 2
+                            GradeId = 1
                         },
                         new
                         {
                             BookId = 71,
-                            GradeId = 1
+                            GradeId = 2
                         },
                         new
                         {
                             BookId = 72,
-                            GradeId = 2
+                            GradeId = 1
                         },
                         new
                         {
                             BookId = 73,
-                            GradeId = 1
-                        },
-                        new
-                        {
-                            BookId = 74,
-                            GradeId = 1
-                        },
-                        new
-                        {
-                            BookId = 74,
-                            GradeId = 2
-                        },
-                        new
-                        {
-                            BookId = 75,
                             GradeId = 4
                         },
                         new
                         {
+                            BookId = 74,
+                            GradeId = 5
+                        },
+                        new
+                        {
                             BookId = 75,
-                            GradeId = 5
+                            GradeId = 3
                         },
                         new
                         {
                             BookId = 76,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 76,
-                            GradeId = 5
+                            GradeId = 3
                         },
                         new
                         {
@@ -749,82 +427,12 @@ namespace Booker.Migrations
                         },
                         new
                         {
-                            BookId = 77,
-                            GradeId = 4
-                        },
-                        new
-                        {
                             BookId = 78,
                             GradeId = 3
                         },
                         new
                         {
-                            BookId = 78,
-                            GradeId = 4
-                        },
-                        new
-                        {
                             BookId = 79,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 79,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 80,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 80,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 81,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 81,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 82,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 82,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 83,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 83,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 84,
-                            GradeId = 3
-                        },
-                        new
-                        {
-                            BookId = 84,
-                            GradeId = 4
-                        },
-                        new
-                        {
-                            BookId = 85,
                             GradeId = 3
                         });
                 });
@@ -1090,363 +698,321 @@ namespace Booker.Migrations
                         new
                         {
                             Id = 34,
-                            LevelId = 2,
-                            SubjectId = 4,
-                            Title = "Biologia na czasie 4"
+                            LevelId = 1,
+                            SubjectId = 5,
+                            Title = "To jest chemia 1"
                         },
                         new
                         {
                             Id = 35,
                             LevelId = 1,
                             SubjectId = 5,
-                            Title = "To jest chemia 1"
+                            Title = "To jest chemia 2"
                         },
                         new
                         {
                             Id = 36,
-                            LevelId = 1,
+                            LevelId = 2,
                             SubjectId = 5,
-                            Title = "To jest chemia 2"
+                            Title = "To jest chemia 1"
                         },
                         new
                         {
                             Id = 37,
                             LevelId = 2,
                             SubjectId = 5,
-                            Title = "To jest chemia 1"
-                        },
-                        new
-                        {
-                            Id = 38,
-                            LevelId = 2,
-                            SubjectId = 5,
                             Title = "To jest chemia 2"
                         },
                         new
                         {
-                            Id = 39,
+                            Id = 38,
                             LevelId = 1,
                             SubjectId = 6,
                             Title = "Edukacja dla bezpieczeństwa [wsip]"
                         },
                         new
                         {
-                            Id = 40,
+                            Id = 39,
                             LevelId = 2,
                             SubjectId = 7,
                             Title = "Fizyka 1 [wsip]"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            LevelId = 2,
+                            SubjectId = 7,
+                            Title = "Fizyka 2 [wsip]"
                         },
                         new
                         {
                             Id = 41,
                             LevelId = 2,
                             SubjectId = 7,
-                            Title = "Fizyka 2 [wsip]"
+                            Title = "Fizyka 3 [wsip]"
                         },
                         new
                         {
                             Id = 42,
                             LevelId = 2,
                             SubjectId = 7,
-                            Title = "Fizyka 3 [wsip]"
-                        },
-                        new
-                        {
-                            Id = 43,
-                            LevelId = 2,
-                            SubjectId = 7,
                             Title = "Fizyka 4 [wsip]"
                         },
                         new
                         {
-                            Id = 44,
+                            Id = 43,
                             LevelId = 1,
                             SubjectId = 7,
                             Title = "Fizyka 1 [wsip]"
                         },
                         new
                         {
-                            Id = 45,
+                            Id = 44,
                             LevelId = 1,
                             SubjectId = 7,
                             Title = "Fizyka 2 [wsip]"
                         },
                         new
                         {
-                            Id = 46,
+                            Id = 45,
                             LevelId = 1,
                             SubjectId = 7,
                             Title = "Fizyka 3 [wsip]"
                         },
                         new
                         {
-                            Id = 47,
+                            Id = 46,
                             LevelId = 1,
                             SubjectId = 7,
                             Title = "Fizyka 4 [wsip]"
                         },
                         new
                         {
-                            Id = 48,
+                            Id = 47,
                             LevelId = 1,
                             SubjectId = 8,
                             Title = "Oblicza geografii 1"
                         },
                         new
                         {
-                            Id = 49,
+                            Id = 48,
                             LevelId = 1,
                             SubjectId = 8,
                             Title = "Oblicza geografii 2"
                         },
                         new
                         {
+                            Id = 49,
+                            LevelId = 1,
+                            SubjectId = 8,
+                            Title = "Oblicz geografii karty pracy 1"
+                        },
+                        new
+                        {
                             Id = 50,
                             LevelId = 1,
                             SubjectId = 8,
-                            Title = "Oblicza geografii karty pracy 1"
+                            Title = "Oblicz geografii karty pracy 2"
                         },
                         new
                         {
                             Id = 51,
-                            LevelId = 1,
-                            SubjectId = 8,
-                            Title = "Oblicza geografii karty pracy 2"
-                        },
-                        new
-                        {
-                            Id = 52,
                             LevelId = 1,
                             SubjectId = 9,
                             Title = "Historia [wsip] 1"
                         },
                         new
                         {
-                            Id = 53,
+                            Id = 52,
                             LevelId = 1,
                             SubjectId = 9,
                             Title = "Historia [wsip] 2"
                         },
                         new
                         {
-                            Id = 54,
+                            Id = 53,
                             LevelId = 1,
                             SubjectId = 9,
                             Title = "Historia [wsip] 3"
                         },
                         new
                         {
-                            Id = 55,
+                            Id = 54,
                             LevelId = 1,
                             SubjectId = 9,
                             Title = "Historia [wsip] 4"
                         },
                         new
                         {
-                            Id = 56,
+                            Id = 55,
                             LevelId = 1,
                             SubjectId = 10,
                             Title = "Historia i teraźniejszość [wsip] 1"
                         },
                         new
                         {
-                            Id = 57,
+                            Id = 56,
                             LevelId = 1,
                             SubjectId = 10,
                             Title = "Historia i teraźniejszość [wsip] 2"
                         },
                         new
                         {
-                            Id = 58,
+                            Id = 57,
                             LevelId = 1,
                             SubjectId = 11,
                             Title = "Informatyka [operon]"
                         },
                         new
                         {
-                            Id = 59,
+                            Id = 58,
                             LevelId = 1,
                             SubjectId = 11,
                             Title = "Informatyka dla szkół ponadgimnazjalnych [Migra]"
+                        },
+                        new
+                        {
+                            Id = 59,
+                            LevelId = 2,
+                            SubjectId = 11,
+                            Title = "Informatyka [operon]"
                         },
                         new
                         {
                             Id = 60,
                             LevelId = 2,
                             SubjectId = 11,
-                            Title = "Informatyka [operon]"
+                            Title = "Informatyka dla szkół ponadgimnazjalnych [Migra]"
                         },
                         new
                         {
                             Id = 61,
-                            LevelId = 2,
-                            SubjectId = 11,
-                            Title = "Informatyka dla szkół ponadgimnazjalnych [Migra]"
+                            LevelId = 1,
+                            SubjectId = 12,
+                            Title = "NOWA MATeMAtyka 1"
                         },
                         new
                         {
                             Id = 62,
                             LevelId = 1,
                             SubjectId = 12,
-                            Title = "NOWA MATeMAtyka 1"
+                            Title = "NOWA MATeMAtyka 2"
                         },
                         new
                         {
                             Id = 63,
                             LevelId = 1,
                             SubjectId = 12,
-                            Title = "NOWA MATeMAtyka 2"
+                            Title = "NOWA MATeMAtyka 3"
                         },
                         new
                         {
                             Id = 64,
                             LevelId = 1,
                             SubjectId = 12,
-                            Title = "NOWA MATeMAtyka 3"
-                        },
-                        new
-                        {
-                            Id = 65,
-                            LevelId = 1,
-                            SubjectId = 12,
                             Title = "NOWA MATeMAtyka 4"
                         },
                         new
                         {
-                            Id = 66,
+                            Id = 65,
                             LevelId = 3,
                             SubjectId = 12,
                             Title = "NOWA MATeMAtyka 1"
                         },
                         new
                         {
-                            Id = 67,
+                            Id = 66,
                             LevelId = 3,
                             SubjectId = 12,
                             Title = "NOWA MATeMAtyka 2"
                         },
                         new
                         {
-                            Id = 68,
+                            Id = 67,
                             LevelId = 3,
                             SubjectId = 12,
                             Title = "NOWA MATeMAtyka 3"
                         },
                         new
                         {
-                            Id = 69,
+                            Id = 68,
                             LevelId = 3,
                             SubjectId = 12,
                             Title = "NOWA MATeMAtyka 4"
                         },
                         new
                         {
-                            Id = 70,
+                            Id = 69,
                             LevelId = 1,
                             SubjectId = 13,
                             Title = "Krok w przedsiębiorczość"
                         },
                         new
                         {
-                            Id = 71,
+                            Id = 70,
                             LevelId = 1,
                             SubjectId = 14,
                             Title = "Krok w biznes i zarządzanie 1"
                         },
                         new
                         {
-                            Id = 72,
+                            Id = 71,
                             LevelId = 1,
                             SubjectId = 14,
                             Title = "Krok w biznes i zarządzanie 2"
                         },
                         new
                         {
-                            Id = 73,
+                            Id = 72,
                             LevelId = 1,
                             SubjectId = 15,
                             Title = "Spotkania ze sztuką 1"
                         },
                         new
                         {
-                            Id = 74,
-                            LevelId = 1,
-                            SubjectId = 18,
-                            Title = "Masz wpływ 1"
-                        },
-                        new
-                        {
-                            Id = 75,
+                            Id = 73,
                             LevelId = 1,
                             SubjectId = 16,
                             Title = "W centrum uwagi 1"
                         },
                         new
                         {
-                            Id = 76,
+                            Id = 74,
                             LevelId = 1,
                             SubjectId = 16,
                             Title = "W centrum uwagi 2"
                         },
                         new
                         {
-                            Id = 77,
+                            Id = 75,
                             LevelId = -1,
                             SubjectId = 17,
                             Title = "Electronics"
                         },
                         new
                         {
-                            Id = 78,
+                            Id = 76,
                             LevelId = -1,
                             SubjectId = 17,
                             Title = "Electrician"
                         },
                         new
                         {
-                            Id = 79,
+                            Id = 77,
                             LevelId = -1,
                             SubjectId = 17,
                             Title = "Software engineering"
                         },
                         new
                         {
-                            Id = 80,
-                            LevelId = -1,
-                            SubjectId = 17,
-                            Title = "Computing"
-                        },
-                        new
-                        {
-                            Id = 81,
-                            LevelId = -1,
-                            SubjectId = 17,
-                            Title = "Mechanical engineering"
-                        },
-                        new
-                        {
-                            Id = 82,
-                            LevelId = -1,
-                            SubjectId = 17,
-                            Title = "Mechanics"
-                        },
-                        new
-                        {
-                            Id = 83,
-                            LevelId = -1,
-                            SubjectId = 17,
-                            Title = "Environmental Science"
-                        },
-                        new
-                        {
-                            Id = 84,
+                            Id = 78,
                             LevelId = -1,
                             SubjectId = 17,
                             Title = "IT [english for IT]"
                         },
                         new
                         {
-                            Id = 85,
+                            Id = 79,
                             LevelId = 2,
                             SubjectId = 11,
                             Title = "Informatyka w praktyce"
@@ -1684,11 +1250,6 @@ namespace Booker.Migrations
                         {
                             Id = 17,
                             Name = "Język angielski zawodowy"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            Name = "Edukacja obywatelska"
                         });
                 });
 

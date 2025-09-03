@@ -6,13 +6,6 @@
 @inject UserManager<User> UserManager
 
 @functions {
-    private string DisplayLevel(bool? level)
-    {
-        if (level == null)
-            return "Nieznany poziom";
-        return level.Value ? "Rozszerzenie" : "Podstawa";
-    }
-
     private string DisplayGrade(string grade)
     {
         if (string.IsNullOrEmpty(grade))
@@ -51,7 +44,7 @@
             {
                 @foreach (var grade in Model.Item.Book.Grades)
                 {
-                    <button class='@(grade.Id == Model.Params.Grade?.Id ? "" : "outline") grade'>
+                    <button class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'>
                         @DisplayGrade(grade.GradeNumber)
                     </button>
                 }
@@ -59,7 +52,7 @@
             @if (Model.Item.Book.Level != null)
             {
                 <button class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'>
-                    @DisplayLevel(Model.Item.Book.Level)
+                    @Model.Item.Book.Level.Name
                 </button>
             }
         </div>
