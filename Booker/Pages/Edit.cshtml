@@ -27,41 +27,16 @@
                     </small>
 
                     <div class="image-preview-container">
-                        <div class="books-image-layout">
-                            <div class="books-image-layout__top">
-                                <div class="books-image-layout__main">
-                                    @if ((Model.ItemToEdit.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is string mainImg)
-                                    {
-                                        <img src="@mainImg" alt="Główne zdjęcie książki" class="book-image-preview active" />
-                                        <span>Główne zdjęcie</span>
-                                    }
-                                </div>
-
-                                <div class="books-image-layout__side">
-                                    @{
-                                        var sideImages = (Model.ItemToEdit.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).Skip(1).Take(2);
-                                    }
-                                    @foreach (var img in sideImages)
-                                    {
-                                        <img src="@img" alt="Dodatkowe zdjęcie książki" class="book-image-preview active" />
-                                    }
-                                </div>
-                            </div>
-
-                            @if ((Model.ItemToEdit.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).Skip(3).Any())
-                            {
-                                <div class="books-image-layout__bottom">
-                                    @{
-                                        var bottomImages = (Model.ItemToEdit.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).Skip(3).Take(3);
-                                    }
-                                    @foreach (var img in bottomImages)
-                                    {
-                                        <img src="@img" alt="Dodatkowe zdjęcie książki" class="book-image-preview active" />
-                                    }
-                                </div>
-                            }
-                        </div>
+                        @foreach (var (img, index) in (Model.ItemToEdit.Photo ?? "")
+                       .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                       .Select((val, i) => (val, i)))
+                        {
+                            <img src="@img"
+                                 alt="Zdjęcie książki"
+                                 class="book-image-preview @(index == 0 ? "main" : "")" />
+                        }
                     </div>
+
 
                     <div asp-validation-summary="ModelOnly"></div>
                 </section>
@@ -90,8 +65,9 @@
                     <small><span class="char-count">0 / 200</span></small>
 
                     <label asp-for="Input.State">Stan książki:</label>
-                    <textarea asp-for="Input.State" rows="3" maxlength="40"></textarea>
+                    <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…"></textarea>
                     <small><span asp-validation-for="Input.State"></span><span class="char-count" style="text-align:right;">0 / 40</span></small>
+
 
                     <label asp-for="Input.Price">Cena:</label>
                     <input asp-for="Input.Price" placeholder="PLN">
@@ -142,11 +118,6 @@
                 ta.addEventListener("input", updateCharCount);
                 ta.dispatchEvent(new Event("input"));
             });
-
-            // Initialize existing images for proper layout
-            const preview = document.querySelector('.image-preview-container');
-            const existingImages = preview.querySelectorAll('img.book-image-preview');
-            if (existingImages.length > 0) applyStyling(existingImages.length, preview);
         });
 
         function showConfirmSaveModal(event) {

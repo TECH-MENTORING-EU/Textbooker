@@ -5,21 +5,21 @@
 
 function handleImageUpload(input) {
     const preview = input.closest("section").querySelector(".image-preview-container");
-    preview.innerHTML = "";
+    preview.innerHTML = ""; // Clear existing previews
     const imageErrorSpan = input.closest("section").querySelector("#imageErrorMsg");
+
     if (input.files.length > 6) {
         imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
         return;
     }
     imageErrorSpan.textContent = "";
+
     const files = Array.from(input.files);
     const dataTransfer = new DataTransfer();
-
 
     const processingPromises = files.map((file, index) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-
             reader.onload = function (e) {
                 const img = new Image();
                 img.onload = function () {
@@ -28,11 +28,9 @@ function handleImageUpload(input) {
                     let width = img.width;
                     let height = img.height;
 
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
+                    if (width > height && width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
                     } else if (height > MAX_HEIGHT) {
                         width *= MAX_HEIGHT / height;
                         height = MAX_HEIGHT;
@@ -45,95 +43,69 @@ function handleImageUpload(input) {
                     ctx.drawImage(img, 0, 0, width, height);
 
                     canvas.toBlob(blob => {
-                        if (!blob) return reject("Compression failed");
+                        if (!blob) return reject(new Error("Compression failed"));
 
-                        const originalName = file.name;
-                        const newName = originalName.replace(/\.[^/.]+$/, ".jpg");
-
-                        const compressedFile = new File([blob], newName, {
+                        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
                             type: "image/jpeg",
                             lastModified: Date.now()
                         });
-
-
                         dataTransfer.items.add(compressedFile);
 
-                        const newReader = new FileReader();
-                        newReader.onloadend = () => {
-                            const imageElement = document.createElement("img");
-                            imageElement.src = newReader.result;
-                            imageElement.alt = `Podgląd zdjęcia książki numer ${index + 1}.`;
-                            imageElement.id = `Image${index + 1}`;
-                            imageElement.classList.add("book-image-preview", "active");
-                            preview.appendChild(imageElement);
-                            resolve();
-                        };
-                        newReader.readAsDataURL(compressedFile);
+                        
+                        const imageElement = document.createElement("img");
+                        imageElement.src = URL.createObjectURL(compressedFile);
+                        imageElement.alt = `Zdjęcie książki ${index + 1}`;
+                        imageElement.classList.add("book-image-preview");
+                        if (index === 0) {
+                            imageElement.classList.add("main");
+                        }
+
+                        resolve(imageElement);
+
                     }, "image/jpeg", 0.8);
                 };
-
                 img.onerror = reject;
                 img.src = e.target.result;
             };
-
             reader.onerror = reject;
             reader.readAsDataURL(file);
         });
     });
 
     Promise.all(processingPromises)
-        .then(() => {
+        .then(imageElements => {
+            imageElements.forEach(img => {
+                preview.appendChild(img);
+            });
             input.files = dataTransfer.files;
-            applyStyling(files.length, preview);
+            addLabelToMainImage();
         })
+        .catch(error => {
+            console.error("Error processing images:", error);
+            imageErrorSpan.textContent = "Wystąpił błąd podczas przetwarzania zdjęć.";
+        });
+}
+function addLabelToMainImage() {
+    const previewContainer = document.querySelector(".image-preview-container");
+    const mainImage = previewContainer.querySelector(".book-image-preview.main");
+
+    if (!mainImage) {
+        return;
+    }
+
+    const label = document.createElement("span");
+    label.textContent = "Główne zdjęcie";
+    label.classList.add("image-label--dynamic");
+
+    previewContainer.appendChild(label);
+
+    const top = mainImage.offsetTop + mainImage.offsetHeight - 30; 
+    const left = mainImage.offsetLeft + 10;
+
+    label.style.top = `${top}px`;
+    label.style.left = `${left}px`;
 }
 
-function applyStyling(imageAmount, preview) {
-    const images = [];
-    for (let i = 1; i <= imageAmount; i++) {
-        const img = document.getElementById(`Image${i}`);
-        if (img) images.push(img);
-    }
-
-    if (images.length < 2) return;
-
-    const mainWrapper = document.createElement('div');
-    mainWrapper.classList.add('books-image-layout');
-
-    const topWrapper = document.createElement('div');
-    topWrapper.classList.add('books-image-layout__top');
-
-    const mainImageWrapper = document.createElement('div');
-    mainImageWrapper.classList.add('books-image-layout__main');
-
-    const mainImage = images[0];
-    const label = document.createElement('span');
-    label.textContent = 'Główne zdjęcie';
-
-    mainImageWrapper.appendChild(mainImage);
-    mainImageWrapper.appendChild(label);
-
-    const sideWrapper = document.createElement('div');
-    sideWrapper.classList.add('books-image-layout__side');
-
-    for (let i = 1; i < Math.min(3, images.length); i++) {
-        sideWrapper.appendChild(images[i]);
-    }
-
-    topWrapper.appendChild(mainImageWrapper);
-    topWrapper.appendChild(sideWrapper);
-    mainWrapper.appendChild(topWrapper);
-
-    if (images.length > 3) {
-        const bottomWrapper = document.createElement('div');
-        bottomWrapper.classList.add('books-image-layout__bottom');
-        const remaining = images.slice(3, 6);
-        bottomWrapper.append(...remaining);
-        mainWrapper.appendChild(bottomWrapper);
-    }
-
-    preview.appendChild(mainWrapper);
-}
 
 function updateCharCount() {
     const count = this.value.length;
