@@ -45,15 +45,6 @@
             new Level { Id = 4, Name = "Dwujęzyczny" }
         };
 
-        public static List<Level> Levels = new List<Level>
-        {
-            new Level { Id = -1, Name = "Brak" },
-            new Level { Id = 1, Name = "Podstawa" },
-            new Level { Id = 2, Name = "Rozszerzenie" },
-            new Level { Id = 3, Name = "Podstawa+Rozszerzenie" },
-            new Level { Id = 4, Name = "Dwujęzyczny" }
-        };
-
         public static List<Book> Books = new List<Book>
         {
             // Polski
