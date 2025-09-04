@@ -104,10 +104,10 @@
         function setReq(id, met) {
             const el = document.getElementById(id);
             if (met) {
-                el.style.color = 'green';
+                el.style.color = 'var(--pico-color-ins)';
                 el.innerHTML = '&#9989; ' + el.innerHTML.replace(/^.*? /, '');
             } else {
-                el.style.color = 'gray';
+                el.style.color = 'var(--pico-color)';
                 el.innerHTML = '&#10060; ' + el.innerHTML.replace(/^.*? /, '');
             }
         }
