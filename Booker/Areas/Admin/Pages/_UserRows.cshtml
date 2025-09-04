@@ -9,8 +9,7 @@
         <td>@user.Id</td>
         <td>@user.UserName</td>
         <td>@user.Email</td>
-        @* <td>@(user.LastOnline?.ToString("g") ?? "Nigdy")</td> *@
-        <td>1 stycznia 1970, 00:00</td>
+        <td>@(user.LastActiveAt?.ToString("g") ?? "Nigdy")</td>
         <td>
             <a hx-post="?handler=Lockout"
                hx-vals='{"id": @user.Id}'

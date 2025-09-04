@@ -134,6 +134,12 @@ namespace Booker.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("Użytkownik zalogował się.");
+                    var user = await _userManager.GetUserAsync(User);
+                    if (user != null)
+                    {
+                        user.LastActiveAt = DateTime.Now;
+                        await _userManager.UpdateAsync(user);
+                    }
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
