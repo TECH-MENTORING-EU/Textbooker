@@ -163,9 +163,6 @@ public class ItemManager
         var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
-        _context.Attach(book);
-        _context.Attach(model.User);
-
         string allPhotos = "";
         if (model.ImageStreams != null && model.ImageStreams.Count > 0)
         {
