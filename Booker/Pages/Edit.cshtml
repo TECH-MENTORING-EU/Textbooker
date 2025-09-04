@@ -1,4 +1,4 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model Booker.Pages.EditModel
 @{
     ViewData["Title"] = "Edytuj ogłoszenie";
@@ -61,7 +61,7 @@
                     <small><span asp-validation-for="Input.Level"></span></small>
 
                     <label asp-for="Input.Description">Opis ogłoszenia:</label>
-                    <textarea asp-for="Input.Description" rows="4" maxlength="200"></textarea>
+                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
                     <small><span class="char-count">0 / 200</span></small>
 
                     <label asp-for="Input.State">Stan książki:</label>
