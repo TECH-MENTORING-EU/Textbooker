@@ -396,3 +396,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/Booker/.config/dotnet-tools.json
+/Booker/Services/StartupUtilities.cs

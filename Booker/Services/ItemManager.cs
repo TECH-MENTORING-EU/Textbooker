@@ -1,6 +1,7 @@
 using Booker.Data;
 using Microsoft.EntityFrameworkCore;
-using System.IO;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Booker.Services;
 
@@ -17,7 +18,7 @@ public class ItemManager
         Error = 1,
         InvalidTitle = 2,
         InvalidSubject = 4,
-        InvalidGrade = 8,
+        InvalidGrades = 8,
         InvalidLevel = 16,
         NotFound = 32
     }
@@ -27,10 +28,8 @@ public class ItemManager
         public static implicit operator Result(Status status) => new Result(status, -1);
         public static implicit operator Result(int Id) => new Result(Status.Success, Id);
     };
-
-    public record Parameters(string? Search, Grade? Grade, Subject? Subject, bool? Level, decimal? MinPrice, decimal? MaxPrice);
-
     
+    public record Parameters(string? Search, List<Grade> Grades, Subject? Subject, Level? Level, decimal? MinPrice, decimal? MaxPrice);
     public record ItemModel(
         User User,
         StaticDataManager.Parameters Parameters,
@@ -54,45 +53,84 @@ public class ItemManager
         _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User)
             .FirstOrDefaultAsync(i => i.Id == id);
 
-    public IAsyncEnumerable<Item> GetAllItemsAsync() =>
-        GetAllItemsQueryable().OrderByDescending(i => i.DateTime).AsAsyncEnumerable();
+    public IAsyncEnumerable<Item> GetAllItemsAsync()
+    {
+        return GetAllItemsQueryable()
+            .OrderByDescending(i => i.DateTime)
+            .AsAsyncEnumerable();
+    }
 
-    public Task<int> GetAllItemsCountAsync() => GetAllItemsQueryable().CountAsync();
+    public Task<int> GetAllItemsCountAsync()
+    {
+        return GetAllItemsQueryable()
+            .CountAsync();
+    }
 
-    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids) =>
-        GetAllItemsQueryable().Where(i => ids.Contains(i.Id)).OrderByDescending(i => i.DateTime).AsAsyncEnumerable();
+    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids)
+    {
+        return GetAllItemsQueryable()
+            .Where(i => ids.Contains(i.Id))
+            .OrderByDescending(i => i.DateTime)
+            .AsAsyncEnumerable();
+    }
 
-    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize) =>
-        GetAllItemsQueryable().Where(i => ids.Contains(i.Id))
-                              .OrderByDescending(i => i.DateTime)
-                              .Skip(pageNumber * pageSize)
-                              .Take(pageSize)
-                              .AsAsyncEnumerable();
+    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize)
+    {
+        return GetAllItemsQueryable()
+            .Where(i => ids.Contains(i.Id))
+            .OrderByDescending(i => i.DateTime)
+            .Skip(pageNumber * pageSize)
+            .Take(pageSize)
+            .AsAsyncEnumerable();
+    }
 
-    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input) =>
-        ApplyFilters(GetAllItemsQueryable(), input).Select(i => i.Id).AsAsyncEnumerable();
+    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input)
+    {
+        var query = GetAllItemsQueryable();
+        query = ApplyFilters(query, input);
 
-    public Task<int> GetItemsCountByParamsAsync(Parameters input) =>
-        ApplyFilters(GetAllItemsQueryable(), input).CountAsync();
+        return query
+            .Select(i => i.Id)
+            .AsAsyncEnumerable();
+    }
 
-    public IAsyncEnumerable<int> GetUserItemIdsAsync(int userId) =>
-        GetAllItemsQueryable().Where(i => i.UserId == userId).Select(i => i.Id).AsAsyncEnumerable();
+    public Task<int> GetItemsCountByParamsAsync(Parameters input)
+    {
+        var query = GetAllItemsQueryable();
+        query = ApplyFilters(query, input);
 
-    public Task<int> GetUserItemsCountAsync(int userId) =>
-        GetAllItemsQueryable().Where(i => i.UserId == userId).CountAsync();
+        return query.CountAsync();
+    }
 
-    
+    public IAsyncEnumerable<int> GetUserItemIdsAsync(int userId)
+    {
+        return GetAllItemsQueryable()
+            .Where(i => i.UserId == userId)
+            .Select(i => i.Id)
+            .AsAsyncEnumerable();
+    }
+
+    public Task<int> GetUserItemsCountAsync(int userId)
+    {
+        return GetAllItemsQueryable()
+            .Where(i => i.UserId == userId)
+            .CountAsync();
+    }
+
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
         if (model.Parameters.Title == null
-            || model.Parameters.Grade == null
-            || model.Parameters.Subject == null)
+            || model.Parameters.Grades.IsNullOrEmpty()
+            || model.Parameters.Subject == null
+            || model.Parameters.Level == null)
             return Status.Error;
 
         var title = model.Parameters.Title;
+
         var books = await _staticDataManager.GetBooksByTitleAsync(title);
         if (books.Count == 0) return Status.InvalidTitle;
 
@@ -102,7 +140,7 @@ public class ItemManager
         if (!subjects.Contains(model.Parameters.Subject)) status |= Status.InvalidSubject | Status.Error;
 
         var grades = await _staticDataManager.GetGradesByBookTitleAsync(title);
-        if (!grades.Contains(model.Parameters.Grade)) status |= Status.InvalidGrade | Status.Error;
+        if (!grades.SequenceEqual(model.Parameters.Grades)) status |= Status.InvalidGrades | Status.Error;
 
         var levels = await _staticDataManager.GetLevelsByBookTitleAsync(title);
         if (!levels.Contains(model.Parameters.Level)) status |= Status.InvalidLevel | Status.Error;
@@ -115,7 +153,6 @@ public class ItemManager
         return book!.Id;
     }
 
-    
     public async Task<Result> AddItemAsync(ItemModel model)
     {
         if (model == null) throw new ArgumentNullException(nameof(model));
@@ -123,9 +160,10 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult;
 
-        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
+        var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!);
         _context.Attach(book);
         _context.Attach(model.User);
 
@@ -175,7 +213,7 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult.Status;
 
-        var book = await _staticDataManager.GetBookAsync(validationResult.Id);
+        var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
         string allPhotos = model.ExistingImageBlobNames ?? "";
@@ -198,12 +236,7 @@ public class ItemManager
             allPhotos = string.Join(";", photoUris);
         }
 
-        if (item.Book.Id != book.Id)
-        {
-            _context.Attach(book);
-            item.Book = book;
-        }
-
+        item.Book = book;
         item.Description = model.Description;
         item.State = model.State;
         item.Price = model.Price;
@@ -213,7 +246,6 @@ public class ItemManager
         await UpdateItemNVAsync(item);
         return Status.Success;
     }
-
     private async Task UpdateItemNVAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
@@ -221,7 +253,6 @@ public class ItemManager
         await _context.SaveChangesAsync();
     }
 
-    
     public async Task DeleteItemAsync(int id)
     {
         var item = await GetItemAsync(id);
@@ -238,37 +269,58 @@ public class ItemManager
         await _context.SaveChangesAsync();
     }
 
-    
-    private IQueryable<Item> GetAllItemsQueryable() =>
-        _context.Items
+    private IQueryable<Item> GetAllItemsQueryable()
+    {
+        return _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User)
             .AsQueryable();
-
+    }
+    
     private static IQueryable<Item> ApplyFilters(IQueryable<Item> query, Parameters input)
     {
         query = ApplySearchFilter(query, input.Search);
-        query = ApplyGradeFilter(query, input.Grade);
+        query = ApplyGradesFilter(query, input.Grades);
         query = ApplySubjectFilter(query, input.Subject);
         query = ApplyPriceFilters(query, input.MinPrice, input.MaxPrice);
         query = ApplyLevelFilter(query, input.Level);
+
         return query;
     }
 
-    private static IQueryable<Item> ApplySearchFilter(IQueryable<Item> query, string? search) =>
-        string.IsNullOrWhiteSpace(search) ? query : query.Where(i => i.Book.Title.Contains(search.ToLower()));
+    private static IQueryable<Item> ApplySearchFilter(IQueryable<Item> query, string? search)
+    {
+        return string.IsNullOrWhiteSpace(search)
+            ? query
+            : query.Where(i => i.Book.Title.Contains(search.ToLower()));
+    }
 
-    private static IQueryable<Item> ApplyGradeFilter(IQueryable<Item> query, Grade? grade) =>
-        grade == null ? query : query.Where(i => i.Book.Grades.Any(g => g.Id == grade.Id));
+    private static IQueryable<Item> ApplyGradesFilter(IQueryable<Item> query, List<Grade> grades)
+    {
+        return grades.IsNullOrEmpty()
+            ? query
+            : query.Where(i => i.Book.Grades.Any(g => grades.Contains(g)));
+    }
 
-    private static IQueryable<Item> ApplySubjectFilter(IQueryable<Item> query, Subject? subject) =>
-        subject == null ? query : query.Where(i => i.Book.Subject.Id == subject.Id);
+    private static IQueryable<Item> ApplySubjectFilter(IQueryable<Item> query, Subject? subject)
+    {
+        return subject == null
+            ? query
+            : query.Where(i => i.Book.Subject.Id == subject.Id);
+    }
 
-    private static IQueryable<Item> ApplyPriceFilters(IQueryable<Item> query, decimal? minPrice, decimal? maxPrice) =>
-        query.Where(i => !minPrice.HasValue || i.Price >= minPrice.Value)
-             .Where(i => !maxPrice.HasValue || i.Price <= maxPrice.Value);
+    private static IQueryable<Item> ApplyPriceFilters(IQueryable<Item> query, decimal? minPrice, decimal? maxPrice)
+    {
+        return query.Where(i => !minPrice.HasValue || i.Price >= minPrice.Value)
+                    .Where(i => !maxPrice.HasValue || i.Price <= maxPrice.Value);
+    }
 
-    private static IQueryable<Item> ApplyLevelFilter(IQueryable<Item> query, bool? level) =>
-        level == null ? query : query.Where(i => i.Book.Level == level);
+    private static IQueryable<Item> ApplyLevelFilter(IQueryable<Item> query, Level? level)
+    {
+        return level == null
+            ? query
+            : query.Where(i => i.Book.Level.Id == level.Id);
+    }
 }

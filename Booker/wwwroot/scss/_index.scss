@@ -69,7 +69,7 @@
         grid-template-areas:
             "main main" "categories fav";
         grid-template-columns: auto 1rem;
-        grid-template-rows: auto 3rem;
+        grid-template-rows: auto max-content;
 
         .info a {
             @include utils.unstyled-link;
@@ -95,6 +95,7 @@
 
         .actions {
             grid-area: categories;
+            align-content: end;
 
             button {
                 font-size: 0.75em;

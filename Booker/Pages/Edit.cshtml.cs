@@ -27,8 +27,8 @@ namespace Booker.Pages
             {
                 Title = ItemToEdit.Book.Title,
                 Subject = ItemToEdit.Book.Subject.Name,
-                Grade = ItemToEdit.Book.Grades.First().GradeNumber,
-                Level = ItemToEdit.Book.Level == true ? "Rozszerzenie" : "Podstawa",
+                Grade = string.Join(',',ItemToEdit.Book.Grades.Select(g => g.GradeNumber).OrderBy(g => g)),
+                Level = ItemToEdit.Book.Level.Name,
                 Description = ItemToEdit.Description,
                 State = ItemToEdit.State,
                 Price = ItemToEdit.Price,
@@ -36,6 +36,8 @@ namespace Booker.Pages
             };
 
             await LoadSelects();
+            await LoadSelects(string.Empty);
+
             return Page();
         }
 

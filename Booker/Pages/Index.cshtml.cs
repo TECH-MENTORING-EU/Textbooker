@@ -18,11 +18,7 @@ namespace Booker.Pages
         public StaticDataManager.Parameters Params { get; set; } = null!;
         public List<SelectListItem>? Grades { get; set; }
         public List<SelectListItem>? Subjects { get; set; }
-        public List<SelectListItem> Levels => new List<SelectListItem>
-        {
-            new SelectListItem { Value = "Podstawa", Text = "Podstawa" },
-            new SelectListItem { Value = "Rozszerzenie", Text = "Rozszerzenie" }
-        };
+        public List<SelectListItem>? Levels {get; set; }
 
         public IndexModel(
             ILogger<IndexModel> logger,
@@ -60,7 +56,7 @@ namespace Booker.Pages
 
             var params2 = new ItemManager.Parameters(
                 Input?.Search,
-                Params.Grade,
+                Params.Grades,
                 Params.Subject,
                 Params.Level,
                 Input?.MinPrice,
@@ -85,6 +81,7 @@ namespace Booker.Pages
         {
             var _grades = await _staticDataManager.GetGradesAsync();
             var _subjects = await _staticDataManager.GetSubjectsAsync();
+            var _levels = await _staticDataManager.GetLevelsAsync();
 
             Grades = _grades?.Select(g => new SelectListItem
             {
@@ -96,6 +93,12 @@ namespace Booker.Pages
             {
                 Value = s.Name,
                 Text = s.Name
+            }).ToList();
+
+            Levels = _levels?.Select(l => new SelectListItem
+            {
+                Value = l.Name,
+                Text = l.Name
             }).ToList();
         }
     }
