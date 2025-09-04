@@ -1,0 +1,34 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model List<Booker.Data.User>
+
+@foreach (var user in Model)
+{
+    <tr>
+        <td>@user.Id</td>
+        <td>@user.UserName</td>
+        <td>@user.Email</td>
+        @* <td>@(user.LastOnline?.ToString("g") ?? "Nigdy")</td> *@
+        <td>1 stycznia 1970, 00:00</td>
+        <td>
+            <a hx-post="?handler=Lockout"
+               hx-vals='{"id": @user.Id}'
+               hx-target="closest tr"
+               hx-swap="innerHTML"
+               hx-prompt="Na ile dni zablokować użytkownika @user.UserName (-1 do odwołania)?"
+               antiforgery
+              >Zablokuj</a>
+            
+            <a hx-post="?handler=Delete"
+               hx-vals='{"id": @user.Id}'
+               hx-target="closest tr"
+               hx-swap="delete"
+               hx-confirm="Na pewno chcesz usunąć użytkownika @user.UserName?"
+               antiforgery
+              >Usuń</a>
+
+            <a href="">Więcej...</a>
+        </td>
+    </tr>
+}

@@ -1,6 +1,7 @@
 using Booker.Areas.Identity.Utilities;
 using Booker.Data;
 using Booker.Services;
+using Booker.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -44,10 +45,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
-builder.Services.AddRazorPages().AddViewOptions(options =>
+builder.Services.AddRazorPages()
+    .AddViewOptions(options =>
 {
     options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
-}).AddCustomRoutes();
+})
+    .AddCustomRoutes()
+    .AddAuthorizationPolicies();
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -73,6 +77,8 @@ builder.Services.AddDefaultIdentity<User>(options =>
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<DataContext>()
         .AddErrorDescriber<ErrorDescriber>();
+
+builder.Services.ConfigureAuthorization();
 
 var app = builder.Build();
 

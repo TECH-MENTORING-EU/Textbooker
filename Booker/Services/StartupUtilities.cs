@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
+using System.Net;
 
 
 
@@ -149,7 +150,53 @@ namespace Booker.Services
                 });
 
             });
+        }
 
+        public static IMvcBuilder AddAuthorizationPolicies(this IMvcBuilder builder)
+        {
+            return builder.AddRazorPagesOptions(options =>
+            {
+                options.Conventions.AuthorizeAreaFolder("Admin", "/", "AdminOnly");
+            });
+        }
+
+        public static IServiceCollection ConfigureAuthorization(this IServiceCollection services)
+        {
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("AdminHidden", policy => policy.Requirements.Add(new AdminHiddenAuthorizationRequirement()));
+            });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                var redirectToAccessDenied = options.Events.OnRedirectToAccessDenied;
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    if (context.HttpContext.Items.TryGetValue("HideUnauthorized", out var hide)
+                        && hide is true)
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        context.RedirectUri = string.Empty;
+                        return Task.CompletedTask;
+                    }
+                    return redirectToAccessDenied(context);
+                };
+                var redirectToLogin = options.Events.OnRedirectToLogin;
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    if (context.HttpContext.Items.TryGetValue("HideUnauthorized", out var hide)
+                        && hide is true)
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        context.RedirectUri = string.Empty;
+                        return Task.CompletedTask;
+                    }
+                    return redirectToLogin(context);
+                };
+            });
+
+            return services;
         }
 
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)
