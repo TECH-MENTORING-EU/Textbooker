@@ -13,6 +13,9 @@ namespace Booker.Areas.Admin.Pages
         {
             _userManager = userManager;
         }
+
+        public record LockoutLinkModel(int UserId, string? UserName, bool ShouldLockout);
+
         public List<User> Users { get; set; } = [];
 
         [FromQuery]
@@ -86,16 +89,7 @@ namespace Booker.Areas.Admin.Pages
                 lockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
             }
 
-            var result = await _userManager.SetLockoutEnabledAsync(user, true);
-            if (!result.Succeeded)
-            {
-                // Handle enabling lockout failure (e.g., log the error, display a message, etc.)
-                ModelState.AddModelError(string.Empty, "Error enabling lockout.");
-                Users = _userManager.Users.ToList();
-                return new StatusCodeResult(500);
-            }
-
-            result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
+            var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
             if (!result.Succeeded)
             {
                 // Handle lockout failure (e.g., log the error, display a message, etc.)
@@ -104,7 +98,27 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
-            return Content($"User locked out until {lockoutEnd}.");
+            return Partial("_UserRows", new List<User>{user});
+        }
+
+        public async Task<IActionResult> OnPostUnlockAsync(int id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow);
+            if (!result.Succeeded)
+            {
+                // Handle unlock failure (e.g., log the error, display a message, etc.)
+                ModelState.AddModelError(string.Empty, "Error unlocking user.");
+                Users = _userManager.Users.ToList();
+                return new StatusCodeResult(500);
+            }
+
+            return Partial("_UserRows", new List<User> { user });
         }
     }
 }

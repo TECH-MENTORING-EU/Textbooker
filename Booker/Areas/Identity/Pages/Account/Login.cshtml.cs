@@ -149,7 +149,8 @@ namespace Booker.Areas.Identity.Pages.Account
                 if (result.IsLockedOut)
                 {
                     _logger.LogWarning("Konto użytkownika zablokowane.");
-                    return RedirectToPage("./Lockout");
+                    var user = await _userManager.FindByNameAsync(userName);
+                    return RedirectToPage("./Lockout", new { lockoutEnd = user.LockoutEnd?.ToUnixTimeSeconds()});
                 }
                 else
                 {

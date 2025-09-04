@@ -2,6 +2,7 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @model List<Booker.Data.User>
+@using Booker.Areas.Admin.Pages
 
 @foreach (var user in Model)
 {
@@ -11,19 +12,45 @@
         <td>@user.Email</td>
         <td>@(user.LastActiveAt?.ToString("g") ?? "Nigdy")</td>
         <td>
-            <a hx-post="?handler=Lockout"
-               hx-vals='{"id": @user.Id}'
-               hx-target="closest tr"
-               hx-swap="innerHTML"
-               hx-prompt="Na ile dni zablokować użytkownika @user.UserName (-1 do odwołania)?"
-               antiforgery
-              >Zablokuj</a>
+            @if (user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now)
+            {
+                <text>Zablokowany do @user.LockoutEnd?.LocalDateTime.ToString("g")</text>
+            }
+            else
+            {
+                <text>Aktywny</text>
+            }
+        </td>
+        <td>
+            @if (user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now)
+            {
+                <a hx-post="?handler=Unlock"
+                   hx-vals='{"id": @user.Id}'
+                   hx-target="closest tr"
+                   hx-swap="outerHTML"
+                   hx-confirm="Na pewno chcesz odblokować użytkownika @user.UserName?"
+                   href=""
+                   antiforgery
+                >Odblokuj</a>       
+            }
+            else
+            {
+                <a hx-post="?handler=Lockout"
+                   hx-vals='{"id": @user.Id}'
+                   hx-target="closest tr"
+                   hx-swap="outerHTML"
+                   hx-prompt="Na ile dni zablokować użytkownika @user.UserName (-1 do odwołania)?"
+                   href=""
+                   antiforgery
+                >Zablokuj</a>
+            }
             
             <a hx-post="?handler=Delete"
                hx-vals='{"id": @user.Id}'
                hx-target="closest tr"
                hx-swap="delete"
                hx-confirm="Na pewno chcesz usunąć użytkownika @user.UserName?"
+               href=""
                antiforgery
               >Usuń</a>
 

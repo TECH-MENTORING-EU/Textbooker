@@ -1,0 +1,24 @@
+﻿@page
+@model LockoutModel
+@{
+    ViewData["Title"] = "Konto zablokowane";
+}
+
+<header>
+    <h1>@ViewData["Title"]</h1>
+    @if (!Model.IsLongLockout)
+    {
+        <p>Twoje konto zostało tymczasowo zablokowane.</p>
+        <p>Spróbuj ponownie później.</p>
+    }
+    else if (!Model.IsForever)
+    {
+        <p>Twoje konto zostało zablokowane do @Model.LockoutEnd?.ToString("g").</p>
+        <p>Skontaktuj się z administratorem, jeśli uważasz, że to błąd.</p>
+    }
+    else
+    {
+        <p>Twoje konto zostało permanentnie zablokowane.</p>
+        <p>Skontaktuj się z administratorem, jeśli uważasz, że to błąd.</p>
+    }
+</header>
