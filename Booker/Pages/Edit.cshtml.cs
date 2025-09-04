@@ -35,7 +35,6 @@ namespace Booker.Pages
                 Images = new List<IFormFile>() // multiple images handled
             };
 
-            await LoadSelects();
             await LoadSelects(string.Empty);
 
             return Page();

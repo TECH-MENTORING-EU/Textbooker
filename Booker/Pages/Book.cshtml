@@ -32,9 +32,12 @@
         <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
 
         <ul>
-            <li>Klasa: @String.Join(", ", Model.BookItem.Book.Grades.Select(g => g.GradeNumber).ToList() ?? new() { "nieznana" })</li>
+            <li>
+                Klasa: @String.Join(", ",
+                Model.BookItem.Book.Grades.Select(g => g.GradeNumber).ToList() ?? new() { "nieznana" })
+            </li>
             <li>Przedmiot: @Model.BookItem.Book.Subject.Name</li>
-            <li>Zakres: @(Model.BookItem.Book.Level == null ? "Nieznany zakres" : (Model.BookItem.Book.Level == true ? "rozszerzony" : "podstawowy"))</li>
+            <li>Zakres: @Model.BookItem.Book.Level.Name</li>
             <li>Stan: @(Model.BookItem.State ?? "Nieznany stan")</li>
         </ul>
     </section>

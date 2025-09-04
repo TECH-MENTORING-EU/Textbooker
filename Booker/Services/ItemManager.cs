@@ -163,7 +163,6 @@ public class ItemManager
         var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
-        var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!);
         _context.Attach(book);
         _context.Attach(model.User);
 
