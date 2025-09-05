@@ -1,273 +1,96 @@
-﻿@page
+@page
 @model Booker.Areas.Identity.Pages.Account.Manage.ProfilePictureUploadModel
 @{
     ViewData["Title"] = "Prześlij zdjęcie profilowe";
+    ViewData["ActivePage"] = ManageNavPages.ProfilePictureUpload;
 }
 
-<h3 class="profile-page-title">Zarządzaj swoim zdjęciem profilowym</h3>
+<article>
+    <header>
+        <h3>Zarządzaj swoim zdjęciem profilowym</h3>
+    </header>
 
-@if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
-{
-    <div class="alert alert-success" role="alert">
-        @TempData["SuccessMessage"] 🥳
-    </div>
-}
-@if (!ViewData.ModelState.IsValid && ViewData.ModelState.Any(m => m.Value.Errors.Any()))
-{
-    <div class="alert alert-danger" role="alert">
-        <h6 class="alert-heading">Wystąpiły błędy:</h6>
-        <ul>
+    @if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+    {
+        <div role="alert" style="background-color: var(--pico-color-green-100); color: var(--pico-color-green-900); padding: 1rem; border-radius: var(--pico-border-radius);">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!ViewData.ModelState.IsValid && ViewData.ModelState.Values.Any(m => m.Errors.Any()))
+    {
+        <div role="alert" id="modelStateErrors" style="background-color: var(--pico-color-red-100); color: var(--pico-color-red-900); padding: 1rem; border-radius: var(--pico-border-radius);">
+            <strong>Wystąpiły błędy:</strong>
             @foreach (var modelState in ViewData.ModelState.Values)
             {
                 foreach (var error in modelState.Errors)
                 {
-                    <li>@error.ErrorMessage</li>
+                    <div>@error.ErrorMessage</div>
                 }
             }
-        </ul>
-    </div>
-}
+        </div>
+    }
 
-<section class="main-profile-section">
-    <div class="profile-circle-preview">
-        <img id="currentProfilePictureDisplay"
-             src="@(string.IsNullOrEmpty(Model.CurrentProfilePictureUrl) ? "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" : Model.CurrentProfilePictureUrl)"
-             alt="Aktualne zdjęcie profilowe">
-    </div>
-    <button type="button" class="contrast change-photo-button" onclick="document.getElementById('editPhotoModal').showModal()">Zmień zdjęcie profilowe</button>
-</section>
+    <div id="messages"></div>
+
+    <section style="text-align: center; margin: 2rem 0;">
+        <div style="display: inline-block; position: relative;">
+            <img id="currentProfilePictureDisplay"
+                 src="@(Model.CurrentProfilePictureUrl ?? "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")"
+                 alt="Zdjęcie profilowe"
+                 style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--pico-color-azure-500); box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        </div>
+        <br /><br />
+        <button type="button" onclick="openModal()" class="contrast">
+            Zmień zdjęcie profilowe
+        </button>
+    </section>
+</article>
 
 <dialog id="editPhotoModal">
-    <article>
+    <article style="width: 90vw; max-width: 600px;">
         <header>
-            <button aria-label="Close" rel="prev" onclick="document.getElementById('editPhotoModal').close(); resetCroppingState();"></button>
-            <h2>Prześlij i dostosuj nowe zdjęcie</h2>
+            <button aria-label="Close" rel="prev" onclick="closeModal()"></button>
+            <h5 id="modalTitle">Prześlij i dostosuj nowe zdjęcie</h5>
         </header>
-        <form method="post" enctype="multipart/form-data" id="profile-picture-form">
-            <div class="grid">
-                <section>
-                    <label for="imageInput" class="custom-file-upload">
-                        Wybierz plik ze zdjęciem 📂
-                    </label>
-                    <input type="file" id="imageInput" accept="image/*">
-                    <small><span asp-validation-for="Input.Image"></span></small>
-                    <button type="submit" class="primary" id="submitButton" disabled>Prześlij i zapisz zdjęcie 💾</button>
 
-                    <div class="canvas-container">
-                        <img id="imageToCrop" style="max-width: 100%;">
-                    </div>
-         
-                    <div class="controls-group">
-                        <button type="button" class="secondary" id="zoomIn">Powiększ ➕</button>
-                        <button type="button" class="secondary" id="zoomOut">Zmniejsz ➖</button>
-                        <button type="button" class="secondary" id="rotateLeft">Obróć w lewo 🔄</button>
-                        <button type="button" class="secondary" id="rotateRight">Obróć w prawo 🔄</button>
-                        <button type="button" class="secondary" id="resetCropper">Resetuj ↩️</button>
-                    </div>
-                    <input type="hidden" name="Input.Image" id="processedImageInput">
-                    <input type="hidden" name="Input.FileName" id="fileNameInput">
-                </section>
+        <form id="profilePictureForm" enctype="multipart/form-data" method="post" action="?handler=Upload">
+            @Html.AntiForgeryToken()
+
+            <div id="uploadStep">
+                <button type="button" onclick="document.getElementById('imageInput').click()" class="contrast" style="width: 100%;">
+                    Wybierz plik ze zdjęciem <span style="margin-left: 0.5rem;">📁</span>
+                </button>
+                <input type="file" id="imageInput" name="Input.Image" accept="image/*" style="display: none;">
             </div>
+
+            <div id="cropperStep" style="display: none;">
+                <div style="position: relative; width: 100%; max-width: 500px; margin: 0 auto; background-color: var(--pico-background-color); border-radius: var(--pico-border-radius); overflow: hidden;">
+                    <canvas id="cropperCanvas" style="display: block; width: 100%; height: auto; cursor: grab;"></canvas>
+                    <div id="cropperOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                    </div>
+                </div>
+
+                <div style="margin: 1rem 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <button type="button" id="zoomInButton" class="outline" title="Powiększ">🔍+</button>
+                        <button type="button" id="zoomOutButton" class="outline" title="Pomniejsz">🔍−</button>
+                    </div>
+                    <button type="button" id="resetButton" class="outline" style="width: 100%;" title="Resetuj pozycję i skalę">
+                        Resetuj pozycję ↺
+                    </button>
+                </div>
+            </div>
+
+            <footer>
+                <button type="submit" id="submitButton" disabled class="contrast" style="width: 100%;">
+                    Prześlij i zapisz zdjęcie 💾
+                </button>
+            </footer>
         </form>
     </article>
 </dialog>
 
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <script>
-        const imageInput = document.getElementById('imageInput');
-        const imageToCrop = document.getElementById('imageToCrop');
-        const currentProfilePictureDisplay = document.getElementById('currentProfilePictureDisplay');
-        const processedImageInput = document.getElementById('processedImageInput');
-        const fileNameInput = document.getElementById('fileNameInput');
-        const submitButton = document.getElementById('submitButton');
-        const editPhotoModal = document.getElementById('editPhotoModal');
-
-        let cropper;
-        let currentBlob = null;
-        const DEFAULT_PROFILE_PICTURE = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
-
-        function initializeCropper(imageElement) {
-            if (cropper) {
-                cropper.destroy();
-            }
-            cropper = new Cropper(imageElement, {
-                aspectRatio: 1,
-                viewMode: 1,
-                dragMode: 'move',
-                autoCropArea: 0.8,
-                movable: true,
-                zoomable: true,
-                rotatable: true,
-                scalable: true,
-                background: false,
-                cropBoxResizable: false,
-                cropBoxMovable: false,
-                minCropBoxWidth: 100,
-                minCropBoxHeight: 100,
-                ready() {
-                    updatePreviewAndBlob();
-                },
-                crop() {
-                    updatePreviewAndBlob();
-                }
-            });
-        }
-
-        function updatePreviewAndBlob() {
-            if (!cropper || !imageToCrop.src) {
-                currentProfilePictureDisplay.src = DEFAULT_PROFILE_PICTURE;
-                submitButton.disabled = true;
-                processedImageInput.value = '';
-                currentBlob = null;
-                return;
-            }
-
-            const croppedCanvas = cropper.getCroppedCanvas({
-                width: 200,
-                height: 200,
-                fillColor: '#fff',
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
-
-            currentProfilePictureDisplay.src = croppedCanvas.toDataURL('image/png');
-
-            croppedCanvas.toBlob((blob) => {
-                currentBlob = blob;
-                processedImageInput.value = '';
-                submitButton.disabled = !currentBlob;
-            }, 'image/png', 0.8);
-        }
-
-        function resetCroppingState() {
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-            imageToCrop.src = '';
-            imageInput.value = '';
-            fileNameInput.value = '';
-            currentProfilePictureDisplay.src = currentProfilePictureDisplay.dataset.defaultSrc || DEFAULT_PROFILE_PICTURE;
-            submitButton.disabled = true;
-            processedImageInput.value = '';
-            currentBlob = null;
-        }
-
-        imageInput.addEventListener('change', function () {
-            const file = this.files[0];
-            if (file) {
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                const maxSize = 5 * 1024 * 1024;
-
-                if (!allowedTypes.includes(file.type)) {
-                    displayMessage('Dozwolone są tylko pliki JPG, PNG lub GIF.', 'danger');
-                    this.value = '';
-                    resetCroppingState();
-                    return;
-                }
-
-                if (file.size > maxSize) {
-                    displayMessage('Plik jest zbyt duży (maks. 5MB).', 'danger');
-                    this.value = '';
-                    resetCroppingState();
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    imageToCrop.src = e.target.result;
-                    fileNameInput.value = file.name;
-                    initializeCropper(imageToCrop);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                resetCroppingState();
-            }
-        });
-
-        document.getElementById('zoomIn').addEventListener('click', () => {
-            if (cropper) cropper.zoom(0.1);
-        });
-
-        document.getElementById('zoomOut').addEventListener('click', () => {
-            if (cropper) cropper.zoom(-0.1);
-        });
-
-        document.getElementById('rotateLeft').addEventListener('click', () => {
-            if (cropper) cropper.rotate(-90);
-        });
-
-        document.getElementById('rotateRight').addEventListener('click', () => {
-            if (cropper) cropper.rotate(90);
-        });
-
-        document.getElementById('resetCropper').addEventListener('click', () => {
-            if (cropper) cropper.reset();
-        });
-
-        document.getElementById('profile-picture-form').addEventListener('submit', async function (event) {
-            event.preventDefault();
-
-            if (!currentBlob) {
-                displayMessage('Proszę wybrać i dostosować zdjęcie przed przesłaniem.', 'danger');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('Input.Image', currentBlob, fileNameInput.value || 'profile_picture.png');
-
-            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            if (antiForgeryToken) {
-                formData.append('__RequestVerificationToken', antiForgeryToken);
-            }
-
-            try {
-                const response = await fetch(this.action, {
-                    method: this.method,
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        displayMessage('Wystąpił błąd podczas przesyłania zdjęcia. Spróbuj ponownie.\nSzczegóły: ' + (errorData.message || JSON.stringify(errorData)), 'danger');
-                    } catch (e) {
-                        displayMessage('Wystąpił błąd podczas przesyłania zdjęcia. Spróbuj ponownie.\nSzczegóły: ' + errorText, 'danger');
-                    }
-                    throw new Error(errorText);
-                }
-
-                editPhotoModal.close();
-                window.location.href = window.location.href;
-            } catch (error) {
-            }
-        });
-
-        function displayMessage(message, type) {
-            const messageContainer = document.createElement('div');
-            messageContainer.className = `alert alert-${type}`;
-            messageContainer.setAttribute('role', 'alert');
-            messageContainer.innerHTML = message;
-
-            const mainSection = document.querySelector('.main-profile-section');
-            if (mainSection) {
-                mainSection.parentNode.insertBefore(messageContainer, mainSection);
-            } else {
-                document.body.prepend(messageContainer);
-            }
-
-            setTimeout(() => {
-                messageContainer.remove();
-            }, 5000);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            currentProfilePictureDisplay.dataset.defaultSrc = currentProfilePictureDisplay.src;
-            if (!currentProfilePictureDisplay.src || currentProfilePictureDisplay.src.includes('blank-profile-picture-973460_1280.png')) {
-                currentProfilePictureDisplay.src = DEFAULT_PROFILE_PICTURE;
-            }
-        });
-    </script>
+    <script type="module" src="~/js/picture-crop.js"></script>
 }
