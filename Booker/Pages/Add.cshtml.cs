@@ -3,7 +3,7 @@ using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
-
+using System.IO;
 
 namespace Booker.Pages
 {
@@ -26,16 +26,13 @@ namespace Booker.Pages
             await LoadSelects(string.Empty);
 
             return Page();
-        }        
+        }
 
         public async Task<IActionResult> OnPostAsync()
         {
             var user = await _userManager.GetUserAsync(User);
-
             if (user == null)
-            {
                 return Redirect("/Identity/Account/Login");
-            }
 
             if (Input == null)
             {
@@ -44,10 +41,11 @@ namespace Booker.Pages
                 return Page();
             }
 
-            if (Input.Image == null || Input.Image.Length == 0)
-            {
-                ModelState.AddModelError("Input.Image", "Proszę przesłać zdjęcie książki.");
-            }
+            
+            if (Input.Images == null || Input.Images.Count == 0)
+                ModelState.AddModelError("Input.Images", "Proszę przesłać przynajmniej jedno zdjęcie książki.");
+            else if (Input.Images.Count > 6)
+                ModelState.AddModelError("Input.Images", "Możesz przesłać maksymalnie 6 zdjęć.");
 
             if (!ModelState.IsValid)
             {
@@ -55,26 +53,39 @@ namespace Booker.Pages
                 return Page();
             }
 
+            
             var parameters = await _staticDataManager.ConvertParametersAsync(
-                Input.Title,
-                Input.Grade,
-                Input.Subject,
-                Input.Level
+                Input.Title, Input.Grade, Input.Subject, Input.Level
             );
 
-            using var stream = Input.Image!.OpenReadStream();
+            
+            var imageStreams = new List<Stream>();
+            var imageExtensions = new List<string>();
 
+            foreach (var img in Input.Images!)
+            {
+                
+                var memoryStream = new MemoryStream();
+                await img.OpenReadStream().CopyToAsync(memoryStream);
+                memoryStream.Position = 0; 
+                imageStreams.Add(memoryStream);
+
+                imageExtensions.Add(Path.GetExtension(img.FileName));
+            }
+
+            
             var result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
                 user,
                 parameters,
                 Input.Description,
                 Input.State,
                 Input.Price,
-                stream,
-                Path.GetExtension(Input.Image.FileName)
+                imageStreams,
+                imageExtensions
             ));
 
             return ValidateAndReturn(result.Id, result.Status);
         }
+
     }
 }

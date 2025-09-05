@@ -36,9 +36,9 @@ public class ItemManager
         string Description,
         string State,
         decimal Price,
-        Stream? ImageStream,
-        string? ImageFileExtension,
-        string? ExistingImageBlobName = null
+        List<Stream>? ImageStreams = null,
+        List<string>? ImageFileExtensions = null,
+        string? ExistingImageBlobNames = null
     );
 
     public ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager)
@@ -48,15 +48,14 @@ public class ItemManager
         _photosManager = photosManager;
     }
 
-    public Task<Item?> GetItemAsync(int id)
-    {
-        return _context.Items
+    
+    public Task<Item?> GetItemAsync(int id) =>
+        _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User)
             .FirstOrDefaultAsync(i => i.Id == id);
-    }
 
     public IAsyncEnumerable<Item> GetAllItemsAsync()
     {
@@ -164,7 +163,22 @@ public class ItemManager
         var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
-        var photoUri = await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!);
+        string allPhotos = "";
+        if (model.ImageStreams != null && model.ImageStreams.Count > 0)
+        {
+            var photoUris = new List<string>();
+            for (int i = 0; i < model.ImageStreams.Count; i++)
+            {
+                var uri = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
+                photoUris.Add(uri.ToString());
+            }
+            allPhotos = string.Join(";", photoUris);
+        }
+        else if (!string.IsNullOrEmpty(model.ExistingImageBlobNames))
+        {
+            allPhotos = model.ExistingImageBlobNames;
+        }
+
         var item = new Item
         {
             Book = book,
@@ -173,7 +187,7 @@ public class ItemManager
             State = model.State,
             Price = model.Price,
             CreatedAt = DateTime.Now,
-            Photo = photoUri.ToString()
+            Photo = allPhotos
         };
 
         return await AddItemNVAsync(item);
@@ -187,6 +201,7 @@ public class ItemManager
         return item.Id;
     }
 
+    
     public async Task<Status> UpdateItemAsync(Item item, ItemModel model)
     {
         if (model == null) throw new ArgumentNullException(nameof(model));
@@ -197,19 +212,31 @@ public class ItemManager
         var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
-        var photoUri = model.ExistingImageBlobName;
+        string allPhotos = model.ExistingImageBlobNames ?? "";
 
-        if (model.ImageStream != null)
+        if (model.ImageStreams != null && model.ImageStreams.Count > 0)
         {
-            await _photosManager.DeletePhotoAsync(model.ExistingImageBlobName!);
-            photoUri = (await _photosManager.AddPhotoAsync(model.ImageStream!, model.ImageFileExtension!)).ToString();
+            if (!string.IsNullOrEmpty(model.ExistingImageBlobNames))
+            {
+                var oldPhotos = model.ExistingImageBlobNames.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var photo in oldPhotos)
+                    await _photosManager.DeletePhotoAsync(photo);
+            }
+
+            var photoUris = new List<string>();
+            for (int i = 0; i < model.ImageStreams.Count; i++)
+            {
+                var uri = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
+                photoUris.Add(uri.ToString());
+            }
+            allPhotos = string.Join(";", photoUris);
         }
 
         item.Book = book;
         item.Description = model.Description;
         item.State = model.State;
         item.Price = model.Price;
-        item.Photo = photoUri!;
+        item.Photo = allPhotos;
         item.UpdatedAt = DateTime.Now;
 
         await UpdateItemNVAsync(item);
@@ -226,7 +253,14 @@ public class ItemManager
     {
         var item = await GetItemAsync(id);
         if (item == null) return;
-        await _photosManager.DeletePhotoAsync(item.Photo);
+
+        if (!string.IsNullOrEmpty(item.Photo))
+        {
+            var oldPhotos = item.Photo.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var photo in oldPhotos)
+                await _photosManager.DeletePhotoAsync(photo);
+        }
+
         _context.Items.Remove(item);
         await _context.SaveChangesAsync();
     }
