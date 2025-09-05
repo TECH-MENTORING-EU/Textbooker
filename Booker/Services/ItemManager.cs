@@ -61,7 +61,7 @@ public class ItemManager
     public IAsyncEnumerable<Item> GetAllItemsAsync()
     {
         return GetAllItemsQueryable()
-            .OrderByDescending(i => i.DateTime)
+            .OrderByDescending(i => i.CreatedAt)
             .AsAsyncEnumerable();
     }
 
@@ -75,7 +75,7 @@ public class ItemManager
     {
         return GetAllItemsQueryable()
             .Where(i => ids.Contains(i.Id))
-            .OrderByDescending(i => i.DateTime)
+            .OrderByDescending(i => i.CreatedAt)
             .AsAsyncEnumerable();
     }
 
@@ -83,7 +83,7 @@ public class ItemManager
     {
         return GetAllItemsQueryable()
             .Where(i => ids.Contains(i.Id))
-            .OrderByDescending(i => i.DateTime)
+            .OrderByDescending(i => i.CreatedAt)
             .Skip(pageNumber * pageSize)
             .Take(pageSize)
             .AsAsyncEnumerable();
@@ -172,7 +172,7 @@ public class ItemManager
             Description = model.Description,
             State = model.State,
             Price = model.Price,
-            DateTime = DateTime.Now,
+            CreatedAt = DateTime.Now,
             Photo = photoUri.ToString()
         };
 
@@ -210,7 +210,7 @@ public class ItemManager
         item.State = model.State;
         item.Price = model.Price;
         item.Photo = photoUri!;
-        item.DateTime = DateTime.Now;
+        item.UpdatedAt = DateTime.Now;
 
         await UpdateItemNVAsync(item);
         return Status.Success;
