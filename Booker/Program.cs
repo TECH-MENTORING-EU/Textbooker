@@ -14,6 +14,7 @@ using System.Configuration;
 using System.Globalization;
 using System.Net;
 using System.Threading.RateLimiting;
+using System.Security.Claims;
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
@@ -124,6 +125,18 @@ app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    using var scope = app.Services.CreateScope();
+    var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
+    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
+    if (!await sessionCacheManager.CheckSession(context))
+    {
+        await signInManager.SignOutAsync();
+        context.User = new ClaimsPrincipal();
+    }
+    await next();
+});
 app.UseAuthorization();
 app.UseRateLimiter();
 

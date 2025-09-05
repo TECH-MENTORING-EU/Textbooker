@@ -34,6 +34,9 @@ namespace Booker.Services
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
 
+            services.AddScoped<SessionCacheManager>();
+            services.AddHostedService<MaintenanceService>();
+
             return services;
         }
 

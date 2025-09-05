@@ -1,4 +1,5 @@
 using Booker.Data;
+using Booker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,11 @@ namespace Booker.Areas.Admin.Pages
     public class UsersModel : PageModel
     {
         private readonly UserManager<User> _userManager;
-        public UsersModel(UserManager<User> userManager)
+        private readonly SessionCacheManager _sessionCacheManager;
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager)
         {
             _userManager = userManager;
+            _sessionCacheManager = sessionCacheManager;
         }
 
         public record LockoutLinkModel(int UserId, string? UserName, bool ShouldLockout);
@@ -88,7 +91,8 @@ namespace Booker.Areas.Admin.Pages
             {
                 lockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
             }
-
+            
+            _sessionCacheManager.InvalidateSession(id);
             var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
             if (!result.Succeeded)
             {
