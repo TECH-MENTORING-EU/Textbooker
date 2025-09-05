@@ -14,7 +14,12 @@
         <h2>@Model.BookItem.Book.Title</h2>
         <p>
             <small>
-                Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.DateTime))
+                Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.CreatedAt))
+                @if (Model.BookItem.UpdatedAt != null)
+                {
+                    <br />
+                    <text>Edytowane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.UpdatedAt.Value))</text>
+                }
             </small>
         </p>
         <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
