@@ -41,7 +41,7 @@
                  style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--pico-color-azure-500); box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
         </div>
         <br /><br />
-        <button type="button" onclick="openModal()" class="contrast">
+        <button type="button" onclick="document.getElementById('editPhotoModal').showModal()" class="contrast">
             Zmień zdjęcie profilowe
         </button>
     </section>
@@ -50,7 +50,7 @@
 <dialog id="editPhotoModal">
     <article style="width: 90vw; max-width: 600px;">
         <header>
-            <button aria-label="Close" rel="prev" onclick="closeModal()"></button>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('editPhotoModal').close()"></button>
             <h5 id="modalTitle">Prześlij i dostosuj nowe zdjęcie</h5>
         </header>
 

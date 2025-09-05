@@ -106,7 +106,7 @@ function toggleHamburgerMenu(check) {
         return;
     }
     if (check.checked) {
-        hamburger.setAttribute("open","");
+        hamburger.setAttribute("open", "");
     } else {
         hamburger.removeAttribute("open");
     }
@@ -115,7 +115,7 @@ function toggleHamburgerMenu(check) {
 let v = new aspnetValidation.ValidationService();
 v.bootstrap({ watch: true });
 
-document.querySelector(".input-validation-error")?.scrollIntoView({behavior: "smooth"});
+document.querySelector(".input-validation-error")?.scrollIntoView({ behavior: "smooth" });
 
 document.querySelectorAll(".input-validation-error").forEach(element => {
     element.ariaInvalid = true;
@@ -126,27 +126,3 @@ document.querySelectorAll("button").forEach(button => {
     button.addEventListener("htmx:beforeRequest", function () { this.ariaBusy = true; })
     button.addEventListener("htmx:afterRequest", function () { this.ariaBusy = false; })
 });
-
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    const button = document.getElementById('help-button');
-
-    if (modal) {
-        modal.showModal();
-        if (button) {
-            button.hidden = true;
-        }
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    const button = document.getElementById('help-button');
-
-    if (modal) {
-        modal.close();
-        if (button) {
-            button.hidden = false;
-        }
-    }
-}

@@ -296,13 +296,18 @@ class CustomCropper {
     }
     setZoom(factor) {
         if (!this.image) return;
-        const newScale = Math.max(this.minScale, Math.min(this.maxScale, this.scale * factor));
-        if (newScale !== this.scale) {
-            this.scale = newScale;
-            this.clampOffsets();
-            this.requestDraw();
-            this.notifyChange();
+        const oldScale = this.scale;
+        const newScale = Math.max(this.minScale, Math.min(this.maxScale, oldScale * factor));
+        if (newScale === oldScale) {
+            return;
         }
+        const actualFactor = newScale / oldScale;
+        this.offsetX *= actualFactor;
+        this.offsetY *= actualFactor;
+        this.scale = newScale;
+        this.clampOffsets();
+        this.requestDraw();
+        this.notifyChange();
     }
     requestDraw() {
         if (this.rafPending) return;
@@ -388,10 +393,8 @@ const editPhotoModal = document.getElementById('editPhotoModal');
 const uploadStep = document.getElementById('uploadStep');
 const cropperStep = document.getElementById('cropperStep');
 const imageInput = document.getElementById('imageInput');
-const currentProfilePictureDisplay = document.getElementById('currentProfilePictureDisplay');
 const profilePictureForm = document.getElementById('profilePictureForm');
 const submitButton = document.getElementById('submitButton');
-const cropPreview = document.getElementById('cropPreview');
 
 function debounce(fn, delay = 150) {
     let t;
@@ -414,18 +417,6 @@ async function updateCroppedBlob() {
     if (!customCropper || !customCropper.image) return;
     const token = ++lastUpdateToken;
     try {
-        if (cropPreview) {
-            const blob = await customCropper.getCroppedBlob(400, 0.9);
-            if (token !== lastUpdateToken) return;
-            if (blob) {
-                if (currentPreviewUrl) {
-                    URL.revokeObjectURL(currentPreviewUrl);
-                    currentPreviewUrl = null;
-                }
-                currentPreviewUrl = URL.createObjectURL(blob);
-                cropPreview.src = currentPreviewUrl;
-            }
-        }
         if (submitButton) submitButton.disabled = false;
     } catch (error) {
         console.error('Error getting cropped image:', error);
@@ -439,7 +430,6 @@ function resetState() {
         URL.revokeObjectURL(currentPreviewUrl);
         currentPreviewUrl = null;
     }
-    if (cropPreview) cropPreview.src = '';
     if (customCropper) {
         customCropper.destroy();
         customCropper = null;
@@ -450,10 +440,25 @@ function resetState() {
 function displayMessage(message, type) {
     const container = document.getElementById('messages');
     if (!container) return;
+    const alert = document.createElement('div');
+    alert.setAttribute('role', 'alert');
     const bgColor = type === 'danger' ? 'var(--pico-color-red-100)' : 'var(--pico-color-green-100)';
     const textColor = type === 'danger' ? 'var(--pico-color-red-900)' : 'var(--pico-color-green-900)';
-    container.innerHTML = `<div role="alert" style="background-color: ${bgColor}; color: ${textColor}; padding: 1rem; border-radius: var(--pico-border-radius); margin: 1rem 0;">${message}</div>`;
+    alert.style.backgroundColor = bgColor;
+    alert.style.color = textColor;
+    alert.style.padding = '1rem';
+    alert.style.borderRadius = 'var(--pico-border-radius)';
+    alert.style.margin = '1rem 0';
+    alert.innerHTML = message;
+    container.innerHTML = '';
+    container.appendChild(alert);
+    setTimeout(() => {
+        alert.style.opacity = '0';
+        alert.style.transition = 'opacity 0.5s ease-out';
+        setTimeout(() => alert.remove(), 500);
+    }, 5000);
 }
+
 window.openModal = function () {
     editPhotoModal.showModal();
     resetState();
@@ -480,96 +485,21 @@ function setupCropperControls() {
     const resetButton = document.getElementById('resetButton');
     if (zoomInButton) {
         zoomInButton.addEventListener('click', () => {
-            if (customCropper) {
-                customCropper.setZoom(1.1);
-                updateCroppedBlobDebounced();
-            }
+            if (customCropper) customCropper.setZoom(1.1);
         });
     }
     if (zoomOutButton) {
         zoomOutButton.addEventListener('click', () => {
-            if (customCropper) {
-                customCropper.setZoom(0.9);
-                updateCroppedBlobDebounced();
-            }
+            if (customCropper) customCropper.setZoom(0.9);
         });
     }
     if (resetButton) {
         resetButton.addEventListener('click', () => {
-            if (customCropper) {
-                customCropper.resetTransform();
-                updateCroppedBlobDebounced();
-            }
+            if (customCropper) customCropper.resetTransform();
         });
     }
 }
-async function refreshCurrentProfilePicture(freshBlob) {
-    if (!currentProfilePictureDisplay) return;
-    const base = currentProfilePictureDisplay.dataset.baseSrc || currentProfilePictureDisplay.src;
-    let tempUrl = null;
-    if (freshBlob) {
-        tempUrl = URL.createObjectURL(freshBlob);
-        currentProfilePictureDisplay.src = tempUrl;
-    }
-    try {
-        const baseUrl = new URL(base, window.location.href);
-        const sameOrigin = baseUrl.origin === window.location.origin;
-        if (!sameOrigin) {
-            const busted = addCacheBust(base);
-            await preloadImage(busted);
-            cleanupObjectUrl(currentProfilePictureDisplay.dataset.objectUrl);
-            if (tempUrl) cleanupObjectUrl(tempUrl);
-            currentProfilePictureDisplay.src = busted;
-            delete currentProfilePictureDisplay.dataset.objectUrl;
-        } else {
-            const resp = await fetch(base, {
-                cache: 'reload',
-                credentials: 'include'
-            });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const serverBlob = await resp.blob();
-            const serverUrl = URL.createObjectURL(serverBlob);
-            cleanupObjectUrl(currentProfilePictureDisplay.dataset.objectUrl);
-            if (tempUrl) cleanupObjectUrl(tempUrl);
-            currentProfilePictureDisplay.src = serverUrl;
-            currentProfilePictureDisplay.dataset.objectUrl = serverUrl;
-        }
-    } catch (err) {
-        console.warn('Nie udało się odświeżyć obrazu z serwera, zostaję przy lokalnym blobie:', err);
-        if (tempUrl) {
-            cleanupObjectUrl(currentProfilePictureDisplay.dataset.objectUrl);
-            currentProfilePictureDisplay.dataset.objectUrl = tempUrl;
-        }
-    }
 
-    function cleanupObjectUrl(url) {
-        if (url && typeof url === 'string' && url.startsWith('blob:')) {
-            try {
-                URL.revokeObjectURL(url);
-            } catch { }
-        }
-    }
-
-    function addCacheBust(url) {
-        try {
-            const u = new URL(url, window.location.href);
-            u.searchParams.set('v', Date.now());
-            return u.toString();
-        } catch {
-            const sep = url.includes('?') ? '&' : '?';
-            return url + sep + 'v=' + Date.now();
-        }
-    }
-
-    function preloadImage(src) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve();
-            img.onerror = reject;
-            img.src = src;
-        });
-    }
-}
 if (imageInput) {
     imageInput.addEventListener('change', async function () {
         const file = this.files[0];
@@ -614,18 +544,20 @@ if (imageInput) {
         }
     });
 }
+
 if (profilePictureForm) {
     profilePictureForm.addEventListener('submit', async function (event) {
         event.preventDefault();
-        if (!customCropper) {
+        if (!customCropper || !customCropper.image) {
             displayMessage('Proszę wybrać i dostosować zdjęcie przed przesłaniem.', 'danger');
             return;
         }
+        submitButton.disabled = true;
+        submitButton.textContent = 'Zapisywanie...';
         try {
             const freshBlob = await customCropper.getCroppedBlob(400, 0.9);
             if (!freshBlob) {
-                displayMessage('Proszę wybrać i dostosować zdjęcie przed przesłaniem.', 'danger');
-                return;
+                throw new Error('Nie udało się wygenerować zdjęcia do wysłania.');
             }
             const formData = new FormData();
             formData.append('Input.Image', freshBlob, 'profile_picture.jpeg');
@@ -633,34 +565,35 @@ if (profilePictureForm) {
             if (antiForgery && antiForgery.value) {
                 formData.append('__RequestVerificationToken', antiForgery.value);
             }
-            submitButton.disabled = true;
-            submitButton.textContent = 'Zapisywanie...';
             const response = await fetch(this.action, {
                 method: 'POST',
                 body: formData
             });
-            if (!response.ok) throw new Error('Network response was not ok');
-            await response.text();
-            closeModal();
-            await refreshCurrentProfilePicture(freshBlob);
-            displayMessage('Zdjęcie profilowe zostało zaktualizowane🥳 Wyglądasz ślicznie😉', 'success');
+            if (!response.ok) {
+                throw new Error(`Błąd serwera: ${response.status} ${response.statusText}`);
+            }
+            sessionStorage.setItem('profilePictureUpdated', 'true');
+            window.location.reload();
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Błąd podczas wysyłania zdjęcia:', error);
             displayMessage('Wystąpił błąd podczas zapisywania zdjęcia. Spróbuj ponownie.', 'danger');
-        } finally {
             submitButton.disabled = false;
             submitButton.textContent = submitButton.dataset.defaultText || 'Prześlij i zapisz zdjęcie 💾';
         }
     });
 }
+
 document.addEventListener('DOMContentLoaded', () => {
-    if (currentProfilePictureDisplay) {
-        currentProfilePictureDisplay.dataset.baseSrc = currentProfilePictureDisplay.src;
-    }
     if (submitButton) {
         submitButton.dataset.defaultText = submitButton.textContent;
     }
     if (new URLSearchParams(window.location.search).get('openModal') === 'true') {
         openModal();
+    }
+    if (sessionStorage.getItem('profilePictureUpdated') === 'true') {
+        sessionStorage.removeItem('profilePictureUpdated');
+        setTimeout(() => {
+            displayMessage('Przesłano! Ślicznie wyglądasz 😉', 'success');
+        }, 100);
     }
 });
