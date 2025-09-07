@@ -20,6 +20,10 @@
                     <li><a asp-area="" asp-page="/Profile/Favorites">Ulubione</a></li>
                     <li><a href="/Chat">Wiadomości</a></li>
                     <li><a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index">Ustawienia</a></li>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li><a asp-area="Admin" asp-page="/Index">Panel administracyjny</a></li>
+                    }
                     <li>
                         <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
                             <button id="logout">Wyloguj</button>
