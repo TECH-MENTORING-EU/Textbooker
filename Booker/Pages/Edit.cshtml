@@ -73,6 +73,12 @@
                     <input asp-for="Input.Price" placeholder="PLN">
                     <small><span asp-validation-for="Input.Price"></span></small>
 
+
+                    <label asp-for="Input.Reserved">
+                        <input asp-for="Input.Reserved" type="checkbox" />
+                        Zarezerwowane
+                    </label>
+
                     <div class="grid">
                         <button type="submit" role="button">Zapisz zmiany</button>
                         <button type="button" role="button" class="secondary" onclick="showConfirmDeleteModal(@Model.ItemToEdit.Id)">Usuń ogłoszenie</button>

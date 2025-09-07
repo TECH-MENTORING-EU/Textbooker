@@ -32,7 +32,8 @@ namespace Booker.Pages
                 Description = ItemToEdit.Description,
                 State = ItemToEdit.State,
                 Price = ItemToEdit.Price,
-                Images = new List<IFormFile>() // multiple images handled
+                Images = new List<IFormFile>(), // multiple images handled
+                Reserved = ItemToEdit.Reserved
             };
 
             await LoadSelects(string.Empty);
@@ -68,7 +69,11 @@ namespace Booker.Pages
                 Input.Level
             );
 
-            
+            if(Input.Reserved != ItemToEdit.Reserved)
+            {
+                await _itemManager.MarkItemReservedAsync(id, Input.Reserved);
+            }
+
             var imageStreams = Input.Images?.Select(f => f.OpenReadStream()).ToList();
             var imageExtensions = Input.Images?.Select(f => Path.GetExtension(f.FileName)).ToList();
 
