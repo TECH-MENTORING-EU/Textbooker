@@ -37,6 +37,10 @@
             </small>
         </p>
         <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
+        @if (Model.BookItem.Reserved)
+        {
+            <p><strong>Ten przedmiot jest obecnie zarezerwowany.</strong></p>
+        }
 
         <ul>
             <li>
