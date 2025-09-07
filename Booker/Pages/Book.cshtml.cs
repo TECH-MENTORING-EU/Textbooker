@@ -47,9 +47,10 @@ namespace Booker.Pages
 
             IsCurrentUserOwner = userId == BookItem.User.Id;
 
-            var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
+            // This warns every time, but it shouldn't
+            //var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
 
-            if (!item.IsVisible && !isAuthorized.Succeeded)
+            if (!item.IsVisible && !IsCurrentUserOwner)
             {
                 return NotFound();
             }
