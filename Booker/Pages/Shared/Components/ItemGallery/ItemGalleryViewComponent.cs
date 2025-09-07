@@ -12,7 +12,7 @@ public class ItemGalleryViewComponent : ViewComponent
     const int PageSize = 25;
 
     public record ItemsListModel(
-        IEnumerable<Item> Items,
+        IEnumerable<ItemModel> Items,
         StaticDataManager.Parameters Params,
         int PageNumber,
         bool HasMorePages
@@ -20,6 +20,7 @@ public class ItemGalleryViewComponent : ViewComponent
 
     public record ItemModel(
         Item Item,
+        string FirstPhoto,
         StaticDataManager.Parameters Params
     );
 
@@ -44,13 +45,20 @@ public class ItemGalleryViewComponent : ViewComponent
 
         var itemsFromDb = await _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize).ToListAsync();
 
+        var itemsWithPhotos = itemsFromDb.Select(item => new ItemModel(
+            Item: item,
+            FirstPhoto: string.IsNullOrEmpty(item.Photo)
+                ? "/images/default-book.png" // fallback
+                : item.Photo.Split(';')[0].Trim(),
+            Params: parameters
+        ));
 
         return View(
             new ItemsListModel(
-                itemsFromDb,
-                parameters,
-                pageNumber,
-                itemIds.Count() > (pageNumber + 1) * pageSize
+                Items: itemsWithPhotos,
+                Params: parameters,
+                PageNumber: pageNumber,
+                HasMorePages: itemIds.Count() > (pageNumber + 1) * pageSize
             ));
     }
 }
