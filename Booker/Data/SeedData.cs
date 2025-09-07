@@ -4,18 +4,19 @@
     using static DataContext;
     public static class SeedData
     {
-        public static List<Grade> Grades = new List<Grade>
-        {
+        public readonly static List<Grade> Grades =
+        [
             new Grade { Id = 1, GradeNumber = "1" },
             new Grade { Id = 2, GradeNumber = "2" },
             new Grade { Id = 3, GradeNumber = "3" },
             new Grade { Id = 4, GradeNumber = "4" },
             new Grade { Id = 5, GradeNumber = "5" }
-        };
+        ];
 
         // Hard-coded IDs, should it be like that?
-        public static List<Subject> Subjects = new List<Subject>
-        {
+        public readonly static List<Subject> Subjects =
+        [
+            new Subject { Id = -1, Name = "Brak" },
             new Subject { Id = 1, Name = "Język polski" },
             new Subject { Id = 2, Name = "Język angielski" },
             new Subject { Id = 3, Name = "Język niemiecki" },
@@ -34,19 +35,22 @@
             new Subject { Id = 16, Name = "WOS" },
             new Subject { Id = 17, Name = "Język angielski zawodowy" },
             new Subject { Id = 18, Name = "Edukacja obywatelska" }
-        };
+        ];
 
-        public static List<Level> Levels = new List<Level>
-        {
+        public readonly static List<Level> Levels =
+        [
             new Level { Id = -1, Name = "Brak" },
             new Level { Id = 1, Name = "Podstawa" },
             new Level { Id = 2, Name = "Rozszerzenie" },
             new Level { Id = 3, Name = "Podstawa+Rozszerzenie" },
             new Level { Id = 4, Name = "Dwujęzyczny" }
-        };
+        ];
 
-        public static List<Book> Books = new List<Book>
-        {
+        public readonly static List<Book> Books =
+        [
+            // Inna książka
+            new() { Id = -1, Title = "Inna", SubjectId = -1, Subject = null!, LevelId = -1, Level = null!, Grades = null! },
+
             // Polski
             CreateBook(title: "Ponad słowami 1 cz. 1", subjectId: 1, levelId: 3, grades: new() { 1 }),
             CreateBook(title: "Ponad słowami 1 cz. 2", subjectId: 1, levelId: 3, grades: new() { 1 }),
@@ -169,6 +173,6 @@
 
             // Informatyka
             CreateBook(title: "Informatyka w praktyce", subjectId: 11, levelId: 2, grades: new() { 3 })
-        };
+        ];
     }
 }

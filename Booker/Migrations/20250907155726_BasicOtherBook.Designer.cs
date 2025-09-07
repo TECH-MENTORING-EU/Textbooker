@@ -4,6 +4,7 @@ using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booker.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250907155726_BasicOtherBook")]
+    partial class BasicOtherBook
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,7 +37,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("GradeId");
 
-                    b.ToTable("BookGrades", (string)null);
+                    b.ToTable("BookGrades");
 
                     b.HasData(
                         new
@@ -878,7 +881,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Books", (string)null);
+                    b.ToTable("Books");
 
                     b.HasData(
                         new
@@ -1499,7 +1502,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Grades", (string)null);
+                    b.ToTable("Grades");
 
                     b.HasData(
                         new
@@ -1574,7 +1577,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Items", (string)null);
+                    b.ToTable("Items");
                 });
 
             modelBuilder.Entity("Booker.Data.Level", b =>
@@ -1591,7 +1594,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Levels", (string)null);
+                    b.ToTable("Levels");
 
                     b.HasData(
                         new
@@ -1635,7 +1638,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects", (string)null);
+                    b.ToTable("Subjects");
 
                     b.HasData(
                         new
@@ -1974,7 +1977,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("ItemId");
 
-                    b.ToTable("UserFavorites", (string)null);
+                    b.ToTable("UserFavorites");
                 });
 
             modelBuilder.Entity("BookGrades", b =>

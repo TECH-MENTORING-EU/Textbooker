@@ -21,5 +21,6 @@ namespace Booker.Data
         public required string Photo { get; set; }
         public bool IsVisible { get; set; } = true;
         public bool CanChangeVisibility { get; set; } = true;
+        public bool Reserved {  get; set; }
     }
 }

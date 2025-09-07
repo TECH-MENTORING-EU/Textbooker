@@ -46,7 +46,10 @@
 
                     <label asp-for="Input.Title">Tytuł książki:</label>
                     <select asp-for="Input.Title" asp-items="Model.Books"></select>
-                    <small><span asp-validation-for="Input.Title"></span></small>
+                    <small>
+                        <span asp-validation-for="Input.Title"></span><br>
+                        Nie widzisz swojej książki? Wybierz opcję "inna" i opisz ją poniżej.
+                    </small>
 
                     <label asp-for='Input.Subject'>Przedmiot:</label>
                     <select asp-for='Input.Subject' asp-items="Model.Subjects"></select>
@@ -72,6 +75,12 @@
                     <label asp-for="Input.Price">Cena:</label>
                     <input asp-for="Input.Price" placeholder="PLN">
                     <small><span asp-validation-for="Input.Price"></span></small>
+
+
+                    <label asp-for="Input.Reserved">
+                        <input asp-for="Input.Reserved" type="checkbox" />
+                        Zarezerwowane
+                    </label>
 
                     <div class="grid">
                         <button type="submit" role="button">Zapisz zmiany</button>

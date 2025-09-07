@@ -5,7 +5,7 @@ using System.Net;
 
 namespace Booker.Data
 {
-    public class DataContext : IdentityDbContext<User,IdentityRole<int>,int>
+    public class DataContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
         public DbSet<Book> Books { get; set; }
         public DbSet<Item> Items { get; set; }
@@ -17,7 +17,14 @@ namespace Booker.Data
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
 
         private record BookGrade(int BookId, int GradeId);
-        private static List<BookGrade> bookGrades = new List<BookGrade>();
+        private static List<BookGrade> bookGrades = [
+            // other book static data
+            new BookGrade(BookId: -1, GradeId: 1),
+            new BookGrade(BookId: -1, GradeId: 2),
+            new BookGrade(BookId: -1, GradeId: 3),
+            new BookGrade(BookId: -1, GradeId: 4),
+            new BookGrade(BookId: -1, GradeId: 5)
+        ];
 
 
         public DataContext(DbContextOptions<DataContext> options) : base(options)

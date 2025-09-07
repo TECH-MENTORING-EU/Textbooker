@@ -21,7 +21,7 @@
     private int UserId {get => _userId ??= UserManager.GetUserId(User).IntOrDefault(); }
 }
 
-<article class="book-tile">
+<article class="book-tile @(Model.Item.Reserved ? "reserved" : "")">
     <img src="@Model.FirstPhoto" alt="@Model.Item.Book.Title" />
     <footer>
         <div class="info">
