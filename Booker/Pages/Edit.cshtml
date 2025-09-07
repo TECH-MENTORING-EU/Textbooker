@@ -1,4 +1,4 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model Booker.Pages.EditModel
 @{
     ViewData["Title"] = "Edytuj ogłoszenie";
@@ -16,19 +16,27 @@
     }
     else
     {
-        <form method="post" enctype="multipart/form-data" id="edit-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">            <div class="grid">
+        <form method="post" enctype="multipart/form-data" id="edit-form" class="upload-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">
+            <div class="grid">
                 <section>
-                    @if (!string.IsNullOrEmpty(Model.ItemToEdit.Photo))
-                    {
-                        <img src="@Model.ItemToEdit.Photo" alt="Podgląd obecnego zdjęcia książki" class="book-image-preview">
-                    }
-                    else
-                    {
-                        <img src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
-                    }
-                    <label asp-for="Input.Image">Zmień zdjęcie swojej książki (opcjonalnie):</label>
-                    <input type="file" asp-for="Input.Image" accept="image/*" hx-on:change="handleImageUpload(this)">
-                    <small><span asp-validation-for="Input.Image"></span></small>
+                    <label asp-for="Input.Images">Zmień zdjęcia książki (opcjonalnie):</label>
+                    <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
+                    <small>
+                        <span asp-validation-for="Input.Images"></span>
+                        <span id="imageErrorMsg"></span>
+                    </small>
+
+                    <div class="image-preview-container">
+                        @foreach (var (img, index) in (Model.ItemToEdit.Photo ?? "")
+                       .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                       .Select((val, i) => (val, i)))
+                        {
+                            <img src="@img"
+                                 alt="Zdjęcie książki"
+                                 class="book-image-preview @(index == 0 ? "main" : "")" />
+                        }
+                    </div>
+
 
                     <div asp-validation-summary="ModelOnly"></div>
                 </section>
@@ -58,10 +66,8 @@
 
                     <label asp-for="Input.State">Stan książki:</label>
                     <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…"></textarea>
-                    <small>
-                        <span asp-validation-for="Input.State"></span>
-                        <span class="char-count" style="text-align: right;">0 / 40</span>
-                    </small>
+                    <small><span asp-validation-for="Input.State"></span><span class="char-count" style="text-align:right;">0 / 40</span></small>
+
 
                     <label asp-for="Input.Price">Cena:</label>
                     <input asp-for="Input.Price" placeholder="PLN">
@@ -107,15 +113,11 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize character counters
             document.querySelectorAll('textarea').forEach(ta => {
                 ta.addEventListener("input", updateCharCount);
                 ta.dispatchEvent(new Event("input"));
             });
-
-            const existingImageUrl = document.querySelector('input[name="Input.ExistingImageBlobName"]')?.value;
-            if (existingImageUrl) {
-                document.querySelector('.book-image-preview').src = existingImageUrl;
-            }
         });
 
         function showConfirmSaveModal(event) {

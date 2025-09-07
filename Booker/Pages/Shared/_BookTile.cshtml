@@ -22,7 +22,7 @@
 }
 
 <article class="book-tile">
-    <img src="@Model.Item.Photo" alt="Zdjęcie książki: @Model.Item.Book.Title" />
+    <img src="@Model.FirstPhoto" alt="@Model.Item.Book.Title" />
     <footer>
         <div class="info">
             <a asp-page="/Book" asp-route-id="@Model.Item.Id">

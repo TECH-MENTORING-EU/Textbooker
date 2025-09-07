@@ -1,0 +1,96 @@
+@page
+@model Booker.Areas.Identity.Pages.Account.Manage.ProfilePictureUploadModel
+@{
+    ViewData["Title"] = "Prześlij zdjęcie profilowe";
+    ViewData["ActivePage"] = ManageNavPages.ProfilePictureUpload;
+}
+
+<article>
+    <header>
+        <h3>Zarządzaj swoim zdjęciem profilowym</h3>
+    </header>
+
+    @if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+    {
+        <div role="alert" style="background-color: var(--pico-color-green-100); color: var(--pico-color-green-900); padding: 1rem; border-radius: var(--pico-border-radius);">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!ViewData.ModelState.IsValid && ViewData.ModelState.Values.Any(m => m.Errors.Any()))
+    {
+        <div role="alert" id="modelStateErrors" style="background-color: var(--pico-color-red-100); color: var(--pico-color-red-900); padding: 1rem; border-radius: var(--pico-border-radius);">
+            <strong>Wystąpiły błędy:</strong>
+            @foreach (var modelState in ViewData.ModelState.Values)
+            {
+                foreach (var error in modelState.Errors)
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            }
+        </div>
+    }
+
+    <div id="messages"></div>
+
+    <section style="text-align: center; margin: 2rem 0;">
+        <div style="display: inline-block; position: relative;">
+            <img id="currentProfilePictureDisplay"
+                 src="@(Model.CurrentProfilePictureUrl ?? "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")"
+                 alt="Zdjęcie profilowe"
+                 style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid var(--pico-color-azure-500); box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        </div>
+        <br /><br />
+        <button type="button" onclick="document.getElementById('editPhotoModal').showModal()" class="contrast">
+            Zmień zdjęcie profilowe
+        </button>
+    </section>
+</article>
+
+<dialog id="editPhotoModal">
+    <article style="width: 90vw; max-width: 600px;">
+        <header>
+            <button aria-label="Close" rel="prev" onclick="document.getElementById('editPhotoModal').close()"></button>
+            <h5 id="modalTitle">Prześlij i dostosuj nowe zdjęcie</h5>
+        </header>
+
+        <form id="profilePictureForm" enctype="multipart/form-data" method="post" action="?handler=Upload">
+            @Html.AntiForgeryToken()
+
+            <div id="uploadStep">
+                <button type="button" onclick="document.getElementById('imageInput').click()" class="contrast" style="width: 100%;">
+                    Wybierz plik ze zdjęciem <span style="margin-left: 0.5rem;">📁</span>
+                </button>
+                <input type="file" id="imageInput" name="Input.Image" accept="image/*" style="display: none;">
+            </div>
+
+            <div id="cropperStep" style="display: none;">
+                <div style="position: relative; width: 100%; max-width: 500px; margin: 0 auto; background-color: var(--pico-background-color); border-radius: var(--pico-border-radius); overflow: hidden;">
+                    <canvas id="cropperCanvas" style="display: block; width: 100%; height: auto; cursor: grab;"></canvas>
+                    <div id="cropperOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                    </div>
+                </div>
+
+                <div style="margin: 1rem 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <button type="button" id="zoomInButton" class="outline" title="Powiększ">🔍+</button>
+                        <button type="button" id="zoomOutButton" class="outline" title="Pomniejsz">🔍−</button>
+                    </div>
+                    <button type="button" id="resetButton" class="outline" style="width: 100%;" title="Resetuj pozycję i skalę">
+                        Resetuj pozycję ↺
+                    </button>
+                </div>
+            </div>
+
+            <footer>
+                <button type="submit" id="submitButton" disabled class="contrast" style="width: 100%;">
+                    Prześlij i zapisz zdjęcie 💾
+                </button>
+            </footer>
+        </form>
+    </article>
+</dialog>
+
+@section Scripts {
+    <script type="module" src="~/js/picture-crop.js"></script>
+}

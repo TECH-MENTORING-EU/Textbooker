@@ -6,15 +6,18 @@
 }
 
 
+
 <h1>Nowe ogłoszenie:</h1>
 <form method="post" enctype="multipart/form-data" id="add-form" data-in-summary="" hx-on:submit="this.dataset.inSummary ? this.submit() : showSummary(event)">
     <div class="grid">
         <section>
-            <img src="#" alt="Podgląd zdjęcia książki" class="book-image-preview">
-            <label asp-for="Input.Image">Prześlij zdjęcie swojej książki:</label>
-            <input type="file" asp-for="Input.Image" accept="image/*" hx-on:change="handleImageUpload(this)">
-            <small><span asp-validation-for="Input.Image"></span></small>
-
+            <label asp-for="Input.Images">Prześlij zdjęcia swojej książki:</label>
+            <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
+            <small>
+                <span asp-validation-for="Input.Images"></span>
+                <span id="imageErrorMsg"></span>
+            </small>
+            <div class="image-preview-container"></div>
             <div asp-validation-summary="ModelOnly"></div>
         </section>
 

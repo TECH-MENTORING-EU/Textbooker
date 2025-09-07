@@ -45,7 +45,7 @@ namespace Booker.Services
                         Book = books[rand.Next(books.Count)],
                         User = users[rand.Next(users.Count)],
                         Price = rand.Next(140, 600) / 7M,
-                        DateTime = DateTime.Now.AddDays(-(rand.Next(7*24*60)/(24*60.0))), // random date within the last week
+                        CreatedAt = DateTime.Now.AddDays(-(rand.Next(7*24*60)/(24*60.0))), // random date within the last week
                         Description = "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.",
                         State = "bardzo dobry",
                         Photo = "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -53,7 +53,7 @@ namespace Booker.Services
                 );
             }
 
-            items.Sort((x, y) => x.DateTime.CompareTo(y.DateTime));
+            items.Sort((x, y) => x.CreatedAt.CompareTo(y.CreatedAt));
             context.AddRange(items);
 
             await context.SaveChangesAsync();
