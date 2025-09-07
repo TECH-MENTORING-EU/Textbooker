@@ -265,6 +265,24 @@ public class ItemManager
         await _context.SaveChangesAsync();
     }
 
+    public async Task SetItemsVisibilityByUserAsync(int userId, bool isVisible)
+    {
+        var items = await _context.Items
+            .Where(i => i.UserId == userId && i.IsVisible != isVisible)
+            .ToListAsync();
+
+        foreach (var item in items)
+        {
+            item.IsVisible = isVisible;
+        }
+
+        if (items.Count > 0)
+        {
+            _context.Items.UpdateRange(items);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     private IQueryable<Item> GetAllItemsQueryable()
     {
         return _context.Items

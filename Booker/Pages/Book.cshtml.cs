@@ -42,6 +42,11 @@ namespace Booker.Pages
 
             IsCurrentUserOwner = userId == BookItem.User.Id;
 
+            if (!item.IsVisible && !IsCurrentUserOwner)
+            {
+                return NotFound();
+            }
+
             return Page();
         }
 

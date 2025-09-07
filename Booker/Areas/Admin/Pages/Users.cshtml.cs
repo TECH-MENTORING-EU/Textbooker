@@ -11,10 +11,12 @@ namespace Booker.Areas.Admin.Pages
     {
         private readonly UserManager<User> _userManager;
         private readonly SessionCacheManager _sessionCacheManager;
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager)
+        private readonly ItemManager _itemManager;
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
+            _itemManager = itemManager;
         }
 
         public record LockoutLinkModel(int UserId, string? UserName, bool ShouldLockout);
@@ -101,8 +103,14 @@ namespace Booker.Areas.Admin.Pages
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
+            
+            user.IsVisible = false;
+            await _userManager.UpdateAsync(user);
 
-            return Partial("_UserRows", new List<User>{user});
+            await _itemManager.SetItemsVisibilityByUserAsync(id, false);
+
+
+            return Partial("_UserRows", new List<User> { user });
         }
 
         public async Task<IActionResult> OnPostUnlockAsync(int id)
@@ -121,6 +129,10 @@ namespace Booker.Areas.Admin.Pages
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
+
+            user.IsVisible = true;
+            await _userManager.UpdateAsync(user);
+            await _itemManager.SetItemsVisibilityByUserAsync(id, true);
 
             return Partial("_UserRows", new List<User> { user });
         }
