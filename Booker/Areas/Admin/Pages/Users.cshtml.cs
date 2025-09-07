@@ -1,9 +1,11 @@
+using System.Threading.Tasks;
 using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace Booker.Areas.Admin.Pages
 {
@@ -25,24 +27,24 @@ namespace Booker.Areas.Admin.Pages
 
         [FromQuery]
         public string? SearchTerm { get; set; } = string.Empty;
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
-            Users = _userManager.Users.ToList();
+            Users = await _userManager.Users.ToListAsync();
 
             return Page();
         }
 
-        public IActionResult OnGetSearch(string searchTerm)
+        public async Task<IActionResult> OnGetSearchAsync(string searchTerm)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                Users = _userManager.Users.ToList();
+                Users = await _userManager.Users.ToListAsync();
             }
             else
             {
-                Users = _userManager.Users
+                Users = await _userManager.Users
                     .Where(u => u.UserName!.Contains(searchTerm) || u.Email!.Contains(searchTerm))
-                    .ToList();
+                    .ToListAsync();
             }
 
             return Partial("_UserRows", Users);
