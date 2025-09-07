@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Configuration;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Booker.Data
 {
