@@ -18,11 +18,14 @@ namespace Booker.Areas.Identity.Pages.Account
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly ILogger<ConfirmEmailChangeModel> _logger;
 
-        public ConfirmEmailChangeModel(UserManager<User> userManager, SignInManager<User> signInManager)
+
+        public ConfirmEmailChangeModel(UserManager<User> userManager, SignInManager<User> signInManager, ILogger<ConfirmEmailChangeModel> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
         }
 
         /// <summary>
@@ -64,6 +67,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Twój adres e-mail został pomyślnie zmieniony😉.";
+            _logger.LogInformation($"Użytkownik {user.UserName} zmienił swój adres e-mail na {email}.");
             return Page();
         }
     }

@@ -14,11 +14,14 @@ namespace Booker.Areas.Admin.Pages
         private readonly UserManager<User> _userManager;
         private readonly SessionCacheManager _sessionCacheManager;
         private readonly ItemManager _itemManager;
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager)
+        private readonly ILogger<UsersModel> _logger;
+
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, ILogger<UsersModel> logger)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _itemManager = itemManager;
+            _logger = logger;
         }
 
         public record LockoutLinkModel(int UserId, string? UserName, bool ShouldLockout);
@@ -58,6 +61,8 @@ namespace Booker.Areas.Admin.Pages
                 return NotFound();
             }
 
+            var currentUser = await _userManager.GetUserAsync(User);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
@@ -67,6 +72,7 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
+            _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {user.UserName}.");
             return Content("User deleted successfully.");
         }
 
@@ -77,6 +83,8 @@ namespace Booker.Areas.Admin.Pages
             {
                 return NotFound();
             }
+
+            var currentUser = await _userManager.GetUserAsync(User);
 
             var daysStr = Request.Headers["HX-Prompt"].ToString();
             if (!int.TryParse(daysStr, out int days))
@@ -111,7 +119,7 @@ namespace Booker.Areas.Admin.Pages
 
             await _itemManager.SetItemsVisibilityByUserAsync(id, false);
 
-
+            _logger.LogInformation($"Użytkownik {currentUser?.UserName} zablokował konto użytkownika {user.UserName} na okres {days} dni.");
             return Partial("_UserRows", new List<User> { user });
         }
 
@@ -122,6 +130,8 @@ namespace Booker.Areas.Admin.Pages
             {
                 return NotFound();
             }
+
+            var currentUser = await _userManager.GetUserAsync(User);
 
             var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow);
             if (!result.Succeeded)
@@ -136,6 +146,7 @@ namespace Booker.Areas.Admin.Pages
             await _userManager.UpdateAsync(user);
             await _itemManager.SetItemsVisibilityByUserAsync(id, true);
 
+            _logger.LogInformation($"Użytkownik {currentUser?.UserName} odblokował konto użytkownika {user.UserName}.");
             return Partial("_UserRows", new List<User> { user });
         }
     }

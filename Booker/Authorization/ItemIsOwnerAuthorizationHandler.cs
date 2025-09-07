@@ -11,10 +11,12 @@ public class ItemIsOwnerAuthorizationHandler
         : AuthorizationHandler<OperationAuthorizationRequirement, Item>
 {
     UserManager<User> _userManager;
+    ILogger<ItemIsOwnerAuthorizationHandler> _logger;
 
-    public ItemIsOwnerAuthorizationHandler(UserManager<User> userManager)
+    public ItemIsOwnerAuthorizationHandler(UserManager<User> userManager, ILogger<ItemIsOwnerAuthorizationHandler> logger)
     {
         _userManager = userManager;
+        _logger = logger;
     }
 
     protected override Task HandleRequirementAsync(
@@ -37,6 +39,10 @@ public class ItemIsOwnerAuthorizationHandler
         if (resource.User.Id == _userManager.GetUserId(context.User).IntOrDefault())
         {
             context.Succeed(requirement);
+        }
+        else
+        {
+            _logger.LogWarning($"Użytkownik {context.User.Identity?.Name} próbował wykonać nieuprawnioną akcję {requirement.Name} na zasobie o ID {resource.Id}.");
         }
         return Task.CompletedTask;
     }

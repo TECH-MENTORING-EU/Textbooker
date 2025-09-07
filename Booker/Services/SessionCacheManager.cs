@@ -12,13 +12,17 @@ public class SessionCacheManager
 {
     private readonly IMemoryCache _cache;
     private readonly UserManager<User> _userManager;
+    private readonly ILogger<SessionCacheManager> _logger;
+
     private record struct SessionInfo(bool Valid = false, DateTime? LastActivity = null);
     private Dictionary<int, SessionInfo> _sessions;
 
-    public SessionCacheManager(IMemoryCache cache, UserManager<User> userManager)
+    public SessionCacheManager(IMemoryCache cache, UserManager<User> userManager, ILogger<SessionCacheManager> logger)
     {
         _cache = cache;
         _userManager = userManager;
+        _logger = logger;
+
         if (!_cache.TryGetValue("Sessions", out Dictionary<int, SessionInfo>? sessions))
         {
             sessions = new Dictionary<int, SessionInfo>();
@@ -55,6 +59,7 @@ public class SessionCacheManager
         session.LastActivity = DateTime.Now;
         _sessions[userId] = session;
         _cache.Set("Sessions", _sessions);
+        _logger.LogInformation($"Sesja użytkownika o ID {userId} została unieważniona.");
     }
 
     public async Task WritebackSessions()
@@ -71,6 +76,7 @@ public class SessionCacheManager
                 }
             }
         }
+        _logger.LogInformation("Sesje użytkowników zostały zapisane.");
     }
 
     public void CleanupSessions()
@@ -87,5 +93,6 @@ public class SessionCacheManager
         }
 
         _cache.Set("Sessions", _sessions);
+        _logger.LogInformation($"Wyczyszczono {toRemove.Count} nieaktywnych sesji użytkowników.");
     }
 }

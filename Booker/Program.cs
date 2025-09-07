@@ -15,6 +15,7 @@ using System.Globalization;
 using System.Net;
 using System.Threading.RateLimiting;
 using System.Security.Claims;
+using Serilog.Events;
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
@@ -35,6 +36,8 @@ builder.Services.AddMemoryCache();
 var logsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .WriteTo.Console()
     .WriteTo.File(
         path: Path.Combine(logsPath, "log-.txt"),
@@ -74,6 +77,9 @@ builder.Services.AddDefaultIdentity<User>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<DataContext>()

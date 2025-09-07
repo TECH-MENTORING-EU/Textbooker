@@ -12,10 +12,13 @@ namespace Booker.Areas.Admin.Pages
     {
         private readonly UserManager<User> _userManager;
         private readonly SessionCacheManager _sessionCacheManager;
-        public AdminsModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager)
+        private readonly ILogger<AdminsModel> _logger;
+
+        public AdminsModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ILogger<AdminsModel> logger)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
+            _logger = logger;
         }
         public List<User> Admins { get; set; } = [];
         public async Task<IActionResult> OnGetAsync()
@@ -44,6 +47,9 @@ namespace Booker.Areas.Admin.Pages
             if (!passwordCheck)
             {
                 ModelState.AddModelError(string.Empty, "Niepoprawne hasło.");
+                _logger.LogWarning(
+                    $"Użytkownik {currentUser?.UserName} próbował nadać uprawnienia administratora użytkownikowi {user.UserName}, ale wpisał błędne hasło."
+                );
                 return await OnGetAsync();
             }
 
@@ -61,6 +67,7 @@ namespace Booker.Areas.Admin.Pages
                 return await OnGetAsync();
             }
 
+            _logger.LogInformation($"Użytkownik {currentUser?.UserName} nadał uprawnienia administratora użytkownikowi {user.UserName}.");
             return RedirectToPage();
         }
 
@@ -95,6 +102,7 @@ namespace Booker.Areas.Admin.Pages
 
 
             _sessionCacheManager.InvalidateSession(id);
+            _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął uprawnienia administratora użytkownika {user.UserName}.");
             return Content("Administrator usunięty pomyślnie.");
         }
     }

@@ -10,7 +10,8 @@ namespace Booker.Pages
     [Authorize]
     public class EditModel : Shared.BookFormModel<Shared.ItemEditModel>
     {
-        public readonly IAuthorizationService _authService;
+        private readonly IAuthorizationService _authService;
+        
         public EditModel(UserManager<User> userManager, StaticDataManager staticDataManager, ItemManager itemManager, IAuthorizationService authService)
             : base(userManager, staticDataManager, itemManager)
         {
