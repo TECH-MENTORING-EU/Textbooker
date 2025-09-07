@@ -1,5 +1,4 @@
-﻿using Faker;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace Booker.TagHelpers;
