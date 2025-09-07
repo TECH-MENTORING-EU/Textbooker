@@ -121,6 +121,13 @@ public class ItemManager
             .CountAsync();
     }
 
+    public async Task MarkItemReservedAsync(int itemId, bool reserved)
+    {
+        var item = await GetItemAsync(itemId);
+        item!.Reserved = reserved;
+
+        await UpdateItemNVAsync(item!);
+    }
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
         if (model.Parameters.Title == null

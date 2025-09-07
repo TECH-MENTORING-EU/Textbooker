@@ -33,5 +33,6 @@ public class ItemAddModel : ItemInputModel
 
 public class ItemEditModel : ItemInputModel
 {
-
+    [Display(Name = "Zarezerwowane")]
+    public bool Reserved { get; set; }
 }

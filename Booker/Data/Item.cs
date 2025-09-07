@@ -19,5 +19,6 @@ namespace Booker.Data
         public required string Description { get; set; }
         public required string State { get; set; }
         public required string Photo {  get; set; }
+        public bool Reserved {  get; set; }
     }
 }

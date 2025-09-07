@@ -37,6 +37,10 @@
             </small>
         </p>
         <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
+        @if (Model.BookItem.Reserved)
+        {
+            <p><strong>Ten przedmiot jest obecnie zarezerwowany.</strong></p>
+        }
 
         <ul>
             <li>
@@ -52,7 +56,11 @@
     <section class="actions">
         @if (Model.IsCurrentUserOwner)
         {
-            <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button">Edytuj ogłoszenie</a>
+            <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button" style="margin-inline-end: 1em;">Edytuj ogłoszenie</a>
+            
+            <input type="checkbox" checked="@Model.BookItem.Reserved" antiforgery
+                hx-post="?handler=Reserve" hx-swap="outerHTML" name="reserve" id="reserve-cb" value="true" />
+            <label for="reserve-cb">Oznacz jako zarezerwowane</label>
         }
         else
         {

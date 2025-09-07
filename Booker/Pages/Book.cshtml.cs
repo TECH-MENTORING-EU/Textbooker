@@ -72,6 +72,30 @@ namespace Booker.Pages
             return Partial("_ContactDetails", BookItem.User);
         }
 
+        public async Task<IActionResult> OnPostReserveAsync(int id, bool reserve)
+        {
+            var item = await _itemManager.GetItemAsync(id);
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            var userId = _userManager.GetUserId(User).IntOrDefault();
+
+            if (userId == -1 || userId != item.User.Id)
+            {
+                return Forbid();
+            }
+
+            if (item.Reserved != reserve)
+            {
+                await _itemManager.MarkItemReservedAsync(id, reserve);
+            }
+
+            Response.Headers["HX-Refresh"] = "true";
+            return new NoContentResult();
+        }
+
         public static string FormatDateWithSpecialCases(DateTime? dateTime)
         {
             if (!dateTime.HasValue)
