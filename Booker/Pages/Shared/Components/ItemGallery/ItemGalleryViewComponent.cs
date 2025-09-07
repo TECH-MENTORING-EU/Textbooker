@@ -33,7 +33,8 @@ public class ItemGalleryViewComponent : ViewComponent
         IEnumerable<int> itemIds,
         StaticDataManager.Parameters parameters,
         int pageNumber = 0,
-        int pageSize = PageSize
+        int pageSize = PageSize,
+        bool showHidden = false
     )
     {
         if (!itemIds.Any())
@@ -43,7 +44,12 @@ public class ItemGalleryViewComponent : ViewComponent
             );
         }
 
-        var itemsFromDb = await _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize).ToListAsync();
+        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize);
+        if (!showHidden)
+        {
+            query = query.Where(i => i.IsVisible);
+        }
+        var itemsFromDb = await query.ToListAsync();
 
         var itemsWithPhotos = itemsFromDb.Select(item => new ItemModel(
             Item: item,

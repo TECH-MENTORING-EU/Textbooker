@@ -1,0 +1,16 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Podsumowanie";
+    ViewData["ActivePage"] = AdminNavPages.Index;
+}
+
+<article>
+    <header>
+        <h3>Użytkownicy</h3>
+    </header>
+    <p>Ogółem: @Model.TotalUserCount</p>
+    <p>Dzisiaj aktywnych: @Model.TodayActiveUserCount</p>
+    <p>Nowych w tym tygodniu: @Model.ThisWeekNewUserCount</p>
+</article>
+

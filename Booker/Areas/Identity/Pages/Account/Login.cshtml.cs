@@ -130,10 +130,16 @@ namespace Booker.Areas.Identity.Pages.Account
                 }
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                var result = await _signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("Użytkownik zalogował się.");
+                    var user = await _userManager.GetUserAsync(User);
+                    if (user != null)
+                    {
+                        user.LastActiveAt = DateTime.Now;
+                        await _userManager.UpdateAsync(user);
+                    }
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
@@ -142,8 +148,9 @@ namespace Booker.Areas.Identity.Pages.Account
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning("Konto użytkownika zablokowane.");
-                    return RedirectToPage("./Lockout");
+                    _logger.LogWarning($"Konto użytkownika {userName} zostało zablokowane po zbyt dużej liczbie nieudanych prób logowania.");
+                    var user = await _userManager.FindByNameAsync(userName);
+                    return RedirectToPage("./Lockout", new { lockoutEnd = user.LockoutEnd?.ToUnixTimeSeconds()});
                 }
                 else
                 {

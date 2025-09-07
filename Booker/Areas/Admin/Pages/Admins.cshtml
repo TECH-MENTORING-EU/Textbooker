@@ -1,0 +1,32 @@
+﻿@page
+@model AdminsModel
+@{
+    ViewData["Title"] = "Administratorzy";
+    ViewData["ActivePage"] = AdminNavPages.Admins;
+}
+
+<h3>Administratorzy</h3>
+
+<table id="admins-table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nazwa użytkownika</th>
+            <th>Email</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        <partial name="_AdminRows" model="Model.Admins" />
+    </tbody>
+</table>
+
+<form asp-page-handler="Add" method="post" class="login-form">
+    <h4>Dodaj nowego administratora</h4>
+    <input name="username" placeholder="Nazwa użytkownika" aria-label="Nazwa użytkownika" />
+    <input type="password" name="password" placeholder="Potwierdź swoje hasło" aria-label="Hasło" />
+    <button type="submit">Dodaj</button>
+    <div asp-validation-summary="All"></div>
+</form>
+
+

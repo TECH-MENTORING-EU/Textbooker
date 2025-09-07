@@ -1,0 +1,31 @@
+﻿@page
+@model UsersModel
+@{
+    ViewData["Title"] = "Użytkownicy";
+    ViewData["ActivePage"] = AdminNavPages.Users;
+}
+
+<h3>Użytkownicy</h3>
+
+<input type="search" placeholder="Szukaj..." 
+       hx-get="?handler=Search" 
+       hx-target="#users-table tbody" 
+       hx-trigger="submit, input changed delay:500ms, change"
+       asp-for="SearchTerm" 
+       data-val="false" />
+
+<table id="users-table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nazwa użytkownika</th>
+            <th>Email</th>
+            <th>Ostatnio online</th>
+            <th>Status</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        <partial name="_UserRows" model="Model.Users" />
+    </tbody>
+</table>

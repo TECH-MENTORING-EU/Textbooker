@@ -18,10 +18,13 @@ namespace Booker.Areas.Identity.Pages.Account
     public class ResetPasswordModel : PageModel
     {
         private readonly UserManager<User> _userManager;
+        private readonly ILogger<ResetPasswordModel> _logger;
 
-        public ResetPasswordModel(UserManager<User> userManager)
+
+        public ResetPasswordModel(UserManager<User> userManager, ILogger<ResetPasswordModel> logger)
         {
             _userManager = userManager;
+            _logger = logger;
         }
 
         /// <summary>
@@ -107,6 +110,7 @@ namespace Booker.Areas.Identity.Pages.Account
             var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
             if (result.Succeeded)
             {
+                _logger.LogInformation($"Użytkownik {user.UserName} zresetował swoje hasło.");
                 return RedirectToPage("./ResetPasswordConfirmation");
             }
 

@@ -45,7 +45,7 @@ namespace Booker.Pages.Profile
 
             var user = await _userManager.FindByIdAsync(Id.Value.ToString());
 
-            if (user == null)
+            if (user == null || !user.IsVisible)
             {
                 return NotFound();
             }
@@ -62,7 +62,8 @@ namespace Booker.Pages.Profile
                 {
                     itemIds = ItemIds,
                     parameters = Params,
-                    pageNumber = pageNumber
+                    pageNumber = pageNumber,
+                    showHidden = UserInfo.IsCurrentUser,
                 });
             }
             return Page();

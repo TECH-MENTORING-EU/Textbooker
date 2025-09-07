@@ -7,6 +7,7 @@ namespace Booker.TagHelpers;
 
 [HtmlTargetElement("input", Attributes = AntiForgeryAttributeName)]
 [HtmlTargetElement("button", Attributes = AntiForgeryAttributeName)]
+[HtmlTargetElement("a", Attributes = AntiForgeryAttributeName)]
 public class AntiForgeryHeaderTagHelper : TagHelper
 {
     [HtmlAttributeNotBound]

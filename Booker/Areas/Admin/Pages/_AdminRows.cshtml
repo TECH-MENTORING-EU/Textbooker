@@ -1,0 +1,21 @@
+﻿@model List<Booker.Data.User>
+@using Booker.Areas.Admin.Pages
+
+@foreach (var user in Model)
+{
+    <tr>
+        <td>@user.Id</td>
+        <td>@user.UserName</td>
+        <td>@user.Email</td>
+        <td>
+            <a hx-post="?handler=Remove"
+               hx-vals='{"id": @user.Id}'
+               hx-target="closest tr"
+               hx-swap="delete"
+               hx-confirm="Na pewno chcesz odebrać uprawnienia użytkownikowi @user.UserName?"
+               href=""
+               antiforgery
+              >Odbierz uprawnienia</a>
+        </td>
+    </tr>
+}

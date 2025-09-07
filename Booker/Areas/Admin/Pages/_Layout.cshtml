@@ -1,0 +1,28 @@
+﻿@{
+    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout !=  null)
+    {
+        Layout = parentLayout.ToString();
+    }
+    else
+    {
+        Layout = "/Pages/Shared/_Layout.cshtml";
+    }
+}
+
+<h1>Panel administracyjny</h1>
+
+<hr />
+<div class="sidebar-container">
+    <aside>
+        <nav>
+            <partial name="_AdminNav" />
+        </nav>
+    </aside>
+    <section>
+        @RenderBody()
+    </section>
+</div>
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

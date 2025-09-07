@@ -9,7 +9,7 @@
 
 <h2>Ogłoszenia</h2>
 <section class="grid-gallery">
-    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
+    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" show-hidden="@Model.UserInfo.IsCurrentUser" />
 </section>
 
 <section>

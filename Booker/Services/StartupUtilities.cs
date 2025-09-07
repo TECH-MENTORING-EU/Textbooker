@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using Booker.Authorization;
+using System.Net;
 
 
 
@@ -28,6 +32,12 @@ namespace Booker.Services
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
 
+            services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
+
+            services.AddScoped<SessionCacheManager>();
+            services.AddHostedService<MaintenanceService>();
+
             return services;
         }
 
@@ -37,7 +47,8 @@ namespace Booker.Services
             {
                 options.RejectionStatusCode = 429;
 
-                options.AddPolicy("IpRateLimit", context => {
+                options.AddPolicy("IpRateLimit", context =>
+                {
                     if (context.Request.Method == HttpMethods.Get ||
                         context.Request.Method == HttpMethods.Head ||
                         context.Request.Method == HttpMethods.Options
@@ -50,7 +61,8 @@ namespace Booker.Services
 
                 });
 
-                options.AddPolicy("IpRateLimitAllMethods", context => {
+                options.AddPolicy("IpRateLimitAllMethods", context =>
+                {
                     return IpRateLimit(context);
                 });
             });
@@ -79,7 +91,8 @@ namespace Booker.Services
 
         public static IMvcBuilder AddCustomRoutes(this IMvcBuilder builder)
         {
-            return builder.AddRazorPagesOptions(options => {
+            return builder.AddRazorPagesOptions(options =>
+            {
 
                 options.Conventions.AddPageRouteModelConvention("/Profile/Index", model =>
                 {
@@ -141,7 +154,53 @@ namespace Booker.Services
                 });
 
             });
+        }
 
+        public static IMvcBuilder AddAuthorizationPolicies(this IMvcBuilder builder)
+        {
+            return builder.AddRazorPagesOptions(options =>
+            {
+                options.Conventions.AuthorizeAreaFolder("Admin", "/", "AdminHidden");
+            });
+        }
+
+        public static IServiceCollection ConfigureAuthorization(this IServiceCollection services)
+        {
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("AdminHidden", policy => policy.Requirements.Add(new AdminHiddenAuthorizationRequirement()));
+            });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                var redirectToAccessDenied = options.Events.OnRedirectToAccessDenied;
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    if (context.HttpContext.Items.TryGetValue("HideUnauthorized", out var hide)
+                        && hide is true)
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        context.RedirectUri = string.Empty;
+                        return Task.CompletedTask;
+                    }
+                    return redirectToAccessDenied(context);
+                };
+                var redirectToLogin = options.Events.OnRedirectToLogin;
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    if (context.HttpContext.Items.TryGetValue("HideUnauthorized", out var hide)
+                        && hide is true)
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        context.RedirectUri = string.Empty;
+                        return Task.CompletedTask;
+                    }
+                    return redirectToLogin(context);
+                };
+            });
+
+            return services;
         }
 
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)
@@ -201,6 +260,17 @@ namespace Booker.Services
             {
                 logger.LogError(ex, "Something went wrong during database initialization.");
             }
+            return app;
+        }
+
+        public static async Task<WebApplication> InitializeRolesAsync(this WebApplication app)
+        {
+            using var scope = app.Services.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+            if (!await roleManager.RoleExistsAsync("Admin"))
+                await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
+
             return app;
         }
 

@@ -10,6 +10,7 @@ public class ItemManager
     private readonly DataContext _context;
     private readonly StaticDataManager _staticDataManager;
     private readonly PhotosManager _photosManager;
+    private readonly ILogger<ItemManager> _logger;
 
     [Flags]
     public enum Status
@@ -41,11 +42,12 @@ public class ItemManager
         string? ExistingImageBlobNames = null
     );
 
-    public ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager)
+    public ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager, ILogger<ItemManager> logger)
     {
         _context = context;
         _staticDataManager = staticDataManager;
         _photosManager = photosManager;
+        _logger = logger;
     }
 
     
@@ -239,6 +241,7 @@ public class ItemManager
             allPhotos = string.Join(";", photoUris);
         }
 
+        var oldPrice = item.Price;
         item.Book = book;
         item.Description = model.Description;
         item.State = model.State;
@@ -247,6 +250,11 @@ public class ItemManager
         item.UpdatedAt = DateTime.Now;
 
         await UpdateItemNVAsync(item);
+        if (oldPrice != item.Price)
+        {
+            _logger.LogInformation($"Cena ogłoszenia o ID {item.Id} użytkownika {item.User.UserName} została zmieniona z {oldPrice} zł na {item.Price} zł.");
+        }
+
         return Status.Success;
     }
     private async Task UpdateItemNVAsync(Item item)
@@ -270,6 +278,24 @@ public class ItemManager
 
         _context.Items.Remove(item);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task SetItemsVisibilityByUserAsync(int userId, bool isVisible)
+    {
+        var items = await _context.Items
+            .Where(i => i.UserId == userId && i.IsVisible != isVisible)
+            .ToListAsync();
+
+        foreach (var item in items)
+        {
+            item.IsVisible = isVisible;
+        }
+
+        if (items.Count > 0)
+        {
+            _context.Items.UpdateRange(items);
+            await _context.SaveChangesAsync();
+        }
     }
 
     private IQueryable<Item> GetAllItemsQueryable()

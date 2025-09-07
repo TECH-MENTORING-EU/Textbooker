@@ -1,6 +1,7 @@
 using Booker.Areas.Identity.Utilities;
 using Booker.Data;
 using Booker.Services;
+using Booker.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -12,6 +13,8 @@ using System.Configuration;
 using System.Globalization;
 using System.Net;
 using System.Threading.RateLimiting;
+using System.Security.Claims;
+using Serilog.Events;
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
@@ -32,6 +35,8 @@ builder.Services.AddMemoryCache();
 var logsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .WriteTo.Console()
     .WriteTo.File(
         path: Path.Combine(logsPath, "log-.txt"),
@@ -43,10 +48,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
-builder.Services.AddRazorPages().AddViewOptions(options =>
+builder.Services.AddRazorPages()
+    .AddViewOptions(options =>
 {
     options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
-}).AddCustomRoutes();
+})
+    .AddCustomRoutes()
+    .AddAuthorizationPolicies();
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -68,9 +76,15 @@ builder.Services.AddDefaultIdentity<User>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 })
+    .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<DataContext>()
         .AddErrorDescriber<ErrorDescriber>();
+
+builder.Services.ConfigureAuthorization();
 
 var app = builder.Build();
 
@@ -116,6 +130,18 @@ app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    using var scope = app.Services.CreateScope();
+    var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
+    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
+    if (!await sessionCacheManager.CheckSession(context))
+    {
+        await signInManager.SignOutAsync();
+        context.User = new ClaimsPrincipal();
+    }
+    await next();
+});
 app.UseAuthorization();
 app.UseRateLimiter();
 
@@ -132,5 +158,7 @@ if (app.Environment.IsDevelopment())
 {
     await app.InitializeDatabaseAsync();
 }
+
+await app.InitializeRolesAsync();
 
 app.Run();

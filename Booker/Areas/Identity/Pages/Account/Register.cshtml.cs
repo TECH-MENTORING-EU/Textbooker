@@ -128,7 +128,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("Użytkownik utworzył nowe konto.");
+                    _logger.LogInformation($"Użytkownik {user.UserName} utworzył nowe konto.");
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
