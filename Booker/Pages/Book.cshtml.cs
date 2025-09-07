@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Identity;
 using System.Globalization;
 using Booker.Services;
 using Booker.Utilities;
+using SQLitePCL;
+using Microsoft.AspNetCore.Authorization;
+using Booker.Authorization;
 
 
 namespace Booker.Pages
@@ -14,16 +17,18 @@ namespace Booker.Pages
         private readonly UserManager<User> _userManager;
         private readonly ItemManager _itemManager;
         private readonly FavoritesManager _favoritesManager;
+        private readonly IAuthorizationService _authService;
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
 
-        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager)
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService)
         {
             _userManager = userManager;
             _itemManager = itemManager;
             _favoritesManager = favoritesManager;
+            _authService = authService;
         }
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -42,7 +47,9 @@ namespace Booker.Pages
 
             IsCurrentUserOwner = userId == BookItem.User.Id;
 
-            if (!item.IsVisible && !IsCurrentUserOwner)
+            var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
+
+            if (!item.IsVisible && !isAuthorized.Succeeded)
             {
                 return NotFound();
             }

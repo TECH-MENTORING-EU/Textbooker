@@ -33,6 +33,7 @@ namespace Booker.Services
             services.AddScoped<PhotosManager>();
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
 
             services.AddScoped<SessionCacheManager>();
             services.AddHostedService<MaintenanceService>();
