@@ -23,7 +23,7 @@
         </div>
         <div>
             <label asp-for="Input.Password">Hasło:</label>
-            <input asp-for="Input.Password" autocomplete="new-password" required placeholder="Hasło" 
+            <input asp-for="Input.Password" autocomplete="new-password" required placeholder="Hasło"
                    id="passwordInput"
                    onfocus="showPasswordRequirements()"
                    onblur="hidePasswordRequirementsIfValid()"
@@ -42,11 +42,121 @@
             <input asp-for="Input.ConfirmPassword" autocomplete="new-password" required placeholder="Hasło" />
             <small><span asp-validation-for="Input.ConfirmPassword"></span></small>
         </div>
+
+        <hr />
+
+        <article style="height: 250px; overflow-y: auto; padding: 1rem;">
+            <h3><strong>Regulamin aplikacji textbooker.pl</strong></h3>
+
+            <p><strong>&sect; 1. Postanowienia Ogólne</strong></p>
+            <ol>
+                <li><strong>Cel Aplikacji:</strong> Nasza Aplikacja została stworzona, aby ułatwić uczniom i absolwentom sprzedaż i zakup używanych podręczników.</li>
+                <li><strong>Rola Organizatora:</strong> Aplikacja pełni jedynie rolę "tablicy ogłoszeniowej" i nie jest stroną w transakcjach. Nie ponosimy odpowiedzialności za stan podręczników ani za przebieg transakcji.</li>
+            </ol>
+
+            <p><strong>&sect; 2. Definicje</strong></p>
+            <ol>
+                <li><strong>Aplikacja</strong> – platforma internetowa textbooker.pl służąca do zamieszczania i przeglądania ogłoszeń o sprzedaży książek.</li>
+                <li><strong>Użytkownik</strong> – każda osoba fizyczna korzystająca z Aplikacji.</li>
+                <li><strong>Ogłoszenie</strong> – treść zamieszczona przez Użytkownika w Aplikacji, zawierająca ofertę sprzedaży książki.</li>
+                <li><strong>Konto Użytkownika</strong> – indywidualny obszar w Aplikacji, utworzony po procesie rejestracji, umożliwiający zarządzanie ogłoszeniami.</li>
+            </ol>
+
+            <p><strong>&sect; 3. Zasady dla Sprzedających</strong></p>
+            <ol>
+                <li>Użytkownik może wystawić ogłoszenie o sprzedaży wyłącznie książek, których jest legalnym właścicielem.</li>
+                <li>
+                    <strong>Tworzenie Ogłoszenia:</strong> Każde ogłoszenie musi zawierać:
+                    <ul>
+                        <li><strong>Tytuł podręcznika, autora i wydawnictwo.</strong></li>
+                        <li><strong>Przedmiot i klasę</strong>, do której jest przeznaczony.</li>
+                        <li><strong>Proponowaną cenę.</strong></li>
+                        <li><strong>Prawdziwy opis stanu książki</strong> (np. <em>bardzo dobry, dobry, z widocznymi śladami użytkowania, z notatkami ołówkiem</em>).</li>
+                        <li><strong>Aktualne zdjęcie</strong> (jeśli to możliwe, zawsze pomaga!).</li>
+                        <li><strong>Preferowaną formę kontaktu</strong> (np. przez komunikator, e-mail).</li>
+                    </ul>
+                </li>
+                <li><strong>Uczciwość:</strong> Opis podręcznika musi być zgodny z prawdą. Zatajanie wad (np. wyrwanych kartek) jest niedozwolone.</li>
+                <li><strong>Jedno ogłoszenie = Jeden przedmiot:</strong> Aby zachować porządek, prosimy o tworzenie osobnych ogłoszeń dla każdego podręcznika.</li>
+                <li><strong>Po Sprzedaży:</strong> Po sprzedaży podręcznika, sprzedający ma obowiązek <strong>niezwłocznie usunąć swoje ogłoszenie</strong>.</li>
+                <li>Administrator zastrzega sobie prawo do usunięcia Ogłoszenia, które narusza niniejszy Regulamin, bez podania przyczyny.</li>
+            </ol>
+
+            <p><strong>&sect; 4. Zasady dla Kupujących</strong></p>
+            <ol>
+                <li><strong>Czytaj uważnie:</strong> Przed skontaktowaniem się ze sprzedającym, dokładnie przeczytaj opis podręcznika.</li>
+                <li><strong>Obejrzyj przed zakupem:</strong> Masz pełne prawo do obejrzenia podręcznika na żywo przed podjęciem ostatecznej decyzji o zakupie.</li>
+                <li><strong>Negocjacje:</strong> Podana cena jest zazwyczaj ceną wyjściową. Możesz spróbować negocjować, ale pamiętaj o kulturze i szacunku.</li>
+                <li><strong>Umowa to umowa:</strong> Jeśli umawiasz się na zakup i odbiór, bądź słowny/słowna i pojaw się w umówionym miejscu i czasie.</li>
+            </ol>
+
+            <p><strong>&sect; 5. Transakcja i Bezpieczeństwo</strong></p>
+            <ol>
+                <li><strong>Bezpośredni kontakt:</strong> Wszystkie ustalenia (cena, miejsce i czas spotkania) odbywają się <strong>bezpośrednio</strong> między sprzedającym a kupującym.</li>
+                <li><strong>Bezpieczne miejsce:</strong> Sugerowanym i najbezpieczniejszym miejscem finalizacji transakcji jest teren szkoły w czasie przerw lub po lekcjach. Unikajcie spotkań w odosobnionych miejscach.</li>
+                <li><strong>Forma płatności:</strong> Najprostszą formą płatności jest gotówka lub przelew BLIK przy odbiorze osobistym.</li>
+                <li><strong>Rozwiązywanie sporów:</strong> Wszelkie nieporozumienia sprzedający i kupujący rozwiązują między sobą. Organizatorzy serwisu nie pośredniczą w sporach.</li>
+            </ol>
+
+            <p><strong>&sect; 6. Odpowiedzialność</strong></p>
+            <ol>
+                <li>
+                    Administrator Aplikacji nie ponosi odpowiedzialności za:
+                    <ul>
+                        <li>treści zamieszczane przez Użytkowników,</li>
+                        <li>niewykonanie lub nienależyte wykonanie umowy sprzedaży pomiędzy Użytkownikami.</li>
+                    </ul>
+                </li>
+                <li>Użytkownicy ponoszą pełną odpowiedzialność za treści publikowane na swoich kontach i w ofertach.</li>
+            </ol>
+
+            <p><strong>&sect; 7. Czego nie wolno robić?</strong></p>
+            <ol>
+                <li>
+                    <strong>Zabronione jest wystawianie ogłoszeń dotyczących:</strong>
+                    <ul>
+                        <li>Podrobionych lub pirackich kopii książek (np. fotokopie, skany, ebooki bez licencji).</li>
+                        <li>Książek, których obrót jest zabroniony przez prawo.</li>
+                        <li>Treści, które naruszają prawa autorskie lub dobra osobiste.</li>
+                    </ul>
+                </li>
+                <li><strong>Zakaz spamu</strong> i publikowania ogłoszeń niezwiązanych z tematyką szkolną.</li>
+                <li><strong>Zakaz używania wulgaryzmów</strong> i obrażania innych użytkowników.</li>
+                <li><strong>Zakaz wstawiania wulgarnych zdjęć i opisów książek</strong> oraz opisów i zdjęć profili użytkowników.</li>
+            </ol>
+
+            <p><strong>&sect; 8. Dane osobowe i polityka prywatności</strong></p>
+            <ol>
+                <li>Administratorem danych osobowych Użytkowników jest Administrator Aplikacji.</li>
+                <li>Dane osobowe Użytkowników są przetwarzane w celu świadczenia usług drogą elektroniczną.</li>
+                <li>Podanie danych osobowych jest dobrowolne, ale niezbędne do założenia Konta i korzystania z pełni funkcji Serwisu.</li>
+                <li>Każdy Użytkownik ma prawo dostępu do swoich danych, ich poprawiania oraz żądania zaprzestania ich przetwarzania.</li>
+            </ol>
+
+            <p><strong>&sect; 9. Postanowienia Końcowe</strong></p>
+            <ol>
+                <li>Korzystanie z Aplikacji jest równoznaczne z akceptacją tego regulaminu.</li>
+                <li>Nieprzestrzeganie zasad może skutkować usunięciem ogłoszenia, a w skrajnych przypadkach zablokowaniem dostępu do serwisu.</li>
+                <li>Organizatorzy zastrzegają sobie prawo do wprowadzania zmian w regulaminie.</li>
+            </ol>
+            <hr>
+            <p><em>Pamiętajcie: Celem Aplikacji jest wzajemna pomoc. Bądźmy dla siebie życzliwi, uczciwi i szanujmy swój czas. Udanych transakcji!</em></p>
+        </article>
+
+        <fieldset>
+            <label for="acceptTermsCheckbox">
+                <input type="checkbox" id="acceptTermsCheckbox" asp-for="Input.AcceptTerms">
+                @Html.DisplayNameFor(m => m.Input.AcceptTerms)
+            </label>
+        </fieldset>
+        <small><span asp-validation-for="Input.AcceptTerms" class="text-danger"></span></small>
+
         <button id="registerSubmit" type="submit">Zarejestruj</button>
     </form>
 </section>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
         function showPasswordRequirements() {
             document.getElementById('passwordRequirements').style.display = 'block';
@@ -63,40 +173,11 @@
             const password = document.getElementById('passwordInput').value;
             let allMet = true;
 
-            if (password.length >= 8) {
-                setReq('req-length', true);
-            } else {
-                setReq('req-length', false);
-                allMet = false;
-            }
-
-            if (/[^\w\s]/.test(password)) {
-                setReq('req-special', true);
-            } else {
-                setReq('req-special', false);
-                allMet = false;
-            }
-
-            if (/[a-z]/.test(password)) {
-                setReq('req-lower', true);
-            } else {
-                setReq('req-lower', false);
-                allMet = false;
-            }
-
-            if (/[A-Z]/.test(password)) {
-                setReq('req-upper', true);
-            } else {
-                setReq('req-upper', false);
-                allMet = false;
-            }
-
-            if (/\d/.test(password)) {
-                setReq('req-digit', true);
-            } else {
-                setReq('req-digit', false);
-                allMet = false;
-            }
+            if (password.length >= 8) { setReq('req-length', true); } else { setReq('req-length', false); allMet = false; }
+            if (/[^\w\s]/.test(password)) { setReq('req-special', true); } else { setReq('req-special', false); allMet = false; }
+            if (/[a-z]/.test(password)) { setReq('req-lower', true); } else { setReq('req-lower', false); allMet = false; }
+            if (/[A-Z]/.test(password)) { setReq('req-upper', true); } else { setReq('req-upper', false); allMet = false; }
+            if (/\d/.test(password)) { setReq('req-digit', true); } else { setReq('req-digit', false); allMet = false; }
 
             return allMet;
         }
@@ -111,36 +192,18 @@
                 el.innerHTML = '&#10060; ' + el.innerHTML.replace(/^.*? /, '');
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const acceptTermsCheckbox = document.getElementById('acceptTermsCheckbox');
+            const registerSubmitButton = document.getElementById('registerSubmit');
+
+            function toggleSubmitButtonState() {
+                registerSubmitButton.disabled = !acceptTermsCheckbox.checked;
+            }
+
+            toggleSubmitButtonState();
+
+            acceptTermsCheckbox.addEventListener('change', toggleSubmitButtonState);
+        });
     </script>
 }
-
-
-@* <section>
-    <h3>Inne sposoby rejestracji:</h3>
-    <hr />
-    @{
-        if ((Model.ExternalLogins?.Count ?? 0) == 0)
-        {
-            <div>
-                <p>
-                    Na razie nie ma, zostawiam <a href="https://go.microsoft.com/fwlink/?LinkID=532715">link</a> do strony z set-up'em.
-                </p>
-            </div>
-        }
-        else
-        {
-            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                <div>
-                    <p>
-                        @foreach (var provider in Model.ExternalLogins!)
-                        {
-                            <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Zaloguj się za pomocą konta @provider.DisplayName">@provider.DisplayName</button>
-                        }
-                    </p>
-                </div>
-            </form>
-        }
-    }
-</section> *@
-
-
