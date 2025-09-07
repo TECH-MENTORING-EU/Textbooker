@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Booker.Data;
+using Booker.Services;
 using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,11 @@ namespace Booker.Areas.Admin.Pages
     public class AdminsModel : PageModel
     {
         private readonly UserManager<User> _userManager;
-        public AdminsModel(UserManager<User> userManager)
+        private readonly SessionCacheManager _sessionCacheManager;
+        public AdminsModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager)
         {
             _userManager = userManager;
+            _sessionCacheManager = sessionCacheManager;
         }
         public List<User> Admins { get; set; } = [];
         public async Task<IActionResult> OnGetAsync()
@@ -90,6 +93,8 @@ namespace Booker.Areas.Admin.Pages
                 return new NoContentResult();
             }
 
+
+            _sessionCacheManager.InvalidateSession(id);
             return Content("Administrator usunięty pomyślnie.");
         }
     }
