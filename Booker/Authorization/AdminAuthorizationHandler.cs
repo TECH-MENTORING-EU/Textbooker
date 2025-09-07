@@ -13,11 +13,6 @@ public class AdminAuthorizationHandler
         OperationAuthorizationRequirement requirement,
         object resource)
     {
-        if (context.User == null || !context.User.Identity!.IsAuthenticated)
-        {
-            return Task.CompletedTask;
-        }
-
         // Administrators can do anything (for now).
         if (context.User.IsInRole("Admin"))
         {

@@ -11,8 +11,7 @@ public class AdminHiddenAuthorizationRequirement : IAuthorizationRequirement, IA
 {
     public Task HandleAsync(AuthorizationHandlerContext context)
     {
-        if (context.User == null || !context.User.Identity!.IsAuthenticated
-            || !context.User.IsInRole("Admin"))
+        if (!context.User.IsInRole("Admin"))
         {
             if (context.Resource is AuthorizationFilterContext afc)
             {
