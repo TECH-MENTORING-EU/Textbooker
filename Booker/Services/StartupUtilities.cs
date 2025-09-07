@@ -159,7 +159,7 @@ namespace Booker.Services
         {
             return builder.AddRazorPagesOptions(options =>
             {
-                options.Conventions.AuthorizeAreaFolder("Admin", "/", "AdminOnly");
+                options.Conventions.AuthorizeAreaFolder("Admin", "/", "AdminHidden");
             });
         }
 
