@@ -30,15 +30,6 @@
                 </a>
             </li>
         </ul>
-        @* <ul> *@
-        @*     <li> *@
-        @*         <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Login">Zaloguj się</a> *@
-        @*     </li> *@
-        @*     <li> *@
-        @*         <a role="button" class="outline" asp-area="Identity" asp-page="/Account/Register">Zarejestruj się</a> *@
-        @*     </li> *@
-           
-        @* </ul> *@
         @await Html.PartialAsync("_LoginPartial")
     </nav>
 
@@ -49,7 +40,7 @@
     <button class="float-right"
             style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1000; padding: 0.5rem;"
             data-target="modal-example"
-            onclick="openModal(this.dataset.target)"
+            onclick="document.getElementById(this.dataset.target).showModal()"
             aria-label="Pomoc"
             title="Pomoc">
         <svg icon="help" variant="outline" aria-hidden="true" style="width: 2rem; height: auto;"></svg>
@@ -58,7 +49,7 @@
     <dialog id="modal-example">
         <article>
             <header>
-                <button aria-label="Close" rel="prev" onclick="closeModal(this.closest('dialog').id)"></button>
+                <button aria-label="Close" rel="prev" onclick="this.closest('dialog').close()"></button>
                 <h5>Potrzebujesz pomocy? Skontaktuj się z nami! 💬</h5>
             </header>
             <p>
@@ -91,7 +82,7 @@
         </article>
     </dialog>
 
-    <footer class="container">  
+    <footer class="container">
     </footer>
 
     <script src="~/js/validation/aspnet-validation.min.js" asp-append-version="true"></script>

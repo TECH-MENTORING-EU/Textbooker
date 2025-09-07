@@ -71,7 +71,8 @@
     <section class="seller">
         <h3>Sprzedaje</h3>
         <div>
-            <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" alt="Profil sprzedającego" />
+            <img src="@Model.BookItem.User.Photo"
+                 alt="Profil sprzedającego" />
             <div>
                 @Model.BookItem.User.UserName<br />
                 @Model.BookItem.User.School<br />
