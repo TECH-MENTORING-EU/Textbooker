@@ -11,8 +11,10 @@
         .book-image-preview {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: var(--pico-background-color);
             border-radius: 6px;
+            aspect-ratio: 3 / 4;
 
             &.main {
                 grid-column: span 2;
@@ -22,7 +24,7 @@
     }
 
     .image-label--dynamic {
-        position: absolute; 
+        position: absolute;
         background-color: rgba(15, 15, 15, 0.8);
         color: white;
         font-size: 12px;
@@ -37,7 +39,9 @@
         width: 100%;
         height: auto;
         max-height: 300px;
-        object-fit: cover;
+        object-fit: contain;
+        background-color: var(--pico-background-color);
+        aspect-ratio: 3 / 4;
         border-radius: 6px;
         display: block;
     }

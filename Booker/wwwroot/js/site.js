@@ -5,7 +5,7 @@
 
 function handleImageUpload(input) {
     const preview = input.closest("section").querySelector(".image-preview-container");
-    preview.innerHTML = "";
+    preview.innerHTML = ""; // Clear existing previews
     const imageErrorSpan = input.closest("section").querySelector("#imageErrorMsg");
 
     if (input.files.length > 6) {
@@ -17,40 +17,35 @@ function handleImageUpload(input) {
     const files = Array.from(input.files);
     const dataTransfer = new DataTransfer();
 
-    const TARGET_W = 600;
-    const TARGET_H = 800;
-
     const processingPromises = files.map((file, index) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = function (e) {
                 const img = new Image();
                 img.onload = function () {
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height && width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    } else if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+
                     const canvas = document.createElement("canvas");
-                    canvas.width = TARGET_W;
-                    canvas.height = TARGET_H;
-
-                    const ctx = canvas.getContext("2d", { alpha: false });
-                    ctx.fillStyle = "#000";
-                    ctx.fillRect(0, 0, TARGET_W, TARGET_H);
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = "high";
-
-                    const scaleToFit = Math.min(TARGET_W / img.width, TARGET_H / img.height);
-                    const scale = Math.min(1, scaleToFit);
-
-                    const drawW = Math.round(img.width * scale);
-                    const drawH = Math.round(img.height * scale);
-                    const dx = Math.round((TARGET_W - drawW) / 2);
-                    const dy = Math.round((TARGET_H - drawH) / 2);
-
-                    ctx.drawImage(img, dx, dy, drawW, drawH);
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
 
                     canvas.toBlob(blob => {
                         if (!blob) return reject(new Error("Compression failed"));
 
-                        const baseName = file.name.replace(/\.[^/.]+$/, "");
-                        const compressedFile = new File([blob], `${baseName}.jpg`, {
+                        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
                             type: "image/jpeg",
                             lastModified: Date.now()
                         });
@@ -65,6 +60,7 @@ function handleImageUpload(input) {
                         }
 
                         resolve(imageElement);
+
                     }, "image/jpeg", 0.8);
                 };
                 img.onerror = reject;
@@ -88,7 +84,6 @@ function handleImageUpload(input) {
             imageErrorSpan.textContent = "Wystąpił błąd podczas przetwarzania zdjęć.";
         });
 }
-
 function addLabelToMainImage() {
     const previewContainer = document.querySelector(".image-preview-container");
     const mainImage = previewContainer.querySelector(".book-image-preview.main");
@@ -120,7 +115,7 @@ function updateCharCount() {
 }
 
 function showSummary(event) {
-    event.preventDefault();
+    event.preventDefault(); // Prevent form submission
 
     if (v.isValid(event.target)) {
         document.getElementById('summaryTitle').textContent = document.getElementById('Input_Title').value;
