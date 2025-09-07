@@ -34,7 +34,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("GradeId");
 
-                    b.ToTable("BookGrades");
+                    b.ToTable("BookGrades", (string)null);
 
                     b.HasData(
                         new
@@ -853,7 +853,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Books");
+                    b.ToTable("Books", (string)null);
 
                     b.HasData(
                         new
@@ -1467,7 +1467,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Grades");
+                    b.ToTable("Grades", (string)null);
 
                     b.HasData(
                         new
@@ -1508,18 +1508,12 @@ namespace Booker.Migrations
                     b.Property<int>("BookId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("CanChangeVisibility")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsVisible")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Photo")
                         .IsRequired()
@@ -1545,7 +1539,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Items");
+                    b.ToTable("Items", (string)null);
                 });
 
             modelBuilder.Entity("Booker.Data.Level", b =>
@@ -1562,7 +1556,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Levels");
+                    b.ToTable("Levels", (string)null);
 
                     b.HasData(
                         new
@@ -1606,7 +1600,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", (string)null);
 
                     b.HasData(
                         new
@@ -1719,9 +1713,6 @@ namespace Booker.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<bool>("DisplayEmail")
                         .HasColumnType("bit");
 
@@ -1740,12 +1731,6 @@ namespace Booker.Migrations
 
                     b.Property<string>("Instagram")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsVisible")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastActiveAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -1949,7 +1934,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("ItemId");
 
-                    b.ToTable("UserFavorites");
+                    b.ToTable("UserFavorites", (string)null);
                 });
 
             modelBuilder.Entity("BookGrades", b =>
