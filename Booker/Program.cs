@@ -63,7 +63,7 @@ builder.Services.AddRateLimitPolicies();
 builder.Services.AddDbContext<DataContext>(options =>
 {
     //options.UseInMemoryDatabase("InMemoryDatabaseName");
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), o => o.UseCompatibilityLevel(110));
 });
 
 builder.Services.AddDefaultIdentity<User>(options =>
