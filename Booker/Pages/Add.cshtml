@@ -28,7 +28,10 @@
             <select asp-for="Input.Title" asp-items="Model.Books">
                 <option value="">Wybierz książkę</option>
             </select>
-            <small><span asp-validation-for="Input.Title"></span></small>
+            <small>
+                <span asp-validation-for="Input.Title"></span><br>
+                Nie widzisz swojej książki? Wybierz opcję "inna" i opisz ją poniżej.
+            </small>
 
             <label asp-for='Input.Subject'>Przedmiot:</label>
             <select asp-for='Input.Subject' asp-items="Model.Subjects">
