@@ -11,9 +11,11 @@
         .book-image-preview {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: var(--pico-background-color);
             border-radius: 6px;
             border: 1px solid var(--pico-muted-border-color);
+            aspect-ratio: 3 / 4;
 
             &.main {
                 grid-column: span 2;

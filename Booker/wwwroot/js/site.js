@@ -51,7 +51,6 @@ function handleImageUpload(input) {
                         });
                         dataTransfer.items.add(compressedFile);
 
-                        
                         const imageElement = document.createElement("img");
                         imageElement.src = URL.createObjectURL(compressedFile);
                         imageElement.alt = `Zdjęcie książki ${index + 1}`;
@@ -99,13 +98,12 @@ function addLabelToMainImage() {
 
     previewContainer.appendChild(label);
 
-    const top = mainImage.offsetTop + mainImage.offsetHeight - 30; 
+    const top = mainImage.offsetTop + mainImage.offsetHeight - 30;
     const left = mainImage.offsetLeft + 10;
 
     label.style.top = `${top}px`;
     label.style.left = `${left}px`;
 }
-
 
 function updateCharCount() {
     const count = this.value.length;
@@ -128,7 +126,6 @@ function showSummary(event) {
         document.getElementById('summaryState').textContent = document.getElementById('Input_State').value;
         document.getElementById('summaryPrice').textContent = document.getElementById('Input_Price').value + " PLN";
 
-        
         const firstPreviewImg = document.querySelector('.image-preview-container img');
         if (firstPreviewImg) {
             document.getElementById('summaryImage').src = firstPreviewImg.src;
@@ -143,10 +140,6 @@ function showSummary(event) {
         if (dialog) dialog.showModal();
     }
 }
-
-
-
-
 
 function toggleHamburgerMenu(check) {
     const hamburger = document.getElementById('hamburger').querySelector('details');
