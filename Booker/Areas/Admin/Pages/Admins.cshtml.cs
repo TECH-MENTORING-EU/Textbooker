@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using Booker.Data;
 using Booker.Services;
-using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
