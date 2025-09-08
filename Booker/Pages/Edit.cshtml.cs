@@ -103,7 +103,7 @@ namespace Booker.Pages
             var itemToDelete = await _itemManager.GetItemAsync(itemId);
             if (itemToDelete == null) return NotFound();
             
-            var isAuthorized = await _authService.AuthorizeAsync(User, ItemToEdit, ItemOperations.Delete);
+            var isAuthorized = await _authService.AuthorizeAsync(User, itemToDelete, ItemOperations.Delete);
             if (!isAuthorized.Succeeded) return Forbid();
 
             await _itemManager.DeleteItemAsync(itemId);
