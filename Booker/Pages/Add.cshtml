@@ -89,7 +89,7 @@
         <p><strong>Stan:</strong> <span id="summaryState"></span></p>
         <p><strong>Cena:</strong> <span id="summaryPrice"></span></p>
         <footer>
-            <button form="add-form" type="submit">Potwierdź i dodaj ogłoszenie</button>
+            <button id="confirmAddBtn" form="add-form" type="submit">Potwierdź i dodaj ogłoszenie</button>
         </footer>
     </article>
 </dialog>
@@ -103,10 +103,30 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Character count for textareas
             document.querySelectorAll('textarea').forEach(ta => {
-                ta.addEventListener("input",updateCharCount);
+                ta.addEventListener("input", updateCharCount);
                 ta.dispatchEvent(new Event("input")); // Trigger initial count
             });
+
+            let isSubmitting = false;
+            const confirmButton = document.getElementById('confirmAddBtn');
+
+            if (confirmButton) {
+                confirmButton.addEventListener('click', function(e) {
+                    if (isSubmitting) {
+                        e.preventDefault(); // Prevent duplicate submissions
+                        return;
+                    }
+
+                    isSubmitting = true;
+                    setTimeout(() => {
+                        this.disabled = true;
+                        this.textContent = 'Dodawanie...';
+                    }, 0);
+                });
+            }
         });
     </script>
 }
+
