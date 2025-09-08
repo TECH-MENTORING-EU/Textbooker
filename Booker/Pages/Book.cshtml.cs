@@ -18,17 +18,20 @@ namespace Booker.Pages
         private readonly ItemManager _itemManager;
         private readonly FavoritesManager _favoritesManager;
         private readonly IAuthorizationService _authService;
+        private readonly ILogger<BookModel> _logger;
+
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
 
-        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService)
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger)
         {
             _userManager = userManager;
             _itemManager = itemManager;
             _favoritesManager = favoritesManager;
             _authService = authService;
+            _logger = logger;
         }
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -47,11 +50,11 @@ namespace Booker.Pages
 
             IsCurrentUserOwner = userId == BookItem.User.Id;
 
-            // This warns every time, but it shouldn't
-            //var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
+            var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
 
-            if (!item.IsVisible && !IsCurrentUserOwner)
+            if (!item.IsVisible && !isAuthorized.Succeeded)
             {
+                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
                 return NotFound();
             }
 

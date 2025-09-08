@@ -2,7 +2,7 @@
 @* Custom routes defined in StartupUtilities *@
 @model Booker.Pages.Profile.IndexModel
 @{
-    ViewData["Title"] = "Profil";
+    ViewData["Title"] = "Profil użytkownika " + @Model.UserInfo.RequestUser.UserName;
 }
 
 <partial name="_Heading" for="UserInfo" />

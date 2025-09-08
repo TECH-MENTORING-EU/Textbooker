@@ -11,11 +11,13 @@ namespace Booker.Pages
     public class EditModel : Shared.BookFormModel<Shared.ItemEditModel>
     {
         private readonly IAuthorizationService _authService;
-        
-        public EditModel(UserManager<User> userManager, StaticDataManager staticDataManager, ItemManager itemManager, IAuthorizationService authService)
+        private readonly ILogger<EditModel> _logger;
+
+        public EditModel(UserManager<User> userManager, StaticDataManager staticDataManager, ItemManager itemManager, IAuthorizationService authService, ILogger<EditModel> logger)
             : base(userManager, staticDataManager, itemManager)
         {
             _authService = authService;
+            _logger = logger;
         }
 
         public Item? ItemToEdit { get; set; }
@@ -27,7 +29,11 @@ namespace Booker.Pages
 
             var isAuthorized = await _authService.AuthorizeAsync(User, ItemToEdit, ItemOperations.Update);
 
-            if (!isAuthorized.Succeeded) return Forbid();
+            if (!isAuthorized.Succeeded)
+            {
+                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Update.Name} na zasobie o ID {id}.");
+                return Forbid();
+            }
 
             Input = new Shared.ItemEditModel
             {
@@ -67,7 +73,11 @@ namespace Booker.Pages
 
             var isAuthorized = await _authService.AuthorizeAsync(User, ItemToEdit, ItemOperations.Update);
 
-            if (!isAuthorized.Succeeded) return Forbid();
+            if (!isAuthorized.Succeeded)
+            {
+                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Update.Name} na zasobie o ID {id}.");
+                return Forbid();
+            }
 
             var parameters = await _staticDataManager.ConvertParametersAsync(
                 Input.Title,
@@ -103,8 +113,12 @@ namespace Booker.Pages
             var itemToDelete = await _itemManager.GetItemAsync(itemId);
             if (itemToDelete == null) return NotFound();
             
-            var isAuthorized = await _authService.AuthorizeAsync(User, ItemToEdit, ItemOperations.Delete);
-            if (!isAuthorized.Succeeded) return Forbid();
+            var isAuthorized = await _authService.AuthorizeAsync(User, itemToDelete, ItemOperations.Delete);
+            if (!isAuthorized.Succeeded)
+            {
+                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Delete.Name} na zasobie o ID {itemId}.");
+                return Forbid();
+            }
 
             await _itemManager.DeleteItemAsync(itemId);
             return RedirectToPage("/Index");
