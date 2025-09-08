@@ -40,10 +40,6 @@ public class ItemIsOwnerAuthorizationHandler
         {
             context.Succeed(requirement);
         }
-        else
-        {
-            _logger.LogWarning($"Użytkownik {context.User.Identity?.Name} próbował wykonać nieuprawnioną akcję {requirement.Name} na zasobie o ID {resource.Id}.");
-        }
         return Task.CompletedTask;
     }
 }
