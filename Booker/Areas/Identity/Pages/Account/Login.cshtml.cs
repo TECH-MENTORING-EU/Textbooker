@@ -133,7 +133,6 @@ namespace Booker.Areas.Identity.Pages.Account
                 var result = await _signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("Użytkownik zalogował się.");
                     var user = await _userManager.GetUserAsync(User);
                     if (user != null)
                     {
