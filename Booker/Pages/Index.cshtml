@@ -9,8 +9,7 @@
           hx-get="/"
           hx-trigger="submit, input changed delay:500ms, change"
           hx-target=".grid-gallery"
-          hx-push-url="true"
-          hx-vals='{"pageNumber": 0}'>
+          hx-push-url="true">
         <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" hx-on:focus="this.nextElementSibling.style.display = 'block';" hx-on:keydown="this.nextElementSibling.style.display = 'none';" />
         <small style="display: none;">Szukasz książki do przedmiotu zawodowego lub innej rzadko występującej? Wpisz "inna".</small>
 
