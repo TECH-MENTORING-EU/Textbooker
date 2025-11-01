@@ -24,9 +24,10 @@ jobs:
       - name: Azure Login with OIDC
         uses: azure/login@v1
         with:
-          client-id: fd4296f4-bdfb-4544-8203-c0fac560a7a0     # App ID
-          tenant-id: a3fb7c77-7f12-4e8c-9864-240eadfb4fdb    # Azure Tenant ID
-          subscription-id: 2fe4631b-3ade-4eda-bf70-a1dd7f0a86c1  # Subscription ID
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}     # App ID
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}    # Azure Tenant ID
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}  # Subscription ID
+          enable-OIDC: true
           enable-AzPSSession: false
           audience: api://AzureADTokenExchange               # Explicitly set the audience
 
