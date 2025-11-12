@@ -12,7 +12,7 @@
 {
     <p>Zaloguj się, aby zobaczyć ulubione.</p>
 }
-else if (Model.UserInfo.IsCurrentUser || Model.UserInfo.RequestUser.AreFavoritesPublic)
+else if (Model.UserInfo.CanViewFavorites)
 {
     <section class="grid-gallery">
         <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />

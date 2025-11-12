@@ -6,6 +6,8 @@ using Booker.Utilities;
 using Microsoft.AspNetCore.Identity;
 
 using static Booker.Pages.Profile.IndexModel;
+using Microsoft.AspNetCore.Authorization;
+using Booker.Authorization;
 
 namespace Booker.Pages.Profile
 {
@@ -13,10 +15,13 @@ namespace Booker.Pages.Profile
     {
         private readonly UserManager<User> _userManager;
         private readonly FavoritesManager _favoritesManager;
-        public FavoritesModel(UserManager<User> userManager, FavoritesManager favoritesManager)
+        private readonly IAuthorizationService _authorizationService;
+
+        public FavoritesModel(UserManager<User> userManager, FavoritesManager favoritesManager, IAuthorizationService authorizationService)
         {
             _userManager = userManager;
             _favoritesManager = favoritesManager;
+            _authorizationService = authorizationService;
         }
 
         public record ButtonState(int Id, bool IsFavorite, bool FullSize);
@@ -25,23 +30,24 @@ namespace Booker.Pages.Profile
         public List<int>? ItemIds { get; set; }
         public StaticDataManager.Parameters Params { get; set; } = null!;
         public UserModel UserInfo { get; set; } = null!;
+        public bool Display { get; set; } = true;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
-            var currentUserId = _userManager.GetUserId(User).IntOrDefault();
-
             if (!Id.HasValue)
             {
-                if (currentUserId == 0)
+                if (User.Identity?.IsAuthenticated != true)
                 {
-                    return Redirect("/Identity/Account/Login");
+                    return Challenge();
                 }
-
-                Id = currentUserId;
+                Id = _userManager.GetUserId(User).IntOrDefault();
             }
 
             var user = await _userManager.FindByIdAsync(Id.Value.ToString());
 
-            if (user == null)
+            var viewProfile = await _authorizationService.AuthorizeAsync(User, user, UserOperations.Read);
+            var viewFavorites = await _authorizationService.AuthorizeAsync(User, user, UserOperations.ReadFavorites);
+
+            if (user == null || !viewProfile.Succeeded)
             {
                 return NotFound();
             }
@@ -50,11 +56,20 @@ namespace Booker.Pages.Profile
 
             ItemIds = await _favoritesManager.GetFavoriteIdsAsync(Id.Value);
 
-            UserInfo = new UserModel(user, user.Id == currentUserId);
+            UserInfo = new UserModel(
+                user,
+                user.Id == _userManager.GetUserId(User).IntOrDefault(),
+                viewProfile.Succeeded,
+                viewFavorites.Succeeded
+            );
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
-                return ViewComponent("ItemGalleryViewComponent", new
+                if (!viewFavorites.Succeeded)
+                {
+                    return StatusCode(403);
+                }
+                return ViewComponent("ItemGallery", new
                 {
                     itemIds = ItemIds,
                     parameters = Params,

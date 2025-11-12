@@ -7,13 +7,13 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Booker.Authorization;
 
-public class ItemIsOwnerAuthorizationHandler
-        : AuthorizationHandler<OperationAuthorizationRequirement, Item>
+public class UserProfileAuthorizationHandler
+    : AuthorizationHandler<OperationAuthorizationRequirement, User>
 {
     UserManager<User> _userManager;
     ILogger<ItemIsOwnerAuthorizationHandler> _logger;
 
-    public ItemIsOwnerAuthorizationHandler(UserManager<User> userManager, ILogger<ItemIsOwnerAuthorizationHandler> logger)
+    public UserProfileAuthorizationHandler(UserManager<User> userManager, ILogger<ItemIsOwnerAuthorizationHandler> logger)
     {
         _userManager = userManager;
         _logger = logger;
@@ -22,24 +22,31 @@ public class ItemIsOwnerAuthorizationHandler
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         OperationAuthorizationRequirement requirement,
-        Item resource)
+        User resource)
     {
         if (context.User == null || resource == null)
         {
             return Task.CompletedTask;
         }
-        if (requirement.Name != ItemOperations.Create.Name &&
-            requirement.Name != ItemOperations.Read.Name &&
-            requirement.Name != ItemOperations.Update.Name &&
-            requirement.Name != ItemOperations.Delete.Name)
-        {
-            return Task.CompletedTask;
-        }
 
-        if (resource.User.Id == _userManager.GetUserId(context.User).IntOrDefault())
+        if (resource.Id == _userManager.GetUserId(context.User).IntOrDefault())
         {
             context.Succeed(requirement);
         }
+
+        if (requirement.Name == UserOperations.Read.Name
+            && resource.IsVisible)
+        {
+            context.Succeed(requirement);
+        }
+
+        if (requirement.Name == UserOperations.ReadFavorites.Name
+            && resource.IsVisible
+            && resource.AreFavoritesPublic)
+        {
+            context.Succeed(requirement);
+        }
+
         return Task.CompletedTask;
     }
 }

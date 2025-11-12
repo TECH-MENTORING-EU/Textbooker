@@ -5,21 +5,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Booker.Utilities;
+using Microsoft.AspNetCore.Authorization;
+using Booker.Authorization;
 
 namespace Booker.Pages.Profile
 {
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
         private readonly UserManager<User> _userManager;
         private readonly ItemManager _itemManager;
+        private readonly IAuthorizationService _authorizationService;
+
         const int PageSize = 25;
 
-        public IndexModel(ILogger<IndexModel> logger, UserManager<User> userManager, ItemManager itemManager)
+        public IndexModel(UserManager<User> userManager, ItemManager itemManager, IAuthorizationService authorizationService)
         {
-            _logger = logger;
             _userManager = userManager;
             _itemManager = itemManager;
+            _authorizationService = authorizationService;
         }
         [FromRoute]
         public int? Id { get; set; }
@@ -27,25 +30,25 @@ namespace Booker.Pages.Profile
         public List<int>? ItemIds { get; set; }
         public StaticDataManager.Parameters Params { get; set; } = null!;
 
-        public record UserModel(User RequestUser, bool IsCurrentUser);
+        public record UserModel(User RequestUser, bool IsCurrentUser, bool CanView, bool CanViewFavorites);
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
-            var currentUserId = _userManager.GetUserId(User).IntOrDefault();
-
             if (!Id.HasValue)
             {
-                if (currentUserId == 0)
+                if (User.Identity?.IsAuthenticated != true)
                 {
-                    return Redirect("/Identity/Account/Login");
+                    return Challenge();
                 }
-
-                Id = currentUserId;
-            }            
+                Id = _userManager.GetUserId(User).IntOrDefault();
+            }
 
             var user = await _userManager.FindByIdAsync(Id.Value.ToString());
 
-            if (user == null || !user.IsVisible)
+            var viewProfile = await _authorizationService.AuthorizeAsync(User, user, UserOperations.Read);
+            var viewFavorites = await _authorizationService.AuthorizeAsync(User, user, UserOperations.ReadFavorites);
+            
+            if (user == null || !viewProfile.Succeeded)
             {
                 return NotFound();
             }
@@ -54,11 +57,16 @@ namespace Booker.Pages.Profile
 
             Params = new StaticDataManager.Parameters(null, [], null, null);
 
-            UserInfo = new UserModel(user, user.Id == currentUserId);
+            UserInfo = new UserModel(
+                user,
+                user.Id == _userManager.GetUserId(User).IntOrDefault(),
+                viewProfile.Succeeded,
+                viewFavorites.Succeeded
+            );
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {
-                return ViewComponent("ItemGalleryViewComponent", new
+                return ViewComponent("ItemGallery", new
                 {
                     itemIds = ItemIds,
                     parameters = Params,
