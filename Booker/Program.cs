@@ -16,6 +16,8 @@ using System.Net;
 using System.Threading.RateLimiting;
 using System.Security.Claims;
 using Serilog.Events;
+using Microsoft.AspNetCore.SignalR; // added
+using Microsoft.AspNetCore.Components; // added
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
@@ -27,12 +29,6 @@ IConfiguration configuration = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
     .AddUserSecrets<Program>() // Replace `Program` with your project's main class
     .AddEnvironmentVariables().Build();
-
-if (await StartupUtilities.RunMaintenanceMode(configuration, args))
-{
-    return;
-}
-
 
 // Register IMemoryCache in DI container
 builder.Services.AddMemoryCache();
@@ -51,7 +47,6 @@ Log.Logger = new LoggerConfiguration()
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
     .CreateLogger();
 
-
 builder.Host.UseSerilog();
 
 // Add services to the container.
@@ -65,6 +60,18 @@ builder.Services.AddRazorPages()
     .AddMvcOptions(options => options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider()))
     .AddCustomRoutes()
     .AddAuthorizationPolicies();
+
+// Add Razor Components + interactive server support for islands
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+
+// Add SignalR for chat hub
+builder.Services.AddSignalR();
+
+// Add server-side blazor circuit configuration (lightweight)
+builder.Services.AddServerSideBlazor(options =>
+{
+    options.DetailedErrors = builder.Environment.IsDevelopment();
+});
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -167,6 +174,11 @@ app.Use(async (context, next) =>
 });
 app.UseAuthorization();
 app.UseRateLimiter();
+
+// Map blazor hub (required for interactive islands)
+app.MapBlazorHub();
+// Map chat SignalR hub
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.MapRazorPages();
 await app.MigrateDatabaseAsync(configuration);
