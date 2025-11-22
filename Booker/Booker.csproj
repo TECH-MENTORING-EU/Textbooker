@@ -10,10 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Include="wwwroot\_MaintenancePage.html">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>        
-      </None>
+      <None Include=".github\copilot-instructions.md" />
     </ItemGroup>
 
   <ItemGroup>

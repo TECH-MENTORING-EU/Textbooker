@@ -9,7 +9,14 @@ hybrid approach that gives us the best of both worlds: SEO-friendly server rende
 ## 1. Meta-Instructions for AI Assistants
 
 ### 1.1 General Principles
-- In Ask mode if asked for solution always give solution in numered steps and substeps, and ask which one want to be implemented
+
+- Creating list of steps, put substeps to new line with additional indentation.
+- Group approaches by general strategy - under separater h2 header, ask at the end which one to implement.
+- For sub-steps use letters minor numbering (1.1, 1.2, etc), put substeps on new lines.
+- Ask me whether i want to see snippets and for any approach, do not show them automaticaly.
+- Snippet sections start with h2 header with approach it implements.
+- Try always create simplest solution that meets the requirements, any additional spotted or possible complexity adress as a follow up suggestion.
+- When creating code snippets, and steps for implement a aproach, do not inlucde optional steps, list them as suggestions after the main steps.
 - Preserve formatting and indentation exactly.  
 - Skip the step dotnet run in order to test your changes, unless specifically asked for it.
 
@@ -17,9 +24,6 @@ hybrid approach that gives us the best of both worlds: SEO-friendly server rende
 - **Suggest, don’t apply:** list extra ideas as bullets after code.  
 - ≤ 2 paragraphs explanation.  
 - The developer is the final authority.
-
-### 1.3 Assistant Behavior 
-- Provide minimal, context-aware snippets; avoid over-scaffolding.
 
 ---
 
@@ -30,19 +34,15 @@ Primary goal → help build a **secure, maintainable, performant Razor Pages + B
 
 ### 🔒 Security First
 - Server-side auth & authorization.  
-- Use ASP.NET Core cookie auth (Windows Auth or OIDC when introduced).  
-- No client-side token storage.  
-- No BFF-specific anti-tokenization rules required (already server-rendered).
+- Use ASP.NET Core cookie auth (Windows Auth or OIDC when introduced).   
 
 ### ⚡ Performance by Default
 - Use async/await correctly; avoid blocking calls.  
-- Employ **Dapper** for parameterized SQL.  
 - Enable ADO.NET connection pooling.  
 - Keep Razor/Blazor partials small; stream responses where practical.
 
 ### 🧩 Maintainability & Readability
-- Follow **Clean Architecture + SOLID**.  
-- Layers: `UI → Application → Infrastructure → Domain`.  
+- Follow **SOLID** and **KISS**.  
 - Keep each method focused; prefer explicit, self-documenting code.
 
 ### ⚙️ Consistency
@@ -52,20 +52,32 @@ Primary goal → help build a **secure, maintainable, performant Razor Pages + B
 
 ## 4. Blazor Static SSR & HTMX
 
-### 4.1 Render Mode
-- Use **Static SSR** components (no `Interactive*` render modes unless explicitly required).  
+### 4.1 Blazor SSR Strategy
+- For Blazor related stuff start with **Static SSR** components
+- Do not render lot of html on the server side with Blazor, use htmx.
+- Prefer Razor Pages for full pages; Blazor Static SSR for reusable UI parts.
+- Prefer Blazor interactivity over JS for islands of interactivity.
 - Avoid accidental interactive circuits unless a feature demands it.
-
-### 4.2 Component Design
 - Split markup/logic (`.razor` + `.razor.cs`).  
 - Prefer parameters over cascading state unless necessary.  
 - No direct HTTP calls inside components; use services.
+- Keep components pure (parameter in → markup out).  
+- Avoid heavy per-request allocation; prefer streaming partial HTML when possible.
+- No `HttpClient` in Razor/Blazor components; only in services.
+
+### 4.2 HTMX Strategy
+
 - Do not put javascript in the htmx events like onclick, onsubmit, etc, create partial view or component to handle the htmx request on the server side.
 - Do not put javascript for any htmx attributes like hx-get, hx-post, hx-swap, create partial view or component to handle the htmx request on the server side.
+- Server endpoints return partial Razor views or fragments (no full layouts).  
+- Include `hx-headers` only for non-sensitive metadata; auth handled by cookies.  
+- Prevent duplicate requests with `hx-trigger="click"` + `disabled` state handling.  
+- Progressive enhancement: prefer htmx over JS for interactivity.
+- Use `hx-indicator` for loading spinners; ensure accessible announcements.
 
 ### 4.3 State
 - Minimal transient per-request state; avoid long-lived interactive state.  
-- If interactive islands added later, scope them narrowly.
+- If interactive islands added, scope them narrowly.
 
 ### 4.4 Error Handling
 - Use `ErrorBoundary` only if interactive islands introduced; otherwise rely on Razor Pages error pipeline.
@@ -118,13 +130,12 @@ Primary goal → help build a **secure, maintainable, performant Razor Pages + B
 
 ### 7.1 HTML (Semantic + Secure)
 - Use semantic elements: `<main>`, `<nav>`, `<header>`, `<footer>`, `<section>`, `<article>`.  
-- `<button>` for actions; avoid clickable non-semantic elements.  
-- Single `<h1>` per page.  
+- `<button>` for actions; avoid clickable non-semantic elements. 
 - No hidden auth fields; rely on cookies.
 
 ### 7.2 PICO CSS
 - Prefer responsive prefixes (`sm: md: lg:`).  
-- No magic numbers; rely on theme tokens.  
+- No magic numbers;   
 
 ### 7.3 JavaScript
 - Minimal JS; only enhancement.  
@@ -135,18 +146,7 @@ Primary goal → help build a **secure, maintainable, performant Razor Pages + B
 ### 7.5 Accessibility & UX
 - All inputs have labels.  
 - Manage focus after htmx swaps (set `hx-trigger` + JS focus helpers).  
-
-### 7.6 Blazor SSR Specific
-- Keep components pure (parameter in → markup out).  
-- Avoid heavy per-request allocation; prefer streaming partial HTML when possible.
-
-### 7.7 htmx Usage
-- Use `hx-get`, `hx-post`, `hx-delete`, `hx-swap="outerHTML|innerHTML"` appropriately.  
-- Server endpoints return partial Razor views or fragments (no full layouts).  
-- Include `hx-headers` only for non-sensitive metadata; auth handled by cookies.  
-- Prevent duplicate requests with `hx-trigger="click"` + `disabled` state handling.  
-- Progressive enhancement: page works without JS; htmx augments.  
-- Use `hx-indicator` for loading spinners; ensure accessible announcements.
+- String literals in resources for localization.
 
 ---
 
@@ -179,7 +179,6 @@ Primary goal → help build a **secure, maintainable, performant Razor Pages + B
 ## 10. Configuration & Environment
 
 ### 10.1 Environment Modes
-- No `HttpClient` in Razor/Blazor components; only in services.
 
 ### 10.2 Secrets & Configuration
 - Use __Project > Manage User Secrets__ locally.  

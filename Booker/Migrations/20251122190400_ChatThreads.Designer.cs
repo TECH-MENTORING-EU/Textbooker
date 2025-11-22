@@ -4,6 +4,7 @@ using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booker.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20251122190400_ChatThreads")]
+    partial class ChatThreads
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -854,51 +857,6 @@ namespace Booker.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Booker.Data.AdminActionLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ActionType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("AdminUserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AdminUserName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Parameters")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TargetId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TargetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TargetType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminUserName");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.ToTable("AdminActionLogs");
-                });
-
             modelBuilder.Entity("Booker.Data.Book", b =>
                 {
                     b.Property<int>("Id")
@@ -1662,9 +1620,6 @@ namespace Booker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("FlaggedForReview")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
@@ -1696,21 +1651,6 @@ namespace Booker.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Items");
-                });
-
-            modelBuilder.Entity("Booker.Data.ItemView", b =>
-                {
-                    b.Property<int>("ItemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ItemId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ItemViews");
                 });
 
             modelBuilder.Entity("Booker.Data.Level", b =>
@@ -1755,37 +1695,6 @@ namespace Booker.Migrations
                             Id = 4,
                             Name = "Dwujęzyczny"
                         });
-                });
-
-            modelBuilder.Entity("Booker.Data.School", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeactivatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EmailDomain")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Schools");
                 });
 
             modelBuilder.Entity("Booker.Data.Subject", b =>
@@ -1913,9 +1822,6 @@ namespace Booker.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("AgeConfirmationAcceptedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<bool>("AreFavoritesPublic")
                         .HasColumnType("bit");
 
@@ -1927,18 +1833,6 @@ namespace Booker.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("DisplayEmail")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("DisplayInstagram")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("DisplayMessenger")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("DisplayPhone")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("DisplaySchool")
                         .HasColumnType("bit");
 
                     b.Property<bool>("DisplayWhatsapp")
@@ -1989,16 +1883,11 @@ namespace Booker.Migrations
                     b.Property<string>("Photo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("SchoolId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SecurityStamp")
+                    b.Property<string>("School")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("TermsAcceptedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TermsAcceptedVersion")
+                    b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -2017,8 +1906,6 @@ namespace Booker.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("SchoolId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -2239,35 +2126,6 @@ namespace Booker.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Booker.Data.ItemView", b =>
-                {
-                    b.HasOne("Booker.Data.Item", "Item")
-                        .WithMany("Views")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Booker.Data.User", "User")
-                        .WithMany("ItemViews")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Item");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Booker.Data.User", b =>
-                {
-                    b.HasOne("Booker.Data.School", "School")
-                        .WithMany("Users")
-                        .HasForeignKey("SchoolId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("School");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
@@ -2339,20 +2197,8 @@ namespace Booker.Migrations
                     b.Navigation("Items");
                 });
 
-            modelBuilder.Entity("Booker.Data.Item", b =>
-                {
-                    b.Navigation("Views");
-                });
-
-            modelBuilder.Entity("Booker.Data.School", b =>
-                {
-                    b.Navigation("Users");
-                });
-
             modelBuilder.Entity("Booker.Data.User", b =>
                 {
-                    b.Navigation("ItemViews");
-
                     b.Navigation("Items");
                 });
 #pragma warning restore 612, 618

@@ -1,0 +1,37 @@
+﻿@page
+@model Booker.Pages.MessagesModel
+@{
+    ViewData["Title"] = "Wiadomości";
+}
+
+<main>
+    <h1>Wiadomości</h1>
+
+    <section aria-label="Filtr użytkowników">
+        <label for="userSearch">Szukaj użytkownika</label>
+        <input id="userSearch"
+               name="q"
+               type="search"
+               placeholder="Wpisz nazwę..."
+               autocomplete="off"
+               hx-get="@Url.Page("Messages/Index", "UserOptions")"
+               hx-trigger="keyup changed delay:250ms"
+               hx-target="#otherUser"
+               hx-swap="innerHTML" />
+    </section>
+
+    <section aria-label="Nowa rozmowa">
+        <select id="otherUser"
+                name="otherUserId"
+                size="10"
+                aria-label="Lista użytkowników"
+                style="max-height:220px; overflow-y:auto; width:100%;">
+            <option value="">-- Wybierz użytkownika --</option>
+            @foreach (var u in Model.OtherUsers)
+            {
+                <option value="@u.Id">@u.UserName</option>
+            }
+        </select>
+    </section>
+</main>
+ 

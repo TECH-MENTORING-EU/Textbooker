@@ -1,0 +1,41 @@
+.chat-island {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 640px;
+}
+.chat-island .chat-status { font-size: 0.85rem; color: var(--pico-muted-color,#666); }
+.chat-island .chat-history {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--pico-border-color);
+  border-radius: 6px;
+  background: var(--pico-card-background-color);
+  height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.chat-island .msg { display: flex; }
+.chat-island .msg.self { justify-content: flex-end; }
+.chat-island .msg.other { justify-content: flex-start; }
+.chat-island .msg .bubble {
+  max-width: 70%;
+  padding: 0.5rem 0.65rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  background: #fff;
+  border: 1px solid #e1e1e1;
+}
+.chat-island .msg.self .bubble { background: #d9f2ff; border-color: #b5e4fb; }
+.chat-island .msg .meta { font-size: 0.7rem; display:flex; justify-content: space-between; color:#555; }
+.chat-island .msg .meta .user { font-weight:600; }
+.chat-island .msg .content { margin:0; white-space:pre-wrap; word-wrap:break-word; font-size:0.9rem; }
+.chat-island .chat-input { display:flex; flex-direction:column; gap:0.4rem; }
+.chat-island .chat-input textarea { resize: vertical; font-family: inherit; }
+.chat-island .chat-input button[disabled] { opacity:0.5; cursor:not-allowed; }

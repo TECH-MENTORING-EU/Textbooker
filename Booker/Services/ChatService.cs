@@ -8,10 +8,12 @@ namespace Booker.Services
     {
         private readonly DataContext _context;
         private readonly ILogger<ChatService> _logger;
-        public ChatService(DataContext context, ILogger<ChatService> logger)
+        private readonly IChatThreadService _threadService; // added
+        public ChatService(DataContext context, ILogger<ChatService> logger, IChatThreadService threadService)
         {
             _context = context;
             _logger = logger;
+            _threadService = threadService; // added
         }
 
         public async Task<IReadOnlyList<ChatMessageDto>> GetMessagesAsync(string dealId, int take, CancellationToken cancellationToken)
@@ -47,6 +49,9 @@ namespace Booker.Services
             };
             _context.ChatMessages.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
+
+            // update thread last message timestamp if thread exists
+            await _threadService.UpdateLastMessageUtcAsync(dealId, DateTime.UtcNow, cancellationToken);
 
             var dto = new ChatMessageDto(entity.Id, entity.DealId, entity.UserId, user.UserName ?? $"U{userId}", entity.Content, entity.CreatedUtc);
             return ChatMessageResult.Ok(dto);
