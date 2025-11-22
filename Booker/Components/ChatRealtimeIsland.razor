@@ -1,0 +1,17 @@
+@inherits ChatRealtimeIslandBase
+<div class="chat-realtime-status">
+    @if (_connected)
+    {
+        <span>Live updates enabled</span>
+    }
+    else
+    {
+        <span>Connecting...</span>
+    }
+</div>
+<ul class="chat-live-list" id="chat-live-list">
+    @foreach (var msg in _liveMessages)
+    {
+        <li><strong>@msg.UserDisplayName:</strong> @msg.Content</li>
+    }
+</ul>

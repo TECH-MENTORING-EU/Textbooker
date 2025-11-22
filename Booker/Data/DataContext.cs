@@ -12,6 +12,7 @@ namespace Booker.Data
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Level> Levels { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; } // added
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -66,6 +67,12 @@ namespace Booker.Data
                     {
                         uf.HasKey("UserId", "ItemId");
                     });
+            });
+
+            modelBuilder.Entity<ChatMessage>(cm =>
+            {
+                cm.HasIndex(c => new { c.DealId, c.CreatedUtc });
+                cm.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
             });
         }
 
