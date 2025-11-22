@@ -9,6 +9,10 @@
         <ResolveStaticWebAssetsInputsDependsOn>RemoveIdentityAssets</ResolveStaticWebAssetsInputsDependsOn>
     </PropertyGroup>
 
+    <ItemGroup>
+      <None Include=".github\copilot-instructions.md" />
+    </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="AspNetCore.SassCompiler" Version="1.92.0">
         <PrivateAssets>all</PrivateAssets>

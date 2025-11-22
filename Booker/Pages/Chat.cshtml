@@ -1,6 +1,6 @@
-﻿@page "{DealId}"
+﻿@* Chat page using Blazor static SSR + interactive server island for realtime chat *@
+@page "{DealId?}"
 @model Booker.Pages.ChatModel
-@using Booker.Components
 @{
     ViewData["Title"] = "TextBooker Chat";
 }
@@ -8,25 +8,18 @@
 <main>
     <h1>Chat</h1>
 
-    <section aria-label="Existing messages">
-        <ul id="chat-history">
-            @foreach (var m in Model.Messages)
-            {
-                <li><strong>@m.UserDisplayName:</strong> @m.Content</li>
-            }
-        </ul>
-    </section>
-
-    <component type="typeof(ChatRealtimeIsland)" render-mode="Server" param-DealId="Model.DealId" />
-
-    <section aria-label="Send message">
-        <form method="post"
-              hx-post="@Url.Page("Chat", "AddMessage", new { DealId = Model.DealId })"
-              hx-target="#chat-history"
-              hx-swap="beforeend">
-            <label for="content">Wiadomość</label>
-            <textarea id="content" name="content" required maxlength="500"></textarea>
-            <button type="submit">Wyślij</button>
-        </form>
-    </section>
+    @if (string.IsNullOrWhiteSpace(Model.DealId))
+    {
+        <p>Brak identyfikatora wątku. Przejdź do <a href="/Messages">listy wiadomości</a> aby wybrać lub rozpocząć rozmowę.</p>
+    }
+    else
+    {
+        <section class="chat-wrapper" aria-label="Historia rozmowy">
+            <component type="typeof(Booker.Components.ChatRealtimeIsland)"
+                       render-mode="Server"
+                       param-DealId="Model.DealId"
+                       param-InitialMessages="Model.Messages"
+                       param-CurrentUserId="Model.CurrentUserId" />
+        </section>
+    }
 </main>

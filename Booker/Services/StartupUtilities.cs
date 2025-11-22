@@ -31,7 +31,9 @@ namespace Booker.Services
             services.AddScoped<FavoritesManager>();
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
-            services.AddScoped<IChatService, ChatService>(); // added chat service
+            services.AddScoped<IChatService, ChatService>(); // chat message service
+            services.AddSingleton<InMemoryChatStore>(); // in-memory chat store
+            services.AddScoped<IChatThreadService, ChatThreadService>(); // thread service
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
