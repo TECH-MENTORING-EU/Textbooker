@@ -58,15 +58,10 @@ builder.Services.AddRazorPages()
     .AddAuthorizationPolicies();
 
 // Add Razor Components + interactive server support for islands
-builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents(o => { o.DetailedErrors = builder.Environment.IsDevelopment(); });
 // Add SignalR for chat hub
 builder.Services.AddSignalR();
-
-// Add server-side blazor circuit configuration (lightweight)
-builder.Services.AddServerSideBlazor(options =>
-{
-    options.DetailedErrors = builder.Environment.IsDevelopment();
-});
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -142,6 +137,7 @@ app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
+
 app.Use(async (context, next) =>
 {
     using var scope = app.Services.CreateScope();
@@ -154,22 +150,14 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+
 app.UseAuthorization();
 app.UseRateLimiter();
+app.UseAntiforgery();
+
 app.MapRazorPages();
-// Create a branch in the pipeline for /messenger
-app.MapWhen(
-    context => context.Request.Path.StartsWithSegments("/Chat"),
-    messengerApp =>
-    {        
-        messengerApp.UseRouting();
-        messengerApp.UseEndpoints(endpoints =>
-        {
-            endpoints.MapBlazorHub();
-           // a fallback within the /messenger scope
-            endpoints.MapFallbackToPage("/_Host");
-        });
-    });
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 if (app.Environment.IsDevelopment())
 {
