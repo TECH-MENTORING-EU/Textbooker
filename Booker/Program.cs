@@ -16,7 +16,8 @@ using System.Threading.RateLimiting;
 using System.Security.Claims;
 using Serilog.Events;
 using Microsoft.AspNetCore.SignalR; // added
-using Microsoft.AspNetCore.Components; // added
+using Microsoft.AspNetCore.Components;
+using Booker.Components; // added
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
@@ -58,7 +59,6 @@ builder.Services.AddRazorPages()
 
 // Add Razor Components + interactive server support for islands
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-
 // Add SignalR for chat hub
 builder.Services.AddSignalR();
 
@@ -156,13 +156,20 @@ app.Use(async (context, next) =>
 });
 app.UseAuthorization();
 app.UseRateLimiter();
-
-// Map blazor hub (required for interactive islands)
-app.MapBlazorHub();
-// Map chat SignalR hub
-app.MapHub<ChatHub>("/hubs/chat");
-
 app.MapRazorPages();
+// Create a branch in the pipeline for /messenger
+app.MapWhen(
+    context => context.Request.Path.StartsWithSegments("/Chat"),
+    messengerApp =>
+    {        
+        messengerApp.UseRouting();
+        messengerApp.UseEndpoints(endpoints =>
+        {
+            endpoints.MapBlazorHub();
+           // a fallback within the /messenger scope
+            endpoints.MapFallbackToPage("/_Host");
+        });
+    });
 
 if (app.Environment.IsDevelopment())
 {
@@ -176,6 +183,7 @@ if (app.Environment.IsDevelopment())
     await app.InitializeDatabaseAsync();
 }
 
-await app.InitializeRolesAsync();
 
+await app.InitializeRolesAsync();
+app.UseStaticFiles();
 app.Run();

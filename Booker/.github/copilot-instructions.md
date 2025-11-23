@@ -54,9 +54,8 @@ Primary goal → help build a **secure, maintainable, performant Razor Pages + B
 
 ### 4.1 Blazor SSR Strategy
 - For Blazor related stuff start with **Static SSR** components
-- Do not render lot of html on the server side with Blazor, use htmx.
+- Do not render vast html on the server side with Blazor, use htmx.
 - Prefer Razor Pages for full pages; Blazor Static SSR for reusable UI parts.
-- Prefer Blazor interactivity over JS for islands of interactivity.
 - Avoid accidental interactive circuits unless a feature demands it.
 - Split markup/logic (`.razor` + `.razor.cs`).  
 - Prefer parameters over cascading state unless necessary.  

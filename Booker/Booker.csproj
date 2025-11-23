@@ -10,6 +10,18 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Components\ChatRealtimeIsland.razor.cs" />
+      <Compile Remove="Pages\Chat.cshtml.cs" />
+      <Compile Remove="Pages\Messages.cshtml.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="Components\ChatRealtimeIsland.razor" />
+      <Content Remove="Pages\Chat.cshtml" />
+      <Content Remove="Pages\Messages.cshtml" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Include=".github\copilot-instructions.md" />
     </ItemGroup>
 
