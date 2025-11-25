@@ -17,7 +17,7 @@ using System.Security.Claims;
 using Serilog.Events;
 using Microsoft.AspNetCore.SignalR; // added
 using Microsoft.AspNetCore.Components;
-using Booker.Components; // added
+using Booker.Messenger; // added
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
