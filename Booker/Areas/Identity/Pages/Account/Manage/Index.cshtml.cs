@@ -121,7 +121,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 && string.IsNullOrEmpty(Input.FbMessenger) 
                 && string.IsNullOrEmpty(Input.Instagram))
             {
-                ModelState.AddModelError(string.Empty, "Musisz wybrać przynajmniej jedną formę kontaktu.");
+                ModelState.AddModelError(string.Empty, "Musisz wybrać przynajmniej jedną formę kontaktu. Zmiany nie zostały zapisane.");
             }
 
             if (Input.DisplayWhatsapp && string.IsNullOrEmpty(Input.PhoneNumber))

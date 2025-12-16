@@ -12,3 +12,7 @@
         grid-template-columns: 1fr 3fr;
     }
 }
+
+[role="alert"].text-danger ul {
+    color: var(--pico-del-color);
+}
