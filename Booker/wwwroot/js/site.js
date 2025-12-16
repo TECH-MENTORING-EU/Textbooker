@@ -7,7 +7,7 @@ function handleImageUpload(input) {
     const preview = input.closest("section").querySelector(".image-preview-container");
     preview.innerHTML = ""; // Clear existing previews
     const imageErrorSpan = input.closest("section").querySelector("#imageErrorMsg");
-
+    const imageUpload = input.closest("section").querySelector("#add-image");
     if (input.files.length > 6) {
         imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
         return;
@@ -16,6 +16,24 @@ function handleImageUpload(input) {
 
     const files = Array.from(input.files);
     const dataTransfer = new DataTransfer();
+
+    const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/heic",
+        "image/heif",
+        "image/avif"
+    ];
+
+    for (const file of files) {
+        if (!allowedTypes.includes(file.type)) {
+            imageErrorSpan.textContent = (`Plik ${file.name} nie jest obsługiwanym formatem pliku.`);
+            input.value = "";
+            return;
+        }
+    }
 
     const processingPromises = files.map((file, index) => {
         return new Promise((resolve, reject) => {
