@@ -6,8 +6,12 @@ A web application built with ASP.NET Core for textbook management and booking.
 
 - **Language**: C# (primary), HTML, JavaScript, SCSS
 - **Framework**: ASP.NET Core with Razor Pages
+- **Interactive Components**: Blazor (Interactive Islands pattern for enhanced interactivity)
 - **Database**: Entity Framework Core with Migrations
-- **Frontend**: Bootstrap (via LibMan)
+- **Frontend**: 
+  - **CSS Framework**: PICO CSS with SCSS preprocessor
+  - **JavaScript**: HTMX for SPA-like functionality without heavy JavaScript frameworks
+- **Authentication/Authorization**: ASP.NET Core Identity
 
 ## 📁 Project Structure
 
