@@ -1,0 +1,24 @@
+@use "sass:map";
+@use "settings" as *;
+
+@if map.get($modules, "forms/basics") {
+  #{$parent-selector} [role="group"] {
+    + small {
+      display: block;
+      width: 100%;
+      margin-top: calc(var(#{$css-var-prefix}spacing) * -0.75);
+      margin-bottom: var(#{$css-var-prefix}spacing);
+      color: var(#{$css-var-prefix}muted-color);
+    }
+    &:has([aria-invalid="false"]) {
+      + small {
+        color: var(#{$css-var-prefix}ins-color);
+      }
+    }
+    &:has([aria-invalid="true"]) {
+      + small {
+        color: var(#{$css-var-prefix}del-color);
+      }
+    }
+  }
+}

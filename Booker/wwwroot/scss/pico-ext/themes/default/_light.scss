@@ -1,0 +1,17 @@
+@use "sass:color";
+@use "colors" as *;
+@use "settings" as *;
+
+// Default: Light theme
+@mixin theme {
+    #{$css-var-prefix}danger: #{color.mix($red-550, $slate-550, 75%)};
+    #{$css-var-prefix}danger-background: #{color.mix($red-550, $slate-600, 75%)};
+    #{$css-var-prefix}danger-border: var(#{$css-var-prefix}danger-background);
+    #{$css-var-prefix}danger-underline: #{rgba(color.mix($red-550, $slate-550, 75%), 0.5)};
+    #{$css-var-prefix}danger-hover: #{color.mix($red-650, $slate-650, 75%)};
+    #{$css-var-prefix}danger-hover-background: #{color.mix($red-600, $slate-650, 75%)};
+    #{$css-var-prefix}danger-hover-border: var(#{$css-var-prefix}danger-hover-background);
+    #{$css-var-prefix}danger-hover-underline: var(#{$css-var-prefix}danger-hover);
+    #{$css-var-prefix}danger-focus: #{color.mix(rgba($red-400, 0.5), rgba($slate-550, 0.25), 75%)};
+    #{$css-var-prefix}danger-inverse: $white;
+}

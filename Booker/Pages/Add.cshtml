@@ -25,9 +25,14 @@
             <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
 
             <label asp-for="Input.Title">Tytuł książki:</label>
-            <select asp-for="Input.Title" asp-items="Model.Books">
-                <option value="">Wybierz książkę</option>
-            </select>
+            <div role="group">
+                <select asp-for="Input.Title" asp-items="Model.Books">
+                    <option value="">Wybierz książkę</option>
+                </select>
+                <button type="button" class="danger" style="--pico-form-element-spacing-horizontal: 0.5rem;" hx-on:click="this.previousElementSibling.value = ''; this.previousElementSibling.dispatchEvent(new Event('change'));">
+                    <svg icon="x" aria-hidden="true" aria-label="Wyczyść" style="width: 1.25rem;"></svg>
+                </button>
+            </div>
             <small>
                 <span asp-validation-for="Input.Title"></span><br>
                 Nie widzisz swojej książki? Wybierz opcję "inna" i opisz ją poniżej.

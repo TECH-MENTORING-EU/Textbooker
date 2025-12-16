@@ -1,0 +1,17 @@
+@use "sass:color";
+@use "colors" as *;
+@use "settings" as *;
+
+// Default: Dark theme
+@mixin theme {
+    #{$css-var-prefix}danger: #{color.mix($red-350, $zinc-350, 75%)};
+    #{$css-var-prefix}danger-background: #{color.mix($red-550, $slate-600, 75%)};
+    #{$css-var-prefix}danger-border: var(#{$css-var-prefix}danger-background);
+    #{$css-var-prefix}danger-underline: #{rgba(color.mix($red-350, $zinc-350, 75%), 0.5)};
+    #{$css-var-prefix}danger-hover: #{color.mix($red-250, $zinc-250, 75%)};
+    #{$css-var-prefix}danger-hover-background: #{color.mix($red-500, $slate-550, 75%)};
+    #{$css-var-prefix}danger-hover-border: var(#{$css-var-prefix}danger-hover-background);
+    #{$css-var-prefix}danger-hover-underline: var(#{$css-var-prefix}danger-hover);
+    #{$css-var-prefix}danger-focus: #{color.mix(rgba($red-350, 0.375), rgba($slate-350, 0.25), 75%)};
+    #{$css-var-prefix}danger-inverse: $white;
+}

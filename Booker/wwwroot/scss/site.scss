@@ -1,6 +1,7 @@
 // $enable-transitions: false; // not really needed
 
 @use "pico"  with ( $theme-color: "azure" );
+@use "pico-ext/pico-ext";
 @use "index";
 @use "book";
 @use "add";
