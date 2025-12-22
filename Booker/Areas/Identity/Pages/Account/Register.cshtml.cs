@@ -93,7 +93,7 @@ namespace Booker.Areas.Identity.Pages.Account
             {
                 var user = CreateUser();
 
-                user.School = "ŚlTZN";
+                user.SchoolId = null; // No school assigned by default - will be updated in Issue #22 and #25
                 user.Photo = "/img/default-profile-picture.jpg";
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
