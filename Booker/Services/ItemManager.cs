@@ -56,7 +56,7 @@ public class ItemManager
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
-            .Include(i => i.User)
+            .Include(i => i.User).ThenInclude(u => u.School)
             .FirstOrDefaultAsync(i => i.Id == id);
 
     public IAsyncEnumerable<Item> GetAllItemsAsync()
@@ -304,7 +304,7 @@ public class ItemManager
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
-            .Include(i => i.User)
+            .Include(i => i.User).ThenInclude(u => u.School)
             .AsQueryable();
     }
     
