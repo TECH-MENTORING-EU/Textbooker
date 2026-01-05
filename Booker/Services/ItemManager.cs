@@ -59,30 +59,41 @@ public class ItemManager
             .Include(i => i.User).ThenInclude(u => u.School)
             .FirstOrDefaultAsync(i => i.Id == id);
 
-    public IAsyncEnumerable<Item> GetAllItemsAsync()
+    public IAsyncEnumerable<Item> GetAllItemsAsync(User? currentUser = null)
     {
-        return GetAllItemsQueryable()
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query
             .OrderByDescending(i => i.CreatedAt)
             .AsAsyncEnumerable();
     }
 
-    public Task<int> GetAllItemsCountAsync()
+    public Task<int> GetAllItemsCountAsync(User? currentUser = null)
     {
-        return GetAllItemsQueryable()
-            .CountAsync();
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query.CountAsync();
     }
 
-    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids)
+    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids, User? currentUser = null)
     {
-        return GetAllItemsQueryable()
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query
             .Where(i => ids.Contains(i.Id))
             .OrderByDescending(i => i.CreatedAt)
             .AsAsyncEnumerable();
     }
 
-    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize)
+    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize, User? currentUser = null)
     {
-        return GetAllItemsQueryable()
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query
             .Where(i => ids.Contains(i.Id))
             .OrderByDescending(i => i.CreatedAt)
             .Skip(pageNumber * pageSize)
@@ -90,9 +101,10 @@ public class ItemManager
             .AsAsyncEnumerable();
     }
 
-    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input)
+    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input, User? currentUser = null)
     {
         var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
         query = ApplyFilters(query, input);
 
         return query
@@ -100,9 +112,10 @@ public class ItemManager
             .AsAsyncEnumerable();
     }
 
-    public Task<int> GetItemsCountByParamsAsync(Parameters input)
+    public Task<int> GetItemsCountByParamsAsync(Parameters input, User? currentUser = null)
     {
         var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
         query = ApplyFilters(query, input);
 
         return query.CountAsync();
@@ -306,6 +319,30 @@ public class ItemManager
             .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User).ThenInclude(u => u.School)
             .AsQueryable();
+    }
+    
+    /// <summary>
+    /// Filters items to only show those from users in the same school as the given user.
+    /// If the user has no school assigned, returns all items from users without a school.
+    /// </summary>
+    private static IQueryable<Item> FilterByUserSchool(IQueryable<Item> query, User? currentUser)
+    {
+        if (currentUser == null)
+        {
+            // Anonymous users see items from all schools
+            return query;
+        }
+
+        if (currentUser.SchoolId.HasValue)
+        {
+            // Show only items from users in the same school
+            return query.Where(i => i.User.SchoolId == currentUser.SchoolId.Value);
+        }
+        else
+        {
+            // User has no school - show items from users without a school
+            return query.Where(i => i.User.SchoolId == null);
+        }
     }
     
     private static IQueryable<Item> ApplyFilters(IQueryable<Item> query, Parameters input)

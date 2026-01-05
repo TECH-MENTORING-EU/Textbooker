@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
@@ -29,13 +31,15 @@ namespace Booker.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<User> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly DataContext _context;
 
         public RegisterModel(
             UserManager<User> userManager,
             IUserStore<User> userStore,
             SignInManager<User> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            DataContext context)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -43,6 +47,7 @@ namespace Booker.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context;
         }
 
         [BindProperty]
@@ -51,6 +56,8 @@ namespace Booker.Areas.Identity.Pages.Account
         public string ReturnUrl { get; set; }
 
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
+        
+        public SelectList AvailableSchools { get; set; }
 
         public class InputModel
         {
@@ -73,6 +80,9 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Potwierdź hasło")]
             [Compare("Password", ErrorMessage = "Hasła się nie zgadzają.")]
             public string ConfirmPassword { get; set; }
+            
+            [Display(Name = "Szkoła")]
+            public int? SchoolId { get; set; }
 
             [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
@@ -83,17 +93,20 @@ namespace Booker.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            AvailableSchools = new SelectList(await _context.Schools.ToListAsync(), "Id", "Name");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            AvailableSchools = new SelectList(await _context.Schools.ToListAsync(), "Id", "Name");
+            
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
 
-                user.SchoolId = null; // No school assigned by default - will be updated in Issue #22 and #25
+                user.SchoolId = Input.SchoolId; // Use selected school from form
                 user.Photo = "/img/default-profile-picture.jpg";
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
