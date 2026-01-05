@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Booker.Services;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
@@ -32,6 +33,7 @@ namespace Booker.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly DataContext _context;
+        private readonly SchoolMappingService _schoolMappingService;
 
         public RegisterModel(
             UserManager<User> userManager,
@@ -39,7 +41,8 @@ namespace Booker.Areas.Identity.Pages.Account
             SignInManager<User> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            DataContext context)
+            DataContext context,
+            SchoolMappingService schoolMappingService)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -48,6 +51,7 @@ namespace Booker.Areas.Identity.Pages.Account
             _logger = logger;
             _emailSender = emailSender;
             _context = context;
+            _schoolMappingService = schoolMappingService;
         }
 
         [BindProperty]
@@ -106,7 +110,39 @@ namespace Booker.Areas.Identity.Pages.Account
             {
                 var user = CreateUser();
 
-                user.SchoolId = Input.SchoolId; // Use selected school from form
+                // Step 1: Try automatic school assignment based on email domain
+                var autoAssignedSchoolId = await _schoolMappingService.GetSchoolIdByEmailAsync(Input.Email);
+                
+                if (autoAssignedSchoolId.HasValue)
+                {
+                    // Automatic assignment successful
+                    user.SchoolId = autoAssignedSchoolId.Value;
+                    _logger.LogInformation(
+                        "User {Email} automatically assigned to school ID {SchoolId} based on email domain",
+                        Input.Email,
+                        autoAssignedSchoolId.Value
+                    );
+                }
+                else if (Input.SchoolId.HasValue)
+                {
+                    // Step 2: Fall back to manual selection if provided
+                    user.SchoolId = Input.SchoolId.Value;
+                    _logger.LogInformation(
+                        "User {Email} manually assigned to school ID {SchoolId}",
+                        Input.Email,
+                        Input.SchoolId.Value
+                    );
+                }
+                else
+                {
+                    // Step 3: No school assignment (both auto and manual failed/not provided)
+                    user.SchoolId = null;
+                    _logger.LogInformation(
+                        "User {Email} registered without school assignment",
+                        Input.Email
+                    );
+                }
+                
                 user.Photo = "/img/default-profile-picture.jpg";
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
