@@ -22,6 +22,28 @@ namespace Booker.Data
         public string? EmailDomain { get; set; }
         
         /// <summary>
+        /// Database schema name for this school's data isolation.
+        /// </summary>
+        [MaxLength(100)]
+        public string? SchemaName { get; set; }
+        
+        /// <summary>
+        /// Indicates if the school is active. Soft delete sets this to false.
+        /// Inactive schools are not selectable/usable for normal users.
+        /// </summary>
+        public bool IsActive { get; set; } = true;
+        
+        /// <summary>
+        /// Date and time when the school was created.
+        /// </summary>
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        /// <summary>
+        /// Date and time when the school was deactivated (soft deleted).
+        /// </summary>
+        public DateTime? DeactivatedAt { get; set; }
+        
+        /// <summary>
         /// Navigation property for users belonging to this school
         /// </summary>
         public ICollection<User> Users { get; } = new HashSet<User>();

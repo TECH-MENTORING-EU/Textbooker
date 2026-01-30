@@ -1,0 +1,53 @@
+@model List<Booker.Services.SchoolWithUserCount>
+@using Booker.Areas.Admin.Pages
+
+@foreach (var item in Model)
+{
+    var school = item.School;
+    <tr class="@(!school.IsActive ? "inactive-row" : "")">
+        <td>@school.Id</td>
+        <td>@school.Name</td>
+        <td>@(school.EmailDomain ?? "-")</td>
+        <td><code>@(school.SchemaName ?? "-")</code></td>
+        <td>@item.UserCount</td>
+        <td>
+            @if (school.IsActive)
+            {
+                <mark>Aktywna</mark>
+            }
+            else
+            {
+                <mark class="warning">Nieaktywna</mark>
+                @if (school.DeactivatedAt.HasValue)
+                {
+                    <small>(od @school.DeactivatedAt.Value.ToString("d"))</small>
+                }
+            }
+        </td>
+        <td>
+            @if (school.IsActive)
+            {
+                <a hx-post="?handler=Deactivate"
+                   hx-vals='{"id": @school.Id}'
+                   hx-target="closest tr"
+                   hx-swap="outerHTML"
+                   hx-confirm="Na pewno chcesz dezaktywować szkołę @school.Name? Użytkownicy (@item.UserCount) stracą dostęp."
+                   href=""
+                   antiforgery
+                   class="secondary"
+                >Dezaktywuj</a>
+            }
+            else
+            {
+                <a hx-post="?handler=Reactivate"
+                   hx-vals='{"id": @school.Id}'
+                   hx-target="closest tr"
+                   hx-swap="outerHTML"
+                   hx-confirm="Na pewno chcesz przywrócić szkołę @school.Name?"
+                   href=""
+                   antiforgery
+                >Przywróć</a>
+            }
+        </td>
+    </tr>
+}

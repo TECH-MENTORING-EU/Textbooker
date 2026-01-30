@@ -97,14 +97,14 @@ namespace Booker.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            AvailableSchools = new SelectList(await _context.Schools.ToListAsync(), "Id", "Name");
+            AvailableSchools = new SelectList(await _context.Schools.Where(s => s.IsActive).ToListAsync(), "Id", "Name");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            AvailableSchools = new SelectList(await _context.Schools.ToListAsync(), "Id", "Name");
+            AvailableSchools = new SelectList(await _context.Schools.Where(s => s.IsActive).ToListAsync(), "Id", "Name");
             
             if (ModelState.IsValid)
             {
@@ -126,12 +126,29 @@ namespace Booker.Areas.Identity.Pages.Account
                 else if (Input.SchoolId.HasValue)
                 {
                     // Step 2: Fall back to manual selection if provided
-                    user.SchoolId = Input.SchoolId.Value;
-                    _logger.LogInformation(
-                        "User {Email} manually assigned to school ID {SchoolId}",
-                        Input.Email,
-                        Input.SchoolId.Value
-                    );
+                    // Verify the selected school is active
+                    var selectedSchool = await _context.Schools
+                        .FirstOrDefaultAsync(s => s.Id == Input.SchoolId.Value && s.IsActive);
+                    
+                    if (selectedSchool != null)
+                    {
+                        user.SchoolId = Input.SchoolId.Value;
+                        _logger.LogInformation(
+                            "User {Email} manually assigned to school ID {SchoolId}",
+                            Input.Email,
+                            Input.SchoolId.Value
+                        );
+                    }
+                    else
+                    {
+                        // Selected school is inactive or doesn't exist
+                        user.SchoolId = null;
+                        _logger.LogWarning(
+                            "User {Email} tried to register with inactive/nonexistent school ID {SchoolId}",
+                            Input.Email,
+                            Input.SchoolId.Value
+                        );
+                    }
                 }
                 else
                 {

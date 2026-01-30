@@ -38,9 +38,9 @@ public class SchoolMappingService
             return null;
         }
 
-        // Find all schools that have this domain in their EmailDomain field
+        // Find all active schools that have this domain in their EmailDomain field
         var matchingSchools = await _context.Schools
-            .Where(s => s.EmailDomain != null && s.EmailDomain.Contains(emailDomain))
+            .Where(s => s.IsActive && s.EmailDomain != null && s.EmailDomain.Contains(emailDomain))
             .ToListAsync();
 
         // Filter schools where the domain matches exactly (handles comma-separated domains)
@@ -96,10 +96,10 @@ public class SchoolMappingService
     }
 
     /// <summary>
-    /// Validates if a domain is already associated with a school
+    /// Validates if a domain is already associated with an active school
     /// </summary>
     /// <param name="domain">Email domain to check</param>
-    /// <returns>True if domain is already in use, false otherwise</returns>
+    /// <returns>True if domain is already in use by an active school, false otherwise</returns>
     public async Task<bool> IsDomainInUseAsync(string domain)
     {
         if (string.IsNullOrWhiteSpace(domain))
@@ -109,7 +109,7 @@ public class SchoolMappingService
 
         var normalizedDomain = domain.Trim().ToLower();
         var schools = await _context.Schools
-            .Where(s => s.EmailDomain != null)
+            .Where(s => s.IsActive && s.EmailDomain != null)
             .ToListAsync();
 
         return schools.Any(s => s.EmailDomain!

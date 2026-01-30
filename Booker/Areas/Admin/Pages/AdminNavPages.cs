@@ -10,10 +10,12 @@ public static class AdminNavPages
     public static string Index => "Index";
     public static string Users => "Users";
     public static string Admins => "Admins";
+    public static string Schools => "Schools";
 
     public static string IndexNavClass(ViewContext viewContext) => PageNavClass(viewContext, Index);
     public static string UsersNavClass(ViewContext viewContext) => PageNavClass(viewContext, Users);
     public static string AdminsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Admins);
+    public static string SchoolsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Schools);
 
     public static string PageNavClass(ViewContext viewContext, string page)
     {
