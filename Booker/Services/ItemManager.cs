@@ -51,6 +51,9 @@ public class ItemManager
     }
 
     
+    /// <summary>
+    /// Gets an item by ID without school filtering. Use for admin scenarios only.
+    /// </summary>
     public Task<Item?> GetItemAsync(int id) =>
         _context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
@@ -58,6 +61,48 @@ public class ItemManager
             .Include(i => i.Book).ThenInclude(b => b.Level)
             .Include(i => i.User).ThenInclude(u => u.School)
             .FirstOrDefaultAsync(i => i.Id == id);
+
+    /// <summary>
+    /// Gets an item by ID with school isolation filtering.
+    /// Returns null if item doesn't exist or user doesn't have access to it (wrong school).
+    /// </summary>
+    public async Task<Item?> GetItemAsync(int id, User? currentUser)
+    {
+        var item = await _context.Items
+            .Include(i => i.Book).ThenInclude(b => b.Grades)
+            .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
+            .Include(i => i.User).ThenInclude(u => u.School)
+            .FirstOrDefaultAsync(i => i.Id == id);
+        
+        if (item == null) return null;
+        
+        // Apply school isolation
+        if (currentUser == null)
+        {
+            // Anonymous users can see items from all active schools
+            return item;
+        }
+        
+        if (currentUser.SchoolId.HasValue)
+        {
+            // User with school can only see items from their own school
+            if (item.User.SchoolId != currentUser.SchoolId.Value)
+            {
+                return null;
+            }
+        }
+        else
+        {
+            // User without school can only see items from users without a school
+            if (item.User.SchoolId != null)
+            {
+                return null;
+            }
+        }
+        
+        return item;
+    }
 
     public IAsyncEnumerable<Item> GetAllItemsAsync(User? currentUser = null)
     {

@@ -118,8 +118,7 @@ namespace Booker.Areas.Identity.Pages.Account
                     // Automatic assignment successful
                     user.SchoolId = autoAssignedSchoolId.Value;
                     _logger.LogInformation(
-                        "User {Email} automatically assigned to school ID {SchoolId} based on email domain",
-                        Input.Email,
+                        "User automatically assigned to school ID {SchoolId} based on email domain",
                         autoAssignedSchoolId.Value
                     );
                 }
@@ -134,8 +133,7 @@ namespace Booker.Areas.Identity.Pages.Account
                     {
                         user.SchoolId = Input.SchoolId.Value;
                         _logger.LogInformation(
-                            "User {Email} manually assigned to school ID {SchoolId}",
-                            Input.Email,
+                            "User manually assigned to school ID {SchoolId}",
                             Input.SchoolId.Value
                         );
                     }
@@ -144,8 +142,7 @@ namespace Booker.Areas.Identity.Pages.Account
                         // Selected school is inactive or doesn't exist
                         user.SchoolId = null;
                         _logger.LogWarning(
-                            "User {Email} tried to register with inactive/nonexistent school ID {SchoolId}",
-                            Input.Email,
+                            "User tried to register with inactive/nonexistent school ID {SchoolId}",
                             Input.SchoolId.Value
                         );
                     }
@@ -154,10 +151,7 @@ namespace Booker.Areas.Identity.Pages.Account
                 {
                     // Step 3: No school assignment (both auto and manual failed/not provided)
                     user.SchoolId = null;
-                    _logger.LogInformation(
-                        "User {Email} registered without school assignment",
-                        Input.Email
-                    );
+                    _logger.LogInformation("User registered without school assignment");
                 }
                 
                 user.Photo = "/img/default-profile-picture.jpg";

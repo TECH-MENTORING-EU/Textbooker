@@ -34,7 +34,7 @@ public class SchoolMappingService
         var emailDomain = ExtractDomain(email);
         if (string.IsNullOrEmpty(emailDomain))
         {
-            _logger.LogWarning("Could not extract domain from email: {Email}", email);
+            _logger.LogWarning("Could not extract domain from provided email");
             return null;
         }
 
