@@ -4,6 +4,14 @@
     using static DataContext;
     public static class SeedData
     {
+        /// <summary>
+        /// Seed data for Schools. Hogwort school with email domain for automatic assignment.
+        /// </summary>
+        public readonly static List<School> Schools =
+        [
+            new School { Id = 1, Name = "Hogwort", EmailDomain = "hogwart.edu.pl", SchemaName = "hogwort", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+        ];
+
         public readonly static List<Grade> Grades =
         [
             new Grade { Id = 1, GradeNumber = "1" },

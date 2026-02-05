@@ -26,7 +26,7 @@ namespace Booker.Services
                     {
                         Email = "user" + i + "@gmail.com",
                         UserName = "user" + i,
-                        School = "Śl.TZN",
+                        SchoolId = null, // No school assigned by default
                         Photo = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
                     }
                 );
