@@ -57,7 +57,7 @@ namespace Booker.Data
         }
 
         public override bool Equals(object? obj) => Equals(obj as School);
-        public override int GetHashCode() => Id.GetHashCode();
+        public override int GetHashCode() => Id;
 
         public static bool operator ==(School? left, School? right)
         {

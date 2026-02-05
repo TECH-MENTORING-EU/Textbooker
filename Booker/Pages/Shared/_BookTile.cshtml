@@ -29,7 +29,7 @@
                 <h2>@Model.Item.Book.Title</h2>
             </a>
 
-            <p>@Model.Item.Price.ToString("F2") zł</p>
+            <p>@Model.Item.Price.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("pl-PL")) zł</p>
             <p>
                 <small>
                     @(Model.Item.User.School?.Name ?? "Bez szkoły")

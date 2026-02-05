@@ -31,7 +31,7 @@
                    hx-vals='{"id": @school.Id}'
                    hx-target="closest tr"
                    hx-swap="outerHTML"
-                   hx-confirm="Na pewno chcesz dezaktywować szkołę @school.Name? Użytkownicy (@item.UserCount) stracą dostęp."
+                   hx-confirm="Na pewno chcesz dezaktywować szkołę @Html.Encode(school.Name)? Użytkownicy (@item.UserCount) stracą dostęp."
                    href=""
                    antiforgery
                    class="secondary"
@@ -43,7 +43,7 @@
                    hx-vals='{"id": @school.Id}'
                    hx-target="closest tr"
                    hx-swap="outerHTML"
-                   hx-confirm="Na pewno chcesz przywrócić szkołę @school.Name?"
+                   hx-confirm="Na pewno chcesz przywrócić szkołę @Html.Encode(school.Name)?"
                    href=""
                    antiforgery
                 >Przywróć</a>

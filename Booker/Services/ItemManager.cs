@@ -378,16 +378,11 @@ public class ItemManager
             return query;
         }
 
-        if (currentUser.SchoolId.HasValue)
-        {
+        return currentUser.SchoolId.HasValue
             // Show only items from users in the same school
-            return query.Where(i => i.User.SchoolId == currentUser.SchoolId.Value);
-        }
-        else
-        {
+            ? query.Where(i => i.User.SchoolId == currentUser.SchoolId.Value)
             // User has no school - show items from users without a school
-            return query.Where(i => i.User.SchoolId == null);
-        }
+            : query.Where(i => i.User.SchoolId == null);
     }
     
     private static IQueryable<Item> ApplyFilters(IQueryable<Item> query, Parameters input)

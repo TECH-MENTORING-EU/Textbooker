@@ -139,12 +139,16 @@ namespace Booker.Areas.Identity.Pages.Account
                     }
                     else
                     {
-                        // Selected school is inactive or doesn't exist
-                        user.SchoolId = null;
+                        // Selected school is inactive or doesn't exist - inform the user
                         _logger.LogWarning(
                             "User tried to register with inactive/nonexistent school ID {SchoolId}",
                             Input.SchoolId.Value
                         );
+                        ModelState.AddModelError(
+                            nameof(Input.SchoolId),
+                            "Wybrana szkoła nie jest dostępna. Wybierz inną szkołę."
+                        );
+                        return Page();
                     }
                 }
                 else
@@ -152,6 +156,8 @@ namespace Booker.Areas.Identity.Pages.Account
                     // Step 3: No school assignment (both auto and manual failed/not provided)
                     user.SchoolId = null;
                     _logger.LogInformation("User registered without school assignment");
+                    ModelState.AddModelError("Input.SchoolId", "Wybierz szkołę, aby ukończyć rejestrację.");
+                    return Page();
                 }
                 
                 user.Photo = "/img/default-profile-picture.jpg";

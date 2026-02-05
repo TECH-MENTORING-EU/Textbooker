@@ -236,6 +236,24 @@ public class SchoolService
             return null;
         }
 
+        // Validate email domain uniqueness (excluding this school)
+        if (!string.IsNullOrWhiteSpace(emailDomain))
+        {
+            var normalizedDomain = emailDomain.Trim().ToLower();
+            var domainInUse = await _context.Schools
+                .Where(s => s.Id != id && s.IsActive && s.EmailDomain != null)
+                .AnyAsync(s => s.EmailDomain!.ToLower().Contains(normalizedDomain));
+
+            if (domainInUse)
+            {
+                _logger.LogWarning(
+                    "Cannot update school {SchoolId}: email domain '{Domain}' is already in use by another active school",
+                    id, normalizedDomain
+                );
+                throw new InvalidOperationException($"Email domain '{normalizedDomain}' is already in use by another active school.");
+            }
+        }
+
         school.Name = name;
         school.EmailDomain = emailDomain;
 
@@ -278,7 +296,7 @@ public class SchoolService
         // Limit length
         if (schemaName.Length > 50)
         {
-            schemaName = schemaName.Substring(0, 50);
+            schemaName = schemaName[..50];
         }
         
         return string.IsNullOrEmpty(schemaName) ? "school" : schemaName;

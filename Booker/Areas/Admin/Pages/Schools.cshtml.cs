@@ -121,7 +121,17 @@ namespace Booker.Areas.Admin.Pages
                 return new BadRequestResult();
             }
 
-            var school = await _schoolService.UpdateSchoolAsync(id, name.Trim(), emailDomain?.Trim());
+            School? school;
+            try
+            {
+                school = await _schoolService.UpdateSchoolAsync(id, name.Trim(), emailDomain?.Trim());
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Failed to update school {SchoolId}: domain conflict", id);
+                return new BadRequestObjectResult(ex.Message);
+            }
+
             if (school == null)
             {
                 return NotFound();
