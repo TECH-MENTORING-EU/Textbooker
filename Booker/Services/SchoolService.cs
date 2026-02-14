@@ -153,7 +153,8 @@ public class SchoolService
             _logger.LogWarning("Attempted to reactivate non-existent school with ID: {SchoolId}", id);
             return false;
         }
-        
+
+        school.IsActive = true;
         school.DeactivatedAt = null;
 
         await _context.SaveChangesAsync();
