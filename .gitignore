@@ -396,6 +396,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-
-# Entity Framework Migrations
-**/Migrations/
+/Booker/.config/dotnet-tools.json

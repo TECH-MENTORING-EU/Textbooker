@@ -90,77 +90,26 @@ public class SchoolService
     /// <returns>The created school</returns>
     public async Task<School> CreateSchoolAsync(string name, string? emailDomain = null)
     {
-        // Generate schema name from school name
-        var schemaName = GenerateSchemaName(name);
         
-        // Check if schema name already exists
-        var existingSchool = await _context.Schools
-            .FirstOrDefaultAsync(s => s.SchemaName == schemaName);
-        
-        if (existingSchool != null)
-        {
-            // Add unique suffix if schema name exists
-            var suffix = 1;
-            while (await _context.Schools.AnyAsync(s => s.SchemaName == $"{schemaName}_{suffix}"))
-            {
-                suffix++;
-            }
-            schemaName = $"{schemaName}_{suffix}";
-        }
 
         var school = new School
         {
             Name = name,
             EmailDomain = emailDomain,
-            SchemaName = schemaName,
-            IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Schools.Add(school);
         await _context.SaveChangesAsync();
 
-        // Create the database schema
-        await CreateSchemaAsync(schemaName);
 
         _logger.LogInformation(
-            "Created new school: {SchoolName} (ID: {SchoolId}, Schema: {SchemaName})",
+            "Created new school: {SchoolName} (ID: {SchoolId}",
             school.Name,
-            school.Id,
-            school.SchemaName
+            school.Id
         );
 
         return school;
-    }
-
-    /// <summary>
-    /// Creates a database schema for a school.
-    /// </summary>
-    /// <param name="schemaName">Name of the schema to create</param>
-    private async Task CreateSchemaAsync(string schemaName)
-    {
-        try
-        {
-            // Validate schema name to prevent SQL injection
-            if (!IsValidSchemaName(schemaName))
-            {
-                throw new ArgumentException($"Invalid schema name: {schemaName}");
-            }
-
-            // Create the schema using raw SQL
-            // Schema name is validated to be alphanumeric with underscores only
-            var sql = $"IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = N'{schemaName}') EXEC('CREATE SCHEMA [{schemaName}]')";
-            #pragma warning disable EF1002 // Schema name is validated by IsValidSchemaName to prevent SQL injection
-            await _context.Database.ExecuteSqlRawAsync(sql);
-            #pragma warning restore EF1002
-
-            _logger.LogInformation("Created database schema: {SchemaName}", schemaName);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create database schema: {SchemaName}", schemaName);
-            throw;
-        }
     }
 
     /// <summary>
@@ -178,7 +127,6 @@ public class SchoolService
             return false;
         }
 
-        school.IsActive = false;
         school.DeactivatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -186,8 +134,7 @@ public class SchoolService
         _logger.LogInformation(
             "Soft deleted school: {SchoolName} (ID: {SchoolId}). Schema {SchemaName} preserved.",
             school.Name,
-            school.Id,
-            school.SchemaName
+            school.Id
         );
 
         return true;

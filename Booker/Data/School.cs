@@ -20,19 +20,14 @@ namespace Booker.Data
         /// </summary>
         [MaxLength(500)]
         public string? EmailDomain { get; set; }
-        
-        /// <summary>
-        /// Database schema name for this school's data isolation.
-        /// </summary>
-        [MaxLength(100)]
-        public string? SchemaName { get; set; }
-        
+
+
         /// <summary>
         /// Indicates if the school is active. Soft delete sets this to false.
         /// Inactive schools are not selectable/usable for normal users.
         /// </summary>
         public bool IsActive { get; set; } = true;
-        
+
         /// <summary>
         /// Date and time when the school was created.
         /// </summary>

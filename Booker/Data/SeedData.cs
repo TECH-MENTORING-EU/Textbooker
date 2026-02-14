@@ -9,7 +9,7 @@
         /// </summary>
         public readonly static List<School> Schools =
         [
-            new School { Id = 1, Name = "Hogwort", EmailDomain = "hogwart.edu.pl", SchemaName = "hogwort", IsActive = true, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new School { Id = 1, Name = "Hogwort", EmailDomain = "hogwart.edu.pl", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         ];
 
         public readonly static List<Grade> Grades =
