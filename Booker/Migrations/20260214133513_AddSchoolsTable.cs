@@ -11,6 +11,11 @@ namespace Booker.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+
+            migrationBuilder.DropColumn(
+             name: "School",
+             table: "AspNetUsers");
+
             migrationBuilder.AddColumn<int>(
                 name: "SchoolId",
                 table: "AspNetUsers",
@@ -56,6 +61,13 @@ namespace Booker.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<string>(
+                name: "School",
+                table: "AspNetUsers",
+                type: "nvarchar(max)",
+                nullable: false,
+                defaultValue: "");
+
             migrationBuilder.DropForeignKey(
                 name: "FK_AspNetUsers_Schools_SchoolId",
                 table: "AspNetUsers");
