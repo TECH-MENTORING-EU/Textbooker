@@ -131,7 +131,7 @@ namespace Booker.Areas.Identity.Pages.Account
                     
                     if (selectedSchool != null)
                     {
-                        user.SchoolId = Input.SchoolId.Value;
+                        user.SchoolId = Input.SchoolId.Value;                       
                         _logger.LogInformation(
                             "User manually assigned to school ID {SchoolId}",
                             Input.SchoolId.Value
