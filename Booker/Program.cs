@@ -147,11 +147,19 @@ app.UseRateLimiter();
 
 app.MapRazorPages();
 
+if (configuration.GetValue<bool>("MaintenanceMode"))
+{
+    Log.Information("Maintenance mode is enabled. Skipping database migrations and initialization.");
+    app.Run();
+    return;
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
 }
+
 await app.MigrateDatabaseAsync(configuration);
 
 if (app.Environment.IsDevelopment())

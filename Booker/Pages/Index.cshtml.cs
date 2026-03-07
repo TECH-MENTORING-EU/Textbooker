@@ -11,10 +11,12 @@ namespace Booker.Pages
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
+        private readonly IConfiguration _configuration;
         private readonly ItemManager _itemManager;
         private readonly StaticDataManager _staticDataManager;
         private readonly UserManager<User> _userManager;
 
+        public bool IsMaintenanceMode { get; set; }
         public List<int> ItemIds { get; set; } = null!;
         public StaticDataManager.Parameters Params { get; set; } = null!;
         public List<SelectListItem>? Grades { get; set; }
@@ -23,12 +25,14 @@ namespace Booker.Pages
 
         public IndexModel(
             ILogger<IndexModel> logger,
+            IConfiguration configuration,
             ItemManager itemManager,
             StaticDataManager staticDataManager,
             UserManager<User> userManager
             )
         {
             _logger = logger;
+            _configuration = configuration;
             _itemManager = itemManager;
             _staticDataManager = staticDataManager;
             _userManager = userManager;
@@ -48,6 +52,13 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
+            IsMaintenanceMode = _configuration.GetValue<bool>("MaintenanceMode");
+
+            if (IsMaintenanceMode)
+            {
+                return Page();
+            }
+
             await LoadSelects();
 
             Params = await _staticDataManager.ConvertParametersAsync(
