@@ -1,5 +1,6 @@
 using Booker.Areas.Identity.Utilities;
 using Booker.Data;
+using Booker.Middleware;
 using Booker.Services;
 using Booker.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -26,6 +27,8 @@ IConfiguration configuration = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
     .AddUserSecrets<Program>() // Replace `Program` with your project's main class
     .AddEnvironmentVariables().Build();
+
+var isMaintenanceEnabled = configuration.GetValue<bool>("Maintenance");
 
 
 // Register IMemoryCache in DI container
@@ -126,6 +129,8 @@ else
     app.UseStaticFiles();
 }
 
+app.UseMiddleware<MaintenanceModeMiddleware>();
+
 app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
@@ -152,13 +157,17 @@ if (app.Environment.IsDevelopment())
     app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
 }
-await app.MigrateDatabaseAsync(configuration);
 
-if (app.Environment.IsDevelopment())
+if (!isMaintenanceEnabled)
 {
-    await app.InitializeDatabaseAsync();
-}
+    await app.MigrateDatabaseAsync(configuration);
 
-await app.InitializeRolesAsync();
+    if (app.Environment.IsDevelopment())
+    {
+        await app.InitializeDatabaseAsync();
+    }
+
+    await app.InitializeRolesAsync();
+}
 
 app.Run();
