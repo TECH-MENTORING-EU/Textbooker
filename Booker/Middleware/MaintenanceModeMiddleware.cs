@@ -6,7 +6,7 @@ namespace Booker.Middleware;
 
 public sealed class MaintenanceModeMiddleware(RequestDelegate next, IConfiguration configuration, IWebHostEnvironment environment)
 {
-    private readonly string maintenancePagePath = Path.Combine(environment.ContentRootPath, "Pages", "_MaintenancePage.html");
+    private readonly string maintenancePagePath = Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "_MaintenancePage.html");
 
     public async Task InvokeAsync(HttpContext context)
     {
