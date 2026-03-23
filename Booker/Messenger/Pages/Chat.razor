@@ -1,8 +1,87 @@
 ﻿@page "/Chat"
-
 <PageTitle>Chat</PageTitle>
 
 <section class="chat-page">
-    <h1>Chat</h1>
+    <div class="chat-sidebar">
+        <header class="chat-sidebar-header">
+            <h1>Czat</h1>
+        </header>
+        <div class="chat-conversations">
+            @foreach (var conversation in _conversations)
+            {
+                <button class="conversation-tile @(conversation.Id == _selectedConversation?.Id ? "active" : "")"
+                        @onclick="() => SelectConversation(conversation)">
+                    <span class="conversation-name">@conversation.UserName</span>
+                    <span class="conversation-last-message">@conversation.LastMessage</span>
+                </button>
+            }
+        </div>
+    </div>
 
+    <div class="chat-main">
+        @if (_selectedConversation != null)
+        {
+            <header class="chat-main-header">
+                <h2>@_selectedConversation.UserName</h2>
+                <small>Ostatnie logowanie: @FormatDate(_selectedConversation.LastMessageUtc)</small>
+            </header>
+
+            <div class="chat-messages" @ref="_messagesContainer">
+                @if (_hasOlderMessages)
+                {
+                    <div class="load-older">
+                        <button @onclick="LoadOlderMessages" disabled="@_isLoadingOlder">
+                            @if (_isLoadingOlder)
+                            {
+                                <span>Ładowanie...</span>
+                            }
+                            else
+                            {
+                                <span>Załaduj starsze wiadomości</span>
+                            }
+                        </button>
+                    </div>
+                }
+
+                @{
+                    DateTime? lastDate = null;
+                }
+                @foreach (var msg in _messages)
+                {
+                    var msgDate = msg.CreatedUtc.ToLocalTime().Date;
+                    if (lastDate == null || lastDate != msgDate)
+                    {
+                        <div class="date-separator">
+                            <span>@msgDate.ToString("dd MMMM yyyy")</span>
+                        </div>
+                        lastDate = msgDate;
+                    }
+
+                    <div class="message-row @(IsLoggedUser(msg.SenderId) ? "mine" : "theirs")">
+                        <div class="message-bubble">
+                            <p class="message-content">@msg.Content</p>
+                            <span class="message-time">@FormatShortDate(msg.CreatedUtc)</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <footer class="chat-input-area">
+                <textarea class="chat-input"
+                          placeholder="Wpisz wiadomość..."
+                          @bind="_newMessageText"
+                          @onkeydown="HandleKeyDown"
+                          rows="3"></textarea>
+                <button class="send-button" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(_newMessageText)">
+                    Wyślij
+                </button>
+            </footer>
+        }
+        else
+        {
+            <div class="chat-placeholder">
+                <p>Wybierz rozmowę z listy po lewej stronie</p>
+            </div>
+        }
+    </div>
 </section>
