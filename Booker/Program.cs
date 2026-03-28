@@ -1,4 +1,4 @@
-using Booker.Areas.Identity.Utilities;
+﻿using Booker.Areas.Identity.Utilities;
 using Booker.Data;
 using Booker.Middleware;
 using Booker.Services;
@@ -129,6 +129,59 @@ else
     app.UseStaticFiles();
 }
 
+if (configuration.GetValue<bool>("MaintenanceMode"))
+{
+    app.Run(async (context) =>
+    {
+        context.Response.StatusCode = 503;
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.WriteAsync("""
+            <!DOCTYPE html>
+            <html lang="pl">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>TextBooker – Wracamy we wrześniu!</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+                <link rel="icon" type="image/png" href="/favicons/favicon-96x96.png" sizes="96x96" />
+                <link rel="stylesheet" href="/css/site.css" />
+            </head>
+            <body>
+                <main class="container">
+                    <section class="maintenance">
+                        <h1>🎒 Wracamy we wrześniu wraz z obsługą kilku szkół</h1>
+                        <p class="subtitle">
+                            Tymczasem zapraszamy na webinar <strong>On .NET Live</strong>, w którym wystąpili członkowie naszego zespołu,
+                            opowiadając o programie nauki, wykorzystywaniu AI w projekcie oraz web developmencie aplikacji
+                            z użyciem technologii <strong>Razor Pages</strong> i <strong>HTMX</strong>.
+                        </p>
+                        <div class="video-wrapper">
+                            <iframe
+                                src="https://www.youtube.com/embed/OEfsOWjlPF0"
+                                title="On .NET Live – TextBooker"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                        <div class="social-links">
+                            <a href="https://www.facebook.com/profile.php?id=61578317232992" target="_blank">Facebook</a>
+                            <a href="https://www.instagram.com/textbooker.pl/" target="_blank">Instagram</a>
+                            <a href="mailto:support@textbooker.pl">support@textbooker.pl</a>
+                        </div>
+                    </section>
+                </main>
+            </body>
+            </html>
+            """);
+    });
+
+    Log.Information("Maintenance mode is enabled. Skipping database migrations and initialization.");
+    app.Run();
+    return;
+}
+
 app.UseMiddleware<MaintenanceModeMiddleware>();
 
 app.UseRouting();
@@ -158,16 +211,13 @@ if (app.Environment.IsDevelopment())
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
 }
 
-if (!isMaintenanceEnabled)
+await app.MigrateDatabaseAsync(configuration);
+
+if (app.Environment.IsDevelopment())
 {
-    await app.MigrateDatabaseAsync(configuration);
-
-    if (app.Environment.IsDevelopment())
-    {
-        await app.InitializeDatabaseAsync();
-    }
-
-    await app.InitializeRolesAsync();
+    await app.InitializeDatabaseAsync();
 }
+
+await app.InitializeRolesAsync();
 
 app.Run();
