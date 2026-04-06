@@ -19,7 +19,7 @@ public class PhotosManager
         _config = config;
     }
 
-    public async Task<Uri> AddPhotoAsync(Stream stream, string fileExtension)
+    public async Task<string> AddPhotoAsync(Stream stream, string fileExtension)
     {
         var bucketName = _config["AWS:BucketName"];
 
@@ -36,12 +36,9 @@ public class PhotosManager
 
         var response = await _s3Client.PutObjectAsync(putRequest);
 
-        var publicUrl = _config["AWS:PublicUrl"];
         if (response.HttpStatusCode == HttpStatusCode.OK)
         {
-            var url = $"{publicUrl}/{fileName}";
-            _logger.LogInformation("Uploaded photo URL: {Url}", url);
-            return new Uri(url);
+            return fileName;
         }
         else
         {
@@ -59,7 +56,7 @@ public class PhotosManager
         var deleteRequest = new DeleteObjectRequest
         {
             BucketName = bucketName,
-            Key = photoUri.Substring(photoUri.LastIndexOf('/') + 1)
+            Key = photoUri
         };
         try
         {
@@ -70,6 +67,10 @@ public class PhotosManager
             _logger.LogWarning($"Error deleting old photo: {ex.Message}");
         }
     }
-
+    public string GetPhotoUrl(string photoUri)
+    {
+        var publicUrl = _config["AWS:PublicUrl"];
+        return $"{publicUrl}/{photoUri}";
+    }
 
 }

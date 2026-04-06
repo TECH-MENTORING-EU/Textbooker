@@ -39,7 +39,7 @@ public class ItemManager
         decimal Price,
         List<Stream>? ImageStreams = null,
         List<string>? ImageFileExtensions = null,
-        string? ExistingImageBlobNames = null
+        string? ExistingImageFileNames = null
     );
 
     public ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager, ILogger<ItemManager> logger)
@@ -175,17 +175,17 @@ public class ItemManager
         string allPhotos = "";
         if (model.ImageStreams != null && model.ImageStreams.Count > 0)
         {
-            var photoUris = new List<string>();
+            var photoFileNames = new List<string>();
             for (int i = 0; i < model.ImageStreams.Count; i++)
             {
-                var uri = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
-                photoUris.Add(uri.ToString());
+                var fileName = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
+                photoFileNames.Add(fileName.ToString());
             }
-            allPhotos = string.Join(";", photoUris);
+            allPhotos = string.Join(";", photoFileNames);
         }
-        else if (!string.IsNullOrEmpty(model.ExistingImageBlobNames))
+        else if (!string.IsNullOrEmpty(model.ExistingImageFileNames))
         {
-            allPhotos = model.ExistingImageBlobNames;
+            allPhotos = model.ExistingImageFileNames;
         }
 
         var item = new Item
@@ -221,13 +221,13 @@ public class ItemManager
         var book = await _context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
-        string allPhotos = model.ExistingImageBlobNames ?? "";
+        string allPhotos = model.ExistingImageFileNames  ?? "";
 
         if (model.ImageStreams != null && model.ImageStreams.Count > 0)
         {
-            if (!string.IsNullOrEmpty(model.ExistingImageBlobNames))
+            if (!string.IsNullOrEmpty(model.ExistingImageFileNames ))
             {
-                var oldPhotos = model.ExistingImageBlobNames.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                var oldPhotos = model.ExistingImageFileNames .Split(';', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var photo in oldPhotos)
                     await _photosManager.DeletePhotoAsync(photo);
             }

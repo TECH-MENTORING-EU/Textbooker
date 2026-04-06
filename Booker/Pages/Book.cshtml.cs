@@ -9,7 +9,6 @@ using SQLitePCL;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 
-
 namespace Booker.Pages
 {
     public class BookModel : PageModel
@@ -19,19 +18,22 @@ namespace Booker.Pages
         private readonly FavoritesManager _favoritesManager;
         private readonly IAuthorizationService _authService;
         private readonly ILogger<BookModel> _logger;
+        private readonly PhotosManager _photosManager;
+        public List<string> Photos { get; set; } = new();
 
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
 
-        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger)
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger, PhotosManager photosManager)
         {
             _userManager = userManager;
             _itemManager = itemManager;
             _favoritesManager = favoritesManager;
             _authService = authService;
             _logger = logger;
+            _photosManager = photosManager;
         }
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -42,6 +44,10 @@ namespace Booker.Pages
                 return NotFound();
             }
 
+            Photos = (item.Photo ?? "")
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(f => _photosManager.GetPhotoUrl(f.Trim()))
+            .ToList();
             BookItem = item;
 
             var userId = _userManager.GetUserId(User).IntOrDefault();
@@ -72,7 +78,9 @@ namespace Booker.Pages
 
             BookItem = item;
             
+
             var userId = _userManager.GetUserId(User).IntOrDefault();
+
 
             if (userId == -1)
             {
