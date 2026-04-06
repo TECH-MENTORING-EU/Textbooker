@@ -1,48 +1,69 @@
+﻿using Amazon.S3;
+using Amazon.S3.Model;
 using System;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
+using System.IO;
+using System.Net;
 
 namespace Booker.Services;
 
 public class PhotosManager
 {
     private readonly ILogger<PhotosManager> _logger;
-    private readonly BlobServiceClient _blobServiceClient;
+    private readonly IAmazonS3 _s3Client;
     private readonly IConfiguration _config;
 
-    public PhotosManager(ILogger<PhotosManager> logger, BlobServiceClient blobServiceClient, IConfiguration config)
+    public PhotosManager(ILogger<PhotosManager> logger, IAmazonS3 s3Client, IConfiguration config)
     {
         _logger = logger;
-        _blobServiceClient = blobServiceClient;
+        _s3Client = s3Client;
         _config = config;
     }
 
     public async Task<Uri> AddPhotoAsync(Stream stream, string fileExtension)
     {
-        var containerName = _config["AzureStorage:ContainerName"];
-        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-        await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+        var bucketName = _config["AWS:BucketName"];
 
         var fileName = Guid.NewGuid().ToString() + fileExtension;
-        var blobClient = containerClient.GetBlobClient(fileName);
 
-        await blobClient.UploadAsync(stream, overwrite: true);
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = bucketName,
+            Key = fileName,
+            InputStream = stream,
+            CannedACL = S3CannedACL.PublicRead,
+            UseChunkEncoding = false
+        };
 
-        return blobClient.Uri;
+        var response = await _s3Client.PutObjectAsync(putRequest);
+
+        var publicUrl = _config["AWS:PublicUrl"];
+        if (response.HttpStatusCode == HttpStatusCode.OK)
+        {
+            var url = $"{publicUrl}/{fileName}";
+            _logger.LogInformation("Uploaded photo URL: {Url}", url);
+            return new Uri(url);
+        }
+        else
+        {
+            _logger.LogError("Failed to upload photo to S3. HTTP Status: {StatusCode}", response.HttpStatusCode);
+            throw new Exception("Nie można dodać zdjęcia. Spróbuj ponownie później.");
+        }
     }
 
     public async Task DeletePhotoAsync(string photoUri)
     {
         if (string.IsNullOrEmpty(photoUri)) return;
 
-        var containerName = _config["AzureStorage:ContainerName"];
-        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var bucketName = _config["AWS:BucketName"];
+
+        var deleteRequest = new DeleteObjectRequest
+        {
+            BucketName = bucketName,
+            Key = photoUri.Substring(photoUri.LastIndexOf('/') + 1)
+        };
         try
         {
-            var oldBlobName = Path.GetFileName(new Uri(photoUri).LocalPath);
-            var oldBlobClient = containerClient.GetBlobClient(oldBlobName);
-            await oldBlobClient.DeleteIfExistsAsync();
+            await _s3Client.DeleteObjectAsync(deleteRequest);
         }
         catch (Exception ex)
         {
