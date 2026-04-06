@@ -3,6 +3,7 @@ using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Identity;
 
 namespace Booker.Pages.Shared.Components.ItemGallery;
 
@@ -10,6 +11,7 @@ public class ItemGalleryViewComponent : ViewComponent
 {
     private readonly ItemManager _itemManager;
     private readonly PhotosManager _photosManager;
+    private readonly UserManager<User> _userManager;
     const int PageSize = 25;
 
     public record ItemsListModel(
@@ -25,9 +27,10 @@ public class ItemGalleryViewComponent : ViewComponent
         StaticDataManager.Parameters Params
     );
 
-    public ItemGalleryViewComponent(ItemManager itemManager, PhotosManager photosManager)
+    public ItemGalleryViewComponent(ItemManager itemManager, UserManager<User> userManager, PhotosManager photosManager)
     {
         _itemManager = itemManager;
+        _userManager = userManager;
         _photosManager = photosManager;
     }
 
@@ -46,7 +49,11 @@ public class ItemGalleryViewComponent : ViewComponent
             );
         }
 
-        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize);
+        var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true 
+            ? await _userManager.GetUserAsync(UserClaimsPrincipal) 
+            : null;
+
+        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize, currentUser);
         if (!showHidden)
         {
             query = query.Where(i => i.IsVisible);

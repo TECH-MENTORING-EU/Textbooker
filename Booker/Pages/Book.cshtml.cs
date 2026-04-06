@@ -38,7 +38,8 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var item = await _itemManager.GetItemAsync(id);
+            var currentUser = await _userManager.GetUserAsync(User);
+            var item = await _itemManager.GetItemAsync(id, currentUser);
             if (item == null)
             {
                 return NotFound();
@@ -69,7 +70,8 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetEmailAsync(int id)
         {
-            var item = await _itemManager.GetItemAsync(id);
+            var currentUser = await _userManager.GetUserAsync(User);
+            var item = await _itemManager.GetItemAsync(id, currentUser);
 
             if (item == null)
             {
@@ -98,7 +100,8 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostReserveAsync(int id, bool reserve)
         {
-            var item = await _itemManager.GetItemAsync(id);
+            var currentUser = await _userManager.GetUserAsync(User);
+            var item = await _itemManager.GetItemAsync(id, currentUser);
             if (item == null)
             {
                 return NotFound();

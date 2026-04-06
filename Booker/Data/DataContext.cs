@@ -12,6 +12,7 @@ namespace Booker.Data
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Level> Levels { get; set; }
+        public DbSet<School> Schools { get; set; }
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -35,6 +36,8 @@ namespace Booker.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<School>().HasData(SeedData.Schools);
+
             modelBuilder.Entity<Subject>().HasData(SeedData.Subjects);
 
             modelBuilder.Entity<Grade>().HasData(SeedData.Grades);
@@ -57,6 +60,7 @@ namespace Booker.Data
 
             modelBuilder.Entity<User>(u =>
             {
+                u.HasOne(u => u.School).WithMany(s => s.Users).HasForeignKey(u => u.SchoolId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
                 u.HasMany(u => u.Items).WithOne(i => i.User);
                 u.HasMany(u => u.Favorites).WithMany()
                     .UsingEntity("UserFavorites",
