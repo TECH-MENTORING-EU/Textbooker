@@ -21,7 +21,7 @@ public class PhotosManager
 
     public async Task<string> AddPhotoAsync(Stream stream, string fileExtension)
     {
-        var bucketName = _config["AWS:BucketName"];
+        var bucketName = _config["S3:BucketName"];
 
         var fileName = Guid.NewGuid().ToString() + fileExtension;
 
@@ -51,7 +51,7 @@ public class PhotosManager
     {
         if (string.IsNullOrEmpty(photoUri)) return;
 
-        var bucketName = _config["AWS:BucketName"];
+        var bucketName = _config["S3:BucketName"];
 
         var deleteRequest = new DeleteObjectRequest
         {
@@ -69,7 +69,7 @@ public class PhotosManager
     }
     public string GetPhotoUrl(string photoUri)
     {
-        var publicUrl = _config["AWS:PublicUrl"];
+        var publicUrl = _config["CF:PublicUrl"];
         return $"{publicUrl}/{photoUri}";
     }
 

@@ -21,11 +21,11 @@ namespace Booker.Services
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddSingleton<IAmazonS3>(x => new AmazonS3Client(
-                configuration["AWS:AccessKeyId"], 
-                configuration["AWS:SecretAccessKey"],
+                configuration["S3:AccessKeyId"], 
+                configuration["S3:SecretAccessKey"],
                 new AmazonS3Config
                 {
-                    ServiceURL = configuration["AWS:ServiceUrl"],
+                    ServiceURL = configuration["CF:ServiceUrl"],
                     ForcePathStyle = true
                 }));
 
