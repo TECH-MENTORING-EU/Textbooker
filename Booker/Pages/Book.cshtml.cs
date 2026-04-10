@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using System.Globalization;
 using Booker.Services;
 using Booker.Utilities;
-using SQLitePCL;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 
@@ -24,6 +23,7 @@ namespace Booker.Pages
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
+        public int ViewCount { get; set; }
 
         public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger)
         {
@@ -57,6 +57,16 @@ namespace Booker.Pages
             {
                 _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
                 return NotFound();
+            }
+
+            if (userId != -1 && !IsCurrentUserOwner)
+            {
+                await _itemManager.RecordViewAsync(id, userId);
+            }
+
+            if (IsCurrentUserOwner)
+            {
+                ViewCount = await _itemManager.GetViewCountAsync(id);
             }
 
             return Page();
