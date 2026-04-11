@@ -314,7 +314,6 @@ namespace Booker.Services
                 UserName = defaultUserName,
                 Email = defaultEmail,
                 EmailConfirmed = true,
-                School = "ŚlTZN",
                 Photo = "/img/default-profile-picture.jpg"
             };
 
