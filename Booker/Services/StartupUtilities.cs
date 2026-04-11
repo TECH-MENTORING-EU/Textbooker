@@ -16,6 +16,7 @@ using System.Net;
 
 namespace Booker.Services
 {
+    // CLASS-SCOPE-LIMIT: Startup helpers intentionally avoid default-user creation unless all required `DefaultUser` configuration values are provided.
     public static partial class StartupUtilities
     {
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
@@ -275,6 +276,58 @@ namespace Booker.Services
             if (!await roleManager.RoleExistsAsync("Admin"))
                 await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
 
+            return app;
+        }
+
+        public static async Task<WebApplication> InitializeDefaultUserAsync(this WebApplication app)
+        {
+            using var scope = app.Services.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+            var secretsConfiguration = new ConfigurationBuilder()
+                .AddUserSecrets<Program>(optional: true)
+                .Build();
+
+            var defaultUserName = secretsConfiguration["DefaultUser:UserName"];
+            var defaultPassword = secretsConfiguration["DefaultUser:Password"];
+            var defaultEmail = secretsConfiguration["DefaultUser:Email"];
+
+            if (string.IsNullOrWhiteSpace(defaultUserName)
+                || string.IsNullOrWhiteSpace(defaultPassword)
+                || string.IsNullOrWhiteSpace(defaultEmail))
+            {
+                logger.LogInformation("Default user initialization skipped because `DefaultUser` configuration is missing.");
+                return app;
+            }
+
+            var existingUser = await userManager.FindByNameAsync(defaultUserName);
+            if (existingUser != null)
+            {
+                return app;
+            }
+
+            var user = new User
+            {
+                UserName = defaultUserName,
+                Email = defaultEmail,
+                EmailConfirmed = true,
+                School = "ŚlTZN",
+                Photo = "/img/default-profile-picture.jpg"
+            };
+
+            var result = await userManager.CreateAsync(user, defaultPassword);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    logger.LogError("Nie udało się utworzyć domyślnego użytkownika. {Code}: {Description}", error.Code, error.Description);
+                }
+
+                return app;
+            }
+
+            logger.LogInformation("Utworzono domyślnego użytkownika: {UserName}", defaultUserName);
             return app;
         }
 

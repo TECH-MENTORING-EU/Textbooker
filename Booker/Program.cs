@@ -169,6 +169,7 @@ await app.MigrateDatabaseAsync(configuration);
 if (app.Environment.IsDevelopment())
 {
     await app.InitializeDatabaseAsync();
+    await app.InitializeDefaultUserAsync();
 }
 
 
