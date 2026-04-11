@@ -29,10 +29,10 @@
                 <h2>@Model.Item.Book.Title</h2>
             </a>
 
-            <p>@Model.Item.Price zł</p>
+            <p>@Model.Item.Price.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("pl-PL")) zł</p>
             <p>
                 <small>
-                    @(string.IsNullOrWhiteSpace(Model.Item.User.School) ? "Nieznana szkoła" : Model.Item.User.School)
+                    @(Model.Item.User.School?.Name ?? "Bez szkoły")
                 </small>
             </p>
         </div>

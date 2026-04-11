@@ -42,6 +42,13 @@
             <input asp-for="Input.ConfirmPassword" autocomplete="new-password" required placeholder="Hasło" />
             <small><span asp-validation-for="Input.ConfirmPassword"></span></small>
         </div>
+        <div>
+            <label asp-for="Input.SchoolId">Szkoła (opcjonalne):</label>
+            <select asp-for="Input.SchoolId" asp-items="Model.AvailableSchools">
+                <option value="">-- Wybierz szkołę (opcjonalnie) --</option>
+            </select>
+            <small><span asp-validation-for="Input.SchoolId"></span></small>
+        </div>
 
         <hr />
 
