@@ -43,7 +43,7 @@ public class PhotosManager
         else
         {
             _logger.LogError("Failed to upload photo to S3. HTTP Status: {StatusCode}", response.HttpStatusCode);
-            throw new Exception("Nie można dodać zdjęcia. Spróbuj ponownie później.");
+            throw new Exception("Nie można dodać zdjęcia. Spróbuj ponownie później albo skontaktuj się z wsparciem.");
         }
     }
 

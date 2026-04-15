@@ -5,12 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Booker.Services;
 
-public class ItemManager
+public class ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager, ILogger<ItemManager> logger)
 {
-    private readonly DataContext _context;
-    private readonly StaticDataManager _staticDataManager;
-    private readonly PhotosManager _photosManager;
-    private readonly ILogger<ItemManager> _logger;
 
     [Flags]
     public enum Status
@@ -42,20 +38,13 @@ public class ItemManager
         string? ExistingImageFileNames = null
     );
 
-    public ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager, ILogger<ItemManager> logger)
-    {
-        _context = context;
-        _staticDataManager = staticDataManager;
-        _photosManager = photosManager;
-        _logger = logger;
-    }
 
     
     /// <summary>
     /// Gets an item by ID without school filtering. Use for admin scenarios only.
     /// </summary>
     public Task<Item?> GetItemAsync(int id) =>
-        _context.Items
+        context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
@@ -68,7 +57,7 @@ public class ItemManager
     /// </summary>
     public async Task<Item?> GetItemAsync(int id, User? currentUser)
     {
-        var item = await _context.Items
+        var item = await context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
@@ -198,21 +187,21 @@ public class ItemManager
 
         var title = model.Parameters.Title;
 
-        var books = await _staticDataManager.GetBooksByTitleAsync(title);
+        var books = await staticDataManager.GetBooksByTitleAsync(title);
         if (books.Count == 0) return Status.InvalidTitle;
 
         Status status = 0;
 
-        var subjects = await _staticDataManager.GetSubjectsByBookTitleAsync(title);
+        var subjects = await staticDataManager.GetSubjectsByBookTitleAsync(title);
         if (!subjects.Contains(model.Parameters.Subject)) status |= Status.InvalidSubject | Status.Error;
 
-        var grades = await _staticDataManager.GetGradesByBookTitleAsync(title);
+        var grades = await staticDataManager.GetGradesByBookTitleAsync(title);
         if (!grades.SequenceEqual(model.Parameters.Grades)) status |= Status.InvalidGrades | Status.Error;
 
-        var levels = await _staticDataManager.GetLevelsByBookTitleAsync(title);
+        var levels = await staticDataManager.GetLevelsByBookTitleAsync(title);
         if (!levels.Contains(model.Parameters.Level)) status |= Status.InvalidLevel | Status.Error;
 
-        var book = (await _staticDataManager.GetBooksByParamsAsync(model.Parameters)).FirstOrDefault();
+        var book = (await staticDataManager.GetBooksByParamsAsync(model.Parameters)).FirstOrDefault();
         if (book == null) status |= Status.NotFound | Status.Error;
 
         if (status.HasFlag(Status.Error)) return status;
@@ -227,7 +216,7 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult;
 
-        var book = await _context.Books.FindAsync(validationResult.Id);
+        var book = await context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
         string allPhotos = "";
@@ -236,7 +225,7 @@ public class ItemManager
             var photoFileNames = new List<string>();
             for (int i = 0; i < model.ImageStreams.Count; i++)
             {
-                var fileName = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
+                var fileName = await photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
                 photoFileNames.Add(fileName.ToString());
             }
             allPhotos = string.Join(";", photoFileNames);
@@ -263,8 +252,8 @@ public class ItemManager
     private async Task<int> AddItemNVAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
-        _context.Items.Add(item);
-        await _context.SaveChangesAsync();
+        context.Items.Add(item);
+        await context.SaveChangesAsync();
         return item.Id;
     }
 
@@ -276,7 +265,7 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult.Status;
 
-        var book = await _context.Books.FindAsync(validationResult.Id);
+        var book = await context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
         string allPhotos = model.ExistingImageFileNames  ?? "";
@@ -287,13 +276,13 @@ public class ItemManager
             {
                 var oldPhotos = model.ExistingImageFileNames .Split(';', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var photo in oldPhotos)
-                    await _photosManager.DeletePhotoAsync(photo);
+                    await photosManager.DeletePhotoAsync(photo);
             }
 
             var photoUris = new List<string>();
             for (int i = 0; i < model.ImageStreams.Count; i++)
             {
-                var uri = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
+                var uri = await photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
                 photoUris.Add(uri.ToString());
             }
             allPhotos = string.Join(";", photoUris);
@@ -310,7 +299,7 @@ public class ItemManager
         await UpdateItemNVAsync(item);
         if (oldPrice != item.Price)
         {
-            _logger.LogInformation($"Cena ogłoszenia o ID {item.Id} użytkownika {item.User.UserName} została zmieniona z {oldPrice} zł na {item.Price} zł.");
+            logger.LogInformation($"Cena ogłoszenia o ID {item.Id} użytkownika {item.User.UserName} została zmieniona z {oldPrice} zł na {item.Price} zł.");
         }
 
         return Status.Success;
@@ -318,8 +307,8 @@ public class ItemManager
     private async Task UpdateItemNVAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
-        _context.Items.Update(item);
-        await _context.SaveChangesAsync();
+        context.Items.Update(item);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteItemAsync(int id)
@@ -331,16 +320,16 @@ public class ItemManager
         {
             var oldPhotos = item.Photo.Split(';', StringSplitOptions.RemoveEmptyEntries);
             foreach (var photo in oldPhotos)
-                await _photosManager.DeletePhotoAsync(photo);
+                await photosManager.DeletePhotoAsync(photo);
         }
 
-        _context.Items.Remove(item);
-        await _context.SaveChangesAsync();
+        context.Items.Remove(item);
+        await context.SaveChangesAsync();
     }
 
     public async Task SetItemsVisibilityByUserAsync(int userId, bool isVisible)
     {
-        var items = await _context.Items
+        var items = await context.Items
             .Where(i => i.UserId == userId && i.IsVisible != isVisible)
             .ToListAsync();
 
@@ -351,14 +340,14 @@ public class ItemManager
 
         if (items.Count > 0)
         {
-            _context.Items.UpdateRange(items);
-            await _context.SaveChangesAsync();
+            context.Items.UpdateRange(items);
+            await context.SaveChangesAsync();
         }
     }
 
     private IQueryable<Item> GetAllItemsQueryable()
     {
-        return _context.Items
+        return context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
@@ -429,4 +418,12 @@ public class ItemManager
             ? query
             : query.Where(i => i.Book.Level.Id == level.Id);
     }
+
+	public List<string> GetPhotosUrl(Item item)
+	{
+		return (item.Photo ?? "")
+			.Split(';', StringSplitOptions.RemoveEmptyEntries)
+			.Select(f => photosManager.GetPhotoUrl(f.Trim()))
+			.ToList();
+	}
 }
