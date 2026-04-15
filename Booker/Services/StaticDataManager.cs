@@ -7,33 +7,25 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Booker.Services;
 
-public class StaticDataManager
+public class StaticDataManager(DataContext context, IMemoryCache cache)
 {
-    private readonly DataContext _context;
-    private readonly IMemoryCache _cache;
-
     public record Parameters(string? Title, List<Grade> Grades, Subject? Subject, Level? Level);
 
-    public StaticDataManager(DataContext context, IMemoryCache cache)
-    {
-        _context = context;
-        _cache = cache;
-    }
 
     public async Task<Book?> GetBookAsync(int id) =>
         (await GetBooksAsync()).FirstOrDefault(b => b.Id == id);
 
     public async Task<List<Book>> GetBooksAsync()
     {
-        if (!_cache.TryGetValue("books", out List<Book>? books))
+        if (!cache.TryGetValue("books", out List<Book>? books))
         {
-            books = await _context.Books
+            books = await context.Books
                 .Include(b => b.Grades)
                 .Include(b => b.Subject)
                 .Include(b => b.Level)
                 .OrderBy(g => g.Id)
                 .ToListAsync();
-            _cache.Set("books", books, TimeSpan.FromHours(1));
+            cache.Set("books", books, TimeSpan.FromHours(1));
         }
         return books!;
     }
@@ -52,12 +44,12 @@ public class StaticDataManager
 
     public async Task<List<Grade>> GetGradesAsync()
     {
-        if (!_cache.TryGetValue("grades", out List<Grade>? grades))
+        if (!cache.TryGetValue("grades", out List<Grade>? grades))
         {
-            grades = await _context.Grades
+            grades = await context.Grades
                 .OrderBy(g => g.Id)
                 .ToListAsync();
-            _cache.Set("grades", grades, TimeSpan.FromHours(1));
+            cache.Set("grades", grades, TimeSpan.FromHours(1));
         }
         return grades!;
     }
@@ -70,12 +62,12 @@ public class StaticDataManager
 
     public async Task<List<Subject>> GetSubjectsAsync()
     {
-        if (!_cache.TryGetValue("subjects", out List<Subject>? subjects))
+        if (!cache.TryGetValue("subjects", out List<Subject>? subjects))
         {
-            subjects = await _context.Subjects
+            subjects = await context.Subjects
                 .OrderBy(s => s.Name)
                 .ToListAsync();
-            _cache.Set("subjects", subjects, TimeSpan.FromHours(1));
+            cache.Set("subjects", subjects, TimeSpan.FromHours(1));
         }
         return subjects!;
     }
@@ -88,12 +80,12 @@ public class StaticDataManager
 
     public async Task<List<Level>> GetLevelsAsync()
     {
-        if (!_cache.TryGetValue("levels", out List<Level>? levels))
+        if (!cache.TryGetValue("levels", out List<Level>? levels))
         {
-            levels = await _context.Levels
+            levels = await context.Levels
                 .OrderBy(l => l.Id)
                 .ToListAsync();
-            _cache.Set("levels", levels, TimeSpan.FromHours(1));
+            cache.Set("levels", levels, TimeSpan.FromHours(1));
         }
         return levels!;
     }

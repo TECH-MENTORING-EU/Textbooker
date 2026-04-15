@@ -8,16 +8,8 @@ namespace Booker.Services;
 /// Service responsible for managing schools including CRUD operations, 
 /// soft delete, and database schema management.
 /// </summary>
-public class SchoolService
+public class SchoolService(DataContext context, ILogger<SchoolService> logger)
 {
-    private readonly DataContext _context;
-    private readonly ILogger<SchoolService> _logger;
-
-    public SchoolService(DataContext context, ILogger<SchoolService> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Gets all schools (optionally including inactive ones).
@@ -26,7 +18,7 @@ public class SchoolService
     /// <returns>List of schools</returns>
     public async Task<List<School>> GetAllSchoolsAsync(bool includeInactive = false)
     {
-        var query = _context.Schools.AsQueryable();
+        var query = context.Schools.AsQueryable();
         
         if (!includeInactive)
         {
@@ -43,7 +35,7 @@ public class SchoolService
     /// <returns>List of schools with user counts</returns>
     public async Task<List<SchoolWithUserCount>> GetSchoolsWithUserCountAsync(bool includeInactive = false)
     {
-        var query = _context.Schools.AsQueryable();
+        var query = context.Schools.AsQueryable();
         
         if (!includeInactive)
         {
@@ -67,7 +59,7 @@ public class SchoolService
     /// <returns>School or null if not found</returns>
     public async Task<School?> GetSchoolByIdAsync(int id)
     {
-        return await _context.Schools.FindAsync(id);
+        return await context.Schools.FindAsync(id);
     }
 
     /// <summary>
@@ -76,7 +68,7 @@ public class SchoolService
     /// <returns>List of active schools</returns>
     public async Task<List<School>> GetActiveSchoolsAsync()
     {
-        return await _context.Schools
+        return await context.Schools
             .Where(s => s.IsActive)
             .OrderBy(s => s.Name)
             .ToListAsync();
@@ -99,11 +91,11 @@ public class SchoolService
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Schools.Add(school);
-        await _context.SaveChangesAsync();
+        context.Schools.Add(school);
+        await context.SaveChangesAsync();
 
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "Created new school: {SchoolName} (ID: {SchoolId}",
             school.Name,
             school.Id
@@ -120,18 +112,18 @@ public class SchoolService
     /// <returns>True if successful, false if school not found</returns>
     public async Task<bool> SoftDeleteSchoolAsync(int id)
     {
-        var school = await _context.Schools.FindAsync(id);
+        var school = await context.Schools.FindAsync(id);
         if (school == null)
         {
-            _logger.LogWarning("Attempted to soft delete non-existent school with ID: {SchoolId}", id);
+            logger.LogWarning("Attempted to soft delete non-existent school with ID: {SchoolId}", id);
             return false;
         }
 
         school.DeactivatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "Soft deleted school: {SchoolName} (ID: {SchoolId}). Schema {SchemaName} preserved.",
             school.Name,
             school.Id
@@ -147,19 +139,19 @@ public class SchoolService
     /// <returns>True if successful, false if school not found</returns>
     public async Task<bool> ReactivateSchoolAsync(int id)
     {
-        var school = await _context.Schools.FindAsync(id);
+        var school = await context.Schools.FindAsync(id);
         if (school == null)
         {
-            _logger.LogWarning("Attempted to reactivate non-existent school with ID: {SchoolId}", id);
+            logger.LogWarning("Attempted to reactivate non-existent school with ID: {SchoolId}", id);
             return false;
         }
 
         school.IsActive = true;
         school.DeactivatedAt = null;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "Reactivated school: {SchoolName} (ID: {SchoolId})",
             school.Name,
             school.Id
@@ -177,7 +169,7 @@ public class SchoolService
     /// <returns>Updated school or null if not found</returns>
     public async Task<School?> UpdateSchoolAsync(int id, string name, string? emailDomain)
     {
-        var school = await _context.Schools.FindAsync(id);
+        var school = await context.Schools.FindAsync(id);
         if (school == null)
         {
             return null;
@@ -187,13 +179,13 @@ public class SchoolService
         if (!string.IsNullOrWhiteSpace(emailDomain))
         {
             var normalizedDomain = emailDomain.Trim().ToLower();
-            var domainInUse = await _context.Schools
+            var domainInUse = await context.Schools
                 .Where(s => s.Id != id && s.IsActive && s.EmailDomain != null)
                 .AnyAsync(s => s.EmailDomain!.ToLower().Contains(normalizedDomain));
 
             if (domainInUse)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Cannot update school {SchoolId}: email domain '{Domain}' is already in use by another active school",
                     id, normalizedDomain
                 );
@@ -204,9 +196,9 @@ public class SchoolService
         school.Name = name;
         school.EmailDomain = emailDomain;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "Updated school: {SchoolName} (ID: {SchoolId})",
             school.Name,
             school.Id
@@ -288,7 +280,7 @@ public class SchoolService
     /// <returns>Number of users</returns>
     public async Task<int> GetUserCountAsync(int schoolId)
     {
-        return await _context.Users.CountAsync(u => u.SchoolId == schoolId);
+        return await context.Users.CountAsync(u => u.SchoolId == schoolId);
     }
 }
 
