@@ -9,6 +9,13 @@
         <ResolveStaticWebAssetsInputsDependsOn>RemoveIdentityAssets</ResolveStaticWebAssetsInputsDependsOn>
     </PropertyGroup>
 
+    <ItemGroup>
+      <None Include="wwwroot\_MaintenancePage.html">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>        
+      </None>
+    </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="AspNetCore.SassCompiler" Version="1.92.0">
         <PrivateAssets>all</PrivateAssets>
