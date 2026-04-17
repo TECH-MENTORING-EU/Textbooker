@@ -10,6 +10,7 @@ namespace Booker.Pages.Shared.Components.ItemGallery;
 public class ItemGalleryViewComponent : ViewComponent
 {
     private readonly ItemManager _itemManager;
+    private readonly PhotosManager _photosManager;
     private readonly UserManager<User> _userManager;
     const int PageSize = 25;
 
@@ -26,10 +27,11 @@ public class ItemGalleryViewComponent : ViewComponent
         StaticDataManager.Parameters Params
     );
 
-    public ItemGalleryViewComponent(ItemManager itemManager, UserManager<User> userManager)
+    public ItemGalleryViewComponent(ItemManager itemManager, UserManager<User> userManager, PhotosManager photosManager)
     {
         _itemManager = itemManager;
         _userManager = userManager;
+        _photosManager = photosManager;
     }
 
     public async Task<IViewComponentResult> InvokeAsync(
@@ -62,7 +64,7 @@ public class ItemGalleryViewComponent : ViewComponent
             Item: item,
             FirstPhoto: string.IsNullOrEmpty(item.Photo)
                 ? "/images/default-book.png" // fallback
-                : item.Photo.Split(';')[0].Trim(),
+                : _photosManager.GetPhotoUrl(item.Photo.Split(';')[0].Trim()),
             Params: parameters
         ));
 

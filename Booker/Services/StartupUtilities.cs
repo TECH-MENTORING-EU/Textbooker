@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
-using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 using System.Net;
+using Amazon.S3;
 
 
 
@@ -20,7 +20,14 @@ namespace Booker.Services
     {
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton(x => new BlobServiceClient(configuration["AzureStorage:ConnectionString"]));
+            services.AddSingleton<IAmazonS3>(x => new AmazonS3Client(
+                configuration["S3:AccessKeyId"], 
+                configuration["S3:SecretAccessKey"],
+                new AmazonS3Config
+                {
+                    ServiceURL = configuration["CF:ServiceUrl"],
+                    ForcePathStyle = true
+                }));
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();

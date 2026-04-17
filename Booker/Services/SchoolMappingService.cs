@@ -6,16 +6,8 @@ namespace Booker.Services;
 /// <summary>
 /// Service responsible for mapping email domains to schools
 /// </summary>
-public class SchoolMappingService
+public class SchoolMappingService(DataContext context, ILogger<SchoolMappingService> logger)
 {
-    private readonly DataContext _context;
-    private readonly ILogger<SchoolMappingService> _logger;
-
-    public SchoolMappingService(DataContext context, ILogger<SchoolMappingService> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Attempts to find a school based on the user's email domain.
@@ -27,19 +19,19 @@ public class SchoolMappingService
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            _logger.LogWarning("GetSchoolIdByEmail called with null or empty email");
+            logger.LogWarning("GetSchoolIdByEmail called with null or empty email");
             return null;
         }
 
         var emailDomain = ExtractDomain(email);
         if (string.IsNullOrEmpty(emailDomain))
         {
-            _logger.LogWarning("Could not extract domain from provided email");
+            logger.LogWarning("Could not extract domain from provided email");
             return null;
         }
 
         // Find all active schools that have this domain in their EmailDomain field
-        var matchingSchools = await _context.Schools
+        var matchingSchools = await context.Schools
             .Where(s => s.IsActive && s.EmailDomain != null && s.EmailDomain.Contains(emailDomain))
             .ToListAsync();
 
@@ -53,13 +45,13 @@ public class SchoolMappingService
 
         if (exactMatches.Count == 0)
         {
-            _logger.LogInformation("No school found for email domain: {Domain}", emailDomain);
+            logger.LogInformation("No school found for email domain: {Domain}", emailDomain);
             return null;
         }
 
         if (exactMatches.Count > 1)
         {
-            _logger.LogWarning(
+            logger.LogWarning(
                 "Multiple schools ({Count}) found for email domain: {Domain}. Schools: {SchoolIds}",
                 exactMatches.Count,
                 emailDomain,
@@ -69,7 +61,7 @@ public class SchoolMappingService
         }
 
         var school = exactMatches[0];
-        _logger.LogInformation(
+        logger.LogInformation(
             "Successfully mapped email domain {Domain} to school {SchoolName} (ID: {SchoolId})",
             emailDomain,
             school.Name,
@@ -108,7 +100,7 @@ public class SchoolMappingService
         }
 
         var normalizedDomain = domain.Trim().ToLower();
-        var schools = await _context.Schools
+        var schools = await context.Schools
             .Where(s => s.IsActive && s.EmailDomain != null)
             .ToListAsync();
 
