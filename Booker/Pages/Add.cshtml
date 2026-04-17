@@ -1,5 +1,6 @@
 ﻿@page
 @model Booker.Pages.BookAddingModel
+
 @{
     ViewData["Title"] = "Dodaj ogłoszenie";
     const string include = "#add-form :not([name = '__RequestVerificationToken'])";
@@ -12,7 +13,7 @@
     <div class="grid">
         <section>
             <label asp-for="Input.Images">Prześlij zdjęcia swojej książki:</label>
-            <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
+            <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)" id="add-image">
             <small>
                 <span asp-validation-for="Input.Images"></span>
                 <span id="imageErrorMsg"></span>
