@@ -64,7 +64,8 @@ namespace Booker.Pages
             {
                 if (!img.ContentType.StartsWith("image/"))
                 {
-                    ModelState.AddModelError("Input.Images", $"Plik {img.FileName} nie jest obrazem.");
+                    ModelState.AddModelError("Input.Images",
+                        $"Plik {img.FileName} nie jest obrazem.");
                     continue;
                 }
 
@@ -72,13 +73,15 @@ namespace Booker.Pages
                 string ext = Path.GetExtension(img.FileName)?.ToLowerInvariant();
                 if (string.IsNullOrEmpty(ext))
                 {
-                    ModelState.AddModelError("Input.Images", $"Plik {img.FileName} nie ma rozszerzenia.");
+                    ModelState.AddModelError("Input.Images",
+                        $"Plik {img.FileName} nie ma rozszerzenia.");
                     continue;
                 }
 
                 if (!IsValidImageSignature(img))
                 {
-                    ModelState.AddModelError("Input.Images", $"Plik {img.FileName} nie jest prawidłowym obrazem.");
+                    ModelState.AddModelError("Input.Images", 
+                        $"Plik {img.FileName} nie jest prawidłowym obrazem.");
                     continue;
                 }
 
