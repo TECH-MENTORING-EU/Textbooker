@@ -177,6 +177,19 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
         await UpdateItemNVAsync(item!);
     }
+
+    public async Task RecordViewAsync(int itemId, int userId)
+    {
+        if (await _context.ItemViews.AnyAsync(v => v.ItemId == itemId && v.UserId == userId))
+            return;
+
+        _context.ItemViews.Add(new ItemView { ItemId = itemId, UserId = userId });
+        await _context.SaveChangesAsync();
+    }
+
+    public Task<int> GetViewCountAsync(int itemId) =>
+        _context.ItemViews.CountAsync(v => v.ItemId == itemId);
+
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
         if (model.Parameters.Title == null

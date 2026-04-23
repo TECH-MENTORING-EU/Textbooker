@@ -13,6 +13,7 @@ namespace Booker.Data
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Level> Levels { get; set; }
         public DbSet<School> Schools { get; set; }
+        public DbSet<ItemView> ItemViews { get; set; }
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -70,6 +71,13 @@ namespace Booker.Data
                     {
                         uf.HasKey("UserId", "ItemId");
                     });
+            });
+
+            modelBuilder.Entity<ItemView>(iv =>
+            {
+                iv.HasKey(v => new { v.ItemId, v.UserId });
+                iv.HasOne(v => v.Item).WithMany(i => i.Views).HasForeignKey(v => v.ItemId).OnDelete(DeleteBehavior.Cascade);
+                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.NoAction);
             });
         }
 
