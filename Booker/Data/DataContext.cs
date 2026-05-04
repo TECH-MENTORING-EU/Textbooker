@@ -14,6 +14,8 @@ namespace Booker.Data
         public DbSet<Level> Levels { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; } // added
         public DbSet<ChatThread> ChatThreads { get; set; } // added
+        public DbSet<UserRating> UserRatings { get; set; }
+
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -81,7 +83,15 @@ namespace Booker.Data
                 ct.HasIndex(t => t.ChannelId).IsUnique();
                 ct.HasIndex(t => new { t.UserAId, t.UserBId });
             });
+
+            modelBuilder.Entity<UserRating>(ur =>
+            {
+                ur.HasIndex(ur => new { ur.ReviewerId, ur.RevieweeId }).IsUnique();
+                ur.HasOne(ur => ur.Reviewer).WithMany(u => u.RatingsGiven).HasForeignKey(ur => ur.ReviewerId).OnDelete(DeleteBehavior.Restrict);
+                ur.HasOne(ur => ur.Reviewee).WithMany(u => u.RatingsReceived).HasForeignKey(ur => ur.RevieweeId).OnDelete(DeleteBehavior.Restrict);
+            });
         }
+
 
         public static IEnumerable<int> GenerateAscendingIntegers(int start = 1, int end = 1000)
         {

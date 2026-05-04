@@ -18,5 +18,7 @@ namespace Booker.Data
         public bool DisplayWhatsapp { get; set; } = false;
         public string? FbMessenger { get; set; }
         public string? Instagram { get; set; }
+        public ICollection<UserRating> RatingsGiven { get; } = new HashSet<UserRating>();
+        public ICollection<UserRating> RatingsReceived { get; } = new HashSet<UserRating>();
     }
 }

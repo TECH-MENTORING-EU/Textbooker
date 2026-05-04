@@ -7,6 +7,53 @@
 
 <partial name="_Heading" for="UserInfo" />
 
+<section>
+    <h3>Oceny i opinie</h3>
+    <div class="rating-summary">
+        <strong>Średnia ocena: @Model.AverageRating.ToString("0.0") / 5</strong> (@Model.RatingCount ocen)
+    </div>
+
+    @if (!Model.UserInfo.IsCurrentUser && User.Identity.IsAuthenticated)
+    {
+        <details>
+            <summary>Dodaj ocenę</summary>
+            <form method="post" asp-page-handler="AddRating">
+                <div asp-validation-summary="All" style="color: red; margin-bottom: 1rem;"></div>
+                <label>
+                    Ocena:
+                    <select asp-for="RatingInput.RatingValue" required>
+                        <option value="5">5 - Świetnie</option>
+                        <option value="4">4 - Dobrze</option>
+                        <option value="3">3 - Przeciętnie</option>
+                        <option value="2">2 - Słabo</option>
+                        <option value="1">1 - Bardzo słabo</option>
+                    </select>
+                </label>
+                <label>
+                    Komentarz:
+                    <textarea asp-for="RatingInput.Comment"></textarea>
+                </label>
+                <button type="submit">Wyślij ocenę</button>
+            </form>
+        </details>
+    }
+
+    <div class="ratings-list" style="margin-top: 1rem;">
+        @foreach (var rating in Model.UserRatings)
+        {
+            <article style="padding: 0.5rem; border-bottom: 1px solid #eee;">
+                <strong>@rating.Reviewer.UserName</strong>: @rating.RatingValue / 5
+                <p style="margin: 0.2rem 0;">@rating.Comment</p>
+                <small>@rating.CreatedAt.ToShortDateString()</small>
+            </article>
+        }
+        @if (!Model.UserRatings.Any())
+        {
+            <p>Brak ocen.</p>
+        }
+    </div>
+</section>
+
 <h2>Ogłoszenia</h2>
 <section class="grid-gallery">
     <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" show-hidden="@Model.UserInfo.IsCurrentUser" />

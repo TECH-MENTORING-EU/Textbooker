@@ -34,6 +34,8 @@ namespace Booker.Services
             services.AddScoped<IChatService, ChatService>(); // chat message service
             services.AddSingleton<InMemoryChatStore>(); // in-memory chat store
             services.AddScoped<IChatThreadService, ChatThreadService>(); // thread service
+            services.AddScoped<IRatingManager, RatingManager>();
+
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
