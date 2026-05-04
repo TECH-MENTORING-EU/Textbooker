@@ -2,7 +2,7 @@
 @model Booker.Pages.BookModel
 
 @{
-    ViewData["Title"] = @Model.BookItem.Book.Title + " - TextBooker" ?? "Szczegóły książki";
+    ViewData["Title"] = $"{Model.BookItem.Book.Title} - TextBooker";
 
     var images = Model.Photos;
     var mainImage = images.FirstOrDefault();
@@ -33,6 +33,11 @@
                 {
                     <br />
                     <text>Edytowane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.UpdatedAt.Value))</text>
+                }
+                @if (Model.IsCurrentUserOwner)
+                {
+                    <br />
+                    <text>Wyświetleń: @Model.ViewCount</text>
                 }
             </small>
         </p>

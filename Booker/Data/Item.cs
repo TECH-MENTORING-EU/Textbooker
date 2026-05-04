@@ -22,5 +22,6 @@ namespace Booker.Data
         public bool IsVisible { get; set; } = true;
         public bool CanChangeVisibility { get; set; } = true;
         public bool Reserved {  get; set; }
+        public ICollection<ItemView> Views { get; } = new HashSet<ItemView>();
     }
 }
