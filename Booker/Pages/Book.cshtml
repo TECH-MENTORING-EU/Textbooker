@@ -2,7 +2,7 @@
 @model Booker.Pages.BookModel
 
 @{
-    ViewData["Title"] = @Model.BookItem.Book.Title + " - TextBooker" ?? "Szczegóły książki";
+    ViewData["Title"] = $"{Model.BookItem.Book.Title} - TextBooker";
 
     var images = (Model.BookItem.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
     var mainImage = images.FirstOrDefault();

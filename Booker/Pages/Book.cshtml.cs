@@ -45,23 +45,21 @@ namespace Booker.Pages
 
             BookItem = item;
 
-            var userId = _userManager.GetUserId(User).IntOrDefault();
-
-            IsFavorite = await _favoritesManager.IsFavoriteAsync(userId, id);
-
-            IsCurrentUserOwner = userId == BookItem.User.Id;
+            IsCurrentUserOwner = currentUser != null && currentUser.Id == BookItem.User.Id;
+            IsFavorite = currentUser != null && await _favoritesManager.IsFavoriteAsync(currentUser.Id, id);
 
             var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
 
             if (!item.IsVisible && !isAuthorized.Succeeded)
             {
-                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
+                _logger.LogWarning("Użytkownik {UserName} próbował wykonać nieuprawnioną akcję {ActionName} na zasobie o ID {ItemId}.",
+                    User.Identity?.Name, ItemOperations.Read.Name, id);
                 return NotFound();
             }
 
-            if (userId != -1 && !IsCurrentUserOwner)
+            if (currentUser != null && !IsCurrentUserOwner)
             {
-                await _itemManager.RecordViewAsync(id, userId);
+                await _itemManager.TrackViewAsync(id, currentUser.Id);
             }
 
             if (IsCurrentUserOwner)
@@ -83,16 +81,14 @@ namespace Booker.Pages
             }
 
             BookItem = item;
-            
-            var userId = _userManager.GetUserId(User).IntOrDefault();
 
-            if (userId == -1)
+            if (currentUser == null)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
                 return new NoContentResult();
             }
 
-            if (BookItem.User.Id == userId)
+            if (BookItem.User.Id == currentUser.Id)
             {
                 return new NoContentResult();
             }
@@ -109,9 +105,7 @@ namespace Booker.Pages
                 return NotFound();
             }
 
-            var userId = _userManager.GetUserId(User).IntOrDefault();
-
-            if (userId == -1 || userId != item.User.Id)
+            if (currentUser == null || currentUser.Id != item.User.Id)
             {
                 return Forbid();
             }
