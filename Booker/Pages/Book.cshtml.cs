@@ -31,28 +31,26 @@ namespace Booker.Pages
             Photos = itemManager.GetPhotosUrl(item);
             BookItem = item;
 
-            var userId = userManager.GetUserId(User).IntOrDefault();
-
-            IsFavorite = await favoritesManager.IsFavoriteAsync(userId, id);
-
-            IsCurrentUserOwner = userId == BookItem.User.Id;
+            IsCurrentUserOwner = currentUser != null && currentUser.Id == BookItem.User.Id;
+            IsFavorite = currentUser != null && await favoritesManager.IsFavoriteAsync(currentUser.Id, id);
 
             var isAuthorized = await authService.AuthorizeAsync(User, item, ItemOperations.Read);
 
             if (!item.IsVisible && !isAuthorized.Succeeded)
             {
-                logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
+                logger.LogWarning("Użytkownik {UserName} próbował wykonać nieuprawnioną akcję {ActionName} na zasobie o ID {ItemId}.",
+                    User.Identity?.Name, ItemOperations.Read.Name, id);
                 return NotFound();
             }
 
-            if (userId != -1 && !IsCurrentUserOwner)
+            if (currentUser != null && !IsCurrentUserOwner)
             {
-                await _itemManager.RecordViewAsync(id, userId);
+                await itemManager.TrackViewAsync(id, currentUser.Id);
             }
 
             if (IsCurrentUserOwner)
             {
-                ViewCount = await _itemManager.GetViewCountAsync(id);
+                ViewCount = await itemManager.GetViewCountAsync(id);
             }
 
             return Page();
@@ -69,15 +67,14 @@ namespace Booker.Pages
             }
 
             BookItem = item;
-            var userId = userManager.GetUserId(User).IntOrDefault();
 
-            if (userId == -1)
+            if (currentUser == null)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
                 return new NoContentResult();
             }
 
-            if (BookItem.User.Id == userId)
+            if (BookItem.User.Id == currentUser.Id)
             {
                 return new NoContentResult();
             }
@@ -94,9 +91,7 @@ namespace Booker.Pages
                 return NotFound();
             }
 
-            var userId = userManager.GetUserId(User).IntOrDefault();
-
-            if (userId == -1 || userId != item.User.Id)
+            if (currentUser == null || currentUser.Id != item.User.Id)
             {
                 return Forbid();
             }

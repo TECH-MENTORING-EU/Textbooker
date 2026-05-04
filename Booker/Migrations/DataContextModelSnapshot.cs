@@ -2113,7 +2113,7 @@ namespace Booker.Migrations
                     b.HasOne("Booker.Data.User", "User")
                         .WithMany("ItemViews")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Item");

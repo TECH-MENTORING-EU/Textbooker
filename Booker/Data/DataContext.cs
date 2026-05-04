@@ -77,7 +77,7 @@ namespace Booker.Data
             {
                 iv.HasKey(v => new { v.ItemId, v.UserId });
                 iv.HasOne(v => v.Item).WithMany(i => i.Views).HasForeignKey(v => v.ItemId).OnDelete(DeleteBehavior.Cascade);
-                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.NoAction);
+                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.Cascade);
             });
         }
 

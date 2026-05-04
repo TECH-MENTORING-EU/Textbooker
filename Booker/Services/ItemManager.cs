@@ -178,13 +178,17 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         await UpdateItemNVAsync(item!);
     }
 
-    public async Task RecordViewAsync(int itemId, int userId)
+    public async Task TrackViewAsync(int itemId, int userId)
     {
-        if (await _context.ItemViews.AnyAsync(v => v.ItemId == itemId && v.UserId == userId))
-            return;
-
         _context.ItemViews.Add(new ItemView { ItemId = itemId, UserId = userId });
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Duplicate key - user already viewed this item, ignore
+        }
     }
 
     public Task<int> GetViewCountAsync(int itemId) =>
@@ -312,7 +316,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         await UpdateItemNVAsync(item);
         if (oldPrice != item.Price)
         {
-            logger.LogInformation($"Cena ogłoszenia o ID {item.Id} użytkownika {item.User.UserName} została zmieniona z {oldPrice} zł na {item.Price} zł.");
+            logger.LogInformation("Cena ogłoszenia o ID {ItemId} użytkownika {UserName} została zmieniona z {OldPrice} zł na {NewPrice} zł.",
+                item.Id, item.User.UserName, oldPrice, item.Price);
         }
 
         return Status.Success;
