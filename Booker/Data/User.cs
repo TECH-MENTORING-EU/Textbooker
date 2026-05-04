@@ -54,22 +54,7 @@ namespace Booker.Data
 
         [PersonalData]
         public string? Instagram { get; set; }
-
-        [PersonalData]
-        public bool DisplayInstagram { get; set; } = false;
-
-        // RODO - task 06
-        [PersonalData]
-        public bool DisplaySchool { get; set; } = false;
-
-        // RODO - task 04
-        [PersonalData]
-        public DateTime? TermsAcceptedAt { get; set; }
-
-        [PersonalData]
-        public string? TermsAcceptedVersion { get; set; }
-
-        [PersonalData]
-        public DateTime? AgeConfirmationAcceptedAt { get; set; }
+        public ICollection<UserRating> RatingsGiven { get; } = new HashSet<UserRating>();
+        public ICollection<UserRating> RatingsReceived { get; } = new HashSet<UserRating>();
     }
 }
