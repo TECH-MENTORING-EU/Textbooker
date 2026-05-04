@@ -1,4 +1,4 @@
-using Booker.Areas.Identity.Utilities;
+﻿using Booker.Areas.Identity.Utilities;
 using Booker.Data;
 using Booker.Services;
 using Booker.Authorization;
@@ -29,6 +29,11 @@ IConfiguration configuration = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
     .AddUserSecrets<Program>() // Replace `Program` with your project's main class
     .AddEnvironmentVariables().Build();
+
+if (await StartupUtilities.RunMaintenanceMode(configuration, args))
+{
+    return;
+}
 
 // Register IMemoryCache in DI container
 builder.Services.AddMemoryCache();
@@ -159,15 +164,12 @@ app.MapRazorPages();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
-        string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
-}
 await app.MigrateDatabaseAsync(configuration);
 
 if (app.Environment.IsDevelopment())
 {
+    app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
+        string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
     await app.InitializeDatabaseAsync();
 }
 

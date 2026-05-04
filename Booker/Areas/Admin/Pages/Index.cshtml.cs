@@ -39,7 +39,7 @@ namespace Booker.Areas.Admin.Pages
                 .CountAsync();
 
 
-            TotalItemCount = await _itemManager.GetAllItemsCountAsync();
+            TotalItemCount = await _itemManager.GetAllItemsCountAsync(null); // Admin sees all items across all schools
 
             return Page();
         }

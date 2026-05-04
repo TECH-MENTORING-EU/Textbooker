@@ -1,0 +1,74 @@
+@page
+@model SchoolsModel
+@{
+    ViewData["Title"] = "Szkoły - TextBooker";
+    ViewData["ActivePage"] = AdminNavPages.Schools;
+}
+
+<h3>Zarządzanie szkołami</h3>
+
+<div class="admin-filter">
+    <label>
+        <input type="checkbox" 
+               id="show-inactive"
+               hx-get="?handler=Filter"
+               hx-target="#schools-table tbody"
+               hx-include="this"
+               name="showInactive"
+               value="true"
+               @(Model.ShowInactive ? "checked" : "") />
+        Pokaż nieaktywne szkoły
+    </label>
+</div>
+
+<table id="schools-table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nazwa</th>
+            <th>Domena email</th>
+            <th>Schemat</th>
+            <th>Użytkownicy</th>
+            <th>Status</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        <partial name="_SchoolRows" model="Model.Schools" />
+    </tbody>
+</table>
+
+<article class="school-add-form">
+    <header>
+        <h4>Dodaj nową szkołę</h4>
+    </header>
+    <form asp-page-handler="Add" method="post" hx-post="?handler=Add" hx-target="#schools-table tbody" hx-swap="beforeend" hx-on::after-request="this.reset()">
+        <fieldset role="group">
+            <input name="name" 
+                   placeholder="Nazwa szkoły" 
+                   aria-label="Nazwa szkoły" 
+                   required
+                   minlength="2"
+                   maxlength="200" />
+            <input name="emailDomain" 
+                   placeholder="Domena email (opcjonalna, np. szkola.edu.pl)" 
+                   aria-label="Domena email"
+                   maxlength="500" />
+            <button type="submit">Dodaj szkołę</button>
+        </fieldset>
+        <div asp-validation-summary="All"></div>
+    </form>
+</article>
+
+@section Scripts {
+    <script>
+        // Handle form success/error feedback
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'schools-table') {
+                // Clear any error messages
+                var errorDiv = document.querySelector('.school-add-form [data-val-summary]');
+                if (errorDiv) errorDiv.innerHTML = '';
+            }
+        });
+    </script>
+}

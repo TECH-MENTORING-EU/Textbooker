@@ -5,14 +5,12 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
-using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 using System.Net;
-
-
+using Amazon.S3;
 
 namespace Booker.Services
 {
@@ -20,7 +18,14 @@ namespace Booker.Services
     {
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton(x => new BlobServiceClient(configuration["AzureStorage:ConnectionString"]));
+            services.AddSingleton<IAmazonS3>(x => new AmazonS3Client(
+                configuration["S3:AccessKeyId"], 
+                configuration["S3:SecretAccessKey"],
+                new AmazonS3Config
+                {
+                    ServiceURL = configuration["CF:ServiceUrl"],
+                    ForcePathStyle = true
+                }));
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();
@@ -35,7 +40,8 @@ namespace Booker.Services
             services.AddSingleton<InMemoryChatStore>(); // in-memory chat store
             services.AddScoped<IChatThreadService, ChatThreadService>(); // thread service
             services.AddScoped<IRatingManager, RatingManager>();
-
+            services.AddScoped<SchoolMappingService>();
+            services.AddScoped<SchoolService>();
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
@@ -208,8 +214,46 @@ namespace Booker.Services
             return services;
         }
 
+        public static async Task<bool> RunMaintenanceMode(IConfiguration configuration, string[] args)
+        {
+            if (!configuration.GetValue<bool>("Maintenance"))
+            {
+                return false;
+            }
+
+            var builder = WebApplication.CreateBuilder(args);
+            var app = builder.Build();
+
+            var maintenancePagePath = Path.Combine(
+                app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"),
+                "_MaintenancePage.html");
+
+            app.Run(async context =>
+            {
+                if (!File.Exists(maintenancePagePath))
+                {
+                    context.Response.StatusCode = StatusCodes.Status200OK;
+                    context.Response.ContentType = "text/plain; charset=utf-8";
+                    await context.Response.WriteAsync("Maintenance. Please visit us later");
+                    return;
+                }
+
+                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.ContentType = "text/html; charset=utf-8";
+                await context.Response.SendFileAsync(maintenancePagePath);
+            });
+
+            await app.RunAsync();
+            return true;
+        }
+
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)
         {
+            if (configuration.GetValue<bool>("Maintenance"))
+            {
+                return app;
+            }
+
             using var scope = app.Services.CreateScope();
 
             bool clearDatabase = configuration.GetValue<bool>("DatabaseSettings:ClearDatabaseOnStartup");
@@ -219,7 +263,6 @@ namespace Booker.Services
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
                 var migrator = dbContext.Database.GetService<IMigrator>();
-
 
                 if (clearDatabase)
                 {
@@ -246,7 +289,6 @@ namespace Booker.Services
             {
                 logger.LogError(ex, "Something went wrong :(");
             }
-
 
             return app;
         }
@@ -278,7 +320,6 @@ namespace Booker.Services
 
             return app;
         }
-
 
     }
 }

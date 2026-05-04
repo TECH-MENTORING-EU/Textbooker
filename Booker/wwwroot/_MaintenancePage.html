@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Textbooker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png" />
+    <link rel="manifest" href="/favicons/site.webmanifest" />
+    <link rel="stylesheet" href="/css/site.css" />
+    <style>
+        body > main {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .maintenance-page {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .maintenance-page header,
+        .maintenance-page p {
+            text-align: center;
+        }
+
+        .maintenance-page h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .maintenance-page p {
+            font-size: clamp(1.125rem, 2.2vw, 1.35rem);
+            line-height: 1.6;
+            max-width: 860px;
+            margin-inline: auto;
+        }
+
+        .maintenance-video {
+            margin-top: 2rem;
+        }
+
+        .maintenance-video iframe {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 0;
+            border-radius: var(--pico-border-radius);
+            box-shadow: var(--pico-card-box-shadow);
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <article class="maintenance-page">
+            <header>
+                <h1>Wracamy we wrześniu</h1>
+            </header>
+
+            <p>Wracamy we wrześniu wraz z obsługą kilku szkół.</p>
+            <p>Tymczasem zapraszamy na webinar On .Net Live, w którym wystąpili członkowie naszego zespołu, opowiadając o programie nauki, wykorzystywaniu AI w projekcie, oraz web developmencie aplikacje z użyciem technologii Razor Pages i HTMX.</p>
+
+            <section class="maintenance-video">
+                <iframe
+                    src="https://www.youtube.com/embed/OEfsOWjlPF0"
+                    title="On .Net Live - Textbooker"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen>
+                </iframe>
+            </section>
+        </article>
+    </main>
+</body>
+</html>

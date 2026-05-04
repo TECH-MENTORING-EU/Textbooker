@@ -23,13 +23,17 @@
 
     <ItemGroup>
       <None Include=".github\copilot-instructions.md" />
+      <None Include="wwwroot\_MaintenancePage.html">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>        
+      </None>
     </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AspNetCore.SassCompiler" Version="1.92.0">
         <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.20.3" />
     <PackageReference Include="Faker.Net" Version="2.0.163" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.19" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.19" />
@@ -61,21 +65,21 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
-	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<Content Remove="wwwroot\scss" />
-		<Content Remove="wwwroot\lib\pico" />
-		<Content Remove="wwwroot\css\**\*.map" />
-	</ItemGroup>
+ 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
+ 		<Content Remove="wwwroot\scss" />
+ 		<Content Remove="wwwroot\lib\pico" />
+ 		<Content Remove="wwwroot\css\**\*.map" />
+ 	</ItemGroup>
 
+ 
+ 	<Target Name="RemoveIdentityAssets">
+       <ItemGroup>
+           <StaticWebAsset Remove="@(StaticWebAsset)" Condition="%(SourceId) == 'Microsoft.AspNetCore.Identity.UI'" />
+       </ItemGroup>
+   </Target>
 
-	<Target Name="RemoveIdentityAssets">
-      <ItemGroup>
-          <StaticWebAsset Remove="@(StaticWebAsset)" Condition="%(SourceId) == 'Microsoft.AspNetCore.Identity.UI'" />
-      </ItemGroup>
-  </Target>
-
-	<Target Name="CleanGeneratedCss" AfterTargets="Clean">
-		<RemoveDir Directories="wwwroot\css" />
-	</Target>
+ 	<Target Name="CleanGeneratedCss" AfterTargets="Clean">
+ 		<RemoveDir Directories="wwwroot\css" />
+ 	</Target>
 
 </Project>
