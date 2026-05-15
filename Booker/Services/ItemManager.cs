@@ -180,19 +180,17 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
     public async Task TrackViewAsync(int itemId, int userId)
     {
-        _context.ItemViews.Add(new ItemView { ItemId = itemId, UserId = userId });
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            // Duplicate key - user already viewed this item, ignore
-        }
+        var alreadyViewed = await context.ItemViews
+            .AnyAsync(v => v.ItemId == itemId && v.UserId == userId);
+
+        if (alreadyViewed) return;
+
+        context.ItemViews.Add(new ItemView { ItemId = itemId, UserId = userId });
+        await context.SaveChangesAsync();
     }
 
     public Task<int> GetViewCountAsync(int itemId) =>
-        _context.ItemViews.CountAsync(v => v.ItemId == itemId);
+        context.ItemViews.CountAsync(v => v.ItemId == itemId);
 
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
