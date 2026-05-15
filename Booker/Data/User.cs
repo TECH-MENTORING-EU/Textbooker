@@ -23,6 +23,7 @@ namespace Booker.Data
         public string? Photo { get; set; }
         public ICollection<Item> Items { get; } = new HashSet<Item>();
         public ICollection<Item> Favorites { get; } = new HashSet<Item>();
+        public ICollection<ItemView> ItemViews { get; } = new HashSet<ItemView>();
         public bool AreFavoritesPublic { get; set; } = false;
         public bool DisplayEmail { get; set; } = true;
         public bool DisplayWhatsapp { get; set; } = false;
