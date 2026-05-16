@@ -13,7 +13,6 @@ namespace Booker.Pages
         private readonly ILogger<IndexModel> _logger;
         private readonly ItemManager _itemManager;
         private readonly StaticDataManager _staticDataManager;
-        private readonly UserManager<User> _userManager;
 
         public List<int> ItemIds { get; set; } = null!;
         public StaticDataManager.Parameters Params { get; set; } = null!;
@@ -24,14 +23,12 @@ namespace Booker.Pages
         public IndexModel(
             ILogger<IndexModel> logger,
             ItemManager itemManager,
-            StaticDataManager staticDataManager,
-            UserManager<User> userManager
+            StaticDataManager staticDataManager
             )
         {
             _logger = logger;
             _itemManager = itemManager;
             _staticDataManager = staticDataManager;
-            _userManager = userManager;
         }
 
         [FromQuery]
@@ -66,11 +63,7 @@ namespace Booker.Pages
                 Input?.MaxPrice
             );
 
-            var currentUser = User.Identity?.IsAuthenticated == true 
-                ? await _userManager.GetUserAsync(User) 
-                : null;
-                
-            ItemIds = await _itemManager.GetItemIdsByParamsAsync(params2, currentUser).ToListAsync();
+            ItemIds = await _itemManager.GetItemIdsByParamsAsync(params2).ToListAsync();
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

@@ -2,9 +2,14 @@ using System;
 
 namespace Booker.Services;
 
-public class MaintenanceService(IServiceProvider services) : BackgroundService
+public class MaintenanceService : BackgroundService
 {
+    public MaintenanceService(IServiceProvider services)
+    {
+        Services = services;
+    }
 
+    public IServiceProvider Services { get; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -12,7 +17,7 @@ public class MaintenanceService(IServiceProvider services) : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
-            using var scope = services.CreateScope();
+            using var scope = Services.CreateScope();
             var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
 
             await sessionCacheManager.WritebackSessions();

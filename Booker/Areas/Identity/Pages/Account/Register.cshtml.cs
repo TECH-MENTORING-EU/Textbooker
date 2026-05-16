@@ -17,9 +17,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Booker.Services;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
@@ -32,17 +29,13 @@ namespace Booker.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<User> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
-        private readonly DataContext _context;
-        private readonly SchoolMappingService _schoolMappingService;
 
         public RegisterModel(
             UserManager<User> userManager,
             IUserStore<User> userStore,
             SignInManager<User> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender,
-            DataContext context,
-            SchoolMappingService schoolMappingService)
+            IEmailSender emailSender)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -50,8 +43,6 @@ namespace Booker.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
-            _context = context;
-            _schoolMappingService = schoolMappingService;
         }
 
         [BindProperty]
@@ -60,8 +51,6 @@ namespace Booker.Areas.Identity.Pages.Account
         public string ReturnUrl { get; set; }
 
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
-        
-        public SelectList AvailableSchools { get; set; }
 
         public class InputModel
         {
@@ -84,9 +73,6 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Potwierdź hasło")]
             [Compare("Password", ErrorMessage = "Hasła się nie zgadzają.")]
             public string ConfirmPassword { get; set; }
-            
-            [Display(Name = "Szkoła")]
-            public int? SchoolId { get; set; }
 
             [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
@@ -97,69 +83,17 @@ namespace Booker.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            AvailableSchools = new SelectList(await _context.Schools.Where(s => s.IsActive).ToListAsync(), "Id", "Name");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            AvailableSchools = new SelectList(await _context.Schools.Where(s => s.IsActive).ToListAsync(), "Id", "Name");
-            
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
 
-                // Step 1: Try automatic school assignment based on email domain
-                var autoAssignedSchoolId = await _schoolMappingService.GetSchoolIdByEmailAsync(Input.Email);
-                
-                if (autoAssignedSchoolId.HasValue)
-                {
-                    // Automatic assignment successful
-                    user.SchoolId = autoAssignedSchoolId.Value;
-                    _logger.LogInformation(
-                        "User automatically assigned to school ID {SchoolId} based on email domain",
-                        autoAssignedSchoolId.Value
-                    );
-                }
-                else if (Input.SchoolId.HasValue)
-                {
-                    // Step 2: Fall back to manual selection if provided
-                    // Verify the selected school is active
-                    var selectedSchool = await _context.Schools
-                        .FirstOrDefaultAsync(s => s.Id == Input.SchoolId.Value && s.IsActive);
-                    
-                    if (selectedSchool != null)
-                    {
-                        user.SchoolId = Input.SchoolId.Value;                       
-                        _logger.LogInformation(
-                            "User manually assigned to school ID {SchoolId}",
-                            Input.SchoolId.Value
-                        );
-                    }
-                    else
-                    {
-                        // Selected school is inactive or doesn't exist - inform the user
-                        _logger.LogWarning(
-                            "User tried to register with inactive/nonexistent school ID {SchoolId}",
-                            Input.SchoolId.Value
-                        );
-                        ModelState.AddModelError(
-                            nameof(Input.SchoolId),
-                            "Wybrana szkoła nie jest dostępna. Wybierz inną szkołę."
-                        );
-                        return Page();
-                    }
-                }
-                else
-                {
-                    // Step 3: No school assignment (both auto and manual failed/not provided)
-                    user.SchoolId = null;
-                    _logger.LogInformation("User registered without school assignment");
-                    ModelState.AddModelError("Input.SchoolId", "Wybierz szkołę, aby ukończyć rejestrację.");
-                    return Page();
-                }
-                
+                user.School = "ŚlTZN";
                 user.Photo = "/img/default-profile-picture.jpg";
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);

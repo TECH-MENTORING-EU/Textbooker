@@ -9,6 +9,7 @@ namespace Booker.Services
         Task<double> GetAverageRatingAsync(int userId);
         Task<int> GetRatingCountAsync(int userId);
         Task<List<UserRating>> GetRatingsForUserAsync(int userId);
+        Task<bool> DeleteRatingAsync(int ratingId, int userId, bool isAdmin);
     }
 
     public class RatingManager : IRatingManager
@@ -63,6 +64,18 @@ namespace Booker.Services
                 .Where(ur => ur.RevieweeId == userId)
                 .OrderByDescending(ur => ur.CreatedAt)
                 .ToListAsync();
+        }
+
+        public async Task<bool> DeleteRatingAsync(int ratingId, int userId, bool isAdmin)
+        {
+            var rating = await _context.UserRatings.FindAsync(ratingId);
+            if (rating == null) return false;
+
+            if (!isAdmin && rating.ReviewerId != userId) return false;
+
+            _context.UserRatings.Remove(rating);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

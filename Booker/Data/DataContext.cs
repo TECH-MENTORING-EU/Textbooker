@@ -14,8 +14,6 @@ namespace Booker.Data
         public DbSet<Level> Levels { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; } // added
         public DbSet<ChatThread> ChatThreads { get; set; } // added
-        public DbSet<UserRating> UserRatings { get; set; }
-        public DbSet<School> Schools { get; set; }
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -39,8 +37,6 @@ namespace Booker.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<School>().HasData(SeedData.Schools);
-
             modelBuilder.Entity<Subject>().HasData(SeedData.Subjects);
 
             modelBuilder.Entity<Grade>().HasData(SeedData.Grades);
@@ -63,7 +59,6 @@ namespace Booker.Data
 
             modelBuilder.Entity<User>(u =>
             {
-                u.HasOne(u => u.School).WithMany(s => s.Users).HasForeignKey(u => u.SchoolId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
                 u.HasMany(u => u.Items).WithOne(i => i.User);
                 u.HasMany(u => u.Favorites).WithMany()
                     .UsingEntity("UserFavorites",
@@ -85,13 +80,6 @@ namespace Booker.Data
             {
                 ct.HasIndex(t => t.ChannelId).IsUnique();
                 ct.HasIndex(t => new { t.UserAId, t.UserBId });
-            });
-
-            modelBuilder.Entity<UserRating>(ur =>
-            {
-                ur.HasIndex(ur => new { ur.ReviewerId, ur.RevieweeId }).IsUnique();
-                ur.HasOne(ur => ur.Reviewer).WithMany(u => u.RatingsGiven).HasForeignKey(ur => ur.ReviewerId).OnDelete(DeleteBehavior.Restrict);
-                ur.HasOne(ur => ur.Reviewee).WithMany(u => u.RatingsReceived).HasForeignKey(ur => ur.RevieweeId).OnDelete(DeleteBehavior.Restrict);
             });
         }
 

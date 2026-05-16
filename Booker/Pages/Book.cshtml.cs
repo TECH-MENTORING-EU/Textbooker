@@ -9,39 +9,52 @@ using SQLitePCL;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 
+
 namespace Booker.Pages
 {
-    public class BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger) : PageModel
+    public class BookModel : PageModel
     {
-        public List<string> Photos { get; set; } = new();
+        private readonly UserManager<User> _userManager;
+        private readonly ItemManager _itemManager;
+        private readonly FavoritesManager _favoritesManager;
+        private readonly IAuthorizationService _authService;
+        private readonly ILogger<BookModel> _logger;
+
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
 
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger)
+        {
+            _userManager = userManager;
+            _itemManager = itemManager;
+            _favoritesManager = favoritesManager;
+            _authService = authService;
+            _logger = logger;
+        }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var currentUser = await userManager.GetUserAsync(User);
-            var item = await itemManager.GetItemAsync(id, currentUser);
+            var item = await _itemManager.GetItemAsync(id);
             if (item == null)
             {
                 return NotFound();
             }
 
-            Photos = itemManager.GetPhotosUrl(item);
             BookItem = item;
 
-            var userId = userManager.GetUserId(User).IntOrDefault();
+            var userId = _userManager.GetUserId(User).IntOrDefault();
 
-            IsFavorite = await favoritesManager.IsFavoriteAsync(userId, id);
+            IsFavorite = await _favoritesManager.IsFavoriteAsync(userId, id);
 
             IsCurrentUserOwner = userId == BookItem.User.Id;
 
-            var isAuthorized = await authService.AuthorizeAsync(User, item, ItemOperations.Read);
+            var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
 
             if (!item.IsVisible && !isAuthorized.Succeeded)
             {
-                logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
+                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
                 return NotFound();
             }
 
@@ -50,8 +63,7 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetEmailAsync(int id)
         {
-            var currentUser = await userManager.GetUserAsync(User);
-            var item = await itemManager.GetItemAsync(id, currentUser);
+            var item = await _itemManager.GetItemAsync(id);
 
             if (item == null)
             {
@@ -59,7 +71,8 @@ namespace Booker.Pages
             }
 
             BookItem = item;
-            var userId = userManager.GetUserId(User).IntOrDefault();
+            
+            var userId = _userManager.GetUserId(User).IntOrDefault();
 
             if (userId == -1)
             {
@@ -77,14 +90,13 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostReserveAsync(int id, bool reserve)
         {
-            var currentUser = await userManager.GetUserAsync(User);
-            var item = await itemManager.GetItemAsync(id, currentUser);
+            var item = await _itemManager.GetItemAsync(id);
             if (item == null)
             {
                 return NotFound();
             }
 
-            var userId = userManager.GetUserId(User).IntOrDefault();
+            var userId = _userManager.GetUserId(User).IntOrDefault();
 
             if (userId == -1 || userId != item.User.Id)
             {
@@ -93,7 +105,7 @@ namespace Booker.Pages
 
             if (item.Reserved != reserve)
             {
-                await itemManager.MarkItemReservedAsync(id, reserve);
+                await _itemManager.MarkItemReservedAsync(id, reserve);
             }
 
             Response.Headers["HX-Refresh"] = "true";
