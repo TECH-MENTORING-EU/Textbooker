@@ -3,15 +3,12 @@ using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Identity;
 
 namespace Booker.Pages.Shared.Components.ItemGallery;
 
 public class ItemGalleryViewComponent : ViewComponent
 {
     private readonly ItemManager _itemManager;
-    private readonly PhotosManager _photosManager;
-    private readonly UserManager<User> _userManager;
     const int PageSize = 25;
 
     public record ItemsListModel(
@@ -28,11 +25,9 @@ public class ItemGalleryViewComponent : ViewComponent
         bool LinkFilters
     );
 
-    public ItemGalleryViewComponent(ItemManager itemManager, UserManager<User> userManager, PhotosManager photosManager)
+    public ItemGalleryViewComponent(ItemManager itemManager)
     {
         _itemManager = itemManager;
-        _userManager = userManager;
-        _photosManager = photosManager;
     }
 
     public async Task<IViewComponentResult> InvokeAsync(
@@ -51,11 +46,7 @@ public class ItemGalleryViewComponent : ViewComponent
             );
         }
 
-        var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true 
-            ? await _userManager.GetUserAsync(UserClaimsPrincipal) 
-            : null;
-
-        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize, currentUser);
+        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize);
         if (!showHidden)
         {
             query = query.Where(i => i.IsVisible);
@@ -65,10 +56,9 @@ public class ItemGalleryViewComponent : ViewComponent
         var itemsWithPhotos = itemsFromDb.Select(item => new ItemModel(
             Item: item,
             FirstPhoto: string.IsNullOrEmpty(item.Photo)
-                ? "/img/default-book.svg"
-                : _photosManager.GetPhotoUrl(item.Photo.Split(';')[0].Trim()),
-            Params: parameters,
-            LinkFilters: linkFilters
+                ? "/images/default-book.png" // fallback
+                : item.Photo.Split(';')[0].Trim(),
+            Params: parameters
         ));
 
         return View(

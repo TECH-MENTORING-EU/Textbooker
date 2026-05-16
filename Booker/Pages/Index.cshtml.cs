@@ -10,25 +10,18 @@ namespace Booker.Pages
     public class IndexModel : PageModel
     {
         private readonly StaticDataManager _staticDataManager;
-        private readonly ItemManager _itemManager;
-        private readonly UserManager<User> _userManager;
-        private readonly PhotosManager _photosManager;
 
         public List<Subject> Subjects { get; set; } = new();
         public List<int> RecentItemIds { get; set; } = new();
         public List<HeroItem> HeroItems { get; set; } = new();
 
         public IndexModel(
-            StaticDataManager staticDataManager,
+            ILogger<IndexModel> logger,
             ItemManager itemManager,
-            UserManager<User> userManager,
-            PhotosManager photosManager
-        )
+            StaticDataManager staticDataManager
+            )
         {
             _staticDataManager = staticDataManager;
-            _itemManager = itemManager;
-            _userManager = userManager;
-            _photosManager = photosManager;
         }
 
         public record HeroItem(string Title, string Price, string Photo);
@@ -50,25 +43,7 @@ namespace Booker.Pages
                 MaxPrice: null
             );
 
-            var landingItemIds = await _itemManager
-                .GetItemIdsByParamsAsync(params2, currentUser)
-                .Take(12)
-                .ToListAsync();
-
-            RecentItemIds = landingItemIds.Take(8).ToList();
-
-            HeroItems = await _itemManager
-                .GetItemsByIdsAsync(landingItemIds, currentUser)
-                .Where(i => i.IsVisible)
-                .Take(12)
-                .Select(i => new HeroItem(
-                    i.Book.Title,
-                    i.Price.ToString("F2") + " zł",
-                    i.Photo != null && i.Photo.Length > 0
-                        ? _photosManager.GetPhotoUrl(i.Photo.Split(';')[0].Trim())
-                        : ""
-                ))
-                .ToListAsync();
+            ItemIds = await _itemManager.GetItemIdsByParamsAsync(params2).ToListAsync();
 
             return Page();
         }

@@ -3,83 +3,20 @@
 
 // Write your JavaScript code.
 
-const processedImagesByInput = new WeakMap();
-const uploadStateByInput = new WeakMap();
+function handleImageUpload(input) {
+    const preview = input.closest("section").querySelector(".image-preview-container");
+    preview.innerHTML = ""; // Clear existing previews
+    const imageErrorSpan = input.closest("section").querySelector("#imageErrorMsg");
 
-function getUploadState(input) {
-    let state = uploadStateByInput.get(input);
-    if (!state) {
-        state = {
-            committedFiles: processedImagesByInput.get(input) ?? [],
-            queue: Promise.resolve(),
-            pending: 0
-        };
-        uploadStateByInput.set(input, state);
+    if (input.files.length > 6) {
+        imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
+        return;
     }
 
-    return state;
-}
-
-function assignFiles(input, files) {
+    const files = Array.from(input.files);
     const dataTransfer = new DataTransfer();
-    files.forEach(file => dataTransfer.items.add(file));
-    input.files = dataTransfer.files;
-}
 
-function setImageUploadBusy(input, isBusy) {
-    input.disabled = isBusy;
-    input.setAttribute("aria-busy", isBusy ? "true" : "false");
-
-    const form = input.closest("form");
-    if (!form) {
-        return;
-    }
-
-    if (window.htmx?.trigger) {
-        htmx.trigger(form, "image-upload-state", { busy: isBusy });
-        return;
-    }
-
-    toggleFormSubmitState(form, isBusy);
-}
-
-function toggleFormSubmitState(form, isBusy) {
-    const controls = Array.from(form.elements).filter(element => {
-        if (!(element instanceof HTMLButtonElement || element instanceof HTMLInputElement)) {
-            return false;
-        }
-
-        return element.type === "submit";
-    });
-
-    controls.forEach(element => {
-        element.disabled = isBusy;
-        element.setAttribute("aria-disabled", isBusy ? "true" : "false");
-    });
-
-    const statusElement = form.querySelector("#imageProcessingMsg");
-    if (statusElement) {
-        statusElement.textContent = isBusy ? "Trwa przetwarzanie zdjęć. Poczekaj chwilę." : "";
-    }
-}
-
-function renderImagePreview(preview, files) {
-    preview.innerHTML = "";
-    files.forEach((file, index) => {
-        const imageElement = document.createElement("img");
-        imageElement.src = URL.createObjectURL(file);
-        imageElement.alt = `Zdjęcie książki ${index + 1}`;
-        imageElement.classList.add("book-image-preview");
-        if (index === 0) {
-            imageElement.classList.add("main");
-        }
-        preview.appendChild(imageElement);
-    });
-    addLabelToMainImage();
-}
-
-function processSelectedImages(selectedFiles) {
-    return Promise.all(selectedFiles.map(file => {
+    const processingPromises = files.map((file, index) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = function (e) {

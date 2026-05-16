@@ -6,7 +6,7 @@
     ViewData["Title"] = $"{Model.BookItem.Book.Title} - TextBooker";
     ViewData["Robots"] = "noindex";
 
-    var images = Model.Photos;
+    var images = (Model.BookItem.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
     var mainImage = images.FirstOrDefault();
 
     var profilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
@@ -103,11 +103,7 @@
                  alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName" />
             <div>
                 @Model.BookItem.User.UserName<br />
-                @if (User.Identity?.IsAuthenticated == true && Model.BookItem.User.DisplaySchool && Model.BookItem.User.School != null)
-                {
-                    @Model.BookItem.User.School.Name
-                    <br />
-                }
+                @Model.BookItem.User.School<br />
                 <a href="/Profile/@Model.BookItem.UserId" role="button" class="outline">Więcej od tego użytkownika</a>
             </div>
         </div>

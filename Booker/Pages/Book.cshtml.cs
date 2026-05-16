@@ -8,44 +8,53 @@ using Booker.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 
+
 namespace Booker.Pages
 {
-    public class BookModel(
-        UserManager<User> userManager,
-        ItemManager itemManager,
-        FavoritesManager favoritesManager,
-        IAuthorizationService authService,
-        ILogger<BookModel> logger,
-        ContactRevealLimiter contactRevealLimiter) : PageModel
+    public class BookModel : PageModel
     {
-        public List<string> Photos { get; set; } = new();
+        private readonly UserManager<User> _userManager;
+        private readonly ItemManager _itemManager;
+        private readonly FavoritesManager _favoritesManager;
+        private readonly IAuthorizationService _authService;
+        private readonly ILogger<BookModel> _logger;
+
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
         public int ViewCount { get; set; }
 
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger)
+        {
+            _userManager = userManager;
+            _itemManager = itemManager;
+            _favoritesManager = favoritesManager;
+            _authService = authService;
+            _logger = logger;
+        }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var currentUser = await userManager.GetUserAsync(User);
-            var item = await itemManager.GetItemAsync(id, currentUser);
+            var item = await _itemManager.GetItemAsync(id);
             if (item == null)
             {
                 return NotFound();
             }
 
-            Photos = itemManager.GetPhotosUrl(item);
             BookItem = item;
 
-            IsCurrentUserOwner = currentUser != null && currentUser.Id == BookItem.User.Id;
-            IsFavorite = currentUser != null && await favoritesManager.IsFavoriteAsync(currentUser.Id, id);
+            var userId = _userManager.GetUserId(User).IntOrDefault();
 
-            var isAuthorized = await authService.AuthorizeAsync(User, item, ItemOperations.Read);
+            IsFavorite = await _favoritesManager.IsFavoriteAsync(userId, id);
+
+            IsCurrentUserOwner = userId == BookItem.User.Id;
+
+            var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
 
             if (!item.IsVisible && !isAuthorized.Succeeded)
             {
-                logger.LogWarning("Użytkownik {UserName} próbował wykonać nieuprawnioną akcję {ActionName} na zasobie o ID {ItemId}.",
-                    User.Identity?.Name, ItemOperations.Read.Name, id);
+                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
                 return NotFound();
             }
 
@@ -64,8 +73,7 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetEmailAsync(int id)
         {
-            var currentUser = await userManager.GetUserAsync(User);
-            var item = await itemManager.GetItemAsync(id, currentUser);
+            var item = await _itemManager.GetItemAsync(id);
 
             if (item == null)
             {
@@ -73,6 +81,8 @@ namespace Booker.Pages
             }
 
             BookItem = item;
+            
+            var userId = _userManager.GetUserId(User).IntOrDefault();
 
             // RODO - task 05: the seller's contact details are only disclosed in the context of
             // an active, publicly visible listing (basis: contract performance).
@@ -116,21 +126,22 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostReserveAsync(int id, bool reserve)
         {
-            var currentUser = await userManager.GetUserAsync(User);
-            var item = await itemManager.GetItemAsync(id, currentUser);
+            var item = await _itemManager.GetItemAsync(id);
             if (item == null)
             {
                 return NotFound();
             }
 
-            if (currentUser == null || currentUser.Id != item.User.Id)
+            var userId = _userManager.GetUserId(User).IntOrDefault();
+
+            if (userId == -1 || userId != item.User.Id)
             {
                 return Forbid();
             }
 
             if (item.Reserved != reserve)
             {
-                await itemManager.MarkItemReservedAsync(id, reserve);
+                await _itemManager.MarkItemReservedAsync(id, reserve);
             }
 
             Response.Headers["HX-Refresh"] = "true";

@@ -1,4 +1,4 @@
-﻿using Booker.Areas.Identity.Utilities;
+using Booker.Areas.Identity.Utilities;
 using Booker.Data;
 using Booker.ModelBinding;
 using Booker.Services;
@@ -181,6 +181,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
+}
+await app.MigrateDatabaseAsync(configuration);
+
+if (app.Environment.IsDevelopment())
+{
     await app.InitializeDatabaseAsync();
 }
 

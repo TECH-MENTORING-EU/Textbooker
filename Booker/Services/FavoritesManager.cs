@@ -5,8 +5,10 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Booker.Services;
 
-public class FavoritesManager(DataContext context, ItemManager itemManager, IMemoryCache cache)
+public class FavoritesManager
 {
+    private readonly DataContext _context;
+    private readonly IMemoryCache _cache;
 
     public enum Status
     {
@@ -17,9 +19,15 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
         NotModified
     }
 
+    public FavoritesManager(DataContext context, IMemoryCache cache)
+    {
+        _context = context;
+        _cache = cache;
+    }
+
     private IQueryable<int> GetFavoriteIdsQueryable(int userId)
     {
-        return context.Users
+        return _context.Users
             .Where(u => u.Id == userId)
             .SelectMany(u => u.Favorites.Select(f => f.Id))
             .AsQueryable();
@@ -27,11 +35,11 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
 
     public async Task<List<int>> GetFavoriteIdsAsync(int userId)
     {
-        if (!cache.TryGetValue("favorites" + userId, out List<int>? ids))
+        if (!_cache.TryGetValue("favorites" + userId, out List<int>? ids))
         {
             ids = await GetFavoriteIdsQueryable(userId)
                 .ToListAsync();
-            cache.Set("favorites" + userId, ids, TimeSpan.FromHours(1));
+            _cache.Set("favorites" + userId, ids, TimeSpan.FromHours(1));
         }
 
         return ids!;
@@ -39,7 +47,7 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
 
     private void InvalidateCache(int userId)
     {
-        cache.Remove("favorites" + userId);
+        _cache.Remove("favorites" + userId);
     }
     
     public async Task<bool> IsFavoriteAsync(int userId, int itemId)
@@ -56,13 +64,25 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
 
     private async Task<Status> ChangeFavoriteAsync(int userId, int itemId, bool isAdding)
     {
-        var user = await context.Users
+        var user = await _context.Users
             .Include(u => u.Favorites)
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)
         {
             return Status.Forbidden;
+        }
+
+        var item = await _context.Items.FindAsync(itemId);
+
+        if (item == null)
+        {
+            return Status.NotFound;
+        }
+
+        if (user.Favorites.Any(f => f.Id == itemId) == isAdding)
+        {
+            return Status.NotModified;
         }
 
         if (isAdding)
@@ -105,14 +125,14 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
             user.Favorites.Remove(item);
         }
 
-        await context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
         InvalidateCache(userId);
         return Status.Success;
     }
 
     public async Task RemoveAllFavoritesAsync(int userId)
     {
-        var user = await context.Users.Include(u => u.Favorites).FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _context.Users.Include(u => u.Favorites).FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)
         {
@@ -120,7 +140,7 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
         }
 
         user.Favorites.Clear();
-        await context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
         InvalidateCache(userId);
     }
 

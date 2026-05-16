@@ -1757,37 +1757,6 @@ namespace Booker.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Booker.Data.School", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeactivatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EmailDomain")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Schools");
-                });
-
             modelBuilder.Entity("Booker.Data.Subject", b =>
                 {
                     b.Property<int>("Id")
@@ -1989,8 +1958,9 @@ namespace Booker.Migrations
                     b.Property<string>("Photo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("SchoolId")
-                        .HasColumnType("int");
+                    b.Property<string>("School")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -2017,8 +1987,6 @@ namespace Booker.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("SchoolId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -2239,35 +2207,6 @@ namespace Booker.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Booker.Data.ItemView", b =>
-                {
-                    b.HasOne("Booker.Data.Item", "Item")
-                        .WithMany("Views")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Booker.Data.User", "User")
-                        .WithMany("ItemViews")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Item");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Booker.Data.User", b =>
-                {
-                    b.HasOne("Booker.Data.School", "School")
-                        .WithMany("Users")
-                        .HasForeignKey("SchoolId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("School");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
@@ -2337,16 +2276,6 @@ namespace Booker.Migrations
             modelBuilder.Entity("Booker.Data.Book", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("Booker.Data.Item", b =>
-                {
-                    b.Navigation("Views");
-                });
-
-            modelBuilder.Entity("Booker.Data.School", b =>
-                {
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Booker.Data.User", b =>

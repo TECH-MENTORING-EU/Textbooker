@@ -12,19 +12,7 @@ namespace Booker.Data
         [PersonalData]
         public DateTime? LastActiveAt { get; set; }
         public bool IsVisible { get; set; } = true;
-
-        /// <summary>
-        /// Foreign key to the School table. Nullable - users without assigned school have null.
-        /// </summary>
-        [PersonalData]
-        public int? SchoolId { get; set; }
-
-        /// <summary>
-        /// Navigation property to the School entity
-        /// </summary>
-        public School? School { get; set; }
-
-        [PersonalData]
+        public required string School { get; set; }
         public string? Photo { get; set; }
         public ICollection<Item> Items { get; } = new HashSet<Item>();
         public ICollection<Item> Favorites { get; } = new HashSet<Item>();
@@ -54,7 +42,5 @@ namespace Booker.Data
 
         [PersonalData]
         public string? Instagram { get; set; }
-        public ICollection<UserRating> RatingsGiven { get; } = new HashSet<UserRating>();
-        public ICollection<UserRating> RatingsReceived { get; } = new HashSet<UserRating>();
     }
 }
