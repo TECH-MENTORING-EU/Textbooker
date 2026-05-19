@@ -93,7 +93,7 @@ namespace Booker.Areas.Identity.Pages.Account
             {
                 var user = CreateUser();
 
-                user.School = "ŚlTZN";
+                user.SchoolId = 1;
                 user.Photo = "/img/default-profile-picture.jpg";
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);

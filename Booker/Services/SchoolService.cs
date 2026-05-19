@@ -125,7 +125,7 @@ public class SchoolService(DataContext context, ILogger<SchoolService> logger)
         await context.SaveChangesAsync();
 
         logger.LogInformation(
-            "Soft deleted school: {SchoolName} (ID: {SchoolId}). Schema {SchemaName} preserved.",
+            "Soft deleted school: {SchoolName} (ID: {SchoolId}).",
             school.Name,
             school.Id
         );
