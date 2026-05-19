@@ -34,7 +34,7 @@ namespace Booker.Services
                 RevieweeId = revieweeId,
                 RatingValue = value,
                 Comment = comment,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.UserRatings.Add(rating);
