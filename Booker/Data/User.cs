@@ -12,13 +12,21 @@ namespace Booker.Data
         [PersonalData]
         public DateTime? LastActiveAt { get; set; }
         public bool IsVisible { get; set; } = true;
-        public required string School { get; set; }
+
+        /// <summary>
+        /// Foreign key to the School table. Nullable - users without assigned school have null.
+        /// </summary>
+        public int? SchoolId { get; set; }
+
+        /// <summary>
+        /// Navigation property to the School entity
+        /// </summary>
+        public School? School { get; set; }
+
         public string? Photo { get; set; }
         public ICollection<Item> Items { get; } = new HashSet<Item>();
         public ICollection<Item> Favorites { get; } = new HashSet<Item>();
         public ICollection<ItemView> ItemViews { get; } = new HashSet<ItemView>();
-
-        [PersonalData]
         public bool AreFavoritesPublic { get; set; } = false;
 
         // RODO - task 05: default values for contact-visibility flags.
