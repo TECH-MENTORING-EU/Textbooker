@@ -12,8 +12,11 @@ namespace Booker.Data
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Level> Levels { get; set; }
-        public DbSet<ChatMessage> ChatMessages { get; set; } // added
-        public DbSet<ChatThread> ChatThreads { get; set; } // added
+        public DbSet<School> Schools { get; set; }
+        public DbSet<ItemView> ItemViews { get; set; }
+        public DbSet<UserRating> UserRatings { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatThread> ChatThreads { get; set; }
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -37,6 +40,8 @@ namespace Booker.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<School>().HasData(SeedData.Schools);
+
             modelBuilder.Entity<Subject>().HasData(SeedData.Subjects);
 
             modelBuilder.Entity<Grade>().HasData(SeedData.Grades);
@@ -59,6 +64,7 @@ namespace Booker.Data
 
             modelBuilder.Entity<User>(u =>
             {
+                u.HasOne(u => u.School).WithMany(s => s.Users).HasForeignKey(u => u.SchoolId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
                 u.HasMany(u => u.Items).WithOne(i => i.User);
                 u.HasMany(u => u.Favorites).WithMany()
                     .UsingEntity("UserFavorites",
@@ -68,6 +74,19 @@ namespace Booker.Data
                     {
                         uf.HasKey("UserId", "ItemId");
                     });
+            });
+
+            modelBuilder.Entity<ItemView>(iv =>
+            {
+                iv.HasKey(v => new { v.ItemId, v.UserId });
+                iv.HasOne(v => v.Item).WithMany(i => i.Views).HasForeignKey(v => v.ItemId).OnDelete(DeleteBehavior.Cascade);
+                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<UserRating>(ur =>
+            {
+                ur.HasOne(ur => ur.Reviewer).WithMany().HasForeignKey(ur => ur.ReviewerId).OnDelete(DeleteBehavior.Restrict);
+                ur.HasOne(ur => ur.Reviewee).WithMany().HasForeignKey(ur => ur.RevieweeId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<ChatMessage>(cm =>
