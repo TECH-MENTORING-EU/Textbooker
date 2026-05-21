@@ -86,7 +86,8 @@ namespace Booker.Data
             modelBuilder.Entity<UserRating>(ur =>
             {
                 ur.HasOne(ur => ur.Reviewer).WithMany().HasForeignKey(ur => ur.ReviewerId).OnDelete(DeleteBehavior.Restrict);
-                ur.HasOne(ur => ur.Reviewee).WithMany().HasForeignKey(ur => ur.RevieweeId).OnDelete(DeleteBehavior.Cascade);
+                ur.HasOne(ur => ur.Reviewee).WithMany().HasForeignKey(ur => ur.RevieweeId).OnDelete(DeleteBehavior.Restrict);
+                ur.HasIndex(ur => new { ur.ReviewerId, ur.RevieweeId }).IsUnique();
             });
 
             modelBuilder.Entity<ChatMessage>(cm =>

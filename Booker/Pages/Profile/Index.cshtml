@@ -7,6 +7,35 @@
 
 <partial name="_Heading" for="UserInfo" />
 
+<section class="profile-rating">
+    <h2>Oceny</h2>
+    <div class="rating-summary">
+        <partial name="Shared/_StarRating" model="@Model.AverageRating" />
+        <span class="rating-count">(@Model.RatingCount ocen)</span>
+    </div>
+
+    @if (!Model.UserInfo.IsCurrentUser && User.Identity?.IsAuthenticated == true)
+    {
+        if (Model.HasExistingRating)
+        {
+            <p class="secondary">Już oceniłeś tego użytkownika.</p>
+        }
+        else if (Model.CanRate)
+        {
+            <a asp-page="/Rating/Create" asp-route-userId="@Model.UserInfo.RequestUser.Id" role="button" class="outline">Oceń użytkownika</a>
+        }
+        else
+        {
+            <details>
+                <summary class="secondary">Dlaczego nie mogę ocenić?</summary>
+                <p>Możesz ocenić tylko użytkownika, z którym miałeś interakcję dotyczącą zarezerwowanej książki. Upewnij się, że sprzedawca oznaczył książkę jako zarezerwowaną i że prowadziliście konwersację.</p>
+            </details>
+        }
+    }
+
+    <partial name="Shared/_RatingList" model="@Model.Ratings" />
+</section>
+
 <h2>Ogłoszenia</h2>
 <section class="grid-gallery">
     <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" show-hidden="@Model.UserInfo.IsCurrentUser" />

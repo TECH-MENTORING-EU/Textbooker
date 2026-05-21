@@ -1,0 +1,79 @@
+@using Booker.Data
+@using Booker.Utilities
+@model List<UserRating>
+@{
+    var currentUserId = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : -1;
+}
+
+@if (Model.Any())
+{
+    <div class="ratings-list">
+        @foreach (var rating in Model)
+        {
+            <article class="rating-item">
+                <div class="rating-header">
+                    <div class="rating-user">
+                        <img src="@rating.Reviewer.Photo" alt="Zdjęcie @rating.Reviewer.UserName" class="rating-avatar" />
+                        <div>
+                            <strong>
+                                <a asp-page="/Profile/Index" asp-route-id="@rating.ReviewerId">@rating.Reviewer.UserName</a>
+                            </strong>
+                            <div class="star-rating small">
+                                @for (int i = 0; i < rating.RatingValue; i++)
+                                {
+                                    <svg icon="star" variant="filled" aria-hidden="true"></svg>
+                                }
+                                @for (int i = rating.RatingValue; i < 5; i++)
+                                {
+                                    <svg icon="star" variant="outline" aria-hidden="true"></svg>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <small class="rating-date">
+                        @rating.CreatedAt.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("pl-PL"))
+                    </small>
+                </div>
+
+                @if (!string.IsNullOrEmpty(rating.Comment))
+                {
+                    <p class="rating-comment">@rating.Comment</p>
+                }
+
+                @if (!string.IsNullOrEmpty(rating.Reply))
+                {
+                    <div class="rating-reply">
+                        <strong>Odpowiedź:</strong>
+                        <p>@rating.Reply</p>
+                        @if (rating.RepliedAt.HasValue)
+                        {
+                            <small>@rating.RepliedAt.Value.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("pl-PL"))</small>
+                        }
+                    </div>
+                }
+                else if (rating.RevieweeId == currentUserId)
+                {
+                    <div class="rating-reply-form">
+                        <form method="post" asp-page="/Rating/Reply" asp-route-ratingId="@rating.Id">
+                            <div style="display: flex; gap: 0.5em; align-items: flex-start;">
+                                <textarea name="Reply" maxlength="500" rows="2" placeholder="Twoja odpowiedź..." required style="min-height: 60px;"></textarea>
+                                <button type="submit" class="secondary">Odpowiedz</button>
+                            </div>
+                        </form>
+                    </div>
+                }
+
+                @if (rating.ReviewerId == currentUserId || User.IsInRole("Admin"))
+                {
+                    <form method="post" asp-page="/Profile/Index" asp-page-handler="DeleteRating" asp-route-ratingId="@rating.Id" style="margin-top: 0.5em;">
+                        <button type="submit" class="outline small" onclick="return confirm('Czy na pewno chcesz usunąć tę ocenę?')">Usuń</button>
+                    </form>
+                }
+            </article>
+        }
+    </div>
+}
+else
+{
+    <p>Brak ocen.</p>
+}
