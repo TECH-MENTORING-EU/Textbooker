@@ -1,0 +1,84 @@
+@page "{userId:int}"
+@model Booker.Pages.Rating.CreateModel
+@{
+    ViewData["Title"] = "Oceń użytkownika";
+}
+
+<article>
+    <header>
+        <h2>Oceń użytkownika @Model.RevieweeUserName</h2>
+    </header>
+
+    <div class="rating-rules">
+        <details>
+            <summary>Reguły oceniania</summary>
+            <ul>
+                <li>Możesz ocenić użytkownika, z którym miałeś interakcję dotyczącą zarezerwowanej książki.</li>
+                <li>Każdego użytkownika możesz ocenić tylko raz.</li>
+                <li>Ocena jest w skali od 1 do 5 gwiazdek.</li>
+                <li>Możesz dodać krótki komentarz do oceny.</li>
+                <li>Oceniany użytkownik może zostawić jedną odpowiedź na Twoją ocenę.</li>
+            </ul>
+        </details>
+    </div>
+
+    @if (!Model.CanRate)
+    {
+        <div class="rating-error">
+            <p>Nie możesz ocenić tego użytkownika. Upewnij się, że mieliście interakcję dotyczącą zarezerwowanej książki.</p>
+            <a asp-page="/Profile/Index" asp-route-id="@Model.UserId" role="button" class="outline">Wróć do profilu</a>
+        </div>
+    }
+    else if (Model.ExistingRating != null)
+    {
+        <div class="rating-error">
+            <p>Już oceniłeś tego użytkownika.</p>
+            <a asp-page="/Profile/Index" asp-route-id="@Model.UserId" role="button" class="outline">Wróć do profilu</a>
+        </div>
+    }
+    else
+    {
+        <form method="post">
+            <input type="hidden" asp-for="UserId" />
+
+            <div class="form-group">
+                <label asp-for="RatingValue">Ocena</label>
+                <div class="star-rating-input">
+                    @for (int i = 5; i >= 1; i--)
+                    {
+                        <input type="radio" id="star@(i)" name="RatingValue" value="@i" required />
+                        <label for="star@(i)" title="@i gwiazdek">
+                            <svg icon="star" variant="outline" aria-hidden="true"></svg>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="RatingValue" class="error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Comment">Komentarz (opcjonalny)</label>
+                <textarea asp-for="Comment" maxlength="500" rows="3" placeholder="Podziel się swoją opinią..."></textarea>
+                <small><span class="char-count">0 / 500</span></small>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <p class="error">@Model.ErrorMessage</p>
+            }
+
+            <div class="grid">
+                <button type="submit">Wyślij ocenę</button>
+                <a asp-page="/Profile/Index" asp-route-id="@Model.UserId" role="button" class="outline" style="text-align:center;">Anuluj</a>
+            </div>
+        </form>
+    }
+</article>
+
+@section Scripts {
+    <script>
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+            textarea.addEventListener('input', updateCharCount);
+        }
+    </script>
+}

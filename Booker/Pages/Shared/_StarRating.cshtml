@@ -1,0 +1,34 @@
+@model double
+@{
+    var fullStars = (int)Math.Floor(Model);
+    var hasHalf = Model - fullStars >= 0.25 && Model - fullStars < 0.75;
+    var emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+    var displayValue = Model > 0 ? Model.ToString("0.0") : "Brak ocen";
+}
+
+<span class="star-rating" title="@displayValue">
+    @if (Model > 0)
+    {
+        @for (int i = 0; i < fullStars; i++)
+        {
+            <svg icon="star" variant="filled" aria-hidden="true"></svg>
+        }
+        @if (hasHalf)
+        {
+            <svg icon="star-half" variant="filled" aria-hidden="true"></svg>
+        }
+        @for (int i = 0; i < emptyStars; i++)
+        {
+            <svg icon="star" variant="outline" aria-hidden="true"></svg>
+        }
+        <span class="rating-value">@displayValue</span>
+    }
+    else
+    {
+        @for (int i = 0; i < 5; i++)
+        {
+            <svg icon="star" variant="outline" aria-hidden="true"></svg>
+        }
+        <span class="rating-value">Brak ocen</span>
+    }
+</span>
