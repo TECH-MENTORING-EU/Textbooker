@@ -2,8 +2,8 @@
 @model IndexModel
 @{
     ViewData["Title"] = "TextBooker";
-    var popularSubjects = Model.Subjects.Take(8);
-    var hasMoreSubjects = Model.Subjects.Count > 8;
+    var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name)).Take(6).ToList();
+    var hasMoreSubjects = Model.Subjects.Count(s => !string.IsNullOrWhiteSpace(s.Name)) > 6;
     var emptyParams = new Booker.Services.StaticDataManager.Parameters(null, new List<Booker.Data.Grade>(), null, null);
 }
 
@@ -65,10 +65,10 @@
 <section class="landing-section" aria-label="Popularne przedmioty">
     <h2 style="text-wrap: balance;">Popularne przedmioty</h2>
     <ul class="category-badges">
-        @foreach (var subject in popularSubjects)
+        @for (var i = 0; i < popularSubjects.Count; i++)
         {
-            if (string.IsNullOrWhiteSpace(subject.Name)) continue;
-            <li class="category-tile" style="--i: @(popularSubjects.ToList().IndexOf(subject));">
+            var subject = popularSubjects[i];
+            <li class="category-tile" style="--i: @i;">
                 <a asp-page="/Browse" asp-route-subject="@subject.Name" role="button" class="outline">
                     <svg icon="book" aria-hidden="true"></svg>
                     <span>@subject.Name</span>
