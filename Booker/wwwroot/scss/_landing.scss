@@ -203,9 +203,10 @@
     margin: 0;
     padding: 0;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     gap: 0.625rem;
+    overflow: hidden;
 }
 
 @keyframes categoryEnter {

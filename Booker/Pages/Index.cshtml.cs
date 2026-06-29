@@ -52,7 +52,7 @@ namespace Booker.Pages
 
             RecentItemIds = await _itemManager
                 .GetItemIdsByParamsAsync(params2, currentUser)
-                .Take(4)
+                .Take(8)
                 .ToListAsync();
 
             var heroIds = await _itemManager

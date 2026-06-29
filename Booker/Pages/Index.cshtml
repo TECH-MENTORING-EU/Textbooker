@@ -2,8 +2,8 @@
 @model IndexModel
 @{
     ViewData["Title"] = "TextBooker";
-    var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name)).Take(6).ToList();
-    var hasMoreSubjects = Model.Subjects.Count(s => !string.IsNullOrWhiteSpace(s.Name)) > 6;
+    var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name)).ToList();
+    var hasMoreSubjects = popularSubjects.Count > 6;
     var emptyParams = new Booker.Services.StaticDataManager.Parameters(null, new List<Booker.Data.Grade>(), null, null);
 }
 
@@ -64,7 +64,7 @@
 
 <section class="landing-section" aria-label="Popularne przedmioty">
     <h2 style="text-wrap: balance;">Popularne przedmioty</h2>
-    <ul class="category-badges">
+    <ul class="category-badges" data-single-line>
         @for (var i = 0; i < popularSubjects.Count; i++)
         {
             var subject = popularSubjects[i];
@@ -91,8 +91,56 @@
 {
     <section class="landing-section" aria-label="Ostatnio dodane">
         <h2 style="text-wrap: balance;">Ostatnio dodane</h2>
-        <section class="grid-gallery grid-gallery-single-row">
+        <section class="grid-gallery grid-gallery-single-row" data-single-row>
             <vc:item-gallery item-ids="@Model.RecentItemIds" parameters="@emptyParams" />
         </section>
     </section>
+}
+
+@section Scripts {
+<script>
+(function () {
+    // ---- Category badges: show only what fits in one line ----
+    var badges = document.querySelector('[data-single-line]');
+    if (badges) {
+        var items = Array.from(badges.children);
+        function fitBadges() {
+            items.forEach(function (li) { li.style.display = ''; });
+            var containerWidth = badges.clientWidth;
+            // Temporarily remove flex-wrap to measure single-line width
+            badges.style.flexWrap = 'nowrap';
+            for (var i = items.length - 1; i >= 0; i--) {
+                if (badges.scrollWidth > containerWidth) {
+                    items[i].style.display = 'none';
+                }
+            }
+        }
+        fitBadges();
+        window.addEventListener('resize', fitBadges);
+    }
+
+    // ---- Recent items: show only what fits in one row ----
+    var gallery = document.querySelector('[data-single-row]');
+    if (gallery) {
+        var tiles = Array.from(gallery.children);
+        function fitRow() {
+            tiles.forEach(function (t) { t.style.display = ''; });
+            var containerWidth = gallery.clientWidth;
+            var gap = parseFloat(getComputedStyle(gallery).gap) || 0;
+            var totalWidth = 0;
+            for (var i = 0; i < tiles.length; i++) {
+                totalWidth += tiles[i].getBoundingClientRect().width;
+                if (i > 0) totalWidth += gap;
+                if (totalWidth > containerWidth + 1) {
+                    tiles[i].style.display = 'none';
+                }
+            }
+        }
+        // Run after images start loading to get accurate measurements
+        requestAnimationFrame(fitRow);
+        window.addEventListener('resize', fitRow);
+        window.addEventListener('load', fitRow);
+    }
+})();
+</script>
 }
