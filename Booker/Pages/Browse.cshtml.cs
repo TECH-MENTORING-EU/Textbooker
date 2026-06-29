@@ -10,7 +10,6 @@ namespace Booker.Pages
 {
     public class BrowseModel : PageModel
     {
-        private readonly ILogger<BrowseModel> _logger;
         private readonly ItemManager _itemManager;
         private readonly StaticDataManager _staticDataManager;
         private readonly UserManager<User> _userManager;
@@ -22,13 +21,11 @@ namespace Booker.Pages
         public List<SelectListItem>? Levels { get; set; }
 
         public BrowseModel(
-            ILogger<BrowseModel> logger,
             ItemManager itemManager,
             StaticDataManager staticDataManager,
             UserManager<User> userManager
             )
         {
-            _logger = logger;
             _itemManager = itemManager;
             _staticDataManager = staticDataManager;
             _userManager = userManager;

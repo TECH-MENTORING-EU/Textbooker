@@ -14,9 +14,9 @@ namespace Booker.Pages
         private readonly UserManager<User> _userManager;
         private readonly PhotosManager _photosManager;
 
-        public List<Subject> Subjects { get; set; } = null!;
-        public List<int> RecentItemIds { get; set; } = null!;
-        public List<HeroItem> HeroItems { get; set; } = null!;
+        public List<Subject> Subjects { get; set; } = new();
+        public List<int> RecentItemIds { get; set; } = new();
+        public List<HeroItem> HeroItems { get; set; } = new();
 
         public IndexModel(
             StaticDataManager staticDataManager,
@@ -50,18 +50,15 @@ namespace Booker.Pages
                 MaxPrice: null
             );
 
-            RecentItemIds = await _itemManager
-                .GetItemIdsByParamsAsync(params2, currentUser)
-                .Take(8)
-                .ToListAsync();
-
-            var heroIds = await _itemManager
+            var landingItemIds = await _itemManager
                 .GetItemIdsByParamsAsync(params2, currentUser)
                 .Take(12)
                 .ToListAsync();
 
+            RecentItemIds = landingItemIds.Take(8).ToList();
+
             HeroItems = await _itemManager
-                .GetItemsByIdsAsync(heroIds, currentUser)
+                .GetItemsByIdsAsync(landingItemIds, currentUser)
                 .Where(i => i.IsVisible)
                 .Take(12)
                 .Select(i => new HeroItem(

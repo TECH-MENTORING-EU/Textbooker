@@ -94,16 +94,27 @@ namespace Booker.Pages
             var imageStreams = Input.Images?.Select(f => f.OpenReadStream()).ToList();
             var imageExtensions = Input.Images?.Select(f => Path.GetExtension(f.FileName)).ToList();
 
-            var result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
-                ItemToEdit.User,
-                parameters,
-                Input.Description,
-                Input.State,
-                Input.Price,
-                imageStreams,
-                imageExtensions,
-                ItemToEdit.Photo
-            ));
+            ItemManager.Status result;
+            try
+            {
+                result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
+                    ItemToEdit.User,
+                    parameters,
+                    Input.Description,
+                    Input.State,
+                    Input.Price,
+                    imageStreams,
+                    imageExtensions,
+                    ItemToEdit.Photo
+                ));
+            }
+            catch (PhotoStorageException ex)
+            {
+                ModelState.AddModelError("Input.Images", ex.Message);
+                Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
             return ValidateAndReturn(ItemToEdit.Id, result);
         }
