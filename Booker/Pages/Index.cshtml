@@ -64,14 +64,14 @@
 
 <section class="landing-section" aria-label="Popularne przedmioty">
     <h2 style="text-wrap: balance;">Popularne przedmioty</h2>
-    <ul class="category-grid">
+    <ul class="category-badges">
         @foreach (var subject in popularSubjects)
         {
-            var name = string.IsNullOrWhiteSpace(subject.Name) ? "Nieznany przedmiot" : subject.Name;
+            if (string.IsNullOrWhiteSpace(subject.Name)) continue;
             <li class="category-tile" style="--i: @(popularSubjects.ToList().IndexOf(subject));">
                 <a asp-page="/Browse" asp-route-subject="@subject.Name" role="button" class="outline">
                     <svg icon="book" aria-hidden="true"></svg>
-                    <span>@name</span>
+                    <span>@subject.Name</span>
                 </a>
             </li>
         }
@@ -91,7 +91,7 @@
 {
     <section class="landing-section" aria-label="Ostatnio dodane">
         <h2 style="text-wrap: balance;">Ostatnio dodane</h2>
-        <section class="grid-gallery">
+        <section class="grid-gallery grid-gallery-single-row">
             <vc:item-gallery item-ids="@Model.RecentItemIds" parameters="@emptyParams" />
         </section>
     </section>

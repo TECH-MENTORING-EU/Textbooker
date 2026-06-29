@@ -52,13 +52,18 @@ namespace Booker.Pages
 
             RecentItemIds = await _itemManager
                 .GetItemIdsByParamsAsync(params2, currentUser)
-                .Take(8)
+                .Take(4)
+                .ToListAsync();
+
+            var heroIds = await _itemManager
+                .GetItemIdsByParamsAsync(params2, currentUser)
+                .Take(12)
                 .ToListAsync();
 
             HeroItems = await _itemManager
-                .GetItemsByIdsAsync(RecentItemIds, currentUser)
+                .GetItemsByIdsAsync(heroIds, currentUser)
                 .Where(i => i.IsVisible)
-                .Take(10)
+                .Take(12)
                 .Select(i => new HeroItem(
                     i.Book.Title,
                     i.Price.ToString("F2") + " zł",
