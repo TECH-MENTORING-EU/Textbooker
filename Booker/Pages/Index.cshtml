@@ -29,28 +29,34 @@
     @if (Model.HeroItems.Count > 0)
     {
         <div class="hero-preview" aria-hidden="true">
-            <div class="hero-carousel">
-                <ul class="hero-carousel-track">
-                    @foreach (var item in Model.HeroItems)
+            <div class="hero-wall">
+                <div class="hero-wall-rotated">
+                    @for (var row = 0; row < 3; row++)
                     {
-                        <li class="hero-book-card">
-                            <div class="hero-book-cover">
-                                @if (!string.IsNullOrEmpty(item.Photo))
-                                {
-                                    <img src="@item.Photo" alt="" />
-                                }
-                                else
-                                {
-                                    <svg icon="book" variant="solid" aria-hidden="true" style="width: 3rem; height: auto; opacity: 0.4;"></svg>
-                                }
-                            </div>
-                            <div class="hero-book-info">
-                                <span class="hero-book-title">@item.Title</span>
-                                <span class="hero-book-price">@item.Price</span>
-                            </div>
-                        </li>
+                        var rowItems = Model.HeroItems.Skip(row * 3).Concat(Model.HeroItems.Take(row * 3));
+                        <div class="hero-wall-row" style="--row: @row;">
+                            @foreach (var item in rowItems.Concat(rowItems))
+                            {
+                                <div class="hero-book-tile">
+                                    <div class="hero-book-cover">
+                                        @if (!string.IsNullOrEmpty(item.Photo))
+                                        {
+                                            <img src="@item.Photo" alt="" />
+                                        }
+                                        else
+                                        {
+                                            <svg icon="book" aria-hidden="true" style="width: 2rem; height: auto; opacity: 0.3;"></svg>
+                                        }
+                                    </div>
+                                    <div class="hero-book-info">
+                                        <span class="hero-book-title">@item.Title</span>
+                                        <span class="hero-book-price">@item.Price</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     }
-                </ul>
+                </div>
             </div>
         </div>
     }

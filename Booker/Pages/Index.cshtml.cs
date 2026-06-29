@@ -58,7 +58,7 @@ namespace Booker.Pages
             HeroItems = await _itemManager
                 .GetItemsByIdsAsync(RecentItemIds, currentUser)
                 .Where(i => i.IsVisible)
-                .Take(5)
+                .Take(10)
                 .Select(i => new HeroItem(
                     i.Book.Title,
                     i.Price.ToString("F2") + " zł",
