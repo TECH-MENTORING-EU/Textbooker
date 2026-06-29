@@ -121,7 +121,7 @@ namespace Booker.Pages
             }
 
             await _itemManager.DeleteItemAsync(itemId);
-            return RedirectToPage("/Index");
+            return RedirectToPage("/Browse");
         }
     }
 }

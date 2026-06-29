@@ -1,8 +1,7 @@
-﻿using Booker.Data;
+using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 
@@ -10,103 +9,47 @@ namespace Booker.Pages
 {
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
-        private readonly ItemManager _itemManager;
         private readonly StaticDataManager _staticDataManager;
+        private readonly ItemManager _itemManager;
         private readonly UserManager<User> _userManager;
 
-        public List<int> ItemIds { get; set; } = null!;
-        public StaticDataManager.Parameters Params { get; set; } = null!;
-        public List<SelectListItem>? Grades { get; set; }
-        public List<SelectListItem>? Subjects { get; set; }
-        public List<SelectListItem>? Levels {get; set; }
+        public List<Subject> Subjects { get; set; } = null!;
+        public List<int> RecentItemIds { get; set; } = null!;
 
         public IndexModel(
-            ILogger<IndexModel> logger,
-            ItemManager itemManager,
             StaticDataManager staticDataManager,
+            ItemManager itemManager,
             UserManager<User> userManager
-            )
+        )
         {
-            _logger = logger;
-            _itemManager = itemManager;
             _staticDataManager = staticDataManager;
+            _itemManager = itemManager;
             _userManager = userManager;
         }
 
-        [FromQuery]
-        public InputModel? Input { get; set; }
-        public class InputModel
+        public async Task<IActionResult> OnGetAsync()
         {
-            public string? Search { get; set; }
-            public string? Grade { get; set; }
-            public string? Subject { get; set; }
-            public decimal? MinPrice { get; set; }
-            public decimal? MaxPrice { get; set; }
-            public string? Level { get; set; }
-        }
+            Subjects = await _staticDataManager.GetSubjectsAsync();
 
-        public async Task<IActionResult> OnGetAsync(int pageNumber)
-        {
-            await LoadSelects();
-
-            Params = await _staticDataManager.ConvertParametersAsync(
-                null,
-                Input?.Grade,
-                Input?.Subject,
-                Input?.Level
-            );
+            var currentUser = User.Identity?.IsAuthenticated == true
+                ? await _userManager.GetUserAsync(User)
+                : null;
 
             var params2 = new ItemManager.Parameters(
-                Input?.Search,
-                Params.Grades,
-                Params.Subject,
-                Params.Level,
-                Input?.MinPrice,
-                Input?.MaxPrice
+                Search: null,
+                Grades: new(),
+                Subject: null,
+                Level: null,
+                MinPrice: null,
+                MaxPrice: null
             );
 
-            var currentUser = User.Identity?.IsAuthenticated == true 
-                ? await _userManager.GetUserAsync(User) 
-                : null;
-                
-            ItemIds = await _itemManager.GetItemIdsByParamsAsync(params2, currentUser).ToListAsync();
+            RecentItemIds = await _itemManager
+                .GetItemIdsByParamsAsync(params2, currentUser)
+                .Take(8)
+                .ToListAsync();
 
-            if (Request.Headers.ContainsKey("HX-Request"))
-            {
-                return ViewComponent("ItemGallery", new
-                {
-                    itemIds = ItemIds,
-                    parameters = Params,
-                    pageNumber = pageNumber
-                });
-            }
             return Page();
-        }
-
-        private async Task LoadSelects()
-        {
-            var _grades = await _staticDataManager.GetGradesAsync();
-            var _subjects = await _staticDataManager.GetSubjectsAsync();
-            var _levels = await _staticDataManager.GetLevelsAsync();
-
-            Grades = _grades?.Select(g => new SelectListItem
-            {
-                Value = g.GradeNumber,
-                Text = $"Klasa {g.GradeNumber}."
-            }).ToList();
-
-            Subjects = _subjects?.Select(s => new SelectListItem
-            {
-                Value = s.Name,
-                Text = s.Name
-            }).ToList();
-
-            Levels = _levels?.Select(l => new SelectListItem
-            {
-                Value = l.Name,
-                Text = l.Name
-            }).ToList();
         }
     }
 }
