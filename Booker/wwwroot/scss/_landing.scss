@@ -138,3 +138,62 @@
         transform: none;
     }
 }
+
+/* ===== Footer ===== */
+footer[role="contentinfo"] {
+    margin-top: 3rem;
+    padding-block: 1.5rem;
+    background-color: var(--pico-card-background-color);
+    border-top: 1px solid var(--pico-card-border-color);
+}
+
+.footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        a {
+            color: var(--pico-muted-color);
+            text-decoration: none;
+            font-size: 0.875rem;
+
+            &:hover {
+                color: var(--pico-primary);
+                text-decoration: underline;
+            }
+        }
+
+        .footer-help-link {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--pico-muted-color);
+            font-size: 0.875rem;
+            cursor: pointer;
+
+            &:hover {
+                color: var(--pico-primary);
+                text-decoration: underline;
+            }
+        }
+    }
+
+    @media (max-width: map.get(map.get(pico.$breakpoints, "sm"), "breakpoint") - 1) {
+        flex-direction: column;
+        align-items: flex-start;
+
+        nav ul {
+            gap: 1rem;
+        }
+    }
+}
