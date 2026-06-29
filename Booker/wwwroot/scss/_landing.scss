@@ -50,7 +50,7 @@
 /* ===== Hero wall (diagonal scrolling books) ===== */
 .hero-wall {
     overflow: hidden;
-    height: 660px;
+    height: 520px;
     position: relative;
     border-radius: var(--pico-border-radius);
 
@@ -185,15 +185,28 @@
     }
 }
 
+.grid-gallery-single-row {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+    gap: var(--pico-spacing);
+    overflow: hidden;
+
+    > article,
+    > [role="article"] {
+        margin-bottom: 0;
+    }
+}
+
 /* ===== Categories ===== */
 .category-badges {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     gap: 0.625rem;
+    overflow: hidden;
 }
 
 @keyframes categoryEnter {
