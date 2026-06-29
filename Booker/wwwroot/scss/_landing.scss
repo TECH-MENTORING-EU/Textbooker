@@ -40,12 +40,15 @@
 }
 
 .hero-preview {
+    max-width: 280px;
+
     [role="article"] {
         margin-bottom: 0;
     }
 
-    /* Visually de-emphasize - decorative only */
-    opacity: 0.9;
+    [role="article"] img {
+        max-height: 300px;
+    }
 
     @media (max-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint") - 1) {
         display: none;

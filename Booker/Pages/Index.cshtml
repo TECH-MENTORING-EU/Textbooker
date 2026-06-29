@@ -29,7 +29,7 @@
     @if (Model.RecentItemIds.Count > 0)
     {
         <div class="hero-preview" aria-hidden="true">
-            <vc:item-gallery item-ids="@Model.RecentItemIds.Take(3)" parameters="@emptyParams" />
+            <vc:item-gallery item-ids="@Model.RecentItemIds.Take(1)" parameters="@emptyParams" />
         </div>
     }
 </section>
