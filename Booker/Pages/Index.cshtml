@@ -26,10 +26,32 @@
         </div>
     </div>
 
-    @if (Model.RecentItemIds.Count > 0)
+    @if (Model.HeroItems.Count > 0)
     {
         <div class="hero-preview" aria-hidden="true">
-            <vc:item-gallery item-ids="@Model.RecentItemIds.Take(1)" parameters="@emptyParams" />
+            <div class="hero-carousel">
+                <ul class="hero-carousel-track">
+                    @foreach (var item in Model.HeroItems)
+                    {
+                        <li class="hero-book-card">
+                            <div class="hero-book-cover">
+                                @if (!string.IsNullOrEmpty(item.Photo))
+                                {
+                                    <img src="@item.Photo" alt="" />
+                                }
+                                else
+                                {
+                                    <svg icon="book" variant="solid" aria-hidden="true" style="width: 3rem; height: auto; opacity: 0.4;"></svg>
+                                }
+                            </div>
+                            <div class="hero-book-info">
+                                <span class="hero-book-title">@item.Title</span>
+                                <span class="hero-book-price">@item.Price</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
         </div>
     }
 </section>

@@ -40,19 +40,102 @@
 }
 
 .hero-preview {
-    max-width: 280px;
-
-    [role="article"] {
-        margin-bottom: 0;
-    }
-
-    [role="article"] img {
-        max-height: 300px;
-    }
+    max-width: 320px;
+    width: 100%;
 
     @media (max-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint") - 1) {
         display: none;
     }
+}
+
+/* ===== Hero carousel ===== */
+.hero-carousel {
+    overflow: hidden;
+    border-radius: var(--pico-border-radius);
+    border: 1px solid var(--pico-card-border-color);
+    background-color: var(--pico-card-background-color);
+    height: 400px;
+    position: relative;
+    mask-image: linear-gradient(to bottom, transparent 0, black 12%, black 88%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 12%, black 88%, transparent 100%);
+}
+
+.hero-carousel-track {
+    list-style: none;
+    margin: 0;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    animation: heroScroll var(--carousel-duration, 20s) linear infinite;
+}
+
+@keyframes heroScroll {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(-50%);
+    }
+}
+
+.hero-carousel:hover .hero-carousel-track {
+    animation-play-state: paused;
+}
+
+.hero-book-card {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: calc(var(--pico-border-radius) * 0.625);
+    background-color: var(--pico-secondary-background);
+    border: 1px solid var(--pico-muted-border-color);
+    pointer-events: none;
+}
+
+.hero-book-cover {
+    flex-shrink: 0;
+    width: 48px;
+    height: 64px;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    background-color: var(--pico-background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--pico-muted-border-color);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+.hero-book-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+}
+
+.hero-book-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.hero-book-price {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--pico-primary);
 }
 
 /* ===== Sections ===== */
@@ -90,14 +173,16 @@
 .category-tile {
     animation: categoryEnter 0.3s ease-out backwards;
     animation-delay: calc(var(--i, 0) * 30ms);
+    display: flex;
 
     > a {
         width: 100%;
+        height: 100%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        min-height: 3rem;
+        min-height: 3.5rem;
         text-wrap: balance;
         text-align: center;
         font-size: 0.95rem;
@@ -139,6 +224,10 @@
 
     .category-tile > a:active {
         transform: none;
+    }
+
+    .hero-carousel-track {
+        animation: none;
     }
 }
 
