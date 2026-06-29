@@ -42,34 +42,23 @@
 .hero-preview {
     width: 100%;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    isolation: isolate;
 
     @media (max-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint") - 1) {
         display: none;
     }
 }
 
-/* ===== Hero wall (diagonal scrolling books) ===== */
+/* ===== Hero wall (three independent book streams) ===== */
 .hero-wall {
-    overflow: hidden;
+    width: 100%;
     height: 560px;
     position: relative;
-
-    /* Mask clips to soft ellipse - this hides the vignette's hard edge */
-    -webkit-mask-image:
-        radial-gradient(ellipse 120% 115% at center, black 40%, transparent 75%);
-    mask-image:
-        radial-gradient(ellipse 120% 115% at center, black 40%, transparent 75%);
-
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none;
-        background:
-            radial-gradient(ellipse 65% 58% at center, transparent 20%, rgba(0, 0, 0, 0.1) 42%, var(--pico-background-color) 70%);
-    }
+    margin-inline: auto;
+    overflow: hidden;
+    -webkit-mask-image: radial-gradient(ellipse 120% 115% at center, black 24%, transparent 43%);
+    mask-image: radial-gradient(ellipse 120% 115% at center, black 24%, transparent 43%);
 }
 
 .hero-wall-rotated {
@@ -82,59 +71,53 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 0.75rem;
-    transform: translate(-50%, -50%) rotate(-25deg);
+    gap: 0.9rem;
+    transform: translate(-50%, -50%) rotate(-22deg);
 }
 
 .hero-wall-row {
-    display: flex;
-    gap: 0.75rem;
     width: max-content;
-    animation: wallScroll var(--row-duration, 40s) linear infinite;
-    pointer-events: none;
 
     &:nth-child(1) {
-        --row-duration: 45s;
-        margin-left: -2rem;
+        margin-left: -4rem;
     }
 
     &:nth-child(2) {
-        --row-duration: 35s;
-        animation-direction: reverse;
-        animation-delay: -17s;
-        margin-left: 2rem;
+        margin-left: 7rem;
+
+        .hero-wall-track {
+            --stream-duration: 31s;
+            animation-direction: reverse;
+        }
     }
 
     &:nth-child(3) {
-        --row-duration: 50s;
-        margin-left: -1rem;
-    }
+        margin-left: -2rem;
 
-    &:nth-child(4) {
-        --row-duration: 38s;
-        animation-direction: reverse;
-        animation-delay: -10s;
-        margin-left: 3rem;
+        .hero-wall-track {
+            --stream-duration: 37s;
+        }
     }
 }
 
-@keyframes wallScroll {
-    from {
-        transform: translateX(0);
-    }
-
-    to {
-        transform: translateX(-50%);
-    }
+.hero-wall-track {
+    --stream-duration: 34s;
+    display: flex;
+    width: max-content;
+    animation: streamBooks var(--stream-duration) linear infinite;
+    will-change: transform;
 }
 
-.hero-wall:hover .hero-wall-row {
-    animation-play-state: paused;
+.hero-wall-sequence {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.9rem;
+    padding-right: 0.9rem;
 }
 
 .hero-book-tile {
+    width: clamp(158px, 13vw, 185px);
     flex-shrink: 0;
-    width: 185px;
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
@@ -143,6 +126,17 @@
     background-color: var(--pico-card-background-color);
     border: 1px solid var(--pico-card-border-color);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+}
+
+@keyframes streamBooks {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-25%);
+    }
 }
 
 .hero-book-cover {
@@ -160,6 +154,8 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
+        outline: 1px solid rgba(0, 0, 0, 0.1);
+        outline-offset: -1px;
     }
 }
 
@@ -167,7 +163,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
-    padding: 0 0.25rem;
+    min-width: 0;
+    padding-inline: 0.2rem;
 }
 
 .hero-book-title {
@@ -185,6 +182,13 @@
     font-size: 0.8125rem;
     font-weight: 700;
     color: var(--pico-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-color-scheme: dark) {
+    .hero-book-cover img {
+        outline-color: rgba(255, 255, 255, 0.1);
+    }
 }
 
 /* ===== Sections ===== */
@@ -294,8 +298,9 @@
         transform: none;
     }
 
-    .hero-wall-row {
+    .hero-wall-track {
         animation: none;
+        transform: translateX(-12%);
     }
 }
 
