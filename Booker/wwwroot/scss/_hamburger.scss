@@ -116,6 +116,18 @@
 
 // Own code begins here
 
+/* Desktop: vertically center all nav items and their content */
+@media (min-width: map.get(map.get(pico.$breakpoints, "md"), "viewport") + 1px) {
+    #{$parent-selector} nav[role="navigation"] {
+        align-items: center;
+    }
+
+    nav[role="navigation"] ul li {
+        display: flex;
+        align-items: center;
+    }
+}
+
 #hamburger-btn ~ label {
     padding: var(--pico-nav-element-spacing-vertical) var(--pico-nav-element-spacing-horizontal);
     margin-right: calc(var(--pico-nav-element-spacing-horizontal) * -1);

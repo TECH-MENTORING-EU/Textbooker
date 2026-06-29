@@ -10,7 +10,7 @@
     padding-block: clamp(1.5rem, 4vw, 3rem);
 
     @media (min-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint")) {
-        grid-template-columns: 1.1fr 0.9fr;
+        grid-template-columns: 1fr 1fr;
     }
 }
 
@@ -41,6 +41,8 @@
 
 .hero-preview {
     width: 100%;
+    position: relative;
+    overflow: hidden;
 
     @media (max-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint") - 1) {
         display: none;
@@ -50,15 +52,14 @@
 /* ===== Hero wall (diagonal scrolling books) ===== */
 .hero-wall {
     overflow: hidden;
-    height: 520px;
+    height: 560px;
     position: relative;
-    border-radius: var(--pico-border-radius);
 
-    /* Near-ellipse mask: books fade softly at all edges */
+    /* Mask clips to soft ellipse - this hides the vignette's hard edge */
     -webkit-mask-image:
-        radial-gradient(ellipse 75% 70% at center, black 30%, rgba(0, 0, 0, 0.6) 50%, transparent 72%);
+        radial-gradient(ellipse 120% 115% at center, black 40%, transparent 75%);
     mask-image:
-        radial-gradient(ellipse 75% 70% at center, black 30%, rgba(0, 0, 0, 0.6) 50%, transparent 72%);
+        radial-gradient(ellipse 120% 115% at center, black 40%, transparent 75%);
 
     &::after {
         content: "";
@@ -67,7 +68,7 @@
         z-index: 1;
         pointer-events: none;
         background:
-            radial-gradient(ellipse 60% 55% at center, transparent 45%, var(--pico-background-color) 80%);
+            radial-gradient(ellipse 65% 58% at center, transparent 20%, rgba(0, 0, 0, 0.1) 42%, var(--pico-background-color) 70%);
     }
 }
 
@@ -75,9 +76,12 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 400%;
+    width: 600%;
+    height: 600%;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
     gap: 0.75rem;
     transform: translate(-50%, -50%) rotate(-25deg);
 }
@@ -97,12 +101,20 @@
     &:nth-child(2) {
         --row-duration: 35s;
         animation-direction: reverse;
+        animation-delay: -17s;
         margin-left: 2rem;
     }
 
     &:nth-child(3) {
         --row-duration: 50s;
         margin-left: -1rem;
+    }
+
+    &:nth-child(4) {
+        --row-duration: 38s;
+        animation-direction: reverse;
+        animation-delay: -10s;
+        margin-left: 3rem;
     }
 }
 
@@ -194,6 +206,12 @@
     > article,
     > [role="article"] {
         margin-bottom: 0;
+    }
+
+    /* Mobile: 2 per row */
+    @media (max-width: map.get(map.get(pico.$breakpoints, "sm"), "breakpoint") - 1) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.625rem;
     }
 }
 

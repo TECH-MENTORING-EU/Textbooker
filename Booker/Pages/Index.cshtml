@@ -2,7 +2,7 @@
 @model IndexModel
 @{
     ViewData["Title"] = "TextBooker";
-    var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name)).ToList();
+    var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name) && !s.Name.Equals("Brak", StringComparison.OrdinalIgnoreCase)).ToList();
     var hasMoreSubjects = popularSubjects.Count > 6;
     var emptyParams = new Booker.Services.StaticDataManager.Parameters(null, new List<Booker.Data.Grade>(), null, null);
 }
@@ -31,7 +31,7 @@
         <div class="hero-preview" aria-hidden="true">
             <div class="hero-wall">
                 <div class="hero-wall-rotated">
-                    @for (var row = 0; row < 3; row++)
+                    @for (var row = 0; row < 4; row++)
                     {
                         var rowItems = Model.HeroItems.Skip(row * 3).Concat(Model.HeroItems.Take(row * 3));
                         <div class="hero-wall-row" style="--row: @row;">
@@ -100,12 +100,20 @@
 @section Scripts {
 <script>
 (function () {
-    // ---- Category badges: show only what fits in one line ----
+    // ---- Category badges: show only what fits in one line (desktop only) ----
     var badges = document.querySelector('[data-single-line]');
     if (badges) {
         var items = Array.from(badges.children);
         function fitBadges() {
             items.forEach(function (li) { li.style.display = ''; });
+            // On mobile, show only first 4 badges
+            if (window.innerWidth <= 575) {
+                badges.style.flexWrap = 'wrap';
+                for (var i = 4; i < items.length; i++) {
+                    items[i].style.display = 'none';
+                }
+                return;
+            }
             var containerWidth = badges.clientWidth;
             // Temporarily remove flex-wrap to measure single-line width
             badges.style.flexWrap = 'nowrap';
@@ -119,12 +127,19 @@
         window.addEventListener('resize', fitBadges);
     }
 
-    // ---- Recent items: show only what fits in one row ----
+    // ---- Recent items: show only what fits in one row (desktop only) ----
     var gallery = document.querySelector('[data-single-row]');
     if (gallery) {
         var tiles = Array.from(gallery.children);
         function fitRow() {
             tiles.forEach(function (t) { t.style.display = ''; });
+            // On mobile, show only first 4 items
+            if (window.innerWidth <= 575) {
+                for (var i = 4; i < tiles.length; i++) {
+                    tiles[i].style.display = 'none';
+                }
+                return;
+            }
             var containerWidth = gallery.clientWidth;
             var gap = parseFloat(getComputedStyle(gallery).gap) || 0;
             var totalWidth = 0;
