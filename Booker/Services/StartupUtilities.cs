@@ -20,14 +20,41 @@ namespace Booker.Services
     {
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton<IAmazonS3>(x => new AmazonS3Client(
-                configuration["S3:AccessKeyId"], 
-                configuration["S3:SecretAccessKey"],
-                new AmazonS3Config
+            services.AddSingleton(_ => new Lazy<IAmazonS3>(() =>
+            {
+                var accessKey = configuration["S3:AccessKeyId"];
+                var secretKey = configuration["S3:SecretAccessKey"];
+                var serviceUrl = configuration["CF:ServiceUrl"];
+                var region = configuration["S3:Region"];
+
+                if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey))
                 {
-                    ServiceURL = configuration["CF:ServiceUrl"],
+                    throw new InvalidOperationException(
+                        "Przed przesłaniem zdjęć skonfiguruj S3:AccessKeyId i S3:SecretAccessKey.");
+                }
+
+                if (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region))
+                {
+                    throw new InvalidOperationException(
+                        "Przed przesłaniem zdjęć skonfiguruj CF:ServiceUrl albo S3:Region.");
+                }
+
+                var clientConfiguration = new AmazonS3Config
+                {
                     ForcePathStyle = true
-                }));
+                };
+
+                if (!string.IsNullOrWhiteSpace(serviceUrl))
+                {
+                    clientConfiguration.ServiceURL = serviceUrl;
+                }
+                else
+                {
+                    clientConfiguration.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region);
+                }
+
+                return new AmazonS3Client(accessKey, secretKey, clientConfiguration);
+            }));
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();
