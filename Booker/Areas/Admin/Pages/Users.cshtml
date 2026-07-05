@@ -7,25 +7,30 @@
 
 <h3>Użytkownicy</h3>
 
-<input type="search" placeholder="Szukaj..." 
+<label for="users-search" class="visually-hidden">Szukaj użytkowników</label>
+<input type="search" id="users-search" placeholder="Szukaj..."
        hx-get="?handler=Search" 
        hx-target="#users-table tbody" 
        hx-trigger="submit, input changed delay:500ms, change"
        asp-for="SearchTerm" 
        data-val="false" />
 
+<p class="table-scroll-hint" id="users-table-hint">Przewiń tabelę poziomo, aby zobaczyć wszystkie kolumny.</p>
+<div class="table-scroll" role="region" aria-label="Tabela użytkowników" aria-describedby="users-table-hint" tabindex="0">
 <table id="users-table">
+    <caption class="visually-hidden">Lista użytkowników systemu</caption>
     <thead>
         <tr>
-            <th>Id</th>
-            <th>Nazwa użytkownika</th>
-            <th>Email</th>
-            <th>Ostatnio online</th>
-            <th>Status</th>
-            <th>Akcje</th>
+            <th scope="col">Id</th>
+            <th scope="col">Nazwa użytkownika</th>
+            <th scope="col">Email</th>
+            <th scope="col">Ostatnio online</th>
+            <th scope="col">Status</th>
+            <th scope="col">Akcje</th>
         </tr>
     </thead>
     <tbody>
         <partial name="_UserRows" model="Model.Users" />
     </tbody>
 </table>
+</div>

@@ -8,7 +8,7 @@
 <h3>Zarządzanie szkołami</h3>
 
 <div class="admin-filter">
-    <label>
+    <label for="show-inactive">
         <input type="checkbox" 
                id="show-inactive"
                hx-get="?handler=Filter"
@@ -21,29 +21,32 @@
     </label>
 </div>
 
+<p class="table-scroll-hint" id="schools-table-hint">Przewiń tabelę poziomo, aby zobaczyć wszystkie kolumny.</p>
+<div class="table-scroll" role="region" aria-label="Tabela szkół" aria-describedby="schools-table-hint" tabindex="0">
 <table id="schools-table">
+    <caption class="visually-hidden">Lista zarządzanych szkół</caption>
     <thead>
         <tr>
-            <th>Id</th>
-            <th>Nazwa</th>
-            <th>Domena email</th>
-            <th>Schemat</th>
-            <th>Użytkownicy</th>
-            <th>Status</th>
-            <th>Akcje</th>
+            <th scope="col">Id</th>
+            <th scope="col">Nazwa</th>
+            <th scope="col">Domena email</th>
+            <th scope="col">Użytkownicy</th>
+            <th scope="col">Status</th>
+            <th scope="col">Akcje</th>
         </tr>
     </thead>
     <tbody>
         <partial name="_SchoolRows" model="Model.Schools" />
     </tbody>
 </table>
+</div>
 
-<article class="school-add-form">
+<article class="school-add-form" aria-labelledby="add-school-heading">
     <header>
-        <h4>Dodaj nową szkołę</h4>
+        <h4 id="add-school-heading">Dodaj nową szkołę</h4>
     </header>
     <form asp-page-handler="Add" method="post" hx-post="?handler=Add" hx-target="#schools-table tbody" hx-swap="beforeend" hx-on::after-request="this.reset()">
-        <fieldset role="group">
+        <fieldset role="group" aria-label="Dane nowej szkoły">
             <input name="name" 
                    placeholder="Nazwa szkoły" 
                    aria-label="Nazwa szkoły" 
@@ -52,23 +55,23 @@
                    maxlength="200" />
             <input name="emailDomain" 
                    placeholder="Domena email (opcjonalna, np. szkola.edu.pl)" 
-                   aria-label="Domena email"
+                   aria-label="Domena email (opcjonalna)"
                    maxlength="500" />
             <button type="submit">Dodaj szkołę</button>
         </fieldset>
-        <div asp-validation-summary="All"></div>
+        <div asp-validation-summary="All" role="alert" aria-live="assertive"></div>
     </form>
 </article>
 
 @section Scripts {
     <script>
-        // Handle form success/error feedback
-        document.body.addEventListener('htmx:afterSwap', function(evt) {
-            if (evt.detail.target.id === 'schools-table') {
-                // Clear any error messages
-                var errorDiv = document.querySelector('.school-add-form [data-val-summary]');
-                if (errorDiv) errorDiv.innerHTML = '';
-            }
+        const schoolAddForm = document.querySelector('.school-add-form form');
+
+        schoolAddForm?.addEventListener('htmx:afterRequest', function(evt) {
+            if (!evt.detail.successful) return;
+
+            var errorDiv = this.querySelector('[data-valmsg-summary="true"]');
+            if (errorDiv) errorDiv.innerHTML = '';
         });
     </script>
 }
