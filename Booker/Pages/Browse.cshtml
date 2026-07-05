@@ -50,27 +50,6 @@
     <div aria-busy="true" class="htmx-indicator" id="ind"></div>
 </section>
 
-<script>
-    function setFilter(name, value, enable) {
-        const elem = document.querySelector(`[name="${name}"]`);
-        if (elem) {
-            elem.value = enable ? value : "";
-            elem.form.requestSubmit();
-        }
-    }
-
-    htmx.onLoad(function(content) {
-        content.querySelectorAll('button.subject, button.grade, button.level').forEach(button => {
-            button.addEventListener('click', function() {
-                const name = this.classList.contains('subject') ? 'subject' : this.classList.contains('grade') ? 'grade' : 'level';
-                const value = name === 'grade' ? this.textContent.trim().slice(6,7) : this.textContent.trim();
-                this.classList.toggle('outline');
-                setFilter(name, value, !this.classList.contains('outline'));
-            });
-        });
-    });
-
-    document.getElementById('mobileFilterSubmit').addEventListener('click', function() {
-        document.getElementById('filterDetails').removeAttribute("open");
-    });
-</script>
+@section Scripts {
+    <script src="~/js/browse.js" asp-append-version="true"></script>
+}

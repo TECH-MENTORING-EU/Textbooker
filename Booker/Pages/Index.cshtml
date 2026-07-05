@@ -4,6 +4,10 @@
     ViewData["Title"] = "TextBooker";
     var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name) && !s.Name.Equals("Brak", StringComparison.OrdinalIgnoreCase)).ToList();
     var hasMoreSubjects = popularSubjects.Count > 6;
+    const int visibleSubjectCount = 6;
+    const int heroItemsPerRow = 4;
+    const int heroRowCount = 3;
+    const int heroSequenceCopies = 4;
     var emptyParams = new Booker.Services.StaticDataManager.Parameters(null, new List<Booker.Data.Grade>(), null, null);
 }
 
@@ -31,17 +35,17 @@
         <div class="hero-preview" aria-hidden="true">
             <div class="hero-wall">
                 <div class="hero-wall-rotated">
-                    @for (var row = 0; row < 3; row++)
+                    @for (var row = 0; row < heroRowCount; row++)
                     {
                         var rowItems = Model.HeroItems
-                            .Skip(row * 4)
-                            .Concat(Model.HeroItems.Take(row * 4))
-                            .Take(4)
+                            .Skip(row * heroItemsPerRow)
+                            .Concat(Model.HeroItems.Take(row * heroItemsPerRow))
+                            .Take(heroItemsPerRow)
                             .ToList();
 
                         <div class="hero-wall-row">
                             <div class="hero-wall-track">
-                                @for (var copy = 0; copy < 4; copy++)
+                                @for (var copy = 0; copy < heroSequenceCopies; copy++)
                                 {
                                     <div class="hero-wall-sequence">
                                         @foreach (var item in rowItems)
@@ -76,8 +80,8 @@
 
 <section class="landing-section" aria-label="Popularne przedmioty">
     <h2 style="text-wrap: balance;">Popularne przedmioty</h2>
-    <ul class="category-badges" data-single-line>
-        @for (var i = 0; i < popularSubjects.Count; i++)
+    <ul class="category-badges">
+        @for (var i = 0; i < Math.Min(popularSubjects.Count, visibleSubjectCount); i++)
         {
             var subject = popularSubjects[i];
             <li class="category-tile" style="--i: @i;">
@@ -103,71 +107,8 @@
 {
     <section class="landing-section" aria-label="Ostatnio dodane">
         <h2 style="text-wrap: balance;">Ostatnio dodane</h2>
-        <div class="grid-gallery grid-gallery-single-row" data-single-row>
+        <div class="grid-gallery grid-gallery-single-row">
             <vc:item-gallery item-ids="@Model.RecentItemIds" parameters="@emptyParams" link-filters="true" />
         </div>
     </section>
-}
-
-@section Scripts {
-<script>
-(function () {
-    // ---- Category badges: show only what fits in one line (desktop only) ----
-    var badges = document.querySelector('[data-single-line]');
-    if (badges) {
-        var items = Array.from(badges.children);
-        function fitBadges() {
-            items.forEach(function (li) { li.style.display = ''; });
-            // On mobile, show only first 4 badges
-            if (window.innerWidth <= 575) {
-                badges.style.flexWrap = 'wrap';
-                for (var i = 4; i < items.length; i++) {
-                    items[i].style.display = 'none';
-                }
-                return;
-            }
-            var containerWidth = badges.clientWidth;
-            // Temporarily remove flex-wrap to measure single-line width
-            badges.style.flexWrap = 'nowrap';
-            for (var i = items.length - 1; i >= 0; i--) {
-                if (badges.scrollWidth > containerWidth) {
-                    items[i].style.display = 'none';
-                }
-            }
-        }
-        fitBadges();
-        window.addEventListener('resize', fitBadges);
-    }
-
-    // ---- Recent items: show only what fits in one row (desktop only) ----
-    var gallery = document.querySelector('[data-single-row]');
-    if (gallery) {
-        var tiles = Array.from(gallery.children);
-        function fitRow() {
-            tiles.forEach(function (t) { t.style.display = ''; });
-            // On mobile, show only first 4 items
-            if (window.innerWidth <= 575) {
-                for (var i = 4; i < tiles.length; i++) {
-                    tiles[i].style.display = 'none';
-                }
-                return;
-            }
-            var containerWidth = gallery.clientWidth;
-            var gap = parseFloat(getComputedStyle(gallery).gap) || 0;
-            var totalWidth = 0;
-            for (var i = 0; i < tiles.length; i++) {
-                totalWidth += tiles[i].getBoundingClientRect().width;
-                if (i > 0) totalWidth += gap;
-                if (totalWidth > containerWidth + 1) {
-                    tiles[i].style.display = 'none';
-                }
-            }
-        }
-        // Run after images start loading to get accurate measurements
-        requestAnimationFrame(fitRow);
-        window.addEventListener('resize', fitRow);
-        window.addEventListener('load', fitRow);
-    }
-})();
-</script>
 }

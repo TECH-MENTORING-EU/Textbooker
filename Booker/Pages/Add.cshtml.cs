@@ -33,7 +33,7 @@ namespace Booker.Pages
                 header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
                 return true;
 
-            return true;
+            return false;
         }
 
 
@@ -70,7 +70,7 @@ namespace Booker.Pages
                 }
 
                 // Optional: check extensions for UX
-                string ext = Path.GetExtension(img.FileName)?.ToLowerInvariant();
+                string? ext = Path.GetExtension(img.FileName)?.ToLowerInvariant();
                 if (string.IsNullOrEmpty(ext))
                 {
                     ModelState.AddModelError("Input.Images",

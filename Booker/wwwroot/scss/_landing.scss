@@ -202,14 +202,17 @@
 }
 
 .grid-gallery-single-row {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--pico-spacing);
     overflow: hidden;
 
     > article,
     > [role="article"] {
         margin-bottom: 0;
+    }
+
+    > :nth-child(n + 5) {
+        display: none;
     }
 
     /* Mobile: 2 per row */
@@ -225,10 +228,9 @@
     margin: 0;
     padding: 0;
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 0.625rem;
-    overflow: hidden;
 }
 
 @keyframes categoryEnter {

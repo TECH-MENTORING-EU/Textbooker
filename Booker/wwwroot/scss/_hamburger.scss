@@ -100,8 +100,6 @@
                 a:hover {
                     border-bottom-color: var(#{$css-var-prefix}underline);
                     text-decoration: none;
-                    //background-color: var(#{$css-var-prefix}primary-background) !important;
-                    //color: var(#{$css-var-prefix}primary-inverse);
                 }
             }
 
@@ -141,8 +139,7 @@
 
     nav[role="navigation"] > [role="list"] #login,
     nav[role="navigation"] > [role="list"] #register {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+        margin-block: 0;
         align-self: stretch;
         display: flex;
         align-items: center;
@@ -176,7 +173,7 @@ nav[role=navigation] > [role=list] {
         background-color: var(--pico-background-color);
         border-bottom: 1px solid var(--pico-muted-border-color);
         box-shadow: var(--pico-card-box-shadow);
-        overflow: visible !important;
+        overflow: visible;
 
         #hamburger-btn ~ [role="list"] {
             display: none;
@@ -204,7 +201,7 @@ nav[role=navigation] > [role=list] {
                 display: block;
                 text-align: center;
                 padding: 0.6rem 1.5rem;
-                color: var(--pico-primary) !important;
+                color: var(--pico-primary);
                 border: var(--pico-border-width) solid var(--pico-primary);
                 border-radius: var(--pico-border-radius);
                 text-decoration: none;

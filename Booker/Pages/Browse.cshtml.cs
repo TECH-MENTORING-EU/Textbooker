@@ -14,8 +14,9 @@ namespace Booker.Pages
         private readonly StaticDataManager _staticDataManager;
         private readonly UserManager<User> _userManager;
 
-        public List<int> ItemIds { get; set; } = null!;
-        public StaticDataManager.Parameters Params { get; set; } = null!;
+        public List<int> ItemIds { get; set; } = new();
+        public StaticDataManager.Parameters Params { get; set; } =
+            new(null, new List<Grade>(), null, null);
         public List<SelectListItem>? Grades { get; set; }
         public List<SelectListItem>? Subjects { get; set; }
         public List<SelectListItem>? Levels { get; set; }

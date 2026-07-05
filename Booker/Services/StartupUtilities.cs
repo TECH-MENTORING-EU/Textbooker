@@ -20,41 +20,42 @@ namespace Booker.Services
     {
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton(_ => new Lazy<IAmazonS3>(() =>
+            services.AddSingleton(serviceProvider =>
             {
                 var accessKey = configuration["S3:AccessKeyId"];
                 var secretKey = configuration["S3:SecretAccessKey"];
                 var serviceUrl = configuration["CF:ServiceUrl"];
                 var region = configuration["S3:Region"];
+                var logger = serviceProvider.GetRequiredService<ILogger<PhotosManager>>();
 
                 if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey))
                 {
-                    throw new InvalidOperationException(
-                        "Przed przesłaniem zdjęć skonfiguruj S3:AccessKeyId i S3:SecretAccessKey.");
+                    logger.LogWarning("Photo uploads are disabled because S3 credentials are not configured.");
                 }
 
                 if (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region))
                 {
-                    throw new InvalidOperationException(
-                        "Przed przesłaniem zdjęć skonfiguruj CF:ServiceUrl albo S3:Region.");
+                    logger.LogWarning("Photo uploads are disabled because neither CF:ServiceUrl nor S3:Region is configured.");
                 }
 
-                var clientConfiguration = new AmazonS3Config
+                return new Lazy<IAmazonS3>(() =>
                 {
-                    ForcePathStyle = true
-                };
+                    if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey) ||
+                        (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region)))
+                    {
+                        throw new InvalidOperationException("Photo storage is not configured.");
+                    }
 
-                if (!string.IsNullOrWhiteSpace(serviceUrl))
-                {
-                    clientConfiguration.ServiceURL = serviceUrl;
-                }
-                else
-                {
-                    clientConfiguration.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region);
-                }
+                    var clientConfiguration = new AmazonS3Config { ForcePathStyle = true };
 
-                return new AmazonS3Client(accessKey, secretKey, clientConfiguration);
-            }));
+                    if (!string.IsNullOrWhiteSpace(serviceUrl))
+                        clientConfiguration.ServiceURL = serviceUrl;
+                    else
+                        clientConfiguration.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region);
+
+                    return new AmazonS3Client(accessKey, secretKey, clientConfiguration);
+                });
+            });
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();
