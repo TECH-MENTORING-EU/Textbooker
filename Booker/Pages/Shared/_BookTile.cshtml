@@ -21,12 +21,12 @@
     private int UserId {get => _userId ??= UserManager.GetUserId(User).IntOrDefault(); }
 }
 
-<article class="book-tile @(Model.Item.Reserved ? "reserved" : "")">
-    <img src="@Model.FirstPhoto" alt="@Model.Item.Book.Title" />
+<article class="book-tile @(Model.Item.Reserved ? "reserved" : "")" aria-labelledby="tile-title-@Model.Item.Id">
+    <img src="@Model.FirstPhoto" alt="Okładka książki: @Model.Item.Book.Title" />
     <footer>
         <div class="info">
-            <a asp-page="/Book" asp-route-id="@Model.Item.Id">
-                <h2>@Model.Item.Book.Title</h2>
+            <a asp-page="/Book" asp-route-id="@Model.Item.Id" aria-labelledby="tile-title-@Model.Item.Id">
+                <h2 id="tile-title-@Model.Item.Id">@Model.Item.Book.Title</h2>
             </a>
 
             <p>@Model.Item.Price.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("pl-PL")) zł</p>
@@ -37,21 +37,27 @@
             </p>
         </div>
         <div class="actions">
-            <button class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'>
+            <button type="button" class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'
+                    aria-pressed="@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "true" : "false")"
+                    aria-label="Filtruj po przedmiocie: @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany" : Model.Item.Book.Subject.Name)">
                 @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
             </button>
             @if (Model.Item.Book.Grades != null)
             {
                 @foreach (var grade in Model.Item.Book.Grades)
                 {
-                    <button class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'>
+                    <button type="button" class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'
+                            aria-pressed="@(Model.Params.Grades.Contains(grade) ? "true" : "false")"
+                            aria-label="Filtruj po klasie: @grade.GradeNumber">
                         @DisplayGrade(grade.GradeNumber)
                     </button>
                 }
             }
             @if (Model.Item.Book.Level != null)
             {
-                <button class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'>
+                <button type="button" class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'
+                        aria-pressed="@(Model.Item.Book.Level == Model.Params.Level ? "true" : "false")"
+                        aria-label="Filtruj po poziomie: @Model.Item.Book.Level.Name">
                     @Model.Item.Book.Level.Name
                 </button>
             }
@@ -60,7 +66,7 @@
             @if (UserId == Model.Item.User.Id)
             {
                 <a class="outline" role="button"
-                   aria-label="Edytuj ogłoszenie"
+                   aria-label="Edytuj ogłoszenie: @Model.Item.Book.Title"
                    title="Edytuj ogłoszenie"
                    href="/Edit/@Model.Item.Id">
                     <svg icon="pencil" variant="outline" aria-hidden="true"></svg>
