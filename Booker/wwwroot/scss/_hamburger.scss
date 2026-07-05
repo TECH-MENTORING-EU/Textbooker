@@ -116,20 +116,23 @@
 
 // Own code begins here
 
-#hamburger-btn ~ label {
+.hamburger-trigger {
+    display: none;
+    min-width: 44px;
+    min-height: 44px;
     padding: var(--pico-nav-element-spacing-vertical) var(--pico-nav-element-spacing-horizontal);
     margin-right: calc(var(--pico-nav-element-spacing-horizontal) * -1);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: inherit;
+    cursor: pointer;
+    line-height: 1;
 
     svg {
         transition: transform var(--pico-transition);
         width: 2em;
         height: 100%;
-    }
-}
-
-#hamburger-btn:checked ~ label {
-    svg {
-        transform: rotate(90deg);
     }
 }
 
@@ -145,7 +148,11 @@ nav[role=navigation] > [role=list] {
         border-bottom: 1px solid var(--pico-muted-border-color);
         box-shadow: var(--pico-card-box-shadow);
 
-        #hamburger-btn ~ [role=list] {
+        .hamburger-trigger {
+            display: block;
+        }
+
+        > [role=list] {
             flex-direction: column-reverse;
             background-color: var(--pico-background-color);
             transition: max-height var(#{$css-var-prefix}transition), opacity var(#{$css-var-prefix}transition), display var(#{$css-var-prefix}transition);
@@ -172,8 +179,20 @@ nav[role=navigation] > [role=list] {
             }
         }
 
-        #hamburger-btn:checked ~ [role=list] {
+        &.hamburger-open {
+            overflow: visible;
+        }
+
+        &.hamburger-open > [role=list] {
             display: flex;
+            max-height: 100vh;
+            opacity: 1;
+        }
+
+        .hamburger-trigger[aria-expanded="true"] {
+            svg {
+                transform: rotate(90deg);
+            }
         }
 
         details.dropdown > summary + ul {
