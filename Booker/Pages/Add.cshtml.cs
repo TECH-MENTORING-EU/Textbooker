@@ -70,7 +70,7 @@ namespace Booker.Pages
                 }
 
                 // Optional: check extensions for UX
-                string ext = Path.GetExtension(img.FileName)?.ToLowerInvariant();
+                string? ext = Path.GetExtension(img.FileName)?.ToLowerInvariant();
                 if (string.IsNullOrEmpty(ext))
                 {
                     ModelState.AddModelError("Input.Images",

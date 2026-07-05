@@ -6,30 +6,30 @@
 
 <h1>@ViewData["Title"]</h1>
 
-<section class="login-form">
+<section class="login-form" aria-labelledby="register-heading">
     <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-        <h2>Stwórz nowe konto:</h2>
+        <h2 id="register-heading">Stwórz nowe konto:</h2>
         <hr />
-        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert" aria-live="assertive"></div>
         <div>
             <label asp-for="Input.UserName">Nazwa użytkownika:</label>
-            <input asp-for="Input.UserName" autocomplete="username" required placeholder="Nazwa użytkownika" />
-            <small><span asp-validation-for="Input.UserName"></span></small>
+            <input asp-for="Input.UserName" autocomplete="username" required placeholder="Nazwa użytkownika" aria-describedby="Input_UserName-error" />
+            <small id="Input_UserName-help"><span asp-validation-for="Input.UserName" id="Input_UserName-error"></span></small>
         </div>
         <div>
             <label asp-for="Input.Email">E-mail:</label>
-            <input asp-for="Input.Email" autocomplete="email" required placeholder="E-mail" />
-            <small><span asp-validation-for="Input.Email"></span></small>
+            <input asp-for="Input.Email" autocomplete="email" required placeholder="E-mail" aria-describedby="Input_Email-error" />
+            <small id="Input_Email-help"><span asp-validation-for="Input.Email" id="Input_Email-error"></span></small>
         </div>
         <div>
             <label asp-for="Input.Password">Hasło:</label>
             <input asp-for="Input.Password" autocomplete="new-password" required placeholder="Hasło"
-                   id="passwordInput"
+                   aria-describedby="Input_Password-error passwordRequirements"
                    onfocus="showPasswordRequirements()"
                    onblur="hidePasswordRequirementsIfValid()"
                    oninput="checkPasswordRequirements()" />
-            <small><span asp-validation-for="Input.Password"></span></small>
-            <ul id="passwordRequirements" style="display:none; margin-top:8px;">
+            <small><span asp-validation-for="Input.Password" id="Input_Password-error"></span></small>
+            <ul id="passwordRequirements" class="password-rules" aria-live="polite" aria-label="Wymagania dotyczące hasła" style="display:none; margin-top:8px;">
                 <li id="req-length">&#10060; minimum 8 znaków</li>
                 <li id="req-special">&#10060; minimum 1 znak specjalny</li>
                 <li id="req-lower">&#10060; minimum 1 mała litera</li>
@@ -39,20 +39,20 @@
         </div>
         <div>
             <label asp-for="Input.ConfirmPassword">Potwierdź hasło:</label>
-            <input asp-for="Input.ConfirmPassword" autocomplete="new-password" required placeholder="Hasło" />
-            <small><span asp-validation-for="Input.ConfirmPassword"></span></small>
+            <input asp-for="Input.ConfirmPassword" autocomplete="new-password" required placeholder="Hasło" aria-describedby="Input_ConfirmPassword-error" />
+            <small id="Input_ConfirmPassword-help"><span asp-validation-for="Input.ConfirmPassword" id="Input_ConfirmPassword-error"></span></small>
         </div>
         <div>
             <label asp-for="Input.SchoolId">Szkoła (opcjonalne):</label>
-            <select asp-for="Input.SchoolId" asp-items="Model.AvailableSchools">
+            <select asp-for="Input.SchoolId" asp-items="Model.AvailableSchools" aria-describedby="Input_SchoolId-help">
                 <option value="">-- Wybierz szkołę (opcjonalnie) --</option>
             </select>
-            <small><span asp-validation-for="Input.SchoolId"></span></small>
+            <small id="Input_SchoolId-help"><span asp-validation-for="Input.SchoolId"></span></small>
         </div>
 
         <hr />
 
-        <article style="height: 250px; overflow-y: auto; padding: 1rem;">
+        <article style="height: 250px; overflow-y: auto; padding: 1rem;" aria-label="Regulamin aplikacji" tabindex="0">
             <h3><strong>Regulamin aplikacji textbooker.pl</strong></h3>
 
             <p><strong>&sect; 1. Postanowienia Ogólne</strong></p>
@@ -151,12 +151,12 @@
         </article>
 
         <fieldset>
-            <label for="acceptTermsCheckbox">
+            <label for="acceptTermsCheckbox" class="form-check-label">
                 <input type="checkbox" id="acceptTermsCheckbox" asp-for="Input.AcceptTerms">
                 @Html.DisplayNameFor(m => m.Input.AcceptTerms)
             </label>
         </fieldset>
-        <small><span asp-validation-for="Input.AcceptTerms" class="text-danger"></span></small>
+        <small><span asp-validation-for="Input.AcceptTerms" class="text-danger" role="alert"></span></small>
 
         <button id="registerSubmit" type="submit">Zarejestruj</button>
     </form>
@@ -177,7 +177,7 @@
         }
 
         function checkPasswordRequirements() {
-            const password = document.getElementById('passwordInput').value;
+            const password = document.getElementById('Input_Password').value;
             let allMet = true;
 
             if (password.length >= 8) { setReq('req-length', true); } else { setReq('req-length', false); allMet = false; }
