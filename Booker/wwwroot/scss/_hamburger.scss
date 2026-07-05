@@ -146,20 +146,23 @@
     }
 }
 
-#hamburger-btn ~ label {
+.hamburger-trigger {
+    display: none;
+    min-width: 44px;
+    min-height: 44px;
     padding: var(--pico-nav-element-spacing-vertical) var(--pico-nav-element-spacing-horizontal);
     margin-right: calc(var(--pico-nav-element-spacing-horizontal) * -1);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: inherit;
+    cursor: pointer;
+    line-height: 1;
 
     svg {
         transition: transform var(--pico-transition);
         width: 2em;
         height: 100%;
-    }
-}
-
-#hamburger-btn:checked ~ label {
-    svg {
-        transform: rotate(90deg);
     }
 }
 
@@ -175,14 +178,12 @@ nav[role=navigation] > [role=list] {
         box-shadow: var(--pico-card-box-shadow);
         overflow: visible;
 
-        #hamburger-btn ~ [role="list"] {
-            display: none;
-            flex-direction: column;
-            width: 100%;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+        .hamburger-trigger {
+            display: block;
+        }
+
+        > [role=list] {
+            flex-direction: column-reverse;
             background-color: var(--pico-background-color);
             z-index: 999;
             padding: 1.25rem;
@@ -232,8 +233,20 @@ nav[role=navigation] > [role=list] {
             }
         }
 
-        #hamburger-btn:checked ~ [role="list"] {
+        &.hamburger-open {
+            overflow: visible;
+        }
+
+        &.hamburger-open > [role=list] {
             display: flex;
+            max-height: 100vh;
+            opacity: 1;
+        }
+
+        .hamburger-trigger[aria-expanded="true"] {
+            svg {
+                transform: rotate(90deg);
+            }
         }
 
         details.dropdown > summary + ul {
