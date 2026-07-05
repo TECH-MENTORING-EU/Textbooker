@@ -6,7 +6,7 @@ using System.Net;
 
 namespace Booker.Services;
 
-public class PhotosManager(ILogger<PhotosManager> logger, IAmazonS3 s3Client, IConfiguration config)
+public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Client, IConfiguration config)
 {
 
 
@@ -25,7 +25,7 @@ public class PhotosManager(ILogger<PhotosManager> logger, IAmazonS3 s3Client, IC
             UseChunkEncoding = false
         };
 
-        var response = await s3Client.PutObjectAsync(putRequest);
+        var response = await s3Client.Value.PutObjectAsync(putRequest);
 
         if (response.HttpStatusCode == HttpStatusCode.OK)
         {
@@ -51,7 +51,7 @@ public class PhotosManager(ILogger<PhotosManager> logger, IAmazonS3 s3Client, IC
         };
         try
         {
-            await s3Client.DeleteObjectAsync(deleteRequest);
+            await s3Client.Value.DeleteObjectAsync(deleteRequest);
         }
         catch (Exception ex)
         {
@@ -60,8 +60,28 @@ public class PhotosManager(ILogger<PhotosManager> logger, IAmazonS3 s3Client, IC
     }
     public string GetPhotoUrl(string photoUri)
     {
-        var publicUrl = config["CF:PublicUrl"];
-        return $"{publicUrl}/{photoUri}";
+        if (string.IsNullOrWhiteSpace(photoUri))
+        {
+            return string.Empty;
+        }
+
+        if (photoUri.StartsWith('/'))
+        {
+            return photoUri;
+        }
+
+        if (Uri.TryCreate(photoUri, UriKind.Absolute, out _))
+        {
+            return photoUri;
+        }
+
+        var publicUrl = config["CF:PublicUrl"]?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(publicUrl))
+        {
+            return photoUri.StartsWith('/') ? photoUri : $"/{photoUri}";
+        }
+
+        return $"{publicUrl}/{photoUri.TrimStart('/')}";
     }
 
 }

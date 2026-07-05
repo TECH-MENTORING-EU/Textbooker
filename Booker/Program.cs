@@ -65,11 +65,7 @@ builder.Services.AddRazorPages()
 builder.Services.AddBookerServices(configuration);
 builder.Services.AddRateLimitPolicies();
 
-builder.Services.AddDbContext<DataContext>(options =>
-{
-    //options.UseInMemoryDatabase("InMemoryDatabaseName");
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), o => o.UseCompatibilityLevel(110));
-});
+builder.Services.AddDbContext<DataContext>(options => options.ConfigureDatabase(configuration));
 
 builder.Services.AddDefaultIdentity<User>(options =>
 {
@@ -154,7 +150,17 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapRazorPages();
-await app.MigrateDatabaseAsync(configuration);
+if (app.Environment.IsEnvironment("Testing"))
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+    await dbContext.Database.EnsureDeletedAsync();
+    await dbContext.Database.EnsureCreatedAsync();
+}
+else
+{
+    await app.MigrateDatabaseAsync(configuration);
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -164,5 +170,56 @@ if (app.Environment.IsDevelopment())
 }
 
 await app.InitializeRolesAsync();
+
+if (app.Environment.IsEnvironment("Testing"))
+{
+    using var scope = app.Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+    const string testUserName = "accessibility-user";
+    var testUser = await userManager.FindByNameAsync(testUserName);
+    if (testUser == null)
+    {
+        testUser = new User
+        {
+            UserName = testUserName,
+            Email = "accessibility@example.test",
+            EmailConfirmed = true
+        };
+        var password = configuration["AccessibilityTests:Password"]
+            ?? throw new InvalidOperationException("Accessibility test password is not configured.");
+        var result = await userManager.CreateAsync(testUser, password);
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(string.Join("; ", result.Errors.Select(error => error.Description)));
+        }
+    }
+    if (!await userManager.IsInRoleAsync(testUser, "Admin"))
+    {
+        var roleResult = await userManager.AddToRoleAsync(testUser, "Admin");
+        if (!roleResult.Succeeded)
+        {
+            throw new InvalidOperationException(string.Join("; ", roleResult.Errors.Select(error => error.Description)));
+        }
+    }
+
+    if (!await dbContext.Items.AnyAsync())
+    {
+        var book = await dbContext.Books.SingleAsync(candidate => candidate.Title == "Ponad słowami 1 cz. 1");
+        dbContext.Items.Add(new Item
+        {
+            BookId = book.Id,
+            Book = book,
+            UserId = testUser.Id,
+            User = testUser,
+            Price = 29.90m,
+            CreatedAt = new DateTime(2026, 6, 29, 10, 0, 0, DateTimeKind.Utc),
+            Description = "Testowe ogłoszenie używane do weryfikacji dostępności.",
+            State = "Bardzo dobry",
+            Photo = "/img/default-book.svg"
+        });
+        await dbContext.SaveChangesAsync();
+    }
+}
 
 app.Run();

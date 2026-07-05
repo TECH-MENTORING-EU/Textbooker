@@ -3,6 +3,7 @@ using System.Configuration;
 using Booker.Data;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 using System.Net;
+using Amazon;
 using Amazon.S3;
 
 
@@ -18,16 +20,58 @@ namespace Booker.Services
 {
     public static partial class StartupUtilities
     {
+        public static void ConfigureDatabase(
+            this DbContextOptionsBuilder options,
+            IConfiguration configuration)
+        {
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            if (string.Equals(configuration["DatabaseProvider"], "Sqlite", StringComparison.OrdinalIgnoreCase))
+            {
+                options.UseSqlite(connectionString);
+                return;
+            }
+
+            options.UseSqlServer(connectionString, sql => sql.UseCompatibilityLevel(110));
+        }
+
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton<IAmazonS3>(x => new AmazonS3Client(
-                configuration["S3:AccessKeyId"], 
-                configuration["S3:SecretAccessKey"],
-                new AmazonS3Config
+            services.AddSingleton(_ => new Lazy<IAmazonS3>(() =>
+            {
+                var accessKey = configuration["S3:AccessKeyId"];
+                var secretKey = configuration["S3:SecretAccessKey"];
+                var serviceUrl = configuration["CF:ServiceUrl"];
+                var region = configuration["S3:Region"];
+
+                if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey))
                 {
-                    ServiceURL = configuration["CF:ServiceUrl"],
+                    throw new InvalidOperationException(
+                        "Przed przesłaniem zdjęć skonfiguruj S3:AccessKeyId i S3:SecretAccessKey.");
+                }
+
+                if (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region))
+                {
+                    throw new InvalidOperationException(
+                        "Przed przesłaniem zdjęć skonfiguruj CF:ServiceUrl albo S3:Region.");
+                }
+
+                var clientConfiguration = new AmazonS3Config
+                {
                     ForcePathStyle = true
-                }));
+                };
+
+                if (!string.IsNullOrWhiteSpace(serviceUrl))
+                {
+                    clientConfiguration.ServiceURL = serviceUrl;
+                }
+                else
+                {
+                    clientConfiguration.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
+                }
+
+                return new AmazonS3Client(accessKey, secretKey, clientConfiguration);
+            }));
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();
@@ -183,6 +227,9 @@ namespace Booker.Services
 
             services.ConfigureApplicationCookie(options =>
             {
+                // WCAG 2.2 SC 2.2.1 exempts time limits longer than 20 hours.
+                options.ExpireTimeSpan = TimeSpan.FromDays(14);
+                options.SlidingExpiration = true;
                 var redirectToAccessDenied = options.Events.OnRedirectToAccessDenied;
                 options.Events.OnRedirectToAccessDenied = context =>
                 {
