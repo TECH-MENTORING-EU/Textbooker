@@ -68,7 +68,7 @@
 </section>
 
 <section>
-    <div aria-busy="false" class="htmx-indicator" id="ind" role="status" aria-live="polite"></div>
+    <div class="htmx-indicator" id="ind" role="status" aria-live="polite"></div>
 </section>
 
 <script>
@@ -92,7 +92,7 @@
 
             button.addEventListener('click', function() {
                 const name = this.classList.contains('subject') ? 'subject' : this.classList.contains('grade') ? 'grade' : 'level';
-                const value = name === 'grade' ? this.textContent.trim().slice(6,7) : this.textContent.trim();
+                const value = this.dataset.filterValue;
                 this.classList.toggle('outline');
                 const active = !this.classList.contains('outline');
                 this.setAttribute("aria-pressed", active ? "true" : "false");

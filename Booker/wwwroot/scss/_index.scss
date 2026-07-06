@@ -87,15 +87,15 @@
         }
 
         button {
-            background-color: #006da6;
-            border-color: #006da6;
-            color: #ffffff;
+            background-color: var(--pico-primary-background);
+            border-color: var(--pico-primary-border);
+            color: var(--pico-primary-inverse);
         }
 
         button.secondary {
-            background-color: #4f5f7f;
-            border-color: #4f5f7f;
-            color: #ffffff;
+            background-color: var(--pico-secondary-background);
+            border-color: var(--pico-secondary-border);
+            color: var(--pico-secondary-inverse);
         }
 
         button {

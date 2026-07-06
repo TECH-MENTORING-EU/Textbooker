@@ -20,7 +20,7 @@
                 {
                     var isActive = img == mainImage;
                     <img src="@img"
-                         alt="Zdjęcie książki @(idx + 1) z @images.Count()@(@isActive ? " - obecnie wybrane" : "")"
+                         alt="Zdjęcie książki @(idx + 1) z @images.Count()"
                          class="thumbnail-book-photo"
                          tabindex="0"
                          role="button"
@@ -112,10 +112,7 @@
                 if (!mainImg) return;
                 mainImg.src = th.src;
                 thumbnails.forEach(other => other.setAttribute("aria-pressed", other === th ? "true" : "false"));
-                var alt = th.getAttribute("alt");
-                if (alt) {
-                    mainImg.setAttribute("alt", alt.replace(" - obecnie wybrane", "") + " - obecnie wybrane");
-                }
+                mainImg.setAttribute("alt", `Główne zdjęcie książki: ${document.getElementById("book-title")?.textContent?.trim() ?? ""}`);
             };
 
             th.addEventListener("click", activate);

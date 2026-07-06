@@ -38,6 +38,7 @@
         </div>
         <div class="actions">
             <button type="button" class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'
+                    data-filter-value="@Model.Item.Book.Subject.Name"
                     aria-pressed="@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "true" : "false")"
                     aria-label="Filtruj po przedmiocie: @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany" : Model.Item.Book.Subject.Name)">
                 @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
@@ -47,6 +48,7 @@
                 @foreach (var grade in Model.Item.Book.Grades)
                 {
                     <button type="button" class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'
+                            data-filter-value="@grade.GradeNumber"
                             aria-pressed="@(Model.Params.Grades.Contains(grade) ? "true" : "false")"
                             aria-label="Filtruj po klasie: @grade.GradeNumber">
                         @DisplayGrade(grade.GradeNumber)
@@ -56,6 +58,7 @@
             @if (Model.Item.Book.Level != null)
             {
                 <button type="button" class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'
+                        data-filter-value="@Model.Item.Book.Level.Name"
                         aria-pressed="@(Model.Item.Book.Level == Model.Params.Level ? "true" : "false")"
                         aria-label="Filtruj po poziomie: @Model.Item.Book.Level.Name">
                     @Model.Item.Book.Level.Name
