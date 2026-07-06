@@ -41,8 +41,8 @@ Accessibility is implemented with:
 | `Pages/Shared/_Layout.cshtml` | Landmarks, skip link, and help dialog semantics |
 | `Pages/Shared/_LoginPartial.cshtml` | Native account menu and expanded state |
 | `Areas/Admin/Pages/_AdminNav.cshtml` | Valid, conditional `aria-current` values |
-| `Booker.AccessibilityTests/accessibility.spec.ts` | axe-core and keyboard behavior tests |
-| `.github/workflows/accessibility.yml` | Accessibility checks for pull requests and `main` |
+| `Booker.AccessibilityTests/accessibility.spec.ts` | Planned axe-core and keyboard behavior tests |
+| `.github/workflows/accessibility.yml` | Planned accessibility checks for pull requests and `main` |
 
 ## WCAG 2.2 A and AA checklist
 
@@ -144,11 +144,11 @@ AAA criteria are outside this Level AA conformance target.
 
 ### Automated
 
-Run `npm run test:a11y`. The Playwright and axe-core suite covers public,
+The planned Playwright and axe-core suite will run with `npm run test:a11y` and cover public,
 identity, profile, account-management, listing, editing, and administration
 flows. It checks supported WCAG A/AA rules as well as the skip link, dialog focus
 return, cropper keyboard alternatives, HTMX announcements, image loading,
-320 CSS px reflow, and minimum target sizes. The same suite runs in
+320 CSS px reflow, and minimum target sizes. A later change will add the suite and
 `.github/workflows/accessibility.yml` for pull requests and changes to `main`.
 
 ## Reporting accessibility problems

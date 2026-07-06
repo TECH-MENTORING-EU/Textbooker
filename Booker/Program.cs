@@ -154,7 +154,10 @@ if (app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-    await dbContext.Database.EnsureDeletedAsync();
+    if (configuration.GetValue<bool>("DatabaseSettings:ClearDatabaseOnStartup"))
+    {
+        await dbContext.Database.EnsureDeletedAsync();
+    }
     await dbContext.Database.EnsureCreatedAsync();
 }
 else
