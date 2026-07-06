@@ -368,6 +368,101 @@ namespace Booker.Services
             return app;
         }
 
+        public static void MapDevelopmentEndpoints(this WebApplication app)
+        {
+            if (!app.Environment.IsDevelopment()) return;
+
+            app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
+                string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
+        }
+
+        public static async Task<WebApplication> InitializeApplicationDataAsync(
+            this WebApplication app,
+            IConfiguration configuration)
+        {
+            if (app.Environment.IsEnvironment("Testing"))
+            {
+                using var scope = app.Services.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+                if (configuration.GetValue<bool>("DatabaseSettings:ClearDatabaseOnStartup"))
+                {
+                    await dbContext.Database.EnsureDeletedAsync();
+                }
+                await dbContext.Database.EnsureCreatedAsync();
+            }
+            else
+            {
+                await app.MigrateDatabaseAsync(configuration);
+            }
+
+            if (app.Environment.IsDevelopment())
+            {
+                await app.InitializeDatabaseAsync();
+            }
+
+            await app.InitializeRolesAsync();
+
+            if (app.Environment.IsEnvironment("Testing"))
+            {
+                await app.InitializeAccessibilityTestDataAsync(configuration);
+            }
+
+            return app;
+        }
+
+        private static async Task InitializeAccessibilityTestDataAsync(
+            this WebApplication app,
+            IConfiguration configuration)
+        {
+            using var scope = app.Services.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+            const string testUserName = "accessibility-user";
+            var testUser = await userManager.FindByNameAsync(testUserName);
+            if (testUser == null)
+            {
+                testUser = new User
+                {
+                    UserName = testUserName,
+                    Email = "accessibility@example.test",
+                    EmailConfirmed = true
+                };
+                var password = configuration["AccessibilityTests:Password"]
+                    ?? throw new InvalidOperationException("Accessibility test password is not configured.");
+                var result = await userManager.CreateAsync(testUser, password);
+                if (!result.Succeeded)
+                {
+                    throw new InvalidOperationException(string.Join("; ", result.Errors.Select(error => error.Description)));
+                }
+            }
+
+            if (!await userManager.IsInRoleAsync(testUser, "Admin"))
+            {
+                var roleResult = await userManager.AddToRoleAsync(testUser, "Admin");
+                if (!roleResult.Succeeded)
+                {
+                    throw new InvalidOperationException(string.Join("; ", roleResult.Errors.Select(error => error.Description)));
+                }
+            }
+
+            if (await dbContext.Items.AnyAsync()) return;
+
+            var book = await dbContext.Books.SingleAsync(candidate => candidate.Title == "Ponad słowami 1 cz. 1");
+            dbContext.Items.Add(new Item
+            {
+                BookId = book.Id,
+                Book = book,
+                UserId = testUser.Id,
+                User = testUser,
+                Price = 29.90m,
+                CreatedAt = new DateTime(2026, 6, 29, 10, 0, 0, DateTimeKind.Utc),
+                Description = "Testowe ogłoszenie używane do weryfikacji dostępności.",
+                State = "Bardzo dobry",
+                Photo = "/img/default-book.svg"
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
 
     }
 }

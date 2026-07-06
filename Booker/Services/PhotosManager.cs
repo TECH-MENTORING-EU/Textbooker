@@ -74,10 +74,7 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
 
         if (Uri.TryCreate(photoUri, UriKind.Absolute, out var absoluteUri))
         {
-            if (!Uri.TryCreate(publicUrl, UriKind.Absolute, out var configuredUri) ||
-                (absoluteUri.Scheme != Uri.UriSchemeHttp && absoluteUri.Scheme != Uri.UriSchemeHttps) ||
-                !string.Equals(absoluteUri.Host, configuredUri.Host, StringComparison.OrdinalIgnoreCase) ||
-                absoluteUri.Port != configuredUri.Port)
+            if (!IsTrustedPublicUrl(absoluteUri, publicUrl))
             {
                 logger.LogWarning("Rejected an untrusted absolute photo URL for host {Host}.", absoluteUri.Host);
                 return string.Empty;
@@ -92,6 +89,14 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
         }
 
         return $"{publicUrl}/{photoUri.TrimStart('/')}";
+    }
+
+    private static bool IsTrustedPublicUrl(Uri candidate, string? configuredPublicUrl)
+    {
+        return Uri.TryCreate(configuredPublicUrl, UriKind.Absolute, out var configuredUri) &&
+            (candidate.Scheme == Uri.UriSchemeHttp || candidate.Scheme == Uri.UriSchemeHttps) &&
+            string.Equals(candidate.Host, configuredUri.Host, StringComparison.OrdinalIgnoreCase) &&
+            candidate.Port == configuredUri.Port;
     }
 
 }
