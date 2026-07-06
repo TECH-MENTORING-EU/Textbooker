@@ -2,6 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, Page, test } from '@playwright/test';
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+const accessibilityUser = process.env.ACCESSIBILITY_TEST_USERNAME ?? 'accessibility-user';
+const accessibilityPassword = process.env.ACCESSIBILITY_TEST_PASSWORD ?? 'Accessibility1!';
 
 async function expectNoWcagViolations(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
@@ -10,8 +12,8 @@ async function expectNoWcagViolations(page: Page) {
 
 async function signIn(page: Page) {
   await page.goto('/Identity/Account/Login');
-  await page.getByLabel('Nazwa użytkownika / e-mail:').fill('accessibility-user');
-  await page.getByLabel('Hasło:').fill('Accessibility1!');
+  await page.getByLabel('Nazwa użytkownika / e-mail:').fill(accessibilityUser);
+  await page.getByLabel('Hasło:').fill(accessibilityPassword);
   await page.getByRole('button', { name: 'Zaloguj się' }).click();
   await expect(page).toHaveURL(/\/$/);
 }
@@ -79,6 +81,17 @@ test('HTMX search updates results and announces loading without losing the layou
   await page.goto('/');
   const search = page.getByRole('searchbox', { name: 'Szukana fraza' });
   const results = page.getByRole('region', { name: 'Wyniki wyszukiwania' });
+  const indicator = page.locator('#ind');
+
+  await page.evaluate(() => {
+    const source = document.querySelector('.filter-search');
+    if (!source) throw new Error('Expected .filter-search to dispatch the HTMX event.');
+    document.body.dispatchEvent(new CustomEvent('htmx:beforeRequest', {
+      bubbles: true,
+      detail: { elt: source }
+    }));
+  });
+  await expect(indicator).toHaveText('Ładowanie wyników…');
 
   await search.fill('nieistniejący podręcznik');
   await expect(results).toContainText('Brak wyników');
@@ -96,6 +109,7 @@ test('HTMX announces failed result updates as errors', async ({ page }) => {
 
   await page.evaluate(() => {
     const source = document.querySelector('.filter-search');
+    if (!source) throw new Error('Expected .filter-search to dispatch the HTMX event.');
     document.body.dispatchEvent(new CustomEvent('htmx:afterRequest', {
       bubbles: true,
       detail: { elt: source, successful: false }
@@ -146,12 +160,24 @@ test('openDialog ignores invalid triggers and accepts a dialog element', async (
 });
 
 test('content images have valid sources and decode successfully', async ({ page }) => {
-  for (const path of ['/', '/Book/1']) {
-    await page.goto(path);
-    const brokenImages = await page.locator('img').evaluateAll(images => images.flatMap(image => {
+  const findBrokenImages = () => page.locator('img').evaluateAll(async images => {
+    await Promise.all(images.map(async image => {
+      try {
+        await (image as HTMLImageElement).decode();
+      } catch {
+        // The validity check below reports the source with useful context.
+      }
+    }));
+
+    return images.flatMap(image => {
       const element = image as HTMLImageElement;
       return element.currentSrc && element.complete && element.naturalWidth > 0 ? [] : [element.getAttribute('src') ?? '(brak src)'];
-    }));
+    });
+  });
+
+  for (const path of ['/', '/Book/1']) {
+    await page.goto(path);
+    const brokenImages = await findBrokenImages();
     expect(brokenImages, `${path} contains broken images`).toEqual([]);
   }
 
@@ -159,10 +185,7 @@ test('content images have valid sources and decode successfully', async ({ page 
   for (const path of ['/Profile', '/Identity/Account/Manage/ProfilePictureUpload']) {
     await page.goto(path);
     await expect(page.locator('img')).not.toHaveCount(0);
-    const brokenImages = await page.locator('img').evaluateAll(images => images.flatMap(image => {
-      const element = image as HTMLImageElement;
-      return element.currentSrc && element.complete && element.naturalWidth > 0 ? [] : [element.getAttribute('src') ?? '(brak src)'];
-    }));
+    const brokenImages = await findBrokenImages();
     expect(brokenImages, `${path} contains broken images`).toEqual([]);
   }
 });
@@ -212,8 +235,10 @@ test('visible controls meet the 24 CSS pixel minimum target size', async ({ page
         const rect = element.getBoundingClientRect();
         const style = getComputedStyle(element);
         if (style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0) return [];
+        const id = element.id ? `#${element.id}` : '';
+        const classes = Array.from(element.classList).map(name => `.${name}`).join('');
         return rect.width < 24 || rect.height < 24
-          ? [`${element.tagName.toLowerCase()}#${element.id}.${element.className}: ${rect.width.toFixed(1)}x${rect.height.toFixed(1)}`]
+          ? [`${element.tagName.toLowerCase()}${id}${classes}: ${rect.width.toFixed(1)}x${rect.height.toFixed(1)}`]
           : [];
       })
     );
