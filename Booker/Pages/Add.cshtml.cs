@@ -33,7 +33,7 @@ namespace Booker.Pages
                 header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
                 return true;
 
-            return true;
+            return false;
         }
 
 
@@ -70,7 +70,7 @@ namespace Booker.Pages
                 }
 
                 // Optional: check extensions for UX
-                string ext = Path.GetExtension(img.FileName)?.ToLowerInvariant();
+                string? ext = Path.GetExtension(img.FileName)?.ToLowerInvariant();
                 if (string.IsNullOrEmpty(ext))
                 {
                     ModelState.AddModelError("Input.Images",
@@ -104,15 +104,26 @@ namespace Booker.Pages
                 Input.Title, Input.Grade, Input.Subject, Input.Level
             );
 
-            var result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
-                (await _userManager.GetUserAsync(User))!,
-                parameters,
-                Input.Description,
-                Input.State,
-                Input.Price,
-                imageStreams,
-                imageExtensions
-            ));
+            ItemManager.Result result;
+            try
+            {
+                result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
+                    (await _userManager.GetUserAsync(User))!,
+                    parameters,
+                    Input.Description,
+                    Input.State,
+                    Input.Price,
+                    imageStreams,
+                    imageExtensions
+                ));
+            }
+            catch (PhotoStorageException ex)
+            {
+                ModelState.AddModelError("Input.Images", ex.Message);
+                Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
             return ValidateAndReturn(result.Id, result.Status);
         }

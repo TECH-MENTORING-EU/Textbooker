@@ -2,6 +2,7 @@
 
 @use "pico"  with ( $theme-color: "azure" );
 @use "index";
+@use "landing";
 @use "book";
 @use "add";
 @use "identity";

@@ -24,7 +24,8 @@ public class ItemGalleryViewComponent : ViewComponent
     public record ItemModel(
         Item Item,
         string FirstPhoto,
-        StaticDataManager.Parameters Params
+        StaticDataManager.Parameters Params,
+        bool LinkFilters
     );
 
     public ItemGalleryViewComponent(ItemManager itemManager, UserManager<User> userManager, PhotosManager photosManager)
@@ -39,7 +40,8 @@ public class ItemGalleryViewComponent : ViewComponent
         StaticDataManager.Parameters parameters,
         int pageNumber = 0,
         int pageSize = PageSize,
-        bool showHidden = false
+        bool showHidden = false,
+        bool linkFilters = false
     )
     {
         if (!itemIds.Any())
@@ -65,7 +67,8 @@ public class ItemGalleryViewComponent : ViewComponent
             FirstPhoto: string.IsNullOrEmpty(item.Photo)
                 ? "/images/default-book.png" // fallback
                 : _photosManager.GetPhotoUrl(item.Photo.Split(';')[0].Trim()),
-            Params: parameters
+            Params: parameters,
+            LinkFilters: linkFilters
         ));
 
         return View(

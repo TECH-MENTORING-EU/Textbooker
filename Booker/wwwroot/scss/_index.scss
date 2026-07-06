@@ -104,10 +104,12 @@
             grid-area: categories;
             align-content: end;
 
-            button {
+            button,
+            a[role="button"] {
                 font-size: 0.75em;
                 padding: 0 0.5em;
                 border-radius: 100vmax;
+                margin-bottom: 0;
             }
         }
 
@@ -148,6 +150,7 @@
         color: white;
         padding: 0.25em 0.5em;
         border-radius: 0.25em;
+        pointer-events: none;
     }
 }
 

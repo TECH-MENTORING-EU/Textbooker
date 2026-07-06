@@ -33,7 +33,7 @@
         @await Html.PartialAsync("_LoginPartial")
     </nav>
 
-    <main class="container">
+    <main class="container @(ViewData["MainClass"])">
         @RenderBody()
     </main>
 
@@ -82,7 +82,28 @@
         </article>
     </dialog>
 
-    <footer class="container">
+    <footer class="container-fluid" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <a asp-area="" asp-page="/Index">
+                    <img src="/img/logo-text.svg" alt="TextBooker" style="height: 1.75rem;">
+                </a>
+                <nav aria-label="Stopka">
+                    <ul role="list">
+                        <li><a asp-area="" asp-page="/Privacy">Polityka prywatności</a></li>
+                        <li>
+                            <button class="footer-help-link"
+                                    type="button"
+                                    data-target="modal-example"
+                                    onclick="document.getElementById(this.dataset.target).showModal()">
+                                Centrum pomocy
+                            </button>
+                        </li>
+                        <li><a href="mailto:support@textbooker.pl">Kontakt</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
     </footer>
 
     <script src="~/js/validation/aspnet-validation.min.js" asp-append-version="true"></script>

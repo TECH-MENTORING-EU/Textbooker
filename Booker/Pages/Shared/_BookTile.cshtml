@@ -22,7 +22,7 @@
 }
 
 <article class="book-tile @(Model.Item.Reserved ? "reserved" : "")">
-    <img src="@Model.FirstPhoto" alt="@Model.Item.Book.Title" />
+    <img src="@Model.FirstPhoto" alt="@(Model.Item.Reserved ? $"{Model.Item.Book.Title} – zarezerwowane" : Model.Item.Book.Title)" />
     <footer>
         <div class="info">
             <a asp-page="/Book" asp-route-id="@Model.Item.Id">
@@ -37,23 +37,50 @@
             </p>
         </div>
         <div class="actions">
-            <button class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'>
-                @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
-            </button>
+            @if (Model.LinkFilters)
+            {
+                <a role="button" class="outline" asp-page="/Browse" asp-route-subject="@Model.Item.Book.Subject.Name">
+                    @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
+                </a>
+            }
+            else
+            {
+                <button type="button" class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'>
+                    @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
+                </button>
+            }
             @if (Model.Item.Book.Grades != null)
             {
                 @foreach (var grade in Model.Item.Book.Grades)
                 {
-                    <button class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'>
-                        @DisplayGrade(grade.GradeNumber)
-                    </button>
+                    @if (Model.LinkFilters)
+                    {
+                        <a role="button" class="outline" asp-page="/Browse" asp-route-grade="@grade.GradeNumber">
+                            @DisplayGrade(grade.GradeNumber)
+                        </a>
+                    }
+                    else
+                    {
+                        <button type="button" class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'>
+                            @DisplayGrade(grade.GradeNumber)
+                        </button>
+                    }
                 }
             }
             @if (Model.Item.Book.Level != null)
             {
-                <button class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'>
-                    @Model.Item.Book.Level.Name
-                </button>
+                @if (Model.LinkFilters)
+                {
+                    <a role="button" class="outline" asp-page="/Browse" asp-route-level="@Model.Item.Book.Level.Name">
+                        @Model.Item.Book.Level.Name
+                    </a>
+                }
+                else
+                {
+                    <button type="button" class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'>
+                        @Model.Item.Book.Level.Name
+                    </button>
+                }
             }
         </div>
         <div class="fav">
