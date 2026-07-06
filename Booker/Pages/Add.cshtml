@@ -95,44 +95,6 @@
 </dialog>
 
 @section Scripts {
-    <script>
-        function updateCharCount(e) {
-            const count = this.value.length;
-            const max = this.getAttribute('maxlength') || 200; // Default to 200 if maxlength is not set
-            this.nextElementSibling.querySelector(".char-count").textContent = `${count} / ${max}`;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // Character count for textareas
-            document.querySelectorAll('textarea').forEach(ta => {
-                ta.addEventListener("input", updateCharCount);
-                ta.dispatchEvent(new Event("input")); // Trigger initial count
-            });
-
-            let isSubmitting = false;
-            const confirmButton = document.getElementById('confirmAddBtn');
-            const addForm = document.getElementById('add-form');
-            const summaryDialog = document.getElementById('summaryModal');
-
-            summaryDialog?.addEventListener('close', () => {
-                if (addForm) delete addForm.dataset.inSummary;
-            });
-
-            if (confirmButton) {
-                confirmButton.addEventListener('click', function(e) {
-                    if (isSubmitting) {
-                        e.preventDefault(); // Prevent duplicate submissions
-                        return;
-                    }
-
-                    isSubmitting = true;
-                    setTimeout(() => {
-                        this.disabled = true;
-                        this.textContent = 'Dodawanie...';
-                    }, 0);
-                });
-            }
-        });
-    </script>
+    <script src="~/js/add-page.js" asp-append-version="true"></script>
 }
 
