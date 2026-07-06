@@ -1,0 +1,4 @@
+interface:
+  display_name: "Make Interfaces Feel Better"
+  short_description: "Polish frontend typography, surfaces, motion, and details"
+  default_prompt: "Review and polish this interface using precise typography, surface, motion, and performance principles."
