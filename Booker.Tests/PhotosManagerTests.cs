@@ -15,7 +15,7 @@ public class PhotosManagerTests
         var s3Client = new Lazy<IAmazonS3>(() =>
         {
             s3WasInitialized = true;
-            throw new InvalidOperationException("S3 should not be initialized while generating an URL.");
+            throw new InvalidOperationException("S3 should not be initialized while generating a URL.");
         });
         var configuration = new ConfigurationBuilder().Build();
         var manager = new PhotosManager(NullLogger<PhotosManager>.Instance, s3Client, configuration);
@@ -33,7 +33,7 @@ public class PhotosManagerTests
         var s3Client = new Lazy<IAmazonS3>(() =>
         {
             s3WasInitialized = true;
-            throw new InvalidOperationException("S3 should not be initialized while generating an URL.");
+            throw new InvalidOperationException("S3 should not be initialized while generating a URL.");
         });
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
