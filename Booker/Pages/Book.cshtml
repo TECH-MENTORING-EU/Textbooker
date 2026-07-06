@@ -111,7 +111,7 @@
             var activate = () => {
                 if (!mainImg) return;
                 mainImg.src = th.src;
-                thumbnails.forEach(other => other.setAttribute("aria-pressed", other === th ? "true" : "false"));
+                thumbnails.forEach(other => other.setAttribute("aria-pressed", other === th));
                 mainImg.setAttribute("alt", `Główne zdjęcie książki: ${document.getElementById("book-title")?.textContent?.trim() ?? ""}`);
             };
 
