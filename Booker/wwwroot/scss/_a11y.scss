@@ -86,7 +86,7 @@
     .main-book-photo,
     .thumbnail-book-photo,
     .rating-avatar {
-        forced-color-adjust: preserve;
+        forced-color-adjust: preserve-parent-color;
     }
 }
 
