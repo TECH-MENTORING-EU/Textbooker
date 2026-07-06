@@ -15,7 +15,7 @@
             <label for="add-image">Prześlij zdjęcia swojej książki:</label>
             <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)" id="add-image" aria-describedby="Input_Images-error imageErrorMsg">
             <small>
-                <span asp-validation-for="Input.Images" id="Input_Images-error"></span>
+                <span asp-validation-for="Input.Images" id="Input_Images-error" role="alert"></span>
                 <span id="imageErrorMsg" role="alert"></span>
             </small>
             <div class="image-preview-container" role="group" aria-label="Podgląd zdjęć książki"></div>
