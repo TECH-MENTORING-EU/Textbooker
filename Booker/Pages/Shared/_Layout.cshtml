@@ -33,7 +33,7 @@
         @await Html.PartialAsync("_LoginPartial")
     </nav>
 
-    <main class="container">
+    <main class="container @(ViewData["MainClass"])">
         @RenderBody()
     </main>
 

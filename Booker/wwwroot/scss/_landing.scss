@@ -222,6 +222,40 @@
     }
 }
 
+/* Give ultra-wide displays more useful density without stretching the page edge to edge. */
+@media (min-width: 1920px) {
+    main.container.landing-page {
+        max-width: min(1800px, calc(100% - 6rem));
+    }
+
+    .landing-hero {
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        gap: clamp(3rem, 5vw, 6rem);
+    }
+
+    .hero-content {
+        h1 {
+            --pico-font-size: clamp(2.25rem, 1.25vw, 2.75rem);
+        }
+
+        p {
+            font-size: 1.25rem;
+        }
+    }
+
+    .hero-wall {
+        height: 640px;
+    }
+
+    .grid-gallery-single-row {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+
+        > :nth-child(5) {
+            display: flex;
+        }
+    }
+}
+
 /* ===== Categories ===== */
 .category-badges {
     list-style: none;

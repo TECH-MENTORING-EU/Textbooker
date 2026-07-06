@@ -2,6 +2,7 @@
 @model IndexModel
 @{
     ViewData["Title"] = "TextBooker";
+    ViewData["MainClass"] = "landing-page";
     var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name) && !s.Name.Equals("Brak", StringComparison.OrdinalIgnoreCase)).ToList();
     var hasMoreSubjects = popularSubjects.Count > 6;
     const int visibleSubjectCount = 6;
