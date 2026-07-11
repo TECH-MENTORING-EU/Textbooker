@@ -1,0 +1,212 @@
+@use "pico";
+@use "settings" as *;
+@use "sass:map";
+
+// Visually hidden but available to screen readers (utility class).
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+// Skip link (WCAG 2.4.1 Bypass Blocks)
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 2000;
+    padding: var(#{$css-var-prefix}block-spacing-vertical) var(#{$css-var-prefix}block-spacing-horizontal);
+    background: var(#{$css-var-prefix}primary-background);
+    color: var(#{$css-var-prefix}primary-inverse);
+    border-radius: 0 0 var(#{$css-var-prefix}border-radius) 0;
+    text-decoration: none;
+    transition: top 0.2s ease-in-out;
+
+    &:focus,
+    &:focus-visible {
+        top: 0;
+        outline: var(#{$css-var-prefix}outline-width) solid var(#{$css-var-prefix}primary);
+        outline-offset: 0;
+    }
+}
+
+// Ensure focus is always visible, even where PICO default outline is weak.
+:where(a, button, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: var(#{$css-var-prefix}outline-width) solid var(#{$css-var-prefix}primary);
+    outline-offset: 2px;
+    border-radius: var(#{$css-var-prefix}border-radius);
+}
+
+// Help trigger: keep a clear focus indicator even with high z-index.
+.help-trigger:focus-visible {
+    outline-width: 3px;
+    outline-offset: 2px;
+}
+
+// Live regions should not steal layout when empty.
+[aria-live]:empty {
+    display: none;
+}
+
+// Star rating exposure (role="img"): keep the value readable when CSS hides SVG.
+.star-rating {
+    &:focus-visible {
+        outline: var(#{$css-var-prefix}outline-width) solid var(#{$css-var-prefix}primary);
+        outline-offset: 2px;
+    }
+}
+
+// Reduced motion (WCAG 2.2 AA + 2.3.3 Animation from Interactions guidance)
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+// High contrast mode fallback (Windows / forced colors): keep outlines visible.
+@media (forced-colors: active) {
+    .skip-link,
+    :where(a, button, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: CanvasText solid 3px;
+        outline-offset: 2px;
+    }
+
+    .book-tile img,
+    .main-book-photo,
+    .thumbnail-book-photo,
+    .rating-avatar {
+        forced-color-adjust: preserve-parent-color;
+    }
+}
+
+// Target size hint (WCAG 2.5.8): ensure the small icon buttons in tiles
+// remain at least 24x24 px hit area for pointer users.
+.book-tile .fav button,
+.book-tile .fav [role="button"] {
+    min-width: 24px;
+    min-height: 24px;
+}
+
+// Muted text: explicit light-theme value with at least 4.5:1 contrast on white.
+[data-theme="light"] {
+    --pico-muted-color: #59636f;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --pico-muted-color: #59636f;
+    }
+}
+
+.help-trigger {
+    display: block;
+    width: max-content;
+    margin: 1rem 1rem 1rem auto;
+    padding: 0.5rem;
+}
+
+.page-shell {
+    display: flex;
+    min-height: 100vh;
+    min-height: 100dvh;
+    flex-direction: column;
+
+    > main {
+        flex: 1 0 auto;
+        width: 100%;
+    }
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    min-width: 24px;
+    min-height: 24px;
+}
+
+nav.sitemap {
+    display: block;
+
+    ul {
+        display: block;
+        padding-inline-start: 1.5rem;
+    }
+
+    li {
+        display: list-item;
+        overflow-wrap: anywhere;
+    }
+}
+
+.sidebar-container > section {
+    min-width: 0;
+}
+
+.table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-gutter: stable;
+    border-inline: 1px solid var(#{$css-var-prefix}muted-border-color);
+}
+
+.table-scroll-hint {
+    display: none;
+    color: var(#{$css-var-prefix}muted-color);
+    font-size: 0.875rem;
+}
+
+@media (max-width: map.get(map.get(pico.$breakpoints, "md"), "viewport")) {
+    .table-scroll-hint {
+        display: block;
+    }
+
+    label:has(> input[type="checkbox"]),
+    label:has(> input[type="radio"]) {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+    }
+}
+
+.crop-position-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(2.75rem, 1fr));
+    gap: 0.5rem;
+    max-width: 18rem;
+    margin: 1rem auto;
+
+    button {
+        margin: 0;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .move-up { grid-column: 2; }
+    .move-left { grid-column: 1; grid-row: 2; }
+    .move-down { grid-column: 2; grid-row: 2; }
+    .move-right { grid-column: 3; grid-row: 2; }
+}
+
+// Maintain visible focus ring for keyboard users even when CSS resets it on
+// summary > markers, file inputs and other special controls.
+:focus-visible {
+    outline-style: solid;
+}
+
+// Make sure dialog content is scrollable and reachable on small screens.
+dialog[open] {
+    max-height: 90vh;
+    overflow: auto;
+}
+// Shared accessibility (a11y) styles: focus, motion, contrast, and target-size safeguards.
