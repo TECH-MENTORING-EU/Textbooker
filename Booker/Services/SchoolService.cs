@@ -96,7 +96,7 @@ public class SchoolService(DataContext context, ILogger<SchoolService> logger)
 
 
         logger.LogInformation(
-            "Created new school: {SchoolName} (ID: {SchoolId}",
+            "Created new school: {SchoolName} (ID: {SchoolId})",
             school.Name,
             school.Id
         );
@@ -124,7 +124,7 @@ public class SchoolService(DataContext context, ILogger<SchoolService> logger)
         await context.SaveChangesAsync();
 
         logger.LogInformation(
-            "Soft deleted school: {SchoolName} (ID: {SchoolId}). Schema {SchemaName} preserved.",
+            "Soft deleted school: {SchoolName} (ID: {SchoolId}). Data preserved.",
             school.Name,
             school.Id
         );
