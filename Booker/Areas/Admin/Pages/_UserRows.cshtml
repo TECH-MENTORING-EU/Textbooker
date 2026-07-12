@@ -30,6 +30,7 @@
                    hx-swap="outerHTML"
                    hx-confirm="Na pewno chcesz odblokować użytkownika @user.UserName?"
                    href=""
+                   aria-label="Odblokuj użytkownika @user.UserName"
                    antiforgery
                 >Odblokuj</a>       
             }
@@ -41,6 +42,7 @@
                    hx-swap="outerHTML"
                    hx-prompt="Na ile dni zablokować użytkownika @user.UserName (-1 do odwołania)?"
                    href=""
+                   aria-label="Zablokuj użytkownika @user.UserName"
                    antiforgery
                 >Zablokuj</a>
             }
@@ -51,10 +53,11 @@
                hx-swap="delete"
                hx-confirm="Na pewno chcesz usunąć użytkownika @user.UserName?"
                href=""
+               aria-label="Usuń użytkownika @user.UserName"
                antiforgery
               >Usuń</a>
 
-            <a href="">Więcej...</a>
+            <a href="" aria-label="Szczegóły użytkownika @user.UserName">Więcej...</a>
         </td>
     </tr>
 }

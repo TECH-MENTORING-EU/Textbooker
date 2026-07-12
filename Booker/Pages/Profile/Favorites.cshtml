@@ -14,15 +14,15 @@
 }
 else if (Model.UserInfo.IsCurrentUser || Model.UserInfo.RequestUser.AreFavoritesPublic)
 {
-    <section class="grid-gallery">
+    <section class="grid-gallery" aria-label="Ulubione ogłoszenia">
         <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
     </section>
 
     <section>
-        <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+        <div aria-busy="false" class="htmx-indicator" id="ind" role="status" aria-live="polite"></div>
     </section>
 }
 else
 {
-    <p>Lista ulubionych tego użytkownika jest prywatna.</p>
+    <p role="status">Lista ulubionych tego użytkownika jest prywatna.</p>
 }
