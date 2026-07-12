@@ -2,7 +2,7 @@
 
 @if (Model.IsFavorite && !Model.FullSize)
 {
-    <button type="button" class="outline" aria-label="Usuń z ulubionych" aria-pressed="true" title="Usuń z ulubionych"
+    <button type="button" class="outline" aria-label="Usuń z ulubionych" aria-pressed="@AriaHelpers.Bool(Model.IsFavorite)" title="Usuń z ulubionych"
             hx-post="@Url.Page("/Profile/Favorites", "Remove")"
             hx-vals='{"itemId" : @Model.Id, "fullsize" : false}' hx-swap="outerHTML" antiforgery>
         <svg icon="star" variant="filled" aria-hidden="true"></svg>
@@ -10,7 +10,7 @@
 }
 else if (!Model.IsFavorite && !Model.FullSize)
 {
-    <button type="button" class="outline" aria-label="Dodaj do ulubionych" aria-pressed="false" title="Dodaj do ulubionych"
+    <button type="button" class="outline" aria-label="Dodaj do ulubionych" aria-pressed="@AriaHelpers.Bool(Model.IsFavorite)" title="Dodaj do ulubionych"
             hx-post="@Url.Page("/Profile/Favorites", "Add")"
             hx-vals='{"itemId" : @Model.Id, "fullsize" : false}' hx-swap="outerHTML" antiforgery>
         <svg icon="star" variant="outline" aria-hidden="true"></svg>
@@ -18,7 +18,7 @@ else if (!Model.IsFavorite && !Model.FullSize)
 }
 else if (Model.IsFavorite && Model.FullSize)
 {
-    <button type="button" class="secondary" aria-pressed="true"
+    <button type="button" class="secondary" aria-pressed="@AriaHelpers.Bool(Model.IsFavorite)"
             hx-post="@Url.Page("/Profile/Favorites", "Remove")"
             hx-vals='{"itemId" : @Model.Id, "fullsize" : true}' hx-swap="outerHTML" antiforgery>
         Usuń z ulubionych
@@ -27,7 +27,7 @@ else if (Model.IsFavorite && Model.FullSize)
 else
 {
     // (!Model.IsFavorite && Model.FullSize)
-    <button type="button" aria-pressed="false"
+    <button type="button" aria-pressed="@AriaHelpers.Bool(Model.IsFavorite)"
             hx-post="@Url.Page("/Profile/Favorites", "Add")"
             hx-vals='{"itemId" : @Model.Id, "fullsize" : true}' hx-swap="outerHTML" antiforgery>
         Dodaj do ulubionych

@@ -24,7 +24,7 @@
                          class="thumbnail-book-photo"
                          tabindex="0"
                          role="button"
-                         aria-pressed="@(isActive ? "true" : "false")"
+                         aria-pressed="@AriaHelpers.Bool(isActive)"
                          aria-label="Pokaż zdjęcie @(idx + 1)"
                          data-index="@idx" />
                 }

@@ -17,4 +17,13 @@ public static class AriaHelpers
     {
         return string.IsNullOrWhiteSpace(activeFlag) ? null : activeFlag;
     }
+
+    /// <summary>
+    /// Renders a boolean as the lowercase string required by the ARIA spec
+    /// (e.g. for `aria-pressed`/`aria-expanded`), since Razor's `@value` would
+    /// otherwise emit C#'s `True`/`False`.
+    /// </summary>
+    /// <param name="value">The boolean state to render.</param>
+    /// <returns>"true" or "false".</returns>
+    public static string Bool(bool value) => value ? "true" : "false";
 }
