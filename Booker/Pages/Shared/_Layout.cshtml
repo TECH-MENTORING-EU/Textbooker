@@ -37,7 +37,7 @@
         </nav>
     </header>
 
-    <main id="main-content" class="container" tabindex="-1">
+    <main id="main-content" class="container @(ViewData["MainClass"])" tabindex="-1">
         @RenderBody()
     </main>
 
@@ -85,13 +85,29 @@
         </article>
     </dialog>
 
-    <footer class="container" role="contentinfo">
-        <nav aria-label="Nawigacja dodatkowa">
-            <ul>
-                <li><a asp-area="" asp-page="/Sitemap">Mapa strony</a></li>
-                <li><a asp-area="" asp-page="/Privacy">Polityka prywatności</a></li>
-            </ul>
-        </nav>
+    <footer class="container-fluid" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <a asp-area="" asp-page="/Index">
+                    <img src="/img/logo-text.svg" alt="TextBooker" style="height: 1.75rem;">
+                </a>
+                <nav aria-label="Nawigacja dodatkowa">
+                    <ul role="list">
+                        <li><a asp-area="" asp-page="/Sitemap">Mapa strony</a></li>
+                        <li><a asp-area="" asp-page="/Privacy">Polityka prywatności</a></li>
+                        <li>
+                            <button class="footer-help-link"
+                                    type="button"
+                                    data-target="modal-example"
+                                    onclick="document.getElementById(this.dataset.target).showModal()">
+                                Centrum pomocy
+                            </button>
+                        </li>
+                        <li><a href="mailto:support@textbooker.pl">Kontakt</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
     </footer>
 
     <script src="~/js/validation/aspnet-validation.min.js" asp-append-version="true"></script>

@@ -15,18 +15,19 @@
         {
             <img src="@mainImage" alt="Główne zdjęcie książki: @Model.BookItem.Book.Title" class="main-book-photo" />
 
-            <div class="thumbnail-images" role="group" aria-label="Wybierz zdjęcie do podglądu">
+            <div class="thumbnail-images" aria-label="Wybierz zdjęcie do podglądu">
                 @foreach (var (img, idx) in images.Select((value, i) => (value, i)))
                 {
                     var isActive = img == mainImage;
-                    <img src="@img"
-                         alt="Zdjęcie książki @(idx + 1) z @images.Count()"
-                         class="thumbnail-book-photo"
-                         tabindex="0"
-                         role="button"
-                         aria-pressed="@AriaHelpers.Bool(isActive)"
-                         aria-label="Pokaż zdjęcie @(idx + 1)"
-                         data-index="@idx" />
+                    <button type="button"
+                            class="thumbnail-button@(isActive ? " active" : string.Empty)"
+                            aria-pressed="@AriaHelpers.Bool(isActive)"
+                            aria-label="Pokaż zdjęcie @(idx + 1)"
+                            data-index="@idx">
+                        <img src="@img"
+                             alt="Zdjęcie książki @(idx + 1) z @images.Count()"
+                             class="thumbnail-book-photo" />
+                    </button>
                 }
             </div>
         }
@@ -105,13 +106,20 @@
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const mainImg = document.querySelector(".main-book-photo");
-        const thumbnails = document.querySelectorAll(".thumbnail-book-photo");
+        const thumbnails = document.querySelectorAll(".thumbnail-button");
 
         thumbnails.forEach(th => {
             var activate = () => {
                 if (!mainImg) return;
-                mainImg.src = th.src;
-                thumbnails.forEach(other => other.setAttribute("aria-pressed", other === th));
+                const thumbnailImage = th.querySelector(".thumbnail-book-photo");
+                if (!thumbnailImage) return;
+
+                mainImg.src = thumbnailImage.src;
+                thumbnails.forEach(other => {
+                    const isActive = other === th;
+                    other.setAttribute("aria-pressed", isActive);
+                    other.classList.toggle("active", isActive);
+                });
                 mainImg.setAttribute("alt", `Główne zdjęcie książki: ${document.getElementById("book-title")?.textContent?.trim() ?? ""}`);
             };
 

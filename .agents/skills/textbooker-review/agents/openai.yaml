@@ -1,0 +1,4 @@
+interface:
+  display_name: "Textbooker Code Review"
+  short_description: "Review Textbooker code safely before merge"
+  default_prompt: "Review this Textbooker branch for project-specific correctness, security, accessibility, responsive UI, configuration, and verification issues."

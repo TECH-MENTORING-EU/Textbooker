@@ -37,32 +37,38 @@
             </p>
         </div>
         <div class="actions">
-            <button type="button" class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'
-                    data-filter-value="@Model.Item.Book.Subject.Name"
-                    aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id)"
-                    aria-label="Filtruj po przedmiocie: @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany" : Model.Item.Book.Subject.Name)">
-                @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
-            </button>
+            <div class="tag-row tag-row-subject">
+                <button type="button" class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'
+                        data-filter-value="@Model.Item.Book.Subject.Name"
+                        aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id)"
+                        aria-label="Filtruj po przedmiocie: @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany" : Model.Item.Book.Subject.Name)">
+                    @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
+                </button>
+            </div>
             @if (Model.Item.Book.Grades != null)
             {
-                @foreach (var grade in Model.Item.Book.Grades)
-                {
-                    <button type="button" class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'
-                            data-filter-value="@grade.GradeNumber"
-                            aria-pressed="@AriaHelpers.Bool(Model.Params.Grades.Contains(grade))"
-                            aria-label="Filtruj po klasie: @grade.GradeNumber">
-                        @DisplayGrade(grade.GradeNumber)
-                    </button>
-                }
+                <div class="tag-row tag-row-grades">
+                    @foreach (var grade in Model.Item.Book.Grades)
+                    {
+                        <button type="button" class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'
+                                data-filter-value="@grade.GradeNumber"
+                                aria-pressed="@AriaHelpers.Bool(Model.Params.Grades.Contains(grade))"
+                                aria-label="Filtruj po klasie: @grade.GradeNumber">
+                            @DisplayGrade(grade.GradeNumber)
+                        </button>
+                    }
+                </div>
             }
             @if (Model.Item.Book.Level != null)
             {
-                <button type="button" class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'
-                        data-filter-value="@Model.Item.Book.Level.Name"
-                        aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Level == Model.Params.Level)"
-                        aria-label="Filtruj po poziomie: @Model.Item.Book.Level.Name">
-                    @Model.Item.Book.Level.Name
-                </button>
+                <div class="tag-row tag-row-level">
+                    <button type="button" class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'
+                            data-filter-value="@Model.Item.Book.Level.Name"
+                            aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Level == Model.Params.Level)"
+                            aria-label="Filtruj po poziomie: @Model.Item.Book.Level.Name">
+                        @Model.Item.Book.Level.Name
+                    </button>
+                </div>
             }
         </div>
         <div class="fav">

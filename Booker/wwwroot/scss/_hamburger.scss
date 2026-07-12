@@ -100,8 +100,6 @@
                 a:hover {
                     border-bottom-color: var(#{$css-var-prefix}underline);
                     text-decoration: none;
-                    //background-color: var(#{$css-var-prefix}primary-background) !important;
-                    //color: var(#{$css-var-prefix}primary-inverse);
                 }
             }
 
@@ -115,6 +113,38 @@
 }
 
 // Own code begins here
+
+/* Desktop: vertically center all nav items and their content */
+@media (min-width: map.get(map.get(pico.$breakpoints, "md"), "viewport") + 1px) {
+    #{$parent-selector} nav[role="navigation"] {
+        align-items: center;
+    }
+
+    nav[role="navigation"] > ul,
+    nav[role="navigation"] > [role="list"] {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    nav[role="navigation"] ul li {
+        display: flex;
+        align-items: center;
+    }
+
+    nav[role="navigation"] > [role="list"] li {
+        display: flex;
+        align-items: center;
+    }
+
+    nav[role="navigation"] > [role="list"] #login,
+    nav[role="navigation"] > [role="list"] #register {
+        margin-block: 0;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+    }
+}
 
 .hamburger-trigger {
     display: none;
@@ -141,12 +171,12 @@ nav[role=navigation] > [role=list] {
 }
 
 @media (max-width: map.get(map.get(pico.$breakpoints, "md"), "viewport")) {
-    nav[role=navigation] {
-        position: sticky;
-        top: 0;
+    #{$parent-selector} nav[role="navigation"][data-breakpoint="md"] {
+        position: relative;
         background-color: var(--pico-background-color);
         border-bottom: 1px solid var(--pico-muted-border-color);
         box-shadow: var(--pico-card-box-shadow);
+        overflow: visible;
 
         .hamburger-trigger {
             display: block;
@@ -155,27 +185,51 @@ nav[role=navigation] > [role=list] {
         > [role=list] {
             flex-direction: column-reverse;
             background-color: var(--pico-background-color);
-            transition: max-height var(#{$css-var-prefix}transition), opacity var(#{$css-var-prefix}transition), display var(#{$css-var-prefix}transition);
-            transition-behavior: allow-discrete;
+            z-index: 999;
+            padding: 1.25rem;
 
-            @starting-style {
-                max-height: 0;
-                opacity: 0;
+            > li {
+                width: 100%;
+                max-width: none;
+                margin-bottom: 0.75rem;
+            }
+
+            > li:last-child {
+                margin-bottom: 0;
+            }
+
+            #login {
+                display: block;
+                text-align: center;
+                padding: 0.6rem 1.5rem;
+                color: var(--pico-primary);
+                border: var(--pico-border-width) solid var(--pico-primary);
+                border-radius: var(--pico-border-radius);
+                text-decoration: none;
+                font-size: 1rem;
+            }
+
+            #register {
+                display: block;
+                text-align: center;
+                padding: 0.75rem 1.5rem;
+                background-color: var(--pico-primary-background);
+                color: var(--pico-primary-inverse);
+                border-radius: var(--pico-border-radius);
+                font-size: 1rem;
+                text-decoration: none;
             }
 
             a {
                 &[role=button] {
                     display: block;
-                    margin: var(--pico-nav-element-spacing-vertical) var(--pico-nav-element-spacing-horizontal);
+                    width: 100%;
+                    box-sizing: border-box;
+                    padding: var(--pico-nav-element-spacing-vertical) var(--pico-nav-element-spacing-horizontal);
                 }
 
                 border-radius: var(--pico-border-radius);
-                border-block-end: 1px solid transparent;
                 transition: revert;
-
-                &:hover {
-                    border-bottom-color: transparent;
-                }
             }
         }
 
@@ -217,10 +271,6 @@ nav[role=navigation] > [role=list] {
             a, button {
                 display: block;
                 padding: calc(var(--pico-form-element-spacing-vertical)) var(--pico-form-element-spacing-horizontal);
-            }
-
-            button {
-                //margin: calc(var(--pico-form-element-spacing-vertical) * 0.5) var(--pico-form-element-spacing-horizontal);
             }
         }
 

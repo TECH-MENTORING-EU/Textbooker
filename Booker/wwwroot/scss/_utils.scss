@@ -21,6 +21,8 @@
 
         &:focus-visible {
             box-shadow: none;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 2px;
         }
     }
 }

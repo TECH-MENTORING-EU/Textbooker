@@ -75,8 +75,9 @@
 <dialog id="summaryModal" aria-labelledby="summary-title">
     <article>
         <header>
-            <button aria-label="Zamknij podsumowanie" rel="prev" type="button" onclick="this.closest('dialog').close();"></button>
-            <h2 id="summary-title">Podsumowanie ogłoszenia</h2>
+            @* <a href="#close" aria-label="Close" class="close" data-target="summaryModal" onclick="return false;"></a> *@
+            <button type="button" aria-label="Close" rel="prev" hx-on:click="this.closest('dialog').close(); document.getElementById('add-form').dataset.inSummary = '';"></button>
+            <h2>Podsumowanie ogłoszenia</h2>
         </header>
         <div>
             <img id="summaryImage" src="" alt="">

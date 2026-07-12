@@ -145,6 +145,7 @@
 
     footer {
         flex: 1;
+        position: relative;
         display: grid;
         gap: 0.25rem;
         grid-template-areas:
@@ -176,13 +177,36 @@
 
         .actions {
             grid-area: categories;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
             align-content: end;
 
-            button {
-                font-size: 0.75em;
-                min-height: 40px;
-                padding: 0.25em 0.75em;
+            .tag-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.375rem;
+                width: 100%;
+            }
+
+            button,
+            a[role="button"] {
+                width: auto;
+                min-height: 32px;
+                padding: 0.125em 0.625em;
+                font-size: 0.7em;
+                line-height: 1.2;
                 border-radius: 100vmax;
+                margin-bottom: 0;
+                white-space: nowrap;
+            }
+
+            .tag-row-subject,
+            .tag-row-level {
+                button,
+                a[role="button"] {
+                    white-space: normal;
+                }
             }
         }
 
@@ -225,6 +249,7 @@
         color: white;
         padding: 0.25em 0.5em;
         border-radius: 0.25em;
+        pointer-events: none;
     }
 }
 
