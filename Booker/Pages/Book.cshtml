@@ -8,24 +8,32 @@
     var mainImage = images.FirstOrDefault();
 }
 
-<article class="book-display">
+<article class="book-display" aria-labelledby="book-title">
 
-    <section class="image">
+    <section class="image" aria-label="Zdjęcia książki">
         @if (images.Any())
         {
             <img src="@mainImage" alt="Główne zdjęcie książki: @Model.BookItem.Book.Title" class="main-book-photo" />
 
-            <div class="thumbnail-images">
-                @foreach (var img in images)
+            <div class="thumbnail-images" role="group" aria-label="Wybierz zdjęcie do podglądu">
+                @foreach (var (img, idx) in images.Select((value, i) => (value, i)))
                 {
-                    <img src="@img" alt="Zdjęcie książki" class="thumbnail-book-photo" />
+                    var isActive = img == mainImage;
+                    <img src="@img"
+                         alt="Zdjęcie książki @(idx + 1) z @images.Count()"
+                         class="thumbnail-book-photo"
+                         tabindex="0"
+                         role="button"
+                         aria-pressed="@AriaHelpers.Bool(isActive)"
+                         aria-label="Pokaż zdjęcie @(idx + 1)"
+                         data-index="@idx" />
                 }
             </div>
         }
     </section>
 
     <section class="data">
-        <h2>@Model.BookItem.Book.Title</h2>
+        <h1 id="book-title">@Model.BookItem.Book.Title</h1>
         <p>
             <small>
                 Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.CreatedAt))
@@ -41,10 +49,10 @@
                 }
             </small>
         </p>
-        <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
+        <p><strong aria-label="Cena: @Model.BookItem.Price.ToString("C")">@Model.BookItem.Price.ToString("C")</strong></p>
         @if (Model.BookItem.Reserved)
         {
-            <p><strong>Ten przedmiot jest obecnie zarezerwowany.</strong></p>
+            <p role="status"><strong>Ten przedmiot jest obecnie zarezerwowany.</strong></p>
         }
 
         <ul>
@@ -58,7 +66,7 @@
         </ul>
     </section>
 
-    <section class="actions">
+    <section class="actions" aria-label="Akcje dla tego ogłoszenia">
         @if (Model.IsCurrentUserOwner)
         {
             <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button" style="margin-inline-end: 1em;">Edytuj ogłoszenie</a>
@@ -70,22 +78,20 @@
         else
         {
             @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState(Model.BookItem.Id, Model.IsFavorite, true))
-            <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
+            <button type="button" hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
         }
     </section>
 
     <section class="description">
-        <h3>Opis</h3>
+        <h2>Opis</h2>
         <p>@Model.BookItem.Description</p>
     </section>
 
-
-
-    <section class="seller">
-        <h3>Sprzedaje</h3>
+    <section class="seller" aria-label="Informacje o sprzedającym">
+        <h2>Sprzedaje</h2>
         <div>
-            <img src="@Model.BookItem.User.Photo"
-                 alt="Profil sprzedającego" />
+            <img src="@(string.IsNullOrWhiteSpace(Model.BookItem.User.Photo) ? "/img/default-profile-picture.jpg" : Model.BookItem.User.Photo)"
+                 alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName" />
             <div>
                 @Model.BookItem.User.UserName<br />
                 @(Model.BookItem.User.School?.Name ?? "Bez szkoły")<br />
@@ -102,8 +108,19 @@
         const thumbnails = document.querySelectorAll(".thumbnail-book-photo");
 
         thumbnails.forEach(th => {
-            th.addEventListener("click", () => {
+            var activate = () => {
+                if (!mainImg) return;
                 mainImg.src = th.src;
+                thumbnails.forEach(other => other.setAttribute("aria-pressed", other === th));
+                mainImg.setAttribute("alt", `Główne zdjęcie książki: ${document.getElementById("book-title")?.textContent?.trim() ?? ""}`);
+            };
+
+            th.addEventListener("click", activate);
+            th.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    activate();
+                }
             });
         });
     });
