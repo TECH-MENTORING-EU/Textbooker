@@ -27,6 +27,7 @@ import argparse
 import json
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +62,28 @@ query($owner:String!,$repo:String!,$number:Int!,$cursor:String){
               updatedAt
             }
           }
+        }
+      }
+    }
+  }
+}
+"""
+
+# GraphQL query used to page through PR-level conversation comments (Conversation
+# tab comments), which are distinct from review threads in Files changed.
+PR_COMMENTS_QUERY = r"""
+query($owner:String!,$repo:String!,$number:Int!,$cursor:String){
+  repository(owner:$owner,name:$repo){
+    pullRequest(number:$number){
+      comments(first:100,after:$cursor){
+        pageInfo{hasNextPage endCursor}
+        nodes{
+          id
+          body
+          createdAt
+          updatedAt
+          author{login}
+          url
         }
       }
     }
@@ -146,7 +169,7 @@ def infer_owner_repo() -> tuple[str, str]:
 
 def check_required_components() -> bool:
     # Returns whether the installed copilot CLI supports --prompt-file, so the
-    # caller can decide how to hand off the prompt in launch_copilot.
+    # caller can decide how to hand off prompts to copilot commands.
     missing: list[str] = []
 
     if shutil.which("git") is None:
@@ -271,6 +294,43 @@ def fetch_threads(owner: str, repo: str, pr_number: int) -> dict[str, Any]:
     return {"pull_request": pull_request, "review_threads": threads}
 
 
+def fetch_pr_comments(owner: str, repo: str, pr_number: int) -> list[dict[str, Any]]:
+    # Page through pullRequest.comments (Conversation tab comments) so the prompt
+    # can include PR discussion outside review threads.
+    cursor: str | None = None
+    comments: list[dict[str, Any]] = []
+
+    while True:
+        command = [
+            "gh",
+            "api",
+            "graphql",
+            "-f",
+            f"query={PR_COMMENTS_QUERY}",
+            "-F",
+            f"owner={owner}",
+            "-F",
+            f"repo={repo}",
+            "-F",
+            f"number={pr_number}",
+        ]
+        if cursor:
+            command.extend(["-F", f"cursor={cursor}"])
+
+        payload = run_json(command)["data"]["repository"]["pullRequest"]
+        if payload is None:
+            raise SystemExit(f"Pull request #{pr_number} not found.")
+
+        page = payload["comments"]
+        comments.extend(page["nodes"])
+
+        if not page["pageInfo"]["hasNextPage"]:
+            break
+        cursor = page["pageInfo"]["endCursor"]
+
+    return comments
+
+
 def unresolved_current_threads(data: dict[str, Any]) -> list[dict[str, Any]]:
     # Filter down to threads that still need action: not resolved and not
     # outdated (i.e. still pointing at current code, not stale diff context).
@@ -281,16 +341,118 @@ def unresolved_current_threads(data: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def build_prompt(pr: dict[str, Any], threads: list[dict[str, Any]]) -> str:
+def launch_copilot_ask(root: Path, prompt: str, supports_prompt_file: bool) -> str | None:
+    # Invoke copilot in ask mode to summarize discussion text. Returns stdout
+    # (if any) on success, otherwise None.
+    cmd = [
+        "copilot",
+        "--mode",
+        "ask",
+        "--no-ask-user",
+        "--allow-all",
+    ]
+    temp_prompt_path: Path | None = None
+    try:
+        if supports_prompt_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                delete=False,
+                suffix=".txt",
+            ) as temp_file:
+                temp_file.write(prompt)
+                temp_prompt_path = Path(temp_file.name)
+            cmd.extend(["--prompt-file", str(temp_prompt_path)])
+        else:
+            cmd.extend(["--prompt", prompt])
+
+        result = subprocess.run(
+            cmd,
+            cwd=str(root),
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        if result.returncode != 0:
+            return None
+
+        output = (result.stdout or "").strip()
+        return output or None
+    finally:
+        if temp_prompt_path is not None and temp_prompt_path.exists():
+            temp_prompt_path.unlink(missing_ok=True)
+
+
+def summarize_discussions_with_copilot(
+    root: Path,
+    threads: list[dict[str, Any]],
+    pr_comments: list[dict[str, Any]],
+    supports_prompt_file: bool,
+) -> tuple[dict[str, str], str | None]:
+    # Summarize each thread independently, plus a single summary of PR-level
+    # conversation comments.
+    thread_summaries: dict[str, str] = {}
+
+    for thread in threads:
+        location = f"{thread.get('path')}:{thread.get('line') or thread.get('originalLine')}"
+        comments = thread.get("comments", {}).get("nodes", [])
+        discussion_lines = [
+            f"Thread location: {location}",
+            "Summarize the discussion and return:",
+            "1) issue, 2) expected change, 3) constraints, 4) implementation hint.",
+            "Keep it concise.",
+            "",
+            "Discussion:",
+        ]
+        for i, comment in enumerate(comments, start=1):
+            author = comment.get("author", {}).get("login", "unknown")
+            body = (comment.get("body") or "").strip() or "(empty)"
+            discussion_lines.append(f"{i}. {author}: {body}")
+
+        summary = launch_copilot_ask(root, "\n".join(discussion_lines), supports_prompt_file)
+        if summary:
+            thread_summaries[thread["id"]] = summary
+
+    pr_comments_summary: str | None = None
+    if pr_comments:
+        discussion_lines = [
+            "Summarize PR conversation comments and return:",
+            "1) global concerns, 2) required actions, 3) non-actionable notes.",
+            "Keep it concise.",
+            "",
+            "Conversation comments:",
+        ]
+        for i, comment in enumerate(pr_comments, start=1):
+            author = comment.get("author", {}).get("login", "unknown")
+            body = (comment.get("body") or "").strip() or "(empty)"
+            discussion_lines.append(f"{i}. {author}: {body}")
+
+        pr_comments_summary = launch_copilot_ask(
+            root,
+            "\n".join(discussion_lines),
+            supports_prompt_file,
+        )
+
+    return thread_summaries, pr_comments_summary
+
+
+def build_prompt(
+    pr: dict[str, Any],
+    threads: list[dict[str, Any]],
+    pr_comments: list[dict[str, Any]],
+    thread_summaries: dict[str, str],
+    pr_comments_summary: str | None,
+) -> str:
     # Assemble the natural-language prompt handed to the `copilot` CLI: PR
-    # context, ground rules for autonomous operation, and a numbered list of
-    # unresolved review threads (using each thread's first/original comment).
+    # context, ground rules for autonomous operation, unresolved review thread
+    # discussions, and PR-level conversation comments.
     lines = [
         f"You are working in the repository on PR #{pr['number']}: {pr['title']}.",
         f"PR URL: {pr['url']}",
         "",
         "Goal:",
-        "Implement fixes for the unresolved review comments below.",
+        "Implement fixes based on the unresolved review discussions and PR conversation.",
         "",
         "Rules:",
         "- Do not ask the user any questions.",
@@ -300,16 +462,46 @@ def build_prompt(pr: dict[str, Any], threads: list[dict[str, Any]]) -> str:
         "- If something is ambiguous, choose the safest reasonable implementation.",
         "- Leave the repository with uncommitted changes only.",
         "",
-        "Unresolved review threads:",
-        "",
     ]
 
+    if pr_comments:
+        lines.append("PR conversation comments:")
+        lines.append("")
+        if pr_comments_summary:
+            lines.append("Summary of PR conversation comments:")
+            lines.append(pr_comments_summary.strip())
+            lines.append("")
+        for i, comment in enumerate(pr_comments, start=1):
+            author = comment.get("author", {}).get("login", "unknown")
+            body = (comment.get("body") or "").strip() or "(empty)"
+            lines.append(f"{i}. ({author})")
+            lines.append(body)
+            lines.append("")
+
+    lines.append("Unresolved review thread discussions:")
+    lines.append("")
+
     for i, thread in enumerate(threads, start=1):
-        first = thread["comments"]["nodes"][0] if thread["comments"]["nodes"] else {}
-        author = first.get("author", {}).get("login", "unknown")
-        body = (first.get("body") or "").strip()
-        lines.append(f"{i}. {thread.get('path')}:{thread.get('line')} ({author})")
-        lines.append(body or "(empty)")
+        path = thread.get("path")
+        line = thread.get("line") or thread.get("originalLine")
+        lines.append(f"{i}. {path}:{line}")
+
+        summary = thread_summaries.get(thread.get("id", ""))
+        if summary:
+            lines.append("Summary:")
+            lines.append(summary.strip())
+
+        comments = thread.get("comments", {}).get("nodes", [])
+        if comments:
+            lines.append("Discussion:")
+            for j, comment in enumerate(comments, start=1):
+                author = comment.get("author", {}).get("login", "unknown")
+                body = (comment.get("body") or "").strip() or "(empty)"
+                lines.append(f"  {j}) {author}: {body}")
+        else:
+            lines.append("Discussion:")
+            lines.append("  (empty)")
+
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
@@ -344,11 +536,63 @@ def launch_copilot(root: Path, prompt: str, prompt_path: Path, supports_prompt_f
     return result.returncode
 
 
+def filter_review_threads(
+    threads: list[dict[str, Any]],
+    *,
+    include_resolved: bool,
+    include_outdated: bool,
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    # Filter review threads according to caller flags and return simple stats
+    # explaining what was skipped.
+    selected: list[dict[str, Any]] = []
+    skipped_resolved = 0
+    skipped_outdated = 0
+
+    for thread in threads:
+        is_resolved = bool(thread.get("isResolved"))
+        is_outdated = bool(thread.get("isOutdated"))
+
+        if not include_resolved and is_resolved:
+            skipped_resolved += 1
+            continue
+        if not include_outdated and is_outdated:
+            skipped_outdated += 1
+            continue
+
+        selected.append(thread)
+
+    stats = {
+        "total": len(threads),
+        "selected": len(selected),
+        "skipped_resolved": skipped_resolved,
+        "skipped_outdated": skipped_outdated,
+    }
+    return selected, stats
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", help="OWNER/REPO. Defaults to inferred repo.")
     parser.add_argument("--prompt-file", default="copilot-agent-prompt.txt")
     parser.add_argument("--no-copilot", action="store_true")
+    parser.add_argument(
+        "--summarize-with-copilot",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use copilot ask mode to summarize discussions before agent mode.",
+    )
+    parser.add_argument(
+        "--include-resolved",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Include resolved review threads.",
+    )
+    parser.add_argument(
+        "--include-outdated",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Include outdated review threads (enabled by default).",
+    )
     args = parser.parse_args()
 
     # Fail fast if git/gh/copilot aren't installed, gh isn't authenticated, or
@@ -370,17 +614,46 @@ def main() -> int:
     # non-outdated review threads.
     pr = find_open_pr(owner, repo, branch)
     data = fetch_threads(owner, repo, pr["number"])
-    threads = unresolved_current_threads(data)
+    threads, thread_stats = filter_review_threads(
+        data["review_threads"],
+        include_resolved=args.include_resolved,
+        include_outdated=args.include_outdated,
+    )
+    pr_comments = fetch_pr_comments(owner, repo, pr["number"])
 
-    if not threads:
-        print("No unresolved current review threads found.")
+    if not threads and not pr_comments:
+        print("No matching review threads or PR conversation comments found.")
         return 0
 
-    # Build the prompt describing the unresolved threads and save it to disk.
-    prompt = build_prompt(data["pull_request"], threads)
+    thread_summaries: dict[str, str] = {}
+    pr_comments_summary: str | None = None
+    if args.summarize_with_copilot and not args.no_copilot:
+        print("Summarizing discussions with copilot ask mode...")
+        thread_summaries, pr_comments_summary = summarize_discussions_with_copilot(
+            root,
+            threads,
+            pr_comments,
+            supports_prompt_file,
+        )
+
+    # Build the prompt describing discussions and save it to disk.
+    prompt = build_prompt(
+        data["pull_request"],
+        threads,
+        pr_comments,
+        thread_summaries,
+        pr_comments_summary,
+    )
     prompt_path = write_prompt_file(root, prompt, args.prompt_file)
 
-    print(f"Found {len(threads)} unresolved review threads.")
+    print(
+        "Review threads: "
+        f"total={thread_stats['total']}, "
+        f"selected={thread_stats['selected']}, "
+        f"skipped_resolved={thread_stats['skipped_resolved']}, "
+        f"skipped_outdated={thread_stats['skipped_outdated']}"
+    )
+    print(f"Found {len(pr_comments)} PR conversation comments.")
     print(f"Prompt written to: {prompt_path}")
 
     if args.no_copilot:
