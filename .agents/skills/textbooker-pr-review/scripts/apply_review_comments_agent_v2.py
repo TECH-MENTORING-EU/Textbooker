@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Version 6:
+Version 2:
 - checks required components before doing anything useful
 - works on the currently checked-out branch
 - finds the open PR for that branch
@@ -17,17 +17,15 @@ Requires:
 - copilot 1.0.70+
 
 Windows:
-  python .\apply_review_comments_agent_v6.py
+  python .\apply_review_comments_agent_v2.py
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -77,6 +75,9 @@ query($owner:String!,$repo:String!,$number:Int!,$cursor:String){
 
 def run(args: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
     # Run a command, capturing stdout/stderr as text instead of raising on failure.
+    # Decode as UTF-8 explicitly so GitHub CLI JSON/text output does not go
+    # through the Windows ANSI code page, which can fail on characters such as
+    # smart quotes.
     # Callers inspect the returncode themselves (see run_text below).
     return subprocess.run(
         args,
@@ -84,6 +85,7 @@ def run(args: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProc
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
 
@@ -141,7 +143,9 @@ def infer_owner_repo() -> tuple[str, str]:
 # --- Environment / prerequisite checks -----------------------------------------
 
 
-def check_required_components() -> None:
+def check_required_components() -> bool:
+    # Returns whether the installed copilot CLI supports --prompt-file, so the
+    # caller can decide how to hand off the prompt in launch_copilot.
     missing: list[str] = []
 
     if shutil.which("git") is None:
@@ -164,9 +168,15 @@ def check_required_components() -> None:
         raise SystemExit(1)
 
     help_text = run_text(["copilot", "--help"])
-    if "--mode" not in help_text or "--prompt" not in help_text or "--no-ask-user" not in help_text:
+    required_flags = ["--mode", "--no-ask-user", "--allow-all"]
+    missing_flags = [flag for flag in required_flags if flag not in help_text]
+    supports_prompt_file = "--prompt-file" in help_text
+    # Either --prompt or --prompt-file must be supported to hand off the prompt.
+    if not supports_prompt_file and "--prompt" not in help_text:
+        missing_flags.append("--prompt/--prompt-file")
+    if missing_flags:
         print("Your copilot CLI does not expose the required flags for this script.")
-        print("Expected: --mode, --prompt, --no-ask-user")
+        print(f"Expected: {', '.join(required_flags)} and --prompt or --prompt-file")
         raise SystemExit(1)
 
     print("Required components found:")
@@ -175,6 +185,8 @@ def check_required_components() -> None:
     print(" - copilot")
     print(" - GitHub auth OK")
     print(" - copilot flags OK")
+
+    return supports_prompt_file
 
 
 def find_open_pr(owner: str, repo: str, branch: str) -> dict[str, Any]:
@@ -310,34 +322,25 @@ def write_prompt_file(root: Path, prompt: str, filename: str) -> Path:
     return path
 
 
-def launch_copilot(root: Path, prompt: str) -> int:
-    # Write the prompt to a temp file first (avoids OS command-line length
-    # limits / escaping issues), then read it back and invoke the standalone
-    # `copilot` CLI in unattended autopilot mode.
-    with tempfile.NamedTemporaryFile("w", delete=False, suffix=".txt", encoding="utf-8") as tmp:
-        tmp.write(prompt)
-        tmp_path = Path(tmp.name)
+def launch_copilot(root: Path, prompt: str, prompt_path: Path, supports_prompt_file: bool) -> int:
+    # Reuse the prompt file already written to disk (see write_prompt_file) so
+    # we don't create a second temp file. Prefer --prompt-file when the
+    # installed copilot CLI supports it (avoids huge CLI arguments); otherwise
+    # fall back to passing the prompt text via --prompt.
+    cmd = [
+        "copilot",
+        "--mode",
+        "autopilot",
+        "--no-ask-user",
+        "--allow-all",
+    ]
+    if supports_prompt_file:
+        cmd.extend(["--prompt-file", str(prompt_path)])
+    else:
+        cmd.extend(["--prompt", prompt])
 
-    try:
-        # We keep the prompt in a file for traceability and avoid a huge CLI argument.
-        # If your copilot version supports reading from a file directly, adapt here.
-        cmd = [
-            "copilot",
-            "--mode",
-            "autopilot",
-            "--no-ask-user",
-            "--allow-all",
-            "--prompt",
-            tmp_path.read_text(encoding="utf-8"),
-        ]
-        result = subprocess.run(cmd, cwd=str(root), check=False)
-        return result.returncode
-    finally:
-        # Always clean up the temp file, even if copilot fails to launch.
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except Exception:
-            pass
+    result = subprocess.run(cmd, cwd=str(root), check=False)
+    return result.returncode
 
 
 def main() -> int:
@@ -349,7 +352,7 @@ def main() -> int:
 
     # Fail fast if git/gh/copilot aren't installed, gh isn't authenticated, or
     # the installed copilot CLI lacks the flags this script relies on.
-    check_required_components()
+    supports_prompt_file = check_required_components()
 
     root = repo_root()
     branch = current_branch()
@@ -384,7 +387,7 @@ def main() -> int:
         return 0
 
     # Hand off to the copilot CLI to actually implement the fixes.
-    rc = launch_copilot(root, prompt)
+    rc = launch_copilot(root, prompt, prompt_path, supports_prompt_file)
     if rc != 0:
         print("copilot exited with a non-zero code.")
     return rc
