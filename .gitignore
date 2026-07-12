@@ -397,3 +397,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /Booker/.config/dotnet-tools.json
+/copilot-agent-prompt.txt
