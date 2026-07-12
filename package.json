@@ -1,0 +1,12 @@
+{
+  "name": "textbooker-accessibility-tests",
+  "private": true,
+  "scripts": {
+    "test:a11y": "playwright test",
+    "test:a11y:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.53.1"
+  }
+}

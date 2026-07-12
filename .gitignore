@@ -397,3 +397,11 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /Booker/.config/dotnet-tools.json
+
+# Factory CLI artifacts (local agent state)
+.factory/
+
+# Accessibility test artifacts
+/Booker/accessibility-tests.db*
+/playwright-report/
+/test-results/
