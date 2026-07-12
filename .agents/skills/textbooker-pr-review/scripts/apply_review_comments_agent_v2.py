@@ -11,10 +11,11 @@ Version 2:
 - does not create a commit
 - does not ask the user questions
 
-Requires:
-- git
-- gh
-- copilot 1.0.70+
+Requires (minimum supported versions):
+- Python 3.13.7
+- git 2.53.0.windows3
+- gh 2.96.0 (2026-07-02)
+- GitHub Copilot CLI 1.0.70
 
 Windows:
   python .\apply_review_comments_agent_v2.py
