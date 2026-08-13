@@ -7,15 +7,13 @@ namespace Booker.Services
     {
         public static async Task Initialize(DataContext context, int itemsCount, int usersCount)
         {
-            if (await context.Items.CountAsync() > itemsCount
-                && await context.Users.CountAsync() > usersCount)
+            const int hogwortSchoolId = 1;
+
+            if (await context.Items.CountAsync() >= itemsCount
+                && await context.Users.CountAsync() >= usersCount)
             {
                 return;
             }
-
-            var lastUserId = await context.Users.AnyAsync()
-                ? await context.Users.MaxAsync(u => u.Id)
-                : 0;
 
             var users = new List<User>();
 
@@ -26,7 +24,7 @@ namespace Booker.Services
                     {
                         Email = "user" + i + "@gmail.com",
                         UserName = "user" + i,
-                        SchoolId = null, // No school assigned by default
+                        SchoolId = hogwortSchoolId,
                         Photo = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
                     }
                 );
