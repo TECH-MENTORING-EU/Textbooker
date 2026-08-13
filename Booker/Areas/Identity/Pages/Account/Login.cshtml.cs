@@ -133,13 +133,18 @@ namespace Booker.Areas.Identity.Pages.Account
                 var result = await _signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
-                    var user = await _userManager.GetUserAsync(User);
+                    var user = await _userManager.FindByNameAsync(userName);
                     if (user != null)
                     {
                         user.LastActiveAt = DateTime.Now;
                         await _userManager.UpdateAsync(user);
                     }
                     return LocalRedirect(returnUrl);
+                }
+                if (result.IsNotAllowed)
+                {
+                    ModelState.AddModelError(string.Empty, "Konto nie jest jeszcze aktywne. Potwierdź adres e-mail i spróbuj ponownie.");
+                    return Page();
                 }
                 if (result.RequiresTwoFactor)
                 {

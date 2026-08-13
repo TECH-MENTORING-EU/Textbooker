@@ -18,7 +18,15 @@
         </div>
         <div>
             <label asp-for="Input.Email">E-mail:</label>
-            <input asp-for="Input.Email" autocomplete="email" required placeholder="E-mail" aria-describedby="Input_Email-error" />
+            <input asp-for="Input.Email"
+                   autocomplete="email"
+                   required
+                   placeholder="E-mail"
+                   aria-describedby="Input_Email-error"
+                   hx-get="?handler=AutoSchool"
+                   hx-trigger="blur, change"
+                   hx-target="#Input_SchoolId"
+                   hx-swap="innerHTML" />
             <small id="Input_Email-help"><span asp-validation-for="Input.Email" id="Input_Email-error"></span></small>
         </div>
         <div>
@@ -41,9 +49,11 @@
             <small id="Input_ConfirmPassword-help"><span asp-validation-for="Input.ConfirmPassword" id="Input_ConfirmPassword-error"></span></small>
         </div>
         <div>
-            <label asp-for="Input.SchoolId">Szkoła (opcjonalne):</label>
-            <select asp-for="Input.SchoolId" asp-items="Model.AvailableSchools" aria-describedby="Input_SchoolId-help">
-                <option value="">-- Wybierz szkołę (opcjonalnie) --</option>
+            <label asp-for="Input.SchoolId">Szkoła:</label>
+            <select asp-for="Input.SchoolId"
+                    asp-items="Model.AvailableSchools"
+                    aria-describedby="Input_SchoolId-help">
+                <option value="">Wybierz szkołę</option>
             </select>
             <small id="Input_SchoolId-help"><span asp-validation-for="Input.SchoolId"></span></small>
         </div>

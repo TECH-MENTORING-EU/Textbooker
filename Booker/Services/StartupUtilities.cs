@@ -325,10 +325,11 @@ namespace Booker.Services
         {
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             try
             {
-                await DevDbInitializer.Initialize(dbContext, itemsCount, usersCount);
+                await SeedData.InitializeDevelopmentDataAsync(dbContext, userManager, itemsCount, usersCount);
                 logger.LogInformation("Database initialized with {ItemsCount} items and {UsersCount} users.", itemsCount, usersCount);
             }
             catch (Exception ex)
@@ -342,13 +343,22 @@ namespace Booker.Services
         {
             using var scope = app.Services.CreateScope();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
             if (!await roleManager.RoleExistsAsync("Admin"))
                 await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
 
+            var adminUser = await userManager.FindByNameAsync("a1");
+            if (adminUser is null)
+                return app;
+
+            if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+            {
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+
             return app;
         }
-
 
     }
 }
