@@ -348,6 +348,9 @@ namespace Booker.Services
             if (!await roleManager.RoleExistsAsync("Admin"))
                 await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
 
+            if (!app.Environment.IsDevelopment())
+                 return app;
+                 
             var adminUser = await userManager.FindByNameAsync("a1");
             if (adminUser is null)
                 return app;

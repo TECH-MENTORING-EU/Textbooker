@@ -4,6 +4,21 @@
 // Write your JavaScript code.
 
 const processedImagesByInput = new WeakMap();
+const uploadStateByInput = new WeakMap();
+
+function getUploadState(input) {
+    let state = uploadStateByInput.get(input);
+    if (!state) {
+        state = {
+            committedFiles: processedImagesByInput.get(input) ?? [],
+            queue: Promise.resolve(),
+            pending: 0
+        };
+        uploadStateByInput.set(input, state);
+    }
+
+    return state;
+}
 
 function assignFiles(input, files) {
     const dataTransfer = new DataTransfer();
@@ -11,38 +26,38 @@ function assignFiles(input, files) {
     input.files = dataTransfer.files;
 }
 
-function handleImageUpload(input) {
-    const preview = input.closest("section").querySelector(".image-preview-container");
-    const imageErrorSpan = input.closest("section").querySelector("#imageErrorMsg");
-    const existingFiles = processedImagesByInput.get(input) ?? [];
-    const selectedFiles = Array.from(input.files);
+function setImageUploadBusy(input, isBusy) {
+    input.disabled = isBusy;
+    input.setAttribute("aria-busy", isBusy ? "true" : "false");
 
-    if (existingFiles.length + selectedFiles.length > 6) {
-        imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
-        assignFiles(input, existingFiles);
+    const form = input.closest("form");
+    if (!form) {
         return;
     }
-    imageErrorSpan.textContent = "";
 
-    const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-        "image/heic",
-        "image/heif",
-        "image/avif"
-    ];
+    form.querySelectorAll("button[type='submit'], input[type='submit'], button:not([type])").forEach(element => {
+        element.disabled = isBusy;
+        element.setAttribute("aria-disabled", isBusy ? "true" : "false");
+    });
+}
 
-    for (const file of selectedFiles) {
-        if (!allowedTypes.includes(file.type)) {
-            imageErrorSpan.textContent = (`Plik ${file.name} nie jest obsługiwanym formatem pliku.`);
-            assignFiles(input, existingFiles);
-            return;
+function renderImagePreview(preview, files) {
+    preview.innerHTML = "";
+    files.forEach((file, index) => {
+        const imageElement = document.createElement("img");
+        imageElement.src = URL.createObjectURL(file);
+        imageElement.alt = `Zdjęcie książki ${index + 1}`;
+        imageElement.classList.add("book-image-preview");
+        if (index === 0) {
+            imageElement.classList.add("main");
         }
-    }
+        preview.appendChild(imageElement);
+    });
+    addLabelToMainImage();
+}
 
-    const processingPromises = selectedFiles.map(file => {
+function processSelectedImages(selectedFiles) {
+    return Promise.all(selectedFiles.map(file => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = function (e) {
@@ -84,30 +99,72 @@ function handleImageUpload(input) {
             reader.onerror = reject;
             reader.readAsDataURL(file);
         });
-    });
+    }));
+}
 
-    Promise.all(processingPromises)
-        .then(processedFiles => {
+function handleImageUpload(input) {
+    const preview = input.closest("section").querySelector(".image-preview-container");
+    const imageErrorSpan = input.closest("section").querySelector("#imageErrorMsg");
+    const selectedFiles = Array.from(input.files);
+    const state = getUploadState(input);
+
+    if (selectedFiles.length === 0) {
+        return;
+    }
+
+    assignFiles(input, state.committedFiles);
+
+    state.pending += 1;
+    setImageUploadBusy(input, true);
+
+    const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/heic",
+        "image/heif",
+        "image/avif"
+    ];
+
+    state.queue = state.queue
+        .then(async () => {
+            const existingFiles = state.committedFiles;
+
+            if (existingFiles.length + selectedFiles.length > 6) {
+                imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
+                assignFiles(input, existingFiles);
+                return;
+            }
+
+            for (const file of selectedFiles) {
+                if (!allowedTypes.includes(file.type)) {
+                    imageErrorSpan.textContent = (`Plik ${file.name} nie jest obsługiwanym formatem pliku.`);
+                    assignFiles(input, existingFiles);
+                    return;
+                }
+            }
+
+            imageErrorSpan.textContent = "";
+
+            const processedFiles = await processSelectedImages(selectedFiles);
             const allFiles = [...existingFiles, ...processedFiles];
+
+            state.committedFiles = allFiles;
             processedImagesByInput.set(input, allFiles);
             assignFiles(input, allFiles);
-
-            preview.innerHTML = "";
-            allFiles.forEach((file, index) => {
-                const imageElement = document.createElement("img");
-                imageElement.src = URL.createObjectURL(file);
-                imageElement.alt = `Zdjęcie książki ${index + 1}`;
-                imageElement.classList.add("book-image-preview");
-                if (index === 0) {
-                    imageElement.classList.add("main");
-                }
-                preview.appendChild(imageElement);
-            });
-            addLabelToMainImage();
+            renderImagePreview(preview, allFiles);
         })
         .catch(error => {
             console.error("Error processing images:", error);
             imageErrorSpan.textContent = "Wystąpił błąd podczas przetwarzania zdjęć.";
+            assignFiles(input, state.committedFiles);
+        })
+        .finally(() => {
+            state.pending -= 1;
+            if (state.pending === 0) {
+                setImageUploadBusy(input, false);
+            }
         });
 }
 function addLabelToMainImage() {
