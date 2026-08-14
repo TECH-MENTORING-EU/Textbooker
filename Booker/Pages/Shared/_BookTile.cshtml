@@ -38,36 +38,72 @@
         </div>
         <div class="actions">
             <div class="tag-row tag-row-subject">
-                <button type="button" class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'
-                        data-filter-value="@Model.Item.Book.Subject.Name"
-                        aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id)"
-                        aria-label="Filtruj po przedmiocie: @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany" : Model.Item.Book.Subject.Name)">
-                    @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
-                </button>
+                @if (Model.LinkFilters)
+                {
+                    <a asp-page="/Browse"
+                       asp-route-subject="@Model.Item.Book.Subject.Name"
+                       class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'
+                       aria-label="Filtruj po przedmiocie: @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany" : Model.Item.Book.Subject.Name)">
+                        @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
+                    </a>
+                }
+                else
+                {
+                    <button type="button" class='@(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id ? "" : "outline") subject'
+                            data-filter-value="@Model.Item.Book.Subject.Name"
+                            aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Subject.Id == Model.Params.Subject?.Id)"
+                            aria-label="Filtruj po przedmiocie: @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany" : Model.Item.Book.Subject.Name)">
+                        @(string.IsNullOrWhiteSpace(Model.Item.Book.Subject.Name) ? "Nieznany przedmiot" : Model.Item.Book.Subject.Name)
+                    </button>
+                }
             </div>
             @if (Model.Item.Book.Grades != null)
             {
                 <div class="tag-row tag-row-grades">
                     @foreach (var grade in Model.Item.Book.Grades)
                     {
-                        <button type="button" class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'
-                                data-filter-value="@grade.GradeNumber"
-                                aria-pressed="@AriaHelpers.Bool(Model.Params.Grades.Contains(grade))"
-                                aria-label="Filtruj po klasie: @grade.GradeNumber">
-                            @DisplayGrade(grade.GradeNumber)
-                        </button>
+                        @if (Model.LinkFilters)
+                        {
+                            <a asp-page="/Browse"
+                               asp-route-grade="@grade.GradeNumber"
+                               class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'
+                               aria-label="Filtruj po klasie: @grade.GradeNumber">
+                                @DisplayGrade(grade.GradeNumber)
+                            </a>
+                        }
+                        else
+                        {
+                            <button type="button" class='@(Model.Params.Grades.Contains(grade) ? "" : "outline") grade'
+                                    data-filter-value="@grade.GradeNumber"
+                                    aria-pressed="@AriaHelpers.Bool(Model.Params.Grades.Contains(grade))"
+                                    aria-label="Filtruj po klasie: @grade.GradeNumber">
+                                @DisplayGrade(grade.GradeNumber)
+                            </button>
+                        }
                     }
                 </div>
             }
             @if (Model.Item.Book.Level != null)
             {
                 <div class="tag-row tag-row-level">
-                    <button type="button" class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'
-                            data-filter-value="@Model.Item.Book.Level.Name"
-                            aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Level == Model.Params.Level)"
-                            aria-label="Filtruj po poziomie: @Model.Item.Book.Level.Name">
-                        @Model.Item.Book.Level.Name
-                    </button>
+                    @if (Model.LinkFilters)
+                    {
+                        <a asp-page="/Browse"
+                           asp-route-level="@Model.Item.Book.Level.Name"
+                           class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'
+                           aria-label="Filtruj po poziomie: @Model.Item.Book.Level.Name">
+                            @Model.Item.Book.Level.Name
+                        </a>
+                    }
+                    else
+                    {
+                        <button type="button" class='@(Model.Item.Book.Level == Model.Params.Level ? "" : "outline") level'
+                                data-filter-value="@Model.Item.Book.Level.Name"
+                                aria-pressed="@AriaHelpers.Bool(Model.Item.Book.Level == Model.Params.Level)"
+                                aria-label="Filtruj po poziomie: @Model.Item.Book.Level.Name">
+                            @Model.Item.Book.Level.Name
+                        </button>
+                    }
                 </div>
             }
         </div>

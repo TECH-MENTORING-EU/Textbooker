@@ -166,7 +166,9 @@
             height: 100%;
         }
 
-        button, [role="button"] {
+        button,
+        [role="button"],
+        .actions a {
             position: relative;
             z-index: 1;
         }
