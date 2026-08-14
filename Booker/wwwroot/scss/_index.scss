@@ -235,6 +235,8 @@
 }
 
 .book-tile.reserved {
+    position: relative;
+
     img {
         filter: saturate(0.2);       
     }
