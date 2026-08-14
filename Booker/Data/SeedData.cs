@@ -6,9 +6,9 @@
     public static class SeedData
     {
         /// <summary>
-        /// Seed data for Schools. Includes the default dev school plus additional demo schools.
+        /// Development-only schools seeded at runtime in Development environment.
         /// </summary>
-        public readonly static List<School> Schools =
+        private readonly static List<School> DevelopmentSchools =
         [
             new School { Id = 1, Name = "Hogwort", EmailDomain = "hogwart.edu.pl", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new School { Id = 2, Name = "Technikum Pod Patronatem Przypadkowego Gościa z Discorda", EmailDomain = "technikum-discord.edu.pl", CreatedAt = new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc) },
@@ -32,18 +32,25 @@
 
         public static async Task InitializeDevelopmentDataAsync(DataContext context, UserManager<User> userManager, int itemsCount, int usersCount)
         {
+            await EnsureSeedSchoolsAsync(context);
+
             if (await context.Users.AnyAsync())
             {
                 return;
             }
 
-            await EnsureSeedSchoolsAsync(context);
             await EnsureCredentialUsersAsync(context, userManager);
 
             var books = await context.Books.ToListAsync();
             if (books.Count == 0)
             {
                 return;
+            }
+
+            var school1Id = await GetSchoolIdByDomainAsync(context, "hogwart.edu.pl");
+            if (school1Id.HasValue)
+            {
+                await SeedRandomUsersAndItemsForSchoolAsync(context, books, schoolId: school1Id.Value, randomPrefix: "r1", usersCount, itemsCount);
             }
 
             var school2Id = await GetSchoolIdByDomainAsync(context, "technikum-discord.edu.pl");
@@ -65,7 +72,7 @@
         {
             var hasChanges = false;
 
-            foreach (var seedSchool in Schools)
+            foreach (var seedSchool in DevelopmentSchools)
             {
                 var seedDomain = seedSchool.EmailDomain?.Trim().ToLower();
                 var school = await context.Schools.SingleOrDefaultAsync(s =>

@@ -39,11 +39,6 @@ namespace Booker.Migrations
                     table.PrimaryKey("PK_Schools", x => x.Id);
                 });
 
-            migrationBuilder.InsertData(
-                table: "Schools",
-                columns: new[] { "Id", "EmailDomain", "Name", "IsActive", "CreatedAt" },
-                values: new object[] { 1, "hogwart.edu.pl", "Hogwort", true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) });
-
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_SchoolId",
                 table: "AspNetUsers",
