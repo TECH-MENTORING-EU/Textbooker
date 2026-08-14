@@ -35,10 +35,32 @@ function setImageUploadBusy(input, isBusy) {
         return;
     }
 
-    form.querySelectorAll("button[type='submit'], input[type='submit'], button:not([type])").forEach(element => {
+    if (window.htmx?.trigger) {
+        htmx.trigger(form, "image-upload-state", { busy: isBusy });
+        return;
+    }
+
+    toggleFormSubmitState(form, isBusy);
+}
+
+function toggleFormSubmitState(form, isBusy) {
+    const controls = Array.from(form.elements).filter(element => {
+        if (!(element instanceof HTMLButtonElement || element instanceof HTMLInputElement)) {
+            return false;
+        }
+
+        return element.type === "submit";
+    });
+
+    controls.forEach(element => {
         element.disabled = isBusy;
         element.setAttribute("aria-disabled", isBusy ? "true" : "false");
     });
+
+    const statusElement = form.querySelector("#imageProcessingMsg");
+    if (statusElement) {
+        statusElement.textContent = isBusy ? "Trwa przetwarzanie zdjęć. Poczekaj chwilę." : "";
+    }
 }
 
 function renderImagePreview(preview, files) {
@@ -131,13 +153,18 @@ function handleImageUpload(input) {
         .then(async () => {
             const existingFiles = state.committedFiles;
 
-            if (existingFiles.length + selectedFiles.length > 6) {
-                imageErrorSpan.textContent = "Możesz dodać maksymalnie 6 zdjęć.";
+            const maxImages = 6;
+            const remainingSlots = Math.max(0, maxImages - existingFiles.length);
+            const acceptedFiles = selectedFiles.slice(0, remainingSlots);
+            const rejectedCount = selectedFiles.length - acceptedFiles.length;
+
+            if (acceptedFiles.length === 0) {
+                imageErrorSpan.textContent = "Masz już maksymalnie 6 zdjęć. Usuń jedno, aby dodać kolejne.";
                 assignFiles(input, existingFiles);
                 return;
             }
 
-            for (const file of selectedFiles) {
+            for (const file of acceptedFiles) {
                 if (!allowedTypes.includes(file.type)) {
                     imageErrorSpan.textContent = (`Plik ${file.name} nie jest obsługiwanym formatem pliku.`);
                     assignFiles(input, existingFiles);
@@ -145,9 +172,11 @@ function handleImageUpload(input) {
                 }
             }
 
-            imageErrorSpan.textContent = "";
+            imageErrorSpan.textContent = rejectedCount > 0
+                ? `Możesz dodać maksymalnie ${maxImages} zdjęć. Dodano ${acceptedFiles.length}, pominięto ${rejectedCount}.`
+                : "";
 
-            const processedFiles = await processSelectedImages(selectedFiles);
+            const processedFiles = await processSelectedImages(acceptedFiles);
             const allFiles = [...existingFiles, ...processedFiles];
 
             state.committedFiles = allFiles;

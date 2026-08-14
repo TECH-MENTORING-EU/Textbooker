@@ -9,7 +9,7 @@
 
 
 <h1 id="add-heading">Nowe ogłoszenie:</h1>
-<form method="post" enctype="multipart/form-data" id="add-form" aria-labelledby="add-heading" hx-on:submit="if (!this.dataset.inSummary) showSummary(event)">
+<form method="post" enctype="multipart/form-data" id="add-form" aria-labelledby="add-heading" hx-on:submit="if (!this.dataset.inSummary) showSummary(event)" hx-on:image-upload-state="toggleFormSubmitState(this, event.detail.busy)">
     <div class="grid">
         <section>
             <label for="add-image">Prześlij zdjęcia swojej książki:</label>
@@ -17,6 +17,7 @@
             <small>
                 <span asp-validation-for="Input.Images" id="Input_Images-error" role="alert"></span>
                 <span id="imageErrorMsg" role="alert"></span>
+                <span id="imageProcessingMsg" role="status" aria-live="polite"></span>
             </small>
             <div class="image-preview-container" role="group" aria-label="Podgląd zdjęć książki"></div>
             <div asp-validation-summary="ModelOnly" role="alert" aria-live="assertive"></div>

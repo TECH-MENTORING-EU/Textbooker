@@ -1,5 +1,6 @@
 @page "{id:int}"
 @model Booker.Pages.EditModel
+@inject Booker.Services.PhotosManager PhotosManager
 @{
     ViewData["Title"] = "Edytuj ogłoszenie";
     const string include = "#edit-form :not([name = '__RequestVerificationToken'])";
@@ -16,7 +17,7 @@
     }
     else
     {
-        <form method="post" enctype="multipart/form-data" id="edit-form" class="upload-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">
+        <form method="post" enctype="multipart/form-data" id="edit-form" class="upload-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);" hx-on:image-upload-state="toggleFormSubmitState(this, event.detail.busy)">
             <div class="grid">
                 <section>
                     <label asp-for="Input.Images">Zmień zdjęcia książki (opcjonalnie):</label>
@@ -24,6 +25,7 @@
                     <small>
                         <span asp-validation-for="Input.Images" id="Input_Images-error" role="alert"></span>
                         <span id="imageErrorMsg" role="alert"></span>
+                        <span id="imageProcessingMsg" role="status" aria-live="polite"></span>
                     </small>
 
                     <div class="image-preview-container" role="group" aria-label="Podgląd zapisanych zdjęć książki">
@@ -31,7 +33,7 @@
                        .Split(';', StringSplitOptions.RemoveEmptyEntries)
                        .Select((val, i) => (val, i)))
                         {
-                            <img src="@img"
+                            <img src="@PhotosManager.GetPhotoUrl(img.Trim())"
                                  alt="Zdjęcie książki @(index + 1)"
                                  class="book-image-preview @(index == 0 ? "main" : "")" />
                         }

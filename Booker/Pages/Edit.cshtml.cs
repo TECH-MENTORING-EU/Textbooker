@@ -91,8 +91,17 @@ namespace Booker.Pages
                 await _itemManager.MarkItemReservedAsync(id, Input.Reserved);
             }
 
-            var imageStreams = Input.Images?.Select(f => f.OpenReadStream()).ToList();
-            var imageExtensions = Input.Images?.Select(f => Path.GetExtension(f.FileName)).ToList();
+            var validatedImages = await Shared.ImageUploadValidation.ValidateAndReadAsync(
+                Input.Images,
+                requireAtLeastOne: false,
+                ModelState);
+
+            if (validatedImages == null)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
             ItemManager.Status result;
             try
@@ -103,8 +112,8 @@ namespace Booker.Pages
                     Input.Description,
                     Input.State,
                     Input.Price,
-                    imageStreams,
-                    imageExtensions,
+                    validatedImages.Streams,
+                    validatedImages.Extensions,
                     ItemToEdit.Photo
                 ));
             }
