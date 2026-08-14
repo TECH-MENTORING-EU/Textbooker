@@ -86,11 +86,6 @@ namespace Booker.Pages
                 Input.Level
             );
 
-            if(Input.Reserved != ItemToEdit.Reserved)
-            {
-                await _itemManager.MarkItemReservedAsync(id, Input.Reserved);
-            }
-
             var validatedImages = await Shared.ImageUploadValidation.ValidateAndReadAsync(
                 Input.Images,
                 requireAtLeastOne: false,
@@ -106,6 +101,9 @@ namespace Booker.Pages
             ItemManager.Status result;
             try
             {
+                // Keep reservation update in the same persistence operation as other edits.
+                ItemToEdit.Reserved = Input.Reserved;
+
                 result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
                     ItemToEdit.User,
                     parameters,

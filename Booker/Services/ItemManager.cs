@@ -237,6 +237,12 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         string allPhotos = "";
         if (model.ImageStreams != null && model.ImageStreams.Count > 0)
         {
+            if (!IsValidImagePayload(model.ImageStreams, model.ImageFileExtensions))
+            {
+                logger.LogWarning("Nieprawidłowy payload obrazów podczas dodawania ogłoszenia.");
+                return Status.Error;
+            }
+
             var photoFileNames = new List<string>();
             for (int i = 0; i < model.ImageStreams.Count; i++)
             {
@@ -283,35 +289,47 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         var book = await context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
-        string allPhotos = model.ExistingImageFileNames  ?? "";
+        string allPhotos = model.ExistingImageFileNames ?? "";
+        var uploadedPhotoUris = new List<string>();
+        var shouldReplacePhotos = model.ImageStreams != null && model.ImageStreams.Count > 0;
 
-        if (model.ImageStreams != null && model.ImageStreams.Count > 0)
+        if (shouldReplacePhotos)
         {
-            if (!string.IsNullOrEmpty(model.ExistingImageFileNames ))
+            if (!IsValidImagePayload(model.ImageStreams, model.ImageFileExtensions))
             {
-                var oldPhotos = model.ExistingImageFileNames .Split(';', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var photo in oldPhotos)
-                    await photosManager.DeletePhotoAsync(photo);
+                logger.LogWarning("Nieprawidłowy payload obrazów podczas edycji ogłoszenia o ID {ItemId}.", item.Id);
+                return Status.Error;
             }
 
-            var photoUris = new List<string>();
-            for (int i = 0; i < model.ImageStreams.Count; i++)
+            for (int i = 0; i < model.ImageStreams!.Count; i++)
             {
                 var uri = await photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
-                photoUris.Add(uri.ToString());
+                uploadedPhotoUris.Add(uri.ToString());
             }
-            allPhotos = string.Join(";", photoUris);
+
+            allPhotos = string.Join(";", uploadedPhotoUris);
         }
 
         var oldPrice = item.Price;
-        item.Book = book;
-        item.Description = model.Description;
-        item.State = model.State;
-        item.Price = model.Price;
-        item.Photo = allPhotos;
-        item.UpdatedAt = DateTime.Now;
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        try
+        {
+            item.Book = book;
+            item.Description = model.Description;
+            item.State = model.State;
+            item.Price = model.Price;
+            item.Photo = allPhotos;
+            item.UpdatedAt = DateTime.Now;
 
-        await UpdateItemNVAsync(item);
+            await UpdateItemNVAsync(item);
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+
         if (oldPrice != item.Price)
         {
             logger.LogInformation("Cena ogłoszenia o ID {ItemId} użytkownika {UserName} została zmieniona z {OldPrice} zł na {NewPrice} zł.",
@@ -442,4 +460,32 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 			.Select(f => photosManager.GetPhotoUrl(f.Trim()))
 			.ToList();
 	}
+
+    private static bool IsValidImagePayload(List<Stream>? imageStreams, List<string>? imageFileExtensions)
+    {
+        if (imageStreams == null || imageFileExtensions == null)
+        {
+            return false;
+        }
+
+        if (imageStreams.Count == 0 || imageStreams.Count != imageFileExtensions.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < imageStreams.Count; i++)
+        {
+            if (imageStreams[i] == null || !imageStreams[i].CanRead)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(imageFileExtensions[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
