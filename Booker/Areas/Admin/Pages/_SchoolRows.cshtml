@@ -32,6 +32,7 @@
                    hx-swap="outerHTML"
                    hx-confirm="Na pewno chcesz dezaktywować szkołę @Html.Encode(school.Name)? Użytkownicy (@item.UserCount) stracą dostęp."
                    href=""
+                   aria-label="Dezaktywuj szkołę @school.Name"
                    antiforgery
                    class="secondary"
                 >Dezaktywuj</a>
@@ -44,6 +45,7 @@
                    hx-swap="outerHTML"
                    hx-confirm="Na pewno chcesz przywrócić szkołę @Html.Encode(school.Name)?"
                    href=""
+                   aria-label="Przywróć szkołę @school.Name"
                    antiforgery
                 >Przywróć</a>
             }

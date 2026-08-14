@@ -1,9 +1,9 @@
 ﻿@model Profile.IndexModel.UserModel
 @using Profile
 
-<section class="profile-heading">
-    <img src="@Model.RequestUser.Photo"
-         alt="Profil sprzedającego" />
+<section class="profile-heading" aria-label="Nagłówek profilu użytkownika">
+    <img src="@(string.IsNullOrWhiteSpace(Model.RequestUser.Photo) ? "/img/default-profile-picture.jpg" : Model.RequestUser.Photo)"
+         alt="Zdjęcie profilowe użytkownika: @Model.RequestUser.UserName" />
     <hgroup>
         <h1>@Model.RequestUser.UserName</h1>
         <p> @{ /* TODO: Add user profile description */ } </p>
@@ -15,7 +15,7 @@
 </section>
 
 <h2>Kontakt</h2>
-<section>
+<section aria-label="Dane kontaktowe użytkownika">
     @if (User.Identity?.IsAuthenticated != true)
     {
         @("Zaloguj się, aby zobaczyć dane kontaktowe użytkownika.")
@@ -26,17 +26,17 @@
     }
 </section>
 
-<nav>
-    <ul>
+<nav aria-label="Sekcje profilu użytkownika">
+    <ul role="list">
         @if (Model.IsCurrentUser)
         {
-            <li><a aria-current="@ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Ogłoszenia</a></li>
-            <li><a aria-current="@ManageNavPages.FavoritesNavClass(ViewContext)" id="favorites" asp-page="./Favorites">Ulubione</a></li>
+            <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.IndexNavClass(ViewContext))" id="profile" asp-page="./Index">Ogłoszenia</a></li>
+            <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.FavoritesNavClass(ViewContext))" id="favorites" asp-page="./Favorites">Ulubione</a></li>
         }
         else
         {
-            <li><a aria-current="@ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index" asp-route-id="@Model.RequestUser.Id">Ogłoszenia</a></li>
-            <li><a aria-current="@ManageNavPages.FavoritesNavClass(ViewContext)" id="favorites" asp-page="./Favorites" asp-route-id="@Model.RequestUser.Id">Ulubione</a></li>
+            <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.IndexNavClass(ViewContext))" id="profile" asp-page="./Index" asp-route-id="@Model.RequestUser.Id">Ogłoszenia</a></li>
+            <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.FavoritesNavClass(ViewContext))" id="favorites" asp-page="./Favorites" asp-route-id="@Model.RequestUser.Id">Ulubione</a></li>
         }
     </ul>
 </nav>

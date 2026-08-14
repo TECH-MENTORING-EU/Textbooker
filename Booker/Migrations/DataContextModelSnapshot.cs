@@ -34,7 +34,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("GradeId");
 
-                    b.ToTable("BookGrades");
+                    b.ToTable("BookGrades", (string)null);
 
                     b.HasData(
                         new
@@ -878,7 +878,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Books");
+                    b.ToTable("Books", (string)null);
 
                     b.HasData(
                         new
@@ -1499,7 +1499,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Grades");
+                    b.ToTable("Grades", (string)null);
 
                     b.HasData(
                         new
@@ -1580,7 +1580,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Items");
+                    b.ToTable("Items", (string)null);
                 });
 
             modelBuilder.Entity("Booker.Data.ItemView", b =>
@@ -1595,7 +1595,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ItemViews");
+                    b.ToTable("ItemViews", (string)null);
                 });
 
             modelBuilder.Entity("Booker.Data.Level", b =>
@@ -1612,7 +1612,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Levels");
+                    b.ToTable("Levels", (string)null);
 
                     b.HasData(
                         new
@@ -1670,17 +1670,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Schools");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EmailDomain = "hogwart.edu.pl",
-                            IsActive = true,
-                            Name = "Hogwort"
-                        });
+                    b.ToTable("Schools", (string)null);
                 });
 
             modelBuilder.Entity("Booker.Data.Subject", b =>
@@ -1697,7 +1687,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", (string)null);
 
                     b.HasData(
                         new
@@ -2046,7 +2036,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("ItemId");
 
-                    b.ToTable("UserFavorites");
+                    b.ToTable("UserFavorites", (string)null);
                 });
 
             modelBuilder.Entity("BookGrades", b =>

@@ -17,6 +17,11 @@
 
     hgroup {
         flex: 1;
+        min-width: 0;
+
+        h1 {
+            overflow-wrap: anywhere;
+        }
     }
 
     a[role=button] {

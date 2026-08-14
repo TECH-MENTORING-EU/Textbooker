@@ -18,10 +18,12 @@ namespace Booker.Areas.Identity.Pages.Account
     public class ConfirmEmailModel : PageModel
     {
         private readonly UserManager<User> _userManager;
+        private readonly ILogger<ConfirmEmailModel> _logger;
 
-        public ConfirmEmailModel(UserManager<User> userManager)
+        public ConfirmEmailModel(UserManager<User> userManager, ILogger<ConfirmEmailModel> logger)
         {
             _userManager = userManager;
+            _logger = logger;
         }
 
         /// <summary>
@@ -43,9 +45,28 @@ namespace Booker.Areas.Identity.Pages.Account
                 return NotFound($"Nie znaleziono użytkownika o ID '{userId}'.");
             }
 
+            if (user.EmailConfirmed)
+            {
+                StatusMessage = "Email jest już potwierdzony. Możesz się zalogować.";
+                return Page();
+            }
+
             code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
             var result = await _userManager.ConfirmEmailAsync(user, code);
-            StatusMessage = result.Succeeded ? "Twoje konto zostało pomyślnie aktywowane😉." : "Błąd aktywacji konta.";
+
+            if (result.Succeeded)
+            {
+                StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+                return Page();
+            }
+
+            var errors = string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
+            _logger.LogWarning(
+                "Email confirmation failed for userId {UserId}. Errors: {Errors}",
+                userId,
+                errors);
+
+            StatusMessage = "Błąd aktywacji konta. Link mógł wygasnąć albo został już użyty.";
             return Page();
         }
     }

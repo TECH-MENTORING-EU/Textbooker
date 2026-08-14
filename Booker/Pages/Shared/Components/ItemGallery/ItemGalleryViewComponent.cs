@@ -65,7 +65,7 @@ public class ItemGalleryViewComponent : ViewComponent
         var itemsWithPhotos = itemsFromDb.Select(item => new ItemModel(
             Item: item,
             FirstPhoto: string.IsNullOrEmpty(item.Photo)
-                ? "/images/default-book.png" // fallback
+                ? "/img/default-book.svg"
                 : _photosManager.GetPhotoUrl(item.Photo.Split(';')[0].Trim()),
             Params: parameters,
             LinkFilters: linkFilters

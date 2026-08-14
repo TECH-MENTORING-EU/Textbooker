@@ -28,22 +28,51 @@
             flex-wrap: wrap;
             justify-content: center;
 
+            .thumbnail-button {
+                all: unset;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 !important;
+                min-height: 0 !important;
+                border: 1px solid transparent;
+                border-radius: 0.25rem;
+                background: transparent !important;
+                box-shadow: none !important;
+                line-height: 0;
+                cursor: pointer;
+                overflow: hidden;
+
+                &:hover,
+                &:focus,
+                &:active {
+                    background: transparent !important;
+                    box-shadow: none !important;
+                }
+
+                &:focus-visible {
+                    outline: var(--pico-outline-width) solid var(--pico-primary);
+                    outline-offset: 2px;
+                }
+
+                &.active {
+                    border-color: var(--pico-muted-border-color);
+                }
+            }
+
             .thumbnail-book-photo {
-                width: 60px;
+                
                 height: 80px;
                 object-fit: contain;
                 background-color: var(--pico-background-color);
                 cursor: pointer;
-                border: 2px solid transparent;
+                border: 0;
                 border-radius: 0.25rem;
-                transition: border-color 0.2s, transform 0.2s;
+                transition: transform 0.2s;
+                display: block;
 
                 &:hover {
                     transform: scale(1.05);
-                }
-
-                &.active {
-                    border-color: var(--pico-primary);
                 }
             }
         }

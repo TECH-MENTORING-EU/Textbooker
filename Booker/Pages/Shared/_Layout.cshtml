@@ -16,7 +16,17 @@
     @await RenderSectionAsync("Styles", false)
     <script src="~/lib/htmx/dist/htmx.min.js" asp-append-version="true"></script>
 </head>
-<body class="page-shell">
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+<body class="page-shell @(Configuration.GetValue<bool>("testingPhase") ? "testing-phase-on" : null)">
+    @if (Configuration.GetValue<bool>("testingPhase"))
+    {
+        <div class="testing-phase-badge"
+             role="note"
+             aria-label="Aplikacja ma wgrane dane testowe. Zachęcamy do załozenia konta, testowania i zglaszania usterek .">
+            Aplikacja ma wgrane dane testowe. Zachęcamy do załozenia konta, testowania i zglaszania usterek .
+        </div>
+    }
+
     <a href="#main-content" class="skip-link">Przejdź do treści głównej</a>
 
     <header role="banner">

@@ -1,90 +1,92 @@
 @page "{id:int}"
 @model Booker.Pages.EditModel
+@inject Booker.Services.PhotosManager PhotosManager
 @{
     ViewData["Title"] = "Edytuj ogłoszenie";
     const string include = "#edit-form :not([name = '__RequestVerificationToken'])";
 }
 
-<article>
-    <h1>Edytuj ogłoszenie:</h1>
+<article aria-labelledby="edit-heading">
+    <h1 id="edit-heading">Edytuj ogłoszenie:</h1>
 
     @if (Model.ItemToEdit == null)
     {
-        <div class="alert alert-danger" role="alert">
+        <div class="alert alert-danger" role="alert" aria-live="assertive">
             Ogłoszenie nie zostało znalezione lub nie masz uprawnień do jego edycji.
         </div>
     }
     else
     {
-        <form method="post" enctype="multipart/form-data" id="edit-form" class="upload-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);">
+        <form method="post" enctype="multipart/form-data" id="edit-form" class="upload-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);" hx-on:image-upload-state="toggleFormSubmitState(this, event.detail.busy)">
             <div class="grid">
                 <section>
                     <label asp-for="Input.Images">Zmień zdjęcia książki (opcjonalnie):</label>
-                    <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
+                    <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)" aria-describedby="Input_Images-error imageErrorMsg">
                     <small>
-                        <span asp-validation-for="Input.Images"></span>
-                        <span id="imageErrorMsg"></span>
+                        <span asp-validation-for="Input.Images" id="Input_Images-error" role="alert"></span>
+                        <span id="imageErrorMsg" role="alert"></span>
+                        <span id="imageProcessingMsg" role="status" aria-live="polite"></span>
                     </small>
 
-                    <div class="image-preview-container">
+                    <div class="image-preview-container" role="group" aria-label="Podgląd zapisanych zdjęć książki">
                         @foreach (var (img, index) in (Model.ItemToEdit.Photo ?? "")
                        .Split(';', StringSplitOptions.RemoveEmptyEntries)
                        .Select((val, i) => (val, i)))
                         {
-                            <img src="@img"
-                                 alt="Zdjęcie książki"
+                            <img src="@PhotosManager.GetPhotoUrl(img.Trim())"
+                                 alt="Zdjęcie książki @(index + 1)"
                                  class="book-image-preview @(index == 0 ? "main" : "")" />
                         }
                     </div>
 
 
-                    <div asp-validation-summary="ModelOnly"></div>
+                    <div asp-validation-summary="ModelOnly" role="alert" aria-live="assertive"></div>
                 </section>
 
                 <section>
-                    <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete"></span>
+                    <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete" aria-hidden="true"></span>
 
                     <label asp-for="Input.Title">Tytuł książki:</label>
-                    <select asp-for="Input.Title" asp-items="Model.Books"></select>
-                    <small>
-                        <span asp-validation-for="Input.Title"></span><br>
+                    <select asp-for="Input.Title" asp-items="Model.Books" aria-describedby="Input_Title-help"></select>
+                    <small id="Input_Title-help">
+                        <span asp-validation-for="Input.Title" role="alert"></span><br>
                         Nie widzisz swojej książki? Wybierz opcję "inna" i opisz ją poniżej.
                     </small>
 
                     <label asp-for='Input.Subject'>Przedmiot:</label>
-                    <select asp-for='Input.Subject' asp-items="Model.Subjects"></select>
-                    <small><span asp-validation-for="Input.Subject"></span></small>
+                    <select asp-for='Input.Subject' asp-items="Model.Subjects" aria-describedby="Input_Subject-error"></select>
+                    <small><span asp-validation-for="Input.Subject" id="Input_Subject-error" role="alert"></span></small>
 
                     <label asp-for='Input.Grade'>Klasa:</label>
-                    <select asp-for='Input.Grade' asp-items="Model.Grades"></select>
-                    <small><span asp-validation-for="Input.Grade"></span></small>
+                    <select asp-for='Input.Grade' asp-items="Model.Grades" aria-describedby="Input_Grade-error"></select>
+                    <small><span asp-validation-for="Input.Grade" id="Input_Grade-error" role="alert"></span></small>
 
                     <label asp-for='Input.Level'>Poziom:</label>
-                    <select asp-for='Input.Level' asp-items="Model.Levels"></select>
-                    <small><span asp-validation-for="Input.Level"></span></small>
+                    <select asp-for='Input.Level' asp-items="Model.Levels" aria-describedby="Input_Level-error"></select>
+                    <small><span asp-validation-for="Input.Level" id="Input_Level-error" role="alert"></span></small>
 
                     <label asp-for="Input.Description">Opis ogłoszenia:</label>
-                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..."></textarea>
-                    <small><span class="char-count">0 / 200</span></small>
+                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." aria-describedby="Input_Description-counter"></textarea>
+                    <small id="Input_Description-counter"><span class="char-count">0 / 200</span></small>
 
                     <label asp-for="Input.State">Stan książki:</label>
-                    <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…"></textarea>
-                    <small><span asp-validation-for="Input.State"></span><span class="char-count" style="text-align:right;">0 / 40</span></small>
+                    <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…" aria-describedby="Input_State-error Input_State-counter"></textarea>
+                    <small><span asp-validation-for="Input.State" id="Input_State-error" role="alert"></span><span class="char-count" id="Input_State-counter" style="text-align:right;">0 / 40</span></small>
 
 
                     <label asp-for="Input.Price">Cena:</label>
-                    <input asp-for="Input.Price" placeholder="PLN">
-                    <small><span asp-validation-for="Input.Price"></span></small>
+                    <input asp-for="Input.Price" placeholder="PLN" aria-describedby="Input_Price-error">
+                    <small><span asp-validation-for="Input.Price" id="Input_Price-error" role="alert"></span></small>
 
 
-                    <label asp-for="Input.Reserved">
+                    <div class="form-check">
                         <input asp-for="Input.Reserved" type="checkbox" />
-                        Zarezerwowane
-                    </label>
+                        <label asp-for="Input.Reserved" class="inline">Zarezerwowane</label>
+                    </div>
 
                     <div class="grid">
                         <button type="submit" role="button">Zapisz zmiany</button>
-                        <button type="button" role="button" class="secondary" onclick="showConfirmDeleteModal(@Model.ItemToEdit.Id)">Usuń ogłoszenie</button>
+                        <button type="button" role="button" class="secondary" onclick="showConfirmDeleteModal(@Model.ItemToEdit.Id)" aria-label="Usuń to ogłoszenie">Usuń ogłoszenie</button>
                     </div>
                 </section>
             </div>
@@ -92,24 +94,24 @@
     }
 </article>
 
-<dialog id="confirmSaveModal" aria-labelledby="confirm-save-title" aria-modal="true">
+<dialog id="confirmSaveModal" aria-labelledby="confirm-save-title">
     <article>
         <h2 id="confirm-save-title">Potwierdź zapis</h2>
         <p>Czy na pewno chcesz zapisać zmiany w tym ogłoszeniu?</p>
         <footer>
-            <button onclick="this.closest('dialog').close();" class="secondary">Anuluj</button>
-            <button onclick="document.getElementById('edit-form').submit();">Zapisz</button>
+            <button type="button" onclick="this.closest('dialog').close();" class="secondary">Anuluj</button>
+            <button type="button" onclick="document.getElementById('edit-form').submit();">Zapisz</button>
         </footer>
     </article>
 </dialog>
 
-<dialog id="confirmDeleteModal" aria-labelledby="confirm-delete-title" aria-modal="true">
+<dialog id="confirmDeleteModal" aria-labelledby="confirm-delete-title">
     <article>
         <h2 id="confirm-delete-title">Potwierdź usunięcie</h2>
         <p>Czy na pewno chcesz trwale usunąć to ogłoszenie? Tej operacji nie można cofnąć.</p>
         <footer>
             <div class="grid">
-                <button onclick="this.closest('dialog').close();" class="secondary">Anuluj</button>
+                <button type="button" onclick="this.closest('dialog').close();" class="secondary">Anuluj</button>
                 <form method="post" asp-page-handler="Delete" id="delete-form-confirm" style="display: contents;">
                     <input type="hidden" name="ItemId" id="deleteItemId" />
                     <button type="submit" role="button">Usuń</button>

@@ -1674,16 +1674,6 @@ namespace Booker.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Schools");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EmailDomain = "hogwart.edu.pl",
-                            IsActive = true,
-                            Name = "Hogwort"
-                        });
                 });
 
             modelBuilder.Entity("Booker.Data.Subject", b =>

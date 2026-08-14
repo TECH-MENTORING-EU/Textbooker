@@ -86,25 +86,32 @@ namespace Booker.Pages
                 Input.Level
             );
 
-            if(Input.Reserved != ItemToEdit.Reserved)
-            {
-                await _itemManager.MarkItemReservedAsync(id, Input.Reserved);
-            }
+            var validatedImages = await Shared.ImageUploadValidation.ValidateAndReadAsync(
+                Input.Images,
+                requireAtLeastOne: false,
+                ModelState);
 
-            var imageStreams = Input.Images?.Select(f => f.OpenReadStream()).ToList();
-            var imageExtensions = Input.Images?.Select(f => Path.GetExtension(f.FileName)).ToList();
+            if (validatedImages == null)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
             ItemManager.Status result;
             try
             {
+                // Keep reservation update in the same persistence operation as other edits.
+                ItemToEdit.Reserved = Input.Reserved;
+
                 result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
                     ItemToEdit.User,
                     parameters,
                     Input.Description,
                     Input.State,
                     Input.Price,
-                    imageStreams,
-                    imageExtensions,
+                    validatedImages.Streams,
+                    validatedImages.Extensions,
                     ItemToEdit.Photo
                 ));
             }

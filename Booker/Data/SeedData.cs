@@ -1,16 +1,316 @@
 ﻿namespace Booker.Data
 {
+    using Microsoft.AspNetCore.Identity;
     using Microsoft.EntityFrameworkCore;
     using static DataContext;
     public static class SeedData
     {
         /// <summary>
-        /// Seed data for Schools. Hogwort school with email domain for automatic assignment.
+        /// Development-only schools seeded at runtime in Development environment.
         /// </summary>
-        public readonly static List<School> Schools =
+        private readonly static List<School> DevelopmentSchools =
         [
-            new School { Id = 1, Name = "Hogwort", EmailDomain = "hogwart.edu.pl", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new School { Id = 1, Name = "Hogwort", EmailDomain = "hogwart.edu.pl", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new School { Id = 2, Name = "Technikum Pod Patronatem Przypadkowego Gościa z Discorda", EmailDomain = "technikum-discord.edu.pl", CreatedAt = new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc) },
+            new School { Id = 3, Name = "Uniwersytet Bestroskiego Zycia W Obliczu Zagłady im. Augusta III Sasa", EmailDomain = "ubz-august.edu.pl", CreatedAt = new DateTime(2024, 1, 3, 0, 0, 0, DateTimeKind.Utc) }
         ];
+
+        private const string DevelopmentPassword = "TestPass123!";
+
+        private sealed record DevelopmentAccount(string UserName, string Email);
+
+        private readonly static List<DevelopmentAccount> DevelopmentAccounts =
+        [
+            new DevelopmentAccount("u1", "u1@hogwart.edu.pl"),
+            new DevelopmentAccount("u2", "u2@technikum-discord.edu.pl"),
+            new DevelopmentAccount("u3", "u3@ubz-august.edu.pl"),
+            new DevelopmentAccount("u4", "u4@hogwart.edu.pl"),
+            new DevelopmentAccount("u5", "u5@technikum-discord.edu.pl"),
+            new DevelopmentAccount("u6", "u6@ubz-august.edu.pl"),
+            new DevelopmentAccount("a1", "a1@hogwart.edu.pl")
+        ];
+
+        public static async Task InitializeDevelopmentDataAsync(DataContext context, UserManager<User> userManager, int itemsCount, int usersCount)
+        {
+            await EnsureSeedSchoolsAsync(context);
+
+            if (await context.Users.AnyAsync())
+            {
+                return;
+            }
+
+            await EnsureCredentialUsersAsync(context, userManager);
+
+            var books = await context.Books.ToListAsync();
+            if (books.Count == 0)
+            {
+                return;
+            }
+
+            var school1Id = await GetSchoolIdByDomainAsync(context, "hogwart.edu.pl");
+            if (school1Id.HasValue)
+            {
+                await SeedRandomUsersAndItemsForSchoolAsync(context, books, schoolId: school1Id.Value, randomPrefix: "r1", usersCount, itemsCount);
+            }
+
+            var school2Id = await GetSchoolIdByDomainAsync(context, "technikum-discord.edu.pl");
+            if (school2Id.HasValue)
+            {
+                await SeedRandomUsersAndItemsForSchoolAsync(context, books, schoolId: school2Id.Value, randomPrefix: "r2", usersCount, itemsCount);
+            }
+
+            var school3Id = await GetSchoolIdByDomainAsync(context, "ubz-august.edu.pl");
+            if (school3Id.HasValue)
+            {
+                await SeedRandomUsersAndItemsForSchoolAsync(context, books, schoolId: school3Id.Value, randomPrefix: "r3", usersCount, itemsCount);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task EnsureSeedSchoolsAsync(DataContext context)
+        {
+            var hasChanges = false;
+
+            foreach (var seedSchool in DevelopmentSchools)
+            {
+                var seedDomain = seedSchool.EmailDomain?.Trim().ToLower();
+                var school = await context.Schools.SingleOrDefaultAsync(s =>
+                    s.EmailDomain != null &&
+                    s.EmailDomain.Trim().ToLower() == seedDomain);
+
+                school ??= await context.Schools.SingleOrDefaultAsync(s => s.Id == seedSchool.Id);
+                if (school is null)
+                {
+                    context.Schools.Add(new School
+                    {
+                        Name = seedSchool.Name,
+                        EmailDomain = seedSchool.EmailDomain,
+                        IsActive = true,
+                        CreatedAt = seedSchool.CreatedAt,
+                        DeactivatedAt = null
+                    });
+
+                    hasChanges = true;
+                    continue;
+                }
+
+                if (!string.Equals(school.Name, seedSchool.Name, StringComparison.Ordinal))
+                {
+                    school.Name = seedSchool.Name;
+                    hasChanges = true;
+                }
+
+                if (!string.Equals(school.EmailDomain, seedSchool.EmailDomain, StringComparison.OrdinalIgnoreCase))
+                {
+                    school.EmailDomain = seedSchool.EmailDomain;
+                    hasChanges = true;
+                }
+
+                if (!school.IsActive)
+                {
+                    school.IsActive = true;
+                    hasChanges = true;
+                }
+
+                if (school.DeactivatedAt is not null)
+                {
+                    school.DeactivatedAt = null;
+                    hasChanges = true;
+                }
+            }
+
+            if (hasChanges)
+            {
+                await context.SaveChangesAsync();
+            }
+        }
+
+        private static async Task EnsureCredentialUsersAsync(DataContext context, UserManager<User> userManager)
+        {
+            foreach (var account in DevelopmentAccounts)
+            {
+                var schoolId = await GetSchoolIdByDomainFromEmailAsync(context, account.Email);
+                var user = await userManager.FindByNameAsync(account.UserName);
+                if (user is null)
+                {
+                    var newUser = new User
+                    {
+                        UserName = account.UserName,
+                        Email = account.Email,
+                        SchoolId = schoolId,
+                        EmailConfirmed = true,
+                        Photo = "/img/default-profile-picture.jpg"
+                    };
+
+                    var createResult = await userManager.CreateAsync(newUser, DevelopmentPassword);
+                    if (!createResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to create seed user '{account.UserName}': {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                    }
+
+                    continue;
+                }
+
+                var needsUpdate = false;
+                if (!string.Equals(user.Email, account.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.Email = account.Email;
+                    needsUpdate = true;
+                }
+
+                if (user.SchoolId != schoolId)
+                {
+                    user.SchoolId = schoolId;
+                    needsUpdate = true;
+                }
+
+                if (!user.EmailConfirmed)
+                {
+                    user.EmailConfirmed = true;
+                    needsUpdate = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(user.Photo))
+                {
+                    user.Photo = "/img/default-profile-picture.jpg";
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate)
+                {
+                    var updateResult = await userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to update seed user '{account.UserName}': {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
+                    }
+                }
+
+                if (!await userManager.HasPasswordAsync(user))
+                {
+                    var addPasswordResult = await userManager.AddPasswordAsync(user, DevelopmentPassword);
+                    if (!addPasswordResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to set password for seed user '{account.UserName}': {string.Join(", ", addPasswordResult.Errors.Select(e => e.Description))}");
+                    }
+                }
+            }
+        }
+
+        private static async Task<int?> GetSchoolIdByDomainFromEmailAsync(DataContext context, string email)
+        {
+            var atIndex = email.LastIndexOf('@');
+            if (atIndex < 0 || atIndex == email.Length - 1)
+            {
+                return null;
+            }
+
+            var domain = email[(atIndex + 1)..].Trim().ToLowerInvariant();
+            return await GetSchoolIdByDomainAsync(context, domain);
+        }
+
+        private static async Task<int?> GetSchoolIdByDomainAsync(DataContext context, string domain)
+        {
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                return null;
+            }
+
+            var normalizedDomain = domain.Trim().ToLowerInvariant();
+
+            var schools = await context.Schools
+                .Where(s => s.EmailDomain != null)
+                .Select(s => new { s.Id, s.EmailDomain })
+                .ToListAsync();
+
+            return schools
+                .Where(s => s.EmailDomain!
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(d => d.Trim().ToLowerInvariant())
+                    .Contains(normalizedDomain))
+                .Select(s => (int?)s.Id)
+                .FirstOrDefault();
+        }
+
+        private static async Task SeedRandomUsersAndItemsForSchoolAsync(
+            DataContext context,
+            List<Book> books,
+            int schoolId,
+            string randomPrefix,
+            int usersCount,
+            int itemsCount)
+        {
+            var userPrefix = randomPrefix + "_";
+
+            if (await context.Users.AnyAsync(u => u.SchoolId == schoolId && u.UserName != null && u.UserName.StartsWith(userPrefix)))
+            {
+                return;
+            }
+
+            var randomUsersInSchool = await context.Users
+                .Where(u => u.SchoolId == schoolId && u.UserName != null && u.UserName.StartsWith(userPrefix))
+                .ToListAsync();
+
+            var missingUsersCount = Math.Max(0, usersCount - randomUsersInSchool.Count);
+            if (missingUsersCount > 0)
+            {
+                var newUsers = Enumerable.Range(0, missingUsersCount)
+                    .Select(_ =>
+                    {
+                        var suffix = Guid.NewGuid().ToString("N")[..10];
+                        var userName = userPrefix + suffix;
+                        return new User
+                        {
+                            UserName = userName,
+                            Email = userName + "@seed.local",
+                            SchoolId = schoolId,
+                            EmailConfirmed = true,
+                            Photo = "/img/default-profile-picture.jpg"
+                        };
+                    })
+                    .ToList();
+
+                context.Users.AddRange(newUsers);
+                randomUsersInSchool.AddRange(newUsers);
+            }
+
+            if (randomUsersInSchool.Count == 0)
+            {
+                return;
+            }
+
+            var currentItemsCount = await context.Items.CountAsync(i =>
+                i.User.SchoolId == schoolId &&
+                i.User.UserName != null &&
+                i.User.UserName.StartsWith(userPrefix));
+
+            var missingItemsCount = Math.Max(0, itemsCount - currentItemsCount);
+            if (missingItemsCount == 0)
+            {
+                return;
+            }
+
+            var items = Enumerable.Range(0, missingItemsCount)
+                .Select(_ =>
+                {
+                    var user = randomUsersInSchool[Random.Shared.Next(randomUsersInSchool.Count)];
+                    var book = books[Random.Shared.Next(books.Count)];
+                    return new Item
+                    {
+                        Book = book,
+                        User = user,
+                        Price = Random.Shared.Next(140, 600) / 7M,
+                        CreatedAt = DateTime.Now.AddDays(-(Random.Shared.Next(7 * 24 * 60) / (24 * 60.0))),
+                        Description = "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.",
+                        State = "bardzo dobry",
+                        Photo = "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fA%3D%3D"
+                    };
+                })
+                .OrderBy(i => i.CreatedAt)
+                .ToList();
+
+            context.Items.AddRange(items);
+        }
 
         public readonly static List<Grade> Grades =
         [
@@ -179,7 +479,6 @@
             CreateBook(title: "Environmental Science", subjectId: 17, levelId: -1, grades: new() { 3,4 }),
             CreateBook(title: "IT [english for IT]", subjectId: 17, levelId: -1, grades: new() { 3,4 }),
 
-            // Informatyka
             CreateBook(title: "Informatyka w praktyce", subjectId: 11, levelId: 2, grades: new() { 3 })
         ];
     }

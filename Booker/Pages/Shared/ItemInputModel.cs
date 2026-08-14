@@ -5,6 +5,16 @@ namespace Booker.Pages.Shared;
 
 public abstract class ItemInputModel
 {
+    public const int MaxImageCount = 6;
+    public const long MaxImageSizeBytes = 5 * 1024 * 1024;
+    public const int MaxImageSizeMb = 5;
+    public static readonly HashSet<string> AllowedImageExtensions =
+    [
+        ".jpg",
+        ".jpeg",
+        ".png"
+    ];
+
     [Required(ErrorMessage = "Proszę wybrać tytuł książki.")]
     public required string Title { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę wybrać przedmiot.")]
@@ -21,8 +31,6 @@ public abstract class ItemInputModel
     [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi być większa od zera.")]
     public required decimal Price { get; set; } = 0;
 
-    //[FileExtensions(Extensions = "jpg,jpeg,png,gif", ErrorMessage = "Dozwolone są tylko pliki graficzne (jpg, jpeg, png, gif).")]
-    //[Length(0, 5 * 1024 * 1024, ErrorMessage = "Plik nie może przekraczać 5 MB.")]
     [Display(Name = "Zdjęcia książki")]
     public virtual List<IFormFile> Images { get; set; } = new();
 }
