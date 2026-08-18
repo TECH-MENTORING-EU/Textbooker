@@ -1,6 +1,7 @@
 ﻿@page "{id:int}"
 @model Booker.Pages.BookModel
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject Booker.Services.PhotosManager PhotosManager
 
 @{
     ViewData["Title"] = $"{Model.BookItem.Book.Title} - TextBooker";
@@ -12,7 +13,7 @@
     var profilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
     var defaultAvatarPath = Configuration.GetValue<string>("Features:DefaultProfilePicturePath") ?? "/img/default-profile-picture.jpg";
     var sellerPhotoUrl = profilePhotosEnabled && !string.IsNullOrWhiteSpace(Model.BookItem.User.Photo)
-        ? Model.BookItem.User.Photo
+        ? PhotosManager.GetPhotoUrl(Model.BookItem.User.Photo)
         : defaultAvatarPath;
 }
 
