@@ -26,10 +26,10 @@ public abstract class ItemInputModel
     [Required(ErrorMessage = "Proszę wybrać poziom.")]
     public required string Level { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę podać opis ogłoszenia.")]
-    [StringLength(MaxDescriptionLength, ErrorMessage = "Opis ogłoszenia nie może przekraczać 200 znaków.")]
+    [StringLength(MaxDescriptionLength, ErrorMessage = "Opis ogłoszenia nie może przekraczać {1} znaków.")]
     public required string Description { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę opisać stan książki.")]
-    [StringLength(MaxStateLength, ErrorMessage = "Opis stanu książki nie może przekraczać 40 znaków.")]
+    [StringLength(MaxStateLength, ErrorMessage = "Opis stanu książki nie może przekraczać {1} znaków.")]
     public required string State { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę podać cenę.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi być większa od zera.")]
