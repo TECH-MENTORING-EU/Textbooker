@@ -401,10 +401,25 @@ function syncDropdownAria() {
     });
 
     document.addEventListener("click", function (event) {
+        // The hamburger trigger toggles the account details itself; treating
+        // its click as "outside" would immediately undo the open state.
+        if (event.target.closest("#hamburger-toggle")) return;
+
         document.querySelectorAll("details.dropdown[open]").forEach(details => {
             if (!details.contains(event.target)) {
                 details.removeAttribute("open");
             }
+        });
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        document.querySelectorAll("details.dropdown[open]").forEach(details => {
+            const summary = details.querySelector("summary");
+            if (summary && details.contains(document.activeElement)) {
+                summary.focus();
+            }
+            details.removeAttribute("open");
         });
     });
 }

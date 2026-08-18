@@ -15,7 +15,7 @@
     var isMessagesEnabled = Configuration.GetValue<bool>("Features:MessagesEnabled");
     <li>
         <details class="dropdown">
-                <summary class="outline" style="border-color: transparent;" aria-expanded="false" aria-controls="account-actions" aria-label="Menu konta użytkownika @userName">Witaj @userName!</summary>
+                <summary aria-expanded="false" aria-controls="account-actions" aria-label="Menu konta użytkownika @userName">Witaj @userName!</summary>
                 <ul id="account-actions" aria-label="Akcje konta @userName">
                     <li><a asp-area="" asp-page="/Profile/Index">Profil</a></li>
                     <li><a asp-area="" asp-page="/Profile/Favorites">Ulubione</a></li>
