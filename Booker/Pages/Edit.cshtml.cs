@@ -65,12 +65,6 @@ namespace Booker.Pages
                 return Page();
             }
 
-            if (!ModelState.IsValid)
-            {
-                Response.StatusCode = StatusCodes.Status400BadRequest;
-                return Page();
-            }
-
             ItemToEdit = await _itemManager.GetItemAsync(id);
             if (ItemToEdit == null) return NotFound();
 
@@ -80,6 +74,13 @@ namespace Booker.Pages
             {
                 _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Update.Name} na zasobie o ID {id}.");
                 return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
+                return Page();
             }
 
             var parameters = await _staticDataManager.ConvertParametersAsync(
