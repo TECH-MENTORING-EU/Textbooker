@@ -60,7 +60,8 @@ public static class ImageUploadValidation
                 continue;
             }
 
-            if (!IsValidImageSignature(image))
+            var detectedExtension = DetectImageExtension(image);
+            if (detectedExtension == null)
             {
                 modelState.AddModelError(modelKey, $"Plik {image.FileName} nie jest prawidłowym obrazem.");
                 continue;
@@ -72,7 +73,7 @@ public static class ImageUploadValidation
             memoryStream.Position = 0;
 
             imageStreams.Add(memoryStream);
-            imageExtensions.Add(extension);
+            imageExtensions.Add(detectedExtension);
         }
 
         if (!modelState.IsValid)
@@ -88,7 +89,13 @@ public static class ImageUploadValidation
         return new ValidatedImageBatch(imageStreams, imageExtensions);
     }
 
-    private static bool IsValidImageSignature(IFormFile file)
+    /// <summary>
+    /// Detects the real image format from magic bytes and returns the matching
+    /// extension, so the stored filename and content type always match the
+    /// actual content even when the upload is misnamed (e.g. PNG named .jpg).
+    /// Returns null when the content is not a supported image.
+    /// </summary>
+    private static string? DetectImageExtension(IFormFile file)
     {
         try
         {
@@ -98,13 +105,13 @@ public static class ImageUploadValidation
 
             if (bytesRead < 2)
             {
-                return false;
+                return null;
             }
 
             // JPEG
             if (header[0] == 0xFF && header[1] == 0xD8)
             {
-                return true;
+                return ".jpg";
             }
 
             // PNG
@@ -112,14 +119,14 @@ public static class ImageUploadValidation
                 header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47 &&
                 header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
             {
-                return true;
+                return ".png";
             }
 
-            return false;
+            return null;
         }
         catch
         {
-            return false;
+            return null;
         }
     }
 }

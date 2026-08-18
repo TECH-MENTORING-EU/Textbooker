@@ -67,11 +67,22 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            var validatedImages = await ImageUploadValidation.ValidateAndReadAsync(
-                [Input.Image],
-                requireAtLeastOne: true,
-                ModelState,
-                modelKey: "Input.Image");
+            ValidatedImageBatch? validatedImages;
+            try
+            {
+                validatedImages = await ImageUploadValidation.ValidateAndReadAsync(
+                    [Input.Image],
+                    requireAtLeastOne: true,
+                    ModelState,
+                    modelKey: "Input.Image");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while validating profile picture upload for user {UserId}", user.Id);
+                ModelState.AddModelError(string.Empty, "Wystąpił błąd podczas zapisywania zdjęcia. Spróbuj ponownie.");
+                CurrentProfilePictureUrl = user.Photo;
+                return Page();
+            }
 
             if (validatedImages == null)
             {
