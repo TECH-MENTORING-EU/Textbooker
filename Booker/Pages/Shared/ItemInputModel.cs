@@ -5,6 +5,8 @@ namespace Booker.Pages.Shared;
 
 public abstract class ItemInputModel
 {
+    public const int MaxDescriptionLength = 200;
+    public const int MaxStateLength = 40;
     public const int MaxImageCount = 6;
     public const long MaxImageSizeBytes = 5 * 1024 * 1024;
     public const int MaxImageSizeMb = 5;
@@ -23,9 +25,11 @@ public abstract class ItemInputModel
     public required string Grade { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę wybrać poziom.")]
     public required string Level { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Proszę podać opis ogłoszenia.")]
+    [StringLength(MaxDescriptionLength, ErrorMessage = "Opis ogłoszenia nie może przekraczać 200 znaków.")]
     public required string Description { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę opisać stan książki.")]
-    [StringLength(40, ErrorMessage = "Opis stanu książki nie może przekraczać 40 znaków.")]
+    [StringLength(MaxStateLength, ErrorMessage = "Opis stanu książki nie może przekraczać 40 znaków.")]
     public required string State { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę podać cenę.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Cena musi być większa od zera.")]
