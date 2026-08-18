@@ -210,10 +210,13 @@ dialog[open] {
     overflow: auto;
 }
 
-// Pico's dialog-footer margin reset (dialog > article > footer button) loses to
-// its own [type=...] rule, so only buttons that happen to carry role="button"
-// keep the intended margin: 0. Equalize all footer buttons so confirm-dialog
-// pairs (Anuluj/Usuń) render at the same height inside .grid rows.
+// Pico resets footer-button margins with a selector list whose halves have
+// different specificity: "dialog > article > footer button" (0,0,4) loses to
+// Pico's own [type=...] margin rule (0,1,1), while
+// "dialog > article > footer [role=button]" (0,1,4) wins. Buttons without
+// role="button" therefore keep a 20px margin-bottom, so .grid siblings
+// stretch to different heights. The :is() selector restores Pico's intended
+// reset symmetrically for every footer button.
 dialog > article > footer :is(button, [role="button"]) {
     margin-bottom: 0;
 }
