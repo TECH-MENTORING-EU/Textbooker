@@ -209,4 +209,12 @@ dialog[open] {
     max-height: 90vh;
     overflow: auto;
 }
+
+// Pico's dialog-footer margin reset (dialog > article > footer button) loses to
+// its own [type=...] rule, so only buttons that happen to carry role="button"
+// keep the intended margin: 0. Equalize all footer buttons so confirm-dialog
+// pairs (Anuluj/Usuń) render at the same height inside .grid rows.
+dialog > article > footer :is(button, [role="button"]) {
+    margin-bottom: 0;
+}
 // Shared accessibility (a11y) styles: focus, motion, contrast, and target-size safeguards.
