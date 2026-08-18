@@ -36,6 +36,7 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
             Key = fileName,
             InputStream = stream,
             CannedACL = S3CannedACL.PublicRead,
+            ContentType = GetContentType(fileExtension),
             UseChunkEncoding = false
         };
 
@@ -104,5 +105,12 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
         var publicUrl = config["CF:PublicUrl"];
         return $"{publicUrl}/{photoUri}";
     }
+
+    public static string GetContentType(string fileExtension) => fileExtension.ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        _ => "application/octet-stream"
+    };
 
 }
