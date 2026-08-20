@@ -402,6 +402,9 @@ function initDropdownBehavior() {
     });
 
     document.addEventListener("click", function (event) {
+        // Synthetic clicks dispatched on document/window have a non-Element
+        // target without closest(); bail out instead of throwing.
+        if (!(event.target instanceof Element)) return;
         // The hamburger trigger toggles the account details itself; treating
         // its click as "outside" would immediately undo the open state.
         if (event.target.closest("#hamburger-toggle")) return;
