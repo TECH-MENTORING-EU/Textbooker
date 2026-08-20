@@ -2,6 +2,8 @@
 @use "settings" as *;
 @use "sass:map";
 
+// Shared accessibility (a11y) styles: focus, motion, contrast, and target-size safeguards.
+
 // Visually hidden but available to screen readers (utility class).
 .visually-hidden {
     position: absolute !important;
@@ -212,12 +214,13 @@ dialog[open] {
 
 // Pico resets footer-button margins with a selector list whose halves have
 // different specificity: "dialog > article > footer button" (0,0,4) loses to
-// Pico's own [type=...] margin rule (0,1,1), while
-// "dialog > article > footer [role=button]" (0,1,4) wins. Buttons without
-// role="button" therefore keep a 20px margin-bottom, so .grid siblings
-// stretch to different heights. The :is() selector restores Pico's intended
-// reset symmetrically for every footer button.
+// Pico's own [type=...] margin rule (0,1,0), while
+// "dialog > article > footer [role=button]" (0,1,3) wins. Buttons without
+// role="button" therefore keep the var(--pico-spacing) margin-bottom (1rem,
+// 20px at the xl breakpoint), so .grid siblings stretch to different heights.
+// This :is() selector (0,1,3) beats the margin rule for both buttons alike;
+// its tie with Pico's [role=button] half is won by source order, because this
+// file loads after Pico.
 dialog > article > footer :is(button, [role="button"]) {
     margin-bottom: 0;
 }
-// Shared accessibility (a11y) styles: focus, motion, contrast, and target-size safeguards.
