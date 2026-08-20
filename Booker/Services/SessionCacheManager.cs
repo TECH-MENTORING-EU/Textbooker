@@ -58,10 +58,10 @@ public class SessionCacheManager(
         logger.LogInformation($"Sesja użytkownika o ID {userId} została unieważniona.");
     }
 
-    // Drops cached session state so the next request validates the user against the
-    // database again; used after unlocking, where the cached invalid entry would
-    // otherwise keep rejecting the user until the next cleanup pass.
-    public void ResetSession(int userId)
+    // Drops the cached session entry so the next request validates the user
+    // against the database again; used after unlocking, where the cached invalid
+    // entry would otherwise keep rejecting the user until the next cleanup pass.
+    public void RemoveCachedSession(int userId)
     {
         store.Sessions.TryRemove(userId, out _);
     }
