@@ -22,7 +22,9 @@
 }
 
 <article class="book-tile @(Model.Item.Reserved ? "reserved" : "")" aria-labelledby="tile-title-@Model.Item.Id">
-    <img src="@Model.FirstPhoto" alt="Okładka książki: @Model.Item.Book.Title" />
+    <a class="cover" asp-page="/Book" asp-route-id="@Model.Item.Id" aria-labelledby="tile-title-@Model.Item.Id">
+        <img src="@Model.FirstPhoto" alt="Okładka książki: @Model.Item.Book.Title" />
+    </a>
     <footer>
         <div class="info">
             <a asp-page="/Book" asp-route-id="@Model.Item.Id" aria-labelledby="tile-title-@Model.Item.Id">
