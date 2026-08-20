@@ -134,5 +134,4 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
             && uri.Host == publicBase.Host
             && uri.Port == publicBase.Port;
     }
-
 }
