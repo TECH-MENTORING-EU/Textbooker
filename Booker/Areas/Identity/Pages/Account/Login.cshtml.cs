@@ -131,10 +131,7 @@ namespace Booker.Areas.Identity.Pages.Account
                         ModelState.AddModelError(string.Empty, GenericLoginFailureMessage);
                         return Page();
                     }
-                    else
-                    {
-                        userName = user.UserName;
-                    }
+                    userName = user.UserName;
                 }
                 var result = await _signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
@@ -153,13 +150,16 @@ namespace Booker.Areas.Identity.Pages.Account
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning($"Konto użytkownika {userName} zostało zablokowane po zbyt dużej liczbie nieudanych prób logowania.");
+                    _logger.LogWarning("Konto użytkownika {UserName} zostało zablokowane po zbyt dużej liczbie nieudanych prób logowania.", userName);
                     // The Lockout page discloses the lockout end time, so it must
                     // stay unreachable from the public login flow outside development.
                     if (_environment.IsDevelopment())
                     {
                         var user = await _userManager.FindByNameAsync(userName);
-                        return RedirectToPage("./Lockout", new { lockoutEnd = user.LockoutEnd?.ToUnixTimeSeconds() });
+                        if (user?.LockoutEnd is DateTimeOffset lockoutEnd)
+                        {
+                            return RedirectToPage("./Lockout", new { lockoutEnd = lockoutEnd.ToUnixTimeSeconds() });
+                        }
                     }
                 }
                 // Wrong password, unconfirmed account, and (outside development)
