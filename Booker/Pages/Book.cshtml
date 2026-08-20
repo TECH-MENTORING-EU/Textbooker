@@ -92,7 +92,7 @@
     <section class="seller" aria-label="Informacje o sprzedającym">
         <h2>Sprzedaje</h2>
         <div>
-            <img src="@(string.IsNullOrWhiteSpace(Model.BookItem.User.Photo) ? "/img/default-profile-picture.jpg" : PhotosManager.GetPhotoUrl(Model.BookItem.User.Photo))"
+            <img src="@(PhotosManager.GetPhotoUrl(Model.BookItem.User.Photo, "/img/default-profile-picture.jpg"))"
                  alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName" />
             <div>
                 @Model.BookItem.User.UserName<br />

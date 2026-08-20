@@ -3,7 +3,7 @@
 @inject Booker.Services.PhotosManager PhotosManager
 
 <section class="profile-heading" aria-label="Nagłówek profilu użytkownika">
-    <img src="@(string.IsNullOrWhiteSpace(Model.RequestUser.Photo) ? "/img/default-profile-picture.jpg" : PhotosManager.GetPhotoUrl(Model.RequestUser.Photo))"
+    <img src="@(PhotosManager.GetPhotoUrl(Model.RequestUser.Photo, "/img/default-profile-picture.jpg"))"
          alt="Zdjęcie profilowe użytkownika: @Model.RequestUser.UserName" />
     <hgroup>
         <h1>@Model.RequestUser.UserName</h1>
