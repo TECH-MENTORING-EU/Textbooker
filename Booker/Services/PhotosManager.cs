@@ -127,7 +127,7 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
     /// Splits a semicolon-separated photo list into storage keys. Root-relative values
     /// (starting with "/" or "\"), absolute URLs (starting with "http") and empty values
     /// are local assets or remote images, not storage objects, so they are skipped.
-    /// Valid keys in this application are bare "<guid>.<ext>" object names.
+    /// Valid keys in this application are bare "&lt;guid&gt;.&lt;ext&gt;" object names.
     /// </summary>
     public static IEnumerable<string> StorageKeys(string? photoList)
     {
@@ -140,22 +140,32 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
                 && !photo.StartsWith("http", StringComparison.OrdinalIgnoreCase));
     }
 
-    public string GetPhotoUrl(string photoUri)
+    public string GetPhotoUrl(string? photoUri, string? defaultUrl = null)
     {
         if (string.IsNullOrWhiteSpace(photoUri))
         {
-            return string.Empty;
+            return defaultUrl ?? string.Empty;
         }
 
-        if (photoUri.StartsWith('/') || photoUri.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        if (IsTrustedPublicUrl(photoUri))
         {
             return photoUri;
+        }
+
+        // Anything that is not a bare storage key (foreign absolute URL,
+        // network-path reference, inline scheme) must not reach an img src,
+        // not even mangled onto the CDN base URL.
+        if (photoUri.StartsWith('/') || photoUri.StartsWith('\\')
+            || Uri.TryCreate(photoUri, UriKind.Absolute, out _))
+        {
+            return defaultUrl ?? string.Empty;
         }
 
         var publicUrl = config["CF:PublicUrl"];
         return $"{publicUrl}/{photoUri}";
     }
 
+<<<<<<< HEAD
     /// <summary>
     /// Determines the content type from the stream's magic bytes when the stream
     /// is seekable, so content that does not match its extension (e.g. PNG data
@@ -184,4 +194,24 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
         _ => "application/octet-stream"
     };
 
+    private bool IsTrustedPublicUrl(string photoUri)
+    {
+        if (photoUri.StartsWith('/'))
+        {
+            // Root-relative application assets are same-origin; a second
+            // slash or backslash makes a network-path reference the browser
+            // resolves against a foreign host.
+            return photoUri.Length == 1 || (photoUri[1] != '/' && photoUri[1] != '\\');
+        }
+
+        if (!Uri.TryCreate(photoUri, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return false;
+        }
+
+        return Uri.TryCreate(config["CF:PublicUrl"], UriKind.Absolute, out var publicBase)
+            && uri.Host == publicBase.Host
+            && uri.Port == publicBase.Port;
+    }
 }
