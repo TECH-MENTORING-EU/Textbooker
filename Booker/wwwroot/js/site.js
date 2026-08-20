@@ -386,15 +386,16 @@ function focusFirstFocusable(container) {
     }
 }
 
-// Keep aria-expanded in sync with <details class="dropdown"> used by the account menu.
-function syncDropdownAria() {
+// Initialize the account-menu dropdown: keep aria-expanded in sync, close it
+// on item activation, outside click, and Escape.
+function initDropdownBehavior() {
     document.querySelectorAll("details.dropdown").forEach(details => {
         const summary = details.querySelector("summary");
         if (!summary) return;
         const update = () => summary.setAttribute("aria-expanded", details.hasAttribute("open") ? "true" : "false");
         update();
         details.addEventListener("toggle", update);
-        // Close the menu when a menu item is activated or on outside click.
+        // Close the menu when a menu item is activated.
         details.querySelectorAll("a, button").forEach(item => {
             item.addEventListener("click", () => details.removeAttribute("open"));
         });
@@ -404,24 +405,29 @@ function syncDropdownAria() {
         // The hamburger trigger toggles the account details itself; treating
         // its click as "outside" would immediately undo the open state.
         if (event.target.closest("#hamburger-toggle")) return;
+        // Clicks inside the dropdown (summary toggle, menu items) have their
+        // own close handling.
+        if (event.target.closest("details.dropdown")) return;
 
-        document.querySelectorAll("details.dropdown[open]").forEach(details => {
-            if (!details.contains(event.target)) {
-                details.removeAttribute("open");
-            }
-        });
+        closeOpenDropdowns();
     });
 
     document.addEventListener("keydown", function (event) {
         if (event.key !== "Escape") return;
-        document.querySelectorAll("details.dropdown[open]").forEach(details => {
-            const summary = details.querySelector("summary");
-            if (summary && details.contains(document.activeElement)) {
-                summary.focus();
-            }
-            details.removeAttribute("open");
-        });
+        closeOpenDropdowns();
     });
 }
 
-document.addEventListener("DOMContentLoaded", syncDropdownAria);
+// Close every open dropdown, returning focus to its summary when focus was
+// inside the menu (the keyboard flow starts from the summary).
+function closeOpenDropdowns() {
+    document.querySelectorAll("details.dropdown[open]").forEach(details => {
+        const summary = details.querySelector("summary");
+        if (summary && details.contains(document.activeElement)) {
+            summary.focus();
+        }
+        details.removeAttribute("open");
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initDropdownBehavior);
