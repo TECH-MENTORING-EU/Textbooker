@@ -350,15 +350,18 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         var item = await GetItemAsync(id);
         if (item == null) return;
 
-        if (!string.IsNullOrEmpty(item.Photo))
-        {
-            var oldPhotos = item.Photo.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var photo in oldPhotos)
-                await photosManager.DeletePhotoAsync(photo);
-        }
-
+        var photoKeys = item.Photo.Split(';', StringSplitOptions.RemoveEmptyEntries);
         context.Items.Remove(item);
         await context.SaveChangesAsync();
+
+        // Storage is cleaned up after the row is gone: a storage outage must not keep
+        // the item alive, it only leaves orphaned objects that are logged for a purge.
+        var orphanedKeys = await photosManager.DeletePhotosAsync(photoKeys);
+        if (orphanedKeys.Count > 0)
+        {
+            logger.LogError("Item {ItemId} was deleted but its photo objects remain in storage. Orphaned keys: {OrphanedKeys}",
+                item.Id, string.Join(", ", orphanedKeys));
+        }
     }
 
     public async Task SetItemsVisibilityByUserAsync(int userId, bool isVisible)
