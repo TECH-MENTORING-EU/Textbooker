@@ -167,7 +167,7 @@ namespace Booker.Areas.Admin.Pages
 
             // Drop the invalid entry left by the lockout so the user can sign in
             // again immediately instead of waiting for the next cleanup pass.
-            _sessionCacheManager.ResetSession(id);
+            _sessionCacheManager.RemoveCachedSession(id);
 
             user.IsVisible = true;
             await _userManager.UpdateAsync(user);

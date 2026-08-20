@@ -6,7 +6,7 @@ namespace Booker.Services;
 // and the MaintenanceService background worker mutate this same table concurrently.
 public sealed class SessionCacheStore
 {
-    public sealed record SessionInfo(bool Valid = false, DateTime? LastActivity = null);
+    public sealed record SessionInfo(bool Valid, DateTime? LastActivity);
 
     public ConcurrentDictionary<int, SessionInfo> Sessions { get; } = new();
 }
