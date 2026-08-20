@@ -23,10 +23,10 @@ public class UserPhotoManager(DataContext context, PhotosManager photosManager, 
         var keys = new List<string>();
         foreach (var photos in itemPhotos)
         {
-            keys.AddRange(StorageKeys(photos));
+            keys.AddRange(PhotosManager.StorageKeys(photos));
         }
 
-        keys.AddRange(StorageKeys(user.Photo));
+        keys.AddRange(PhotosManager.StorageKeys(user.Photo));
         return keys;
     }
 
@@ -50,20 +50,5 @@ public class UserPhotoManager(DataContext context, PhotosManager photosManager, 
 
         logger.LogInformation("Deleted {PhotoCount} photo objects of account {UserId} from storage.",
             photoKeys.Count, userId);
-    }
-
-    /// <summary>
-    /// Item photos are stored as one semicolon-separated list, the profile picture as a
-    /// single value. Root-relative values such as "/img/default-profile-picture.jpg" are
-    /// local application assets, not storage objects, so they are skipped.
-    /// </summary>
-    private static IEnumerable<string> StorageKeys(string? photoList)
-    {
-        return (photoList ?? "")
-            .Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .Select(photo => photo.Trim())
-            .Where(photo => photo.Length > 0
-                && !photo.StartsWith('/')
-                && !photo.StartsWith("http", StringComparison.OrdinalIgnoreCase));
     }
 }

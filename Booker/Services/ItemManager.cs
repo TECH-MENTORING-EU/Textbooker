@@ -350,7 +350,9 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         var item = await GetItemAsync(id);
         if (item == null) return;
 
-        var photoKeys = item.Photo.Split(';', StringSplitOptions.RemoveEmptyEntries);
+        // Only bare storage keys are deleted; seed and legacy items can also reference
+        // root-relative assets or absolute URLs, which are not storage objects.
+        var photoKeys = PhotosManager.StorageKeys(item.Photo).ToList();
         context.Items.Remove(item);
         await context.SaveChangesAsync();
 
