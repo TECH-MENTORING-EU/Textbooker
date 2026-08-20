@@ -88,15 +88,19 @@
                         Na pewno chcesz trwale usunąć użytkownika <strong>@user.UserName</strong>?
                         Tej operacji nie można cofnąć.
                     </p>
+                    <label for="delete-password-@user.Id">Potwierdź swoje hasło</label>
+                    <input type="password" id="delete-password-@user.Id" name="adminPassword" autocomplete="current-password" />
+                    <small id="delete-error-@user.Id" role="alert" class="text-danger"></small>
                     <footer>
-                        <button type="button" class="secondary" onclick="this.closest('dialog').close()">Anuluj</button>
+                        <button type="button" class="secondary" onclick="document.getElementById('delete-error-@user.Id').textContent=''; this.closest('dialog').close()">Anuluj</button>
                         <button type="button"
                                 hx-post="?handler=Delete"
                                 hx-vals='{"id": @user.Id}'
+                                hx-include="#delete-password-@user.Id"
                                 hx-target="closest tr"
                                 hx-swap="delete"
-                                antiforgery
-                                onclick="this.closest('dialog').close()">Usuń</button>
+                                data-error-target="delete-error-@user.Id"
+                                antiforgery>Usuń</button>
                     </footer>
                 </article>
             </dialog>

@@ -115,7 +115,7 @@ namespace Booker.Areas.Admin.Pages
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.AdminRoleRemoved, user.Id, user.UserName ?? user.Id.ToString(), "User");
             await transaction.CommitAsync();
 
-            _sessionCacheManager.InvalidateSession(id);
+            await _sessionCacheManager.InvalidateSessionAsync(id);
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął uprawnienia administratora użytkownika {user.UserName}.");
             return Content("Administrator usunięty pomyślnie.");
         }
