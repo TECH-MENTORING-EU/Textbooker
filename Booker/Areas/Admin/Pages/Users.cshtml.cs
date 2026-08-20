@@ -62,6 +62,28 @@ namespace Booker.Areas.Admin.Pages
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            if (user.Id == currentUser.Id)
+            {
+                ModelState.AddModelError(string.Empty, "Nie możesz usunąć własnego konta z panelu administratora.");
+                return new BadRequestResult();
+            }
+
+            // The admin's password arrives in the HX-Prompt header, same as the
+            // lockout duration; deleting an account must not be weaker than
+            // granting a role.
+            var password = Request.Headers["HX-Prompt"].ToString();
+            if (string.IsNullOrWhiteSpace(password) || !await _userManager.CheckPasswordAsync(currentUser, password))
+            {
+                ModelState.AddModelError(string.Empty, "Niepoprawne hasło.");
+                _logger.LogWarning(
+                    $"Użytkownik {currentUser.UserName} próbował usunąć konto użytkownika {user.UserName}, ale wpisał błędne hasło.");
+                return new BadRequestResult();
+            }
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
@@ -72,7 +94,8 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {user.UserName}.");
+            await _sessionCacheManager.InvalidateSessionAsync(id);
+            _logger.LogInformation($"Użytkownik {currentUser.UserName} usunął konto użytkownika {user.UserName}.");
             return Content("User deleted successfully.");
         }
 
@@ -104,7 +127,7 @@ namespace Booker.Areas.Admin.Pages
                 lockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
             }
             
-            _sessionCacheManager.InvalidateSession(id);
+            await _sessionCacheManager.InvalidateSessionAsync(id);
             var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
             if (!result.Succeeded)
             {
@@ -141,6 +164,10 @@ namespace Booker.Areas.Admin.Pages
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
+
+            // Drop the invalid entry left by the lockout so the user can sign in
+            // again immediately instead of waiting for the next cleanup pass.
+            _sessionCacheManager.ResetSession(id);
 
             user.IsVisible = true;
             await _userManager.UpdateAsync(user);

@@ -35,7 +35,7 @@ namespace Booker.Pages.Profile
 
             if (!Id.HasValue)
             {
-                if (currentUserId == 0)
+                if (currentUserId == -1)
                 {
                     return Redirect("/Identity/Account/Login");
                 }

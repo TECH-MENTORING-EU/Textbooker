@@ -100,7 +100,7 @@ namespace Booker.Areas.Admin.Pages
             }
 
 
-            _sessionCacheManager.InvalidateSession(id);
+            await _sessionCacheManager.InvalidateSessionAsync(id);
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął uprawnienia administratora użytkownika {user.UserName}.");
             return Content("Administrator usunięty pomyślnie.");
         }

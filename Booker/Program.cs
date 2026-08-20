@@ -101,6 +101,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseSecurityHeaders();
+
 app.Use(async (context, next) =>
 {
     context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
@@ -140,13 +142,19 @@ app.UseStatusCodePagesWithReExecute("/Status/{0}");
 app.UseAuthentication();
 app.Use(async (context, next) =>
 {
-    using var scope = app.Services.CreateScope();
-    var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
-    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
-    if (!await sessionCacheManager.CheckSession(context))
+    // Only an authenticated principal can have a cached session; skipping the
+    // check for anonymous traffic avoids a scope, a session lookup, and a
+    // database round-trip on every public request.
+    if (context.User.Identity?.IsAuthenticated == true)
     {
-        await signInManager.SignOutAsync();
-        context.User = new ClaimsPrincipal();
+        using var scope = app.Services.CreateScope();
+        var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
+        var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
+        if (!await sessionCacheManager.CheckSession(context))
+        {
+            await signInManager.SignOutAsync();
+            context.User = new ClaimsPrincipal();
+        }
     }
     await next();
 });

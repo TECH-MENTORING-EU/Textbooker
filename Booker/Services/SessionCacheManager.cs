@@ -3,96 +3,99 @@ using System.Threading.Tasks;
 using Booker.Data;
 using Booker.Utilities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace Booker.Services;
 
-public class SessionCacheManager
+public class SessionCacheManager(
+    SessionCacheStore store,
+    UserManager<User> userManager,
+    ILogger<SessionCacheManager> logger)
 {
-    private readonly IMemoryCache _cache;
-    private readonly UserManager<User> _userManager;
-    private readonly ILogger<SessionCacheManager> _logger;
-
-    private record struct SessionInfo(bool Valid = false, DateTime? LastActivity = null);
-    private Dictionary<int, SessionInfo> _sessions;
-
-    public SessionCacheManager(IMemoryCache cache, UserManager<User> userManager, ILogger<SessionCacheManager> logger)
-    {
-        _cache = cache;
-        _userManager = userManager;
-        _logger = logger;
-
-        if (!_cache.TryGetValue("Sessions", out Dictionary<int, SessionInfo>? sessions))
-        {
-            sessions = new Dictionary<int, SessionInfo>();
-            _cache.Set("Sessions", sessions);
-        }
-        _sessions = sessions!;
-    }
-
     public async Task<bool> CheckSession(HttpContext context)
     {
-        var userId = _userManager.GetUserId(context.User).IntOrDefault();
-        var session = _sessions.GetValueOrDefault(userId, new SessionInfo());
-
-        if (!session.Valid)
+        var userId = userManager.GetUserId(context.User).IntOrDefault();
+        if (userId <= 0)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null || user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now)
+            return false;
+        }
+
+        if (store.Sessions.TryGetValue(userId, out var session))
+        {
+            // A cached invalid entry means an explicit InvalidateSessionAsync call;
+            // it stays invalid until CleanupSessions drops it, so the invalidated
+            // cookie is rejected even before the rotated security stamp is noticed.
+            if (!session.Valid)
             {
                 return false;
             }
-            session.Valid = true;
+
+            // Compare-and-swap refresh: when InvalidateSessionAsync replaces the
+            // entry concurrently, this write loses and the next request is
+            // rejected instead of resurrecting the invalidated session.
+            store.Sessions.TryUpdate(userId, session with { LastActivity = DateTime.Now }, session);
+            return true;
         }
 
-        session.LastActivity = DateTime.Now;
-        _sessions[userId] = session;
-        _cache.Set("Sessions", _sessions);
-        return session.Valid;
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user == null || user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now)
+        {
+            return false;
+        }
+
+        store.Sessions.TryAdd(userId, new SessionCacheStore.SessionInfo(Valid: true, LastActivity: DateTime.Now));
+        return true;
     }
 
-    public void InvalidateSession(int userId)
+    public async Task InvalidateSessionAsync(int userId)
     {
-        var session = _sessions.GetValueOrDefault(userId, new SessionInfo());
-        session.Valid = false;
-        session.LastActivity = DateTime.Now;
-        _sessions[userId] = session;
-        _cache.Set("Sessions", _sessions);
-        _logger.LogInformation($"Sesja użytkownika o ID {userId} została unieważniona.");
+        store.Sessions[userId] = new SessionCacheStore.SessionInfo(Valid: false, LastActivity: DateTime.Now);
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user != null)
+        {
+            await userManager.UpdateSecurityStampAsync(user);
+        }
+        logger.LogInformation($"Sesja użytkownika o ID {userId} została unieważniona.");
+    }
+
+    // Drops cached session state so the next request validates the user against the
+    // database again; used after unlocking, where the cached invalid entry would
+    // otherwise keep rejecting the user until the next cleanup pass.
+    public void ResetSession(int userId)
+    {
+        store.Sessions.TryRemove(userId, out _);
     }
 
     public async Task WritebackSessions()
     {
-        foreach (var (userId, session) in _sessions)
+        foreach (var (userId, session) in store.Sessions)
         {
             if (session.LastActivity.HasValue)
             {
-                var user = await _userManager.FindByIdAsync(userId.ToString());
+                var user = await userManager.FindByIdAsync(userId.ToString());
                 if (user != null)
                 {
                     user.LastActiveAt = session.LastActivity.Value;
-                    await _userManager.UpdateAsync(user);
+                    await userManager.UpdateAsync(user);
                 }
             }
         }
-        _logger.LogInformation("Sesje użytkowników zostały zapisane.");
+        logger.LogInformation("Sesje użytkowników zostały zapisane.");
     }
 
     public void CleanupSessions()
     {
         var now = DateTime.Now;
-        var toRemove = _sessions
-            .Where(kv => !kv.Value.Valid || kv.Value.LastActivity.HasValue && (now - kv.Value.LastActivity.Value).TotalMinutes > 5)
-            .Select(kv => kv.Key)
-            .ToList();
-
-        foreach (var userId in toRemove)
+        var removed = 0;
+        foreach (var (userId, session) in store.Sessions)
         {
-            _sessions.Remove(userId);
+            if (!session.Valid || session.LastActivity.HasValue && (now - session.LastActivity.Value).TotalMinutes > 5)
+            {
+                store.Sessions.TryRemove(userId, out _);
+                removed++;
+            }
         }
 
-        _cache.Set("Sessions", _sessions);
-        _logger.LogInformation($"Wyczyszczono {toRemove.Count} nieaktywnych sesji użytkowników.");
+        logger.LogInformation($"Wyczyszczono {removed} nieaktywnych sesji użytkownika.");
     }
 }
