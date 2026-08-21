@@ -67,7 +67,7 @@ namespace Booker.Pages
                 result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
                     (await _userManager.GetUserAsync(User))!,
                     parameters,
-                    Input.Description,
+                    Input.Description ?? string.Empty,
                     Input.State,
                     Input.Price,
                     validatedImages.Streams,
