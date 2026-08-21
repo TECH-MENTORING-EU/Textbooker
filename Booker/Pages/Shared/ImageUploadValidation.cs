@@ -1,3 +1,4 @@
+using Booker.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -90,39 +91,18 @@ public static class ImageUploadValidation
     }
 
     /// <summary>
-    /// Detects the real image format from magic bytes and returns the matching
-    /// extension, so the stored filename and content type always match the
-    /// actual content even when the upload is misnamed (e.g. PNG named .jpg).
-    /// Returns null when the content is not a supported image.
+    /// Detects the real image format from magic bytes via ImageFormatDetector
+    /// and returns the matching extension, so the stored filename and content
+    /// type always match the actual content even when the upload is misnamed
+    /// (e.g. PNG named .jpg). Returns null when the content is not a supported
+    /// image.
     /// </summary>
     private static string? DetectImageExtension(IFormFile file)
     {
         try
         {
-            var header = new byte[8];
             using var stream = file.OpenReadStream();
-            var bytesRead = stream.Read(header, 0, header.Length);
-
-            if (bytesRead < 2)
-            {
-                return null;
-            }
-
-            // JPEG
-            if (header[0] == 0xFF && header[1] == 0xD8)
-            {
-                return ".jpg";
-            }
-
-            // PNG
-            if (bytesRead >= 8 &&
-                header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47 &&
-                header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
-            {
-                return ".png";
-            }
-
-            return null;
+            return ImageFormatDetector.DetectExtension(stream);
         }
         catch
         {

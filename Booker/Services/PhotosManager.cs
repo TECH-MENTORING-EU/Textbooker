@@ -111,53 +111,23 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
     /// is seekable, so content that does not match its extension (e.g. PNG data
     /// stored with a .jpg extension) is not labeled with the wrong MIME type.
     /// Falls back to the file extension when the stream is not seekable or its
-    /// format is not recognized. The stream position is restored after reading.
+    /// format is not recognized.
     /// </summary>
-    public static string GetContentType(Stream stream, string fileExtension)
+    private static string GetContentType(Stream stream, string fileExtension)
     {
         if (stream.CanSeek)
         {
-            var detectedContentType = DetectContentType(stream);
-            if (detectedContentType != null)
+            var detectedExtension = ImageFormatDetector.DetectExtension(stream);
+            if (detectedExtension != null)
             {
-                return detectedContentType;
+                return GetContentType(detectedExtension);
             }
         }
 
         return GetContentType(fileExtension);
     }
 
-    private static string? DetectContentType(Stream stream)
-    {
-        var originalPosition = stream.Position;
-        try
-        {
-            var header = new byte[8];
-            var bytesRead = stream.Read(header, 0, header.Length);
-
-            // JPEG: FF D8, matching ImageUploadValidation.DetectImageExtension.
-            if (bytesRead >= 2 && header[0] == 0xFF && header[1] == 0xD8)
-            {
-                return "image/jpeg";
-            }
-
-            // PNG: 89 50 4E 47 0D 0A 1A 0A.
-            if (bytesRead >= 8 &&
-                header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47 &&
-                header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
-            {
-                return "image/png";
-            }
-
-            return null;
-        }
-        finally
-        {
-            stream.Position = originalPosition;
-        }
-    }
-
-    public static string GetContentType(string fileExtension) => fileExtension.ToLowerInvariant() switch
+    private static string GetContentType(string fileExtension) => fileExtension.ToLowerInvariant() switch
     {
         ".jpg" or ".jpeg" => "image/jpeg",
         ".png" => "image/png",
