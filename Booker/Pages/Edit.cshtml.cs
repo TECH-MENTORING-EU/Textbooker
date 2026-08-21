@@ -108,7 +108,7 @@ namespace Booker.Pages
                 result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
                     ItemToEdit.User,
                     parameters,
-                    Input.Description,
+                    Input.Description ?? string.Empty,
                     Input.State,
                     Input.Price,
                     validatedImages.Streams,
