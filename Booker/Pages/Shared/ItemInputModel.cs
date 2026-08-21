@@ -25,7 +25,6 @@ public abstract class ItemInputModel
     public required string Grade { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę wybrać poziom.")]
     public required string Level { get; set; } = string.Empty;
-    [Required(ErrorMessage = "Proszę podać opis ogłoszenia.")]
     [StringLength(MaxDescriptionLength, ErrorMessage = "Opis ogłoszenia nie może przekraczać {1} znaków.")]
     public required string Description { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę opisać stan książki.")]
