@@ -101,11 +101,13 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
             return photoUri;
         }
 
-        // Anything that is not a bare storage key (foreign absolute URL,
-        // network-path reference, inline scheme) must not reach an img src,
-        // not even mangled onto the CDN base URL.
+        // Anything that is not a bare storage key (absolute URL, inline
+        // scheme, network-path reference, malformed lookalike) must not
+        // reach an img src, not even mangled onto the CDN base URL. Every
+        // absolute URI carries a colon, so the colon and backslash checks
+        // reject them all without depending on Uri parsing.
         if (photoUri.StartsWith('/') || photoUri.StartsWith('\\')
-            || Uri.TryCreate(photoUri, UriKind.Absolute, out _))
+            || photoUri.Contains(':') || photoUri.Contains('\\'))
         {
             return defaultUrl ?? string.Empty;
         }
@@ -131,6 +133,7 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
         }
 
         return Uri.TryCreate(config["CF:PublicUrl"], UriKind.Absolute, out var publicBase)
+            && uri.Scheme == publicBase.Scheme
             && uri.Host == publicBase.Host
             && uri.Port == publicBase.Port;
     }
