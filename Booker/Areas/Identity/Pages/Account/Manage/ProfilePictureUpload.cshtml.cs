@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Booker.Pages.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -66,6 +67,29 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
+            ValidatedImageBatch? validatedImages;
+            try
+            {
+                validatedImages = await ImageUploadValidation.ValidateAndReadAsync(
+                    [Input.Image],
+                    requireAtLeastOne: true,
+                    ModelState,
+                    modelKey: "Input.Image");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while validating profile picture upload for user {UserId}", user.Id);
+                ModelState.AddModelError(string.Empty, "Wystąpił błąd podczas zapisywania zdjęcia. Spróbuj ponownie.");
+                CurrentProfilePictureUrl = user.Photo;
+                return Page();
+            }
+
+            if (validatedImages == null)
+            {
+                CurrentProfilePictureUrl = user.Photo;
+                return Page();
+            }
+
             try
             {
                 if (!string.IsNullOrEmpty(user.Photo))
@@ -81,8 +105,8 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                     }
                 }
 
-                using var stream = Input.Image.OpenReadStream();
-                var newPhotoUri = await _photosManager.AddPhotoAsync(stream, ".jpeg");
+                await using var imageStream = validatedImages.Streams[0];
+                var newPhotoUri = await _photosManager.AddPhotoAsync(imageStream, validatedImages.Extensions[0]);
 
                 _logger.LogInformation("Successfully uploaded new profile picture for user {UserId}: {PhotoUrl}", user.Id, newPhotoUri);
 

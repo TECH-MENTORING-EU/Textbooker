@@ -36,6 +36,7 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
             Key = fileName,
             InputStream = stream,
             CannedACL = S3CannedACL.PublicRead,
+            ContentType = GetContentType(stream, fileExtension),
             UseChunkEncoding = false
         };
 
@@ -154,5 +155,33 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
         var publicUrl = config["CF:PublicUrl"];
         return $"{publicUrl}/{photoUri}";
     }
+
+    /// <summary>
+    /// Determines the content type from the stream's magic bytes when the stream
+    /// is seekable, so content that does not match its extension (e.g. PNG data
+    /// stored with a .jpg extension) is not labeled with the wrong MIME type.
+    /// Falls back to the file extension when the stream is not seekable or its
+    /// format is not recognized.
+    /// </summary>
+    private static string GetContentType(Stream stream, string fileExtension)
+    {
+        if (stream.CanSeek)
+        {
+            var detectedExtension = ImageFormatDetector.DetectExtension(stream);
+            if (detectedExtension != null)
+            {
+                return GetContentType(detectedExtension);
+            }
+        }
+
+        return GetContentType(fileExtension);
+    }
+
+    private static string GetContentType(string fileExtension) => fileExtension.ToLowerInvariant() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        _ => "application/octet-stream"
+    };
 
 }
