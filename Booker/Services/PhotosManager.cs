@@ -69,26 +69,76 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
         }
     }
 
-    public async Task DeletePhotoAsync(string photoUri)
+    public async Task DeletePhotoAsync(string photoKey)
     {
-        if (string.IsNullOrEmpty(photoUri)) return;
+        if (string.IsNullOrEmpty(photoKey)) return;
 
         var bucketName = config["S3:BucketName"];
+        if (string.IsNullOrWhiteSpace(bucketName))
+        {
+            throw new PhotoStorageException("Photo storage bucket is not configured.");
+        }
 
         var deleteRequest = new DeleteObjectRequest
         {
             BucketName = bucketName,
-            Key = photoUri
+            Key = photoKey
         };
         try
         {
             await s3Client.Value.DeleteObjectAsync(deleteRequest);
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            logger.LogWarning($"Error deleting old photo: {ex.Message}");
+            throw new PhotoStorageException("Photo storage is not configured.", ex);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            throw new PhotoStorageException($"Failed to delete photo object '{photoKey}' from S3.", ex);
         }
     }
+
+    /// <summary>
+    /// Deletes multiple photo objects and returns the keys that could not be deleted,
+    /// so callers can report them for a later cleanup. Never throws.
+    /// </summary>
+    public async Task<List<string>> DeletePhotosAsync(IEnumerable<string>? photoKeys)
+    {
+        var failedKeys = new List<string>();
+
+        foreach (var photoKey in photoKeys ?? Array.Empty<string>())
+        {
+            try
+            {
+                await DeletePhotoAsync(photoKey);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to delete photo object {PhotoKey} from storage.", photoKey);
+                failedKeys.Add(photoKey);
+            }
+        }
+
+        return failedKeys;
+    }
+
+    /// <summary>
+    /// Splits a semicolon-separated photo list into storage keys. Root-relative values
+    /// (starting with "/" or "\"), absolute URLs (starting with "http") and empty values
+    /// are local assets or remote images, not storage objects, so they are skipped.
+    /// Valid keys in this application are bare "<guid>.<ext>" object names.
+    /// </summary>
+    public static IEnumerable<string> StorageKeys(string? photoList)
+    {
+        return (photoList ?? "")
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(photo => photo.Trim())
+            .Where(photo => photo.Length > 0
+                && !photo.StartsWith('/')
+                && !photo.StartsWith('\\')
+                && !photo.StartsWith("http", StringComparison.OrdinalIgnoreCase));
+    }
+
     public string GetPhotoUrl(string photoUri)
     {
         if (string.IsNullOrWhiteSpace(photoUri))

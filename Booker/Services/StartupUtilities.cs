@@ -66,6 +66,7 @@ namespace Booker.Services
             services.AddScoped<FavoritesManager>();
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
+            services.AddScoped<UserPhotoManager>();
             services.AddScoped<SchoolMappingService>();
             services.AddScoped<SchoolService>();
 

@@ -20,17 +20,20 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<DeletePersonalDataModel> _logger;
         private readonly FavoritesManager _favoritesManager;
+        private readonly UserPhotoManager _userPhotoManager;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ILogger<DeletePersonalDataModel> logger,
-            FavoritesManager favoritesManager)
+            FavoritesManager favoritesManager,
+            UserPhotoManager userPhotoManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _favoritesManager = favoritesManager;
+            _userPhotoManager = userPhotoManager;
         }
 
         /// <summary>
@@ -94,12 +97,17 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             var userId = await _userManager.GetUserIdAsync(user);
             await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
 
+            // The keys must be collected before the account is deleted - the item rows
+            // cascade away with the account and the keys cannot be read afterwards.
+            var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException($"Nieoczekiwany błąd przy usuwaniu użytkownika.");
             }
+
+            await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
             await _signInManager.SignOutAsync();
 
