@@ -11,10 +11,12 @@ namespace Booker.Pages.Profile
 {
     public class FavoritesModel : PageModel
     {
+        private readonly ILogger<FavoritesModel> _logger;
         private readonly UserManager<User> _userManager;
         private readonly FavoritesManager _favoritesManager;
-        public FavoritesModel(UserManager<User> userManager, FavoritesManager favoritesManager)
+        public FavoritesModel(ILogger<FavoritesModel> logger, UserManager<User> userManager, FavoritesManager favoritesManager)
         {
+            _logger = logger;
             _userManager = userManager;
             _favoritesManager = favoritesManager;
         }
@@ -31,7 +33,7 @@ namespace Booker.Pages.Profile
 
             if (!Id.HasValue)
             {
-                if (currentUserId == 0)
+                if (currentUserId == -1)
                 {
                     return Redirect("/Identity/Account/Login");
                 }
@@ -43,6 +45,16 @@ namespace Booker.Pages.Profile
 
             if (user == null)
             {
+                return NotFound();
+            }
+
+            // Other users' favorites are served only when they are public; the 404 matches
+            // the unknown-user case so the response does not reveal whether the account exists.
+            if (user.Id != currentUserId && !(user.IsVisible && user.AreFavoritesPublic))
+            {
+                _logger.LogWarning(
+                    "Request for non-public favorites denied (target user {TargetId}, requester {RequesterId})",
+                    user.Id, currentUserId);
                 return NotFound();
             }
 
