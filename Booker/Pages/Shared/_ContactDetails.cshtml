@@ -22,7 +22,7 @@
             </a>
         </p>
     }
-    @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+    @if (Model.DisplayPhone && !string.IsNullOrEmpty(Model.PhoneNumber))
     {
         <p>
             <svg icon="phone" aria-hidden="true" style="vertical-align: -0.4em;"></svg>

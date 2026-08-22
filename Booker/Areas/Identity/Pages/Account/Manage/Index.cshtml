@@ -43,9 +43,14 @@
             <label asp-for="Input.PhoneNumber">Numer telefonu:</label>
             <input asp-for="Input.PhoneNumber" placeholder="Numer telefonu"/>
             <small>
-                Podany numer telefonu będzie automatycznie publiczny.<br />
                 <span asp-validation-for="Input.PhoneNumber"></span>
             </small>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Input.DisplayPhone">
+                <input role="switch" asp-for="Input.DisplayPhone" />
+                Pokaż mój numer telefonu jako dostępną formę kontaktu
+            </label>
         </div>
         <div style="margin-bottom: 1rem;">
             <label asp-for="Input.DisplayWhatsapp">
