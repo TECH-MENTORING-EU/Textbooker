@@ -1,5 +1,6 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
+using Booker.Utilities;
 using System;
 using System.IO;
 using System.Net;
@@ -101,13 +102,10 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
             return photoUri;
         }
 
-        // Anything that is not a bare storage key (absolute URL, inline
-        // scheme, network-path reference, malformed lookalike) must not
-        // reach an img src, not even mangled onto the CDN base URL. Every
-        // absolute URI carries a colon, so the colon and backslash checks
-        // reject them all without depending on Uri parsing.
-        if (photoUri.StartsWith('/') || photoUri.StartsWith('\\')
-            || photoUri.Contains(':') || photoUri.Contains('\\'))
+        // Anything that is not a bare storage key (absolute URL, inline scheme,
+        // network-path reference, malformed lookalike) must not reach an img
+        // src, not even mangled onto the CDN base URL.
+        if (!photoUri.IsBareStorageKey())
         {
             return defaultUrl ?? string.Empty;
         }
