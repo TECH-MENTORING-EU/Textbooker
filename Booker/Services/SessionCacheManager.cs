@@ -31,14 +31,14 @@ public class SessionCacheManager(
             }
 
             // Compare-and-swap refresh: when InvalidateSessionAsync replaces the
-            // entry concurrently, this write loses and the next request is
-            // rejected instead of resurrecting the invalidated session.
-            store.Sessions.TryUpdate(userId, session with { LastActivity = DateTime.Now }, session);
-            return true;
+            // entry concurrently, this write loses, TryUpdate returns false, and
+            // the caller signs this request out instead of letting the next one
+            // resurrect the invalidated session.
+            return store.Sessions.TryUpdate(userId, session with { LastActivity = DateTime.Now }, session);
         }
 
         var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user == null || user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now)
+        if (user == null || user.LockoutEnd > DateTimeOffset.Now)
         {
             return false;
         }

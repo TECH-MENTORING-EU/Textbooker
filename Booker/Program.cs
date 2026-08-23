@@ -140,24 +140,7 @@ app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
-app.Use(async (context, next) =>
-{
-    // Only an authenticated principal can have a cached session; skipping the
-    // check for anonymous traffic avoids a scope, a session lookup, and a
-    // database round-trip on every public request.
-    if (context.User.Identity?.IsAuthenticated == true)
-    {
-        using var scope = app.Services.CreateScope();
-        var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
-        var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
-        if (!await sessionCacheManager.CheckSession(context))
-        {
-            await signInManager.SignOutAsync();
-            context.User = new ClaimsPrincipal();
-        }
-    }
-    await next();
-});
+app.UseSessionValidation();
 app.UseAuthorization();
 app.UseRateLimiter();
 

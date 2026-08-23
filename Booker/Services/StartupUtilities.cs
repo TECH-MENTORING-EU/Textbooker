@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 using System.Net;
+using System.Security.Claims;
 using Amazon.S3;
 
 
@@ -207,21 +208,7 @@ namespace Booker.Services
 
         public static WebApplication UseSecurityHeaders(this WebApplication app)
         {
-            var imgSrc = "'self'";
-            var publicUrlSetting = app.Configuration["CF:PublicUrl"];
-            if (!string.IsNullOrWhiteSpace(publicUrlSetting))
-            {
-                if (Uri.TryCreate(publicUrlSetting, UriKind.Absolute, out var publicUrl))
-                {
-                    imgSrc += $" {publicUrl.GetLeftPart(UriPartial.Authority)}";
-                }
-                else
-                {
-                    app.Logger.LogWarning(
-                        "CF:PublicUrl '{PublicUrl}' is not an absolute URL; img-src falls back to 'self'.",
-                        publicUrlSetting);
-                }
-            }
+            var imgSrc = ResolveImgSrc(app.Configuration, app.Logger);
 
             // 'unsafe-inline' is required by the inline <script> blocks and style
             // attributes used across the pages; 'unsafe-eval' by htmx, which
@@ -246,6 +233,52 @@ namespace Booker.Services
                 headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
                 headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
                 headers["Content-Security-Policy"] = contentSecurityPolicy;
+                await next();
+            });
+
+            return app;
+        }
+
+        // The CDN origin allowed by CSP img-src comes from CF:PublicUrl; when the
+        // setting is missing or malformed, img-src stays at 'self'.
+        private static string ResolveImgSrc(IConfiguration configuration, ILogger logger)
+        {
+            var imgSrc = "'self'";
+            var publicUrlSetting = configuration["CF:PublicUrl"];
+            if (string.IsNullOrWhiteSpace(publicUrlSetting))
+            {
+                return imgSrc;
+            }
+
+            if (Uri.TryCreate(publicUrlSetting, UriKind.Absolute, out var publicUrl))
+            {
+                return imgSrc + $" {publicUrl.GetLeftPart(UriPartial.Authority)}";
+            }
+
+            logger.LogWarning(
+                "CF:PublicUrl '{PublicUrl}' is not an absolute URL; img-src falls back to 'self'.",
+                publicUrlSetting);
+            return imgSrc;
+        }
+
+        // Only an authenticated principal can have a cached session; skipping the
+        // check for anonymous traffic avoids a scope, a session lookup, and a
+        // database round-trip on every public request.
+        public static WebApplication UseSessionValidation(this WebApplication app)
+        {
+            app.Use(async (context, next) =>
+            {
+                if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    using var scope = app.Services.CreateScope();
+                    var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
+                    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
+                    if (!await sessionCacheManager.CheckSession(context))
+                    {
+                        await signInManager.SignOutAsync();
+                        context.User = new ClaimsPrincipal();
+                    }
+                }
                 await next();
             });
 
