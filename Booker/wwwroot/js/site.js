@@ -366,13 +366,17 @@ document.addEventListener("close", function (event) {
     }
 }, true);
 
-// Close any open dialog on Escape (works in addition to native <dialog>).
+// One delegated Escape handler for every dismissible overlay. It stays at
+// document level on purpose: focus can leave an open menu (e.g. tabbing past
+// its last item), so an element-scoped listener would stop firing while the
+// menu is still open. Native <dialog> handles Escape itself; this is a safety
+// net for dialogs and the only Escape handling dropdowns have.
 document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
-    const openDialogs = document.querySelectorAll("dialog[open]");
-    openDialogs.forEach(d => {
+    document.querySelectorAll("dialog[open]").forEach(d => {
         if (typeof d.close === "function") d.close();
     });
+    closeOpenDropdowns();
 });
 
 function focusFirstFocusable(container) {
@@ -387,7 +391,8 @@ function focusFirstFocusable(container) {
 }
 
 // Initialize the account-menu dropdown: keep aria-expanded in sync, close it
-// on item activation, outside click, and Escape.
+// on item activation and outside click; Escape comes from the shared
+// document-level handler above.
 function initDropdownBehavior() {
     document.querySelectorAll("details.dropdown").forEach(details => {
         const summary = details.querySelector("summary");
@@ -412,11 +417,6 @@ function initDropdownBehavior() {
         // own close handling.
         if (event.target.closest("details.dropdown")) return;
 
-        closeOpenDropdowns();
-    });
-
-    document.addEventListener("keydown", function (event) {
-        if (event.key !== "Escape") return;
         closeOpenDropdowns();
     });
 }
