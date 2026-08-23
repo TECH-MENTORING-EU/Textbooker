@@ -64,6 +64,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             [Display(Name = "Numer telefonu")]
             public string PhoneNumber { get; set; }
 
+            [Display(Name = "Pokaż mój numer telefonu jako dostępną formę kontaktu")]
+            public bool DisplayPhone { get; set; }
+
             [Display(Name = "Pokaż WhatsApp jako dostępną formę kontaktu")]
             public bool DisplayWhatsapp { get; set; }
 
@@ -90,6 +93,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 PhoneNumber = phoneNumber,
                 AreFavoritesPublic = user.AreFavoritesPublic,
                 DisplayEmail = user.DisplayEmail,
+                DisplayPhone = user.DisplayPhone,
                 DisplayWhatsapp = user.DisplayWhatsapp,
                 FbMessenger = user.FbMessenger,
                 Instagram = user.Instagram
@@ -116,9 +120,12 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Nie znaleziono użytkownika o ID '{_userManager.GetUserId(User)}'.");
             }
 
-            if (!Input.DisplayEmail 
-                && string.IsNullOrEmpty(Input.PhoneNumber) 
-                && string.IsNullOrEmpty(Input.FbMessenger) 
+            // The phone number only counts as a contact method when at least one phone-based channel displays it.
+            var phoneDisplayed = !string.IsNullOrEmpty(Input.PhoneNumber) && (Input.DisplayPhone || Input.DisplayWhatsapp);
+
+            if (!Input.DisplayEmail
+                && !phoneDisplayed
+                && string.IsNullOrEmpty(Input.FbMessenger)
                 && string.IsNullOrEmpty(Input.Instagram))
             {
                 ModelState.AddModelError(string.Empty, "Musisz wybrać przynajmniej jedną formę kontaktu.");
@@ -149,6 +156,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             
             user.AreFavoritesPublic = Input.AreFavoritesPublic;
             user.DisplayEmail = Input.DisplayEmail;
+            user.DisplayPhone = Input.DisplayPhone;
             user.DisplayWhatsapp = Input.DisplayWhatsapp;
             user.FbMessenger = Input.FbMessenger?.Trim();
             user.Instagram = Input.Instagram?.Trim();

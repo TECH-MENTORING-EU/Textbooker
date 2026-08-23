@@ -1,3 +1,4 @@
+using Booker.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -60,7 +61,8 @@ public static class ImageUploadValidation
                 continue;
             }
 
-            if (!IsValidImageSignature(image))
+            var detectedExtension = DetectImageExtension(image);
+            if (detectedExtension == null)
             {
                 modelState.AddModelError(modelKey, $"Plik {image.FileName} nie jest prawidłowym obrazem.");
                 continue;
@@ -72,7 +74,7 @@ public static class ImageUploadValidation
             memoryStream.Position = 0;
 
             imageStreams.Add(memoryStream);
-            imageExtensions.Add(extension);
+            imageExtensions.Add(detectedExtension);
         }
 
         if (!modelState.IsValid)
@@ -88,38 +90,23 @@ public static class ImageUploadValidation
         return new ValidatedImageBatch(imageStreams, imageExtensions);
     }
 
-    private static bool IsValidImageSignature(IFormFile file)
+    /// <summary>
+    /// Detects the real image format from magic bytes via ImageFormatDetector
+    /// and returns the matching extension, so the stored filename and content
+    /// type always match the actual content even when the upload is misnamed
+    /// (e.g. PNG named .jpg). Returns null when the content is not a supported
+    /// image.
+    /// </summary>
+    private static string? DetectImageExtension(IFormFile file)
     {
         try
         {
-            var header = new byte[8];
             using var stream = file.OpenReadStream();
-            var bytesRead = stream.Read(header, 0, header.Length);
-
-            if (bytesRead < 2)
-            {
-                return false;
-            }
-
-            // JPEG
-            if (header[0] == 0xFF && header[1] == 0xD8)
-            {
-                return true;
-            }
-
-            // PNG
-            if (bytesRead >= 8 &&
-                header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47 &&
-                header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
-            {
-                return true;
-            }
-
-            return false;
+            return ImageFormatDetector.DetectExtension(stream);
         }
         catch
         {
-            return false;
+            return null;
         }
     }
 }

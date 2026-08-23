@@ -139,6 +139,10 @@
         background-color: var(--pico-card-background-color);
     }
 
+    a.cover {
+        display: block;
+    }
+
     h2 {
         @include utils.h5-size;
     }

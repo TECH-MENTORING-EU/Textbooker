@@ -26,6 +26,7 @@ namespace Booker.Data
         public ICollection<ItemView> ItemViews { get; } = new HashSet<ItemView>();
         public bool AreFavoritesPublic { get; set; } = false;
         public bool DisplayEmail { get; set; } = true;
+        public bool DisplayPhone { get; set; } = true;
         public bool DisplayWhatsapp { get; set; } = false;
         public string? FbMessenger { get; set; }
         public string? Instagram { get; set; }
