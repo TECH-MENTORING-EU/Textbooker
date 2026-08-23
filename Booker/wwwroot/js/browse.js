@@ -7,8 +7,12 @@
         element.form.requestSubmit();
     }
 
-    // Drop empty-valued parameters so the URL htmx pushes contains only the
-    // filters the user actually set; clearing a filter then yields a clean /Browse.
+    // Why JavaScript: htmx serializes every form field, including empty ones,
+    // and has no declarative way to drop empty parameters, so a cleared filter
+    // would keep pushing a URL that carries it as a blank value. Doing this in
+    // htmx:configRequest — htmx's own extension event — keeps us inside its
+    // API: the pushed URL ends up containing only the filters actually set,
+    // and clearing a filter yields a clean /Browse.
     document.body.addEventListener("htmx:configRequest", (event) => {
         const params = event.detail.parameters;
         for (const name of Array.from(params.keys())) {
