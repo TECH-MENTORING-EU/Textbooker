@@ -5,7 +5,7 @@ namespace Booker.Pages.Shared;
 
 public abstract class ItemInputModel
 {
-    public const int MaxDescriptionLength = 200;
+    public const int MaxDescriptionLength = 500;
     public const int MaxStateLength = 40;
     public const int MaxImageCount = 6;
     public const long MaxImageSizeBytes = 5 * 1024 * 1024;
