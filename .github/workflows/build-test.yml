@@ -1,0 +1,26 @@
+name: Build and test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # SDK 10 builds both the net8.0 app and the net10.0 test project.
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Booker/Booker.sln
+
+      - name: Build
+        run: dotnet build Booker/Booker.sln --no-restore --nologo
+
+      - name: Test
+        run: dotnet test Booker/Booker.sln --no-build --nologo

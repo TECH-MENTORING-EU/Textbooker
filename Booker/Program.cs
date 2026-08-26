@@ -166,3 +166,4 @@ if (app.Environment.IsDevelopment())
 await app.InitializeRolesAsync();
 
 app.Run();
+public partial class Program { }

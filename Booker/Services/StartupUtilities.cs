@@ -289,6 +289,16 @@ namespace Booker.Services
             try
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+                // Non-relational/test providers (SQLite in the test host) cannot run the
+                // SqlServer-specific migrations; build the schema straight from the model.
+                if (dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+                {
+                    await dbContext.Database.EnsureCreatedAsync();
+                    logger.LogInformation("SQLite schema created from the model (test provider).");
+                    return app;
+                }
+
                 var migrator = dbContext.Database.GetService<IMigrator>();
 
 
