@@ -1,9 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- net10.0 like Booker.Tests: the local machine and CI both run the 10.0 SDK,
-         which happily loads the net8.0 app inside the test host. -->
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- net8.0 like the app and the integration suite. -->
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
