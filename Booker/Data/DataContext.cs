@@ -79,6 +79,15 @@ namespace Booker.Data
                 iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
+            modelBuilder.Entity<Item>(entity =>
+            {
+                // Listings page newest-first with OFFSET/FETCH; the composite also
+                // covers the school-isolation join (Items.UserId -> Users.SchoolId)
+                // which sorts by CreatedAt within the same read.
+                entity.HasIndex(i => i.CreatedAt).IsDescending();
+                entity.HasIndex(i => new { i.UserId, i.CreatedAt }).IsDescending(false, true);
+            });
+
             // RODO - task 09: no FK to User by design - the entry must survive account deletion.
             modelBuilder.Entity<AdminActionLog>(al =>
             {
