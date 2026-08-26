@@ -25,7 +25,11 @@ using System.Net;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
-    [EnableRateLimiting("IpRateLimit")]
+    // AllMethods instead of IpRateLimit: the email-to-school lookup
+    // (OnGetAutoSchoolAsync) is a GET, and the IpRateLimit policy exempts GETs -
+    // which left that endpoint unlimited. Razor Pages only honor this attribute
+    // on the page model, not on individual handlers.
+    [EnableRateLimiting("IpRateLimitAllMethods")]
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<User> _signInManager;

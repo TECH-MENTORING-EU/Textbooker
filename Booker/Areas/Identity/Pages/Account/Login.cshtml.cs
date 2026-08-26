@@ -15,10 +15,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
+    [EnableRateLimiting("IpRateLimit")]
     public class LoginModel : PageModel
     {
         // Single message for every failed sign-in attempt. Distinct messages for

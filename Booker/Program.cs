@@ -64,6 +64,7 @@ builder.Services.AddRazorPages()
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
 builder.Services.AddRateLimitPolicies();
+builder.Services.AddForwardedHeaders(configuration);
 
 builder.Services.AddDbContext<DataContext>(options =>
 {
@@ -113,6 +114,7 @@ var cultureInfo = new CultureInfo("pl-PL");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 
 if (app.Environment.IsDevelopment())

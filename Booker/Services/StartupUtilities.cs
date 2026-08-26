@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
@@ -103,6 +104,34 @@ namespace Booker.Services
                 {
                     return IpRateLimit(context);
                 });
+            });
+
+            return services;
+        }
+
+        public static IServiceCollection AddForwardedHeaders(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+                // By default only loopback proxies are trusted, so a client cannot spoof
+                // X-Forwarded-For to dodge IP-based rate limits. When the app runs behind
+                // an external proxy (e.g. a CDN), list its addresses in
+                // ForwardedHeaders:KnownProxies to restore per-client IP addresses.
+                var knownProxies = configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>();
+                if (knownProxies is { Length: > 0 })
+                {
+                    options.KnownProxies.Clear();
+                    options.KnownNetworks.Clear();
+                    foreach (var address in knownProxies)
+                    {
+                        if (IPAddress.TryParse(address, out var ipAddress))
+                        {
+                            options.KnownProxies.Add(ipAddress);
+                        }
+                    }
+                }
             });
 
             return services;
