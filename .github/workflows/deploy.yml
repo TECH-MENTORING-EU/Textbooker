@@ -13,6 +13,9 @@ jobs:
   build-deploy:
     runs-on: windows-latest  # Use Windows runner for Windows hosting
     env:
+      # The production connection string comes straight from the secret, so certificate
+      # validation depends on its content: it must use Encrypt=True and never set
+      # TrustServerCertificate=True (that bypass stays dev-only in appsettings.Development.json).
       DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
       CLOUDFLARE_R2_SERVICE_URL: ${{ secrets.CLOUDFLARE_R2_SERVICE_URL }}
       CLOUDFLARE_R2_PUBLIC_URL: ${{ secrets.CLOUDFLARE_R2_PUBLIC_URL }}
