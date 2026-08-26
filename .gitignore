@@ -399,7 +399,7 @@ FodyWeavers.xsd
 /Booker/.config/dotnet-tools.json
 /copilot-agent-prompt.txt
 
-# Local SQLite database files
+# Local database files (*.db plus WAL/SHM sidecars)
 *.db
 *.db-shm
 *.db-wal
