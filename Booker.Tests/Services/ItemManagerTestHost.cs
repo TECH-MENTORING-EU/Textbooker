@@ -24,6 +24,7 @@ public sealed class ItemManagerTestHost : IAsyncDisposable
     public DataContext Context { get; }
     public S3Recorder S3 { get; } = new();
     public StaticDataManager StaticData { get; }
+    public PhotosManager Photos { get; }
     public ItemManager Items { get; }
 
     public ItemManagerTestHost()
@@ -48,6 +49,7 @@ public sealed class ItemManagerTestHost : IAsyncDisposable
             NullLogger<PhotosManager>.Instance,
             new Lazy<IAmazonS3>(S3.BuildClient),
             config);
+        Photos = photos;
 
         Items = new ItemManager(Context, StaticData, photos, NullLogger<ItemManager>.Instance);
     }
