@@ -97,7 +97,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
     public IAsyncEnumerable<Item> GetAllItemsAsync(User? currentUser = null)
     {
-        var query = GetAllItemsQueryable();
+        var query = GetAllItemsQueryable()
+            .AsNoTracking();
         query = FilterByUserSchool(query, currentUser);
         
         return query
