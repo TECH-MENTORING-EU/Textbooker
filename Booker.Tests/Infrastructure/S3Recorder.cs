@@ -1,3 +1,4 @@
+using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
 using NSubstitute;
@@ -12,7 +13,7 @@ namespace Booker.Tests.Infrastructure;
 public sealed class S3Recorder
 {
     public List<PutObjectRequest> Puts { get; } = new();
-    public List<DeleteObjectsRequest> Deletes { get; } = new();
+    public List<DeleteObjectRequest> Deletes { get; } = new();
 
     /// <summary>Set true to simulate a storage outage during deletes.</summary>
     public bool FailDeletes { get; set; }
@@ -25,19 +26,21 @@ public sealed class S3Recorder
             .Returns(callInfo =>
             {
                 Puts.Add(callInfo.ArgAt<PutObjectRequest>(0)!);
-                return new PutObjectResponse();
+                // PhotosManager.AddPhotoAsync requires HttpStatusCode.OK to treat the put as successful.
+                return new PutObjectResponse { HttpStatusCode = HttpStatusCode.OK };
             });
 
-        client.DeleteObjectsAsync(Arg.Any<DeleteObjectsRequest>(), Arg.Any<CancellationToken>())
+        // PhotosManager deletes one object per key (DeletePhotoAsync/DeleteObjectAsync loop).
+        client.DeleteObjectAsync(Arg.Any<DeleteObjectRequest>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
-                var request = callInfo.ArgAt<DeleteObjectsRequest>(0)!;
+                var request = callInfo.ArgAt<DeleteObjectRequest>(0)!;
                 Deletes.Add(request);
                 if (FailDeletes)
                 {
                     throw new AmazonS3Exception("simulated storage outage");
                 }
-                return new DeleteObjectsResponse();
+                return new DeleteObjectResponse { HttpStatusCode = HttpStatusCode.NoContent };
             });
 
         return client;
