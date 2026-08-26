@@ -18,6 +18,11 @@ public static class TestSeed
     {
         using var scope = services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+        var existing = await context.Schools.SingleOrDefaultAsync(s => s.EmailDomain == domain);
+        if (existing != null)
+        {
+            return existing.Id;
+        }
         var school = new School { Name = name, EmailDomain = domain, IsActive = true };
         context.Schools.Add(school);
         await context.SaveChangesAsync();
@@ -25,8 +30,10 @@ public static class TestSeed
     }
 
     /// <summary>
-    /// Creates a confirmed, login-able user. Privacy flags and other property tweaks go
-    /// through <paramref name="configure"/> (runs before CreateAsync persists the user).
+    /// Creates a confirmed, login-able user (idempotent: returns the existing id when the
+    /// name is already taken - one factory serves the whole test class, so per-test seeds
+    /// re-run with the same names). Privacy flags and other property tweaks go through
+    /// <paramref name="configure"/> (runs before CreateAsync persists the user).
     /// </summary>
     public static async Task<int> CreateUserAsync(
         IServiceProvider services,
@@ -38,6 +45,11 @@ public static class TestSeed
     {
         using var scope = services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var existing = await userManager.FindByNameAsync(userName);
+        if (existing != null)
+        {
+            return existing.Id;
+        }
         var user = new User
         {
             UserName = userName,
