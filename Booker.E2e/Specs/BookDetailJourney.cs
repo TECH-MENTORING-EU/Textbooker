@@ -42,6 +42,7 @@ public class BookDetailJourney(E2eWebAppFixture fixture)
     public async Task Favorites_button_toggles_and_the_item_lands_on_the_favorites_page()
     {
         var page = await LoggedInBuyerOnItemPageAsync();
+        var title = (await page.TextContentAsync("h1#book-title"))!.Trim();
         var add = page.GetByRole(AriaRole.Button, new() { Name = "Dodaj do ulubionych" });
 
         await add.ClickAsync();
@@ -49,15 +50,23 @@ public class BookDetailJourney(E2eWebAppFixture fixture)
             .Expect(page.GetByRole(AriaRole.Button, new() { Name = "Usuń z ulubionych" }))
             .ToBeVisibleAsync();
 
-        await page.GotoAsync(fixture.BaseUrl + "/Profile/Favorites");
-        var body = await page.TextContentAsync("body");
-        Assert.Contains("12,50", body); // the seeded item is listed with its price
-
-        // Toggle back so the fixture stays reusable for the next run of this test.
-        var remove = page.GetByRole(AriaRole.Button, new() { Name = "Usuń z ulubionych" }).First;
-        await remove.ClickAsync();
-        await Assertions
-            .Expect(page.GetByRole(AriaRole.Button, new() { Name = "Dodaj do ulubionych" }).First)
-            .ToBeVisibleAsync();
+        try
+        {
+            await page.GotoAsync(fixture.BaseUrl + "/Profile/Favorites");
+            var body = await page.TextContentAsync("body");
+            Assert.Contains(title, body); // the seeded item is listed by its title...
+            Assert.Contains("12,50", body); // ...with its price
+        }
+        finally
+        {
+            // Toggle back on the item page so the shared fixture stays clean even
+            // when an assertion above failed.
+            await page.GotoAsync($"{fixture.BaseUrl}/Book/{fixture.SeededItemId}");
+            var remove = page.GetByRole(AriaRole.Button, new() { Name = "Usuń z ulubionych" }).First;
+            if (await remove.IsVisibleAsync())
+            {
+                await remove.ClickAsync();
+            }
+        }
     }
 }

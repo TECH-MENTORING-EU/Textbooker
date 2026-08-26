@@ -24,7 +24,7 @@ public class HomeJourney(E2eWebAppFixture fixture)
         await chip.ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("/Browse"));
 
-        Assert.Contains("subject=", page.Url);
+        Assert.Contains(subject, page.Url); // landed on exactly the chip's target
         Assert.NotNull(await page.QuerySelectorAsync(".grid-gallery"));
     }
 

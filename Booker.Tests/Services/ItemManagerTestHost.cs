@@ -2,7 +2,7 @@ using Amazon;
 using Amazon.S3;
 using Booker.Data;
 using Booker.Services;
-using Booker.Tests.Infrastructure;
+using Booker.TestUtils;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;

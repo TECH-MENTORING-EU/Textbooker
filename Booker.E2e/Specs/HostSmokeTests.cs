@@ -4,7 +4,11 @@ using Microsoft.Playwright;
 
 namespace Booker.E2e.Specs;
 
-/// <summary>Temporary Step-2 verification: the Kestrel swap yields a reachable BaseUrl.</summary>
+/// <summary>
+/// Guards the fixture itself: the Kestrel swap must yield a BaseUrl that a plain
+/// HttpClient and a real Chromium can reach. If this fails, every journey will
+/// too - better to fail here first with an obvious name.
+/// </summary>
 [Collection("E2E")]
 public class HostSmokeTests(E2eWebAppFixture fixture)
 {

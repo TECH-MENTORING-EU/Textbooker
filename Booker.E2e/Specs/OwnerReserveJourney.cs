@@ -18,13 +18,21 @@ public class OwnerReserveJourney(E2eWebAppFixture fixture)
 
         await page.Locator("#reserve-cb").CheckAsync();
 
-        await Assertions
-            .Expect(page.GetByRole(AriaRole.Status))
-            .ToContainTextAsync("zarezerwowany");
-        Assert.True(await page.Locator("#reserve-cb").IsCheckedAsync());
-
-        // Restore the fixture state for any test that runs after this one.
-        await page.Locator("#reserve-cb").UncheckAsync();
-        await Assertions.Expect(page.GetByRole(AriaRole.Status)).Not.ToBeVisibleAsync();
+        try
+        {
+            await Assertions
+                .Expect(page.GetByRole(AriaRole.Status))
+                .ToContainTextAsync("zarezerwowany");
+            Assert.True(await page.Locator("#reserve-cb").IsCheckedAsync());
+        }
+        finally
+        {
+            // Restore the fixture state for any test that runs after this one,
+            // even when an assertion above failed.
+            if (await page.Locator("#reserve-cb").IsCheckedAsync())
+            {
+                await page.Locator("#reserve-cb").UncheckAsync();
+            }
+        }
     }
 }

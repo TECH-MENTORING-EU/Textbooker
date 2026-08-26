@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 

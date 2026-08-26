@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Booker.E2e.Infrastructure;
+namespace Booker.TestUtils;
 
 /// <summary>
 /// Deterministic seed data for the Testing environment (the app's own seeding runs only
@@ -80,7 +80,7 @@ public static class TestSeed
         using var scope = services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<DataContext>();
 
-        // Skip the Id = -1 "Inna" placeholder so listings show a real catalog book.
+        // StaticData seeds an Id=-1 "Inna" (other) placeholder; items must reference a real book.
         var book = await context.Books.Where(b => b.Id > 0).OrderBy(b => b.Id).FirstAsync();
         var owner = await context.Users.FindAsync(ownerId)
             ?? throw new InvalidOperationException($"seed user {ownerId} missing");

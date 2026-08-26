@@ -1,6 +1,6 @@
 using Amazon.S3;
 using Booker.Data;
-using Booker.E2e.Infrastructure;
+using Booker.TestUtils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -17,8 +17,8 @@ namespace Booker.E2e;
 /// <summary>
 /// Boots the real app in the "Testing" environment on a real Kestrel socket
 /// (port 0) instead of the in-memory TestServer, so a real Chromium can drive
-/// it. Same fake adapters as the integration suite: SQLite in-memory, recording
-/// S3, recording e-mail sender.
+/// it. Fake adapters come from the shared Booker.TestUtils project: SQLite
+/// in-memory, recording S3, recording e-mail sender.
 /// </summary>
 /// <remarks>
 /// The factory machinery builds the app twice (dummy TestServer host for WAF +
@@ -34,6 +34,10 @@ public sealed class E2eWebAppFixture : WebApplicationFactory<Program>, IAsyncLif
 
     // Keeps the shared-cache in-memory database alive for the whole fixture.
     private readonly SqliteConnection _anchor = new(ConnectionString);
+
+    // The live Kestrel host; WAF only knows the dummy TestServer host, so the
+    // fixture itself must stop this one on teardown.
+    private IHost? _appHost;
 
     public string BaseUrl { get; private set; } = "";
     public int SeededItemId { get; private set; }
@@ -64,6 +68,7 @@ public sealed class E2eWebAppFixture : WebApplicationFactory<Program>, IAsyncLif
         builder.ConfigureWebHost(web => web.UseKestrel());
         var host = builder.Build();
         host.Start();
+        _appHost = host;
         BaseUrl = host.Services
             .GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
             .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()!
@@ -108,9 +113,17 @@ public sealed class E2eWebAppFixture : WebApplicationFactory<Program>, IAsyncLif
         return user!.Id;
     }
 
-    public async new Task DisposeAsync()
+    // Explicit interface implementation: WAF's own public DisposeAsync would
+    // otherwise be hidden (and skipped) by a Task-returning member.
+    async Task IAsyncLifetime.DisposeAsync()
     {
-        await base.DisposeAsync();
+        if (_appHost is not null)
+        {
+            await _appHost.StopAsync();
+            _appHost.Dispose();
+        }
+        await base.DisposeAsync(); // tears the dummy TestServer host down
         _anchor.Dispose();
+        await Browsers.Shared.DisposeAsync(); // the browser outlives only this collection
     }
 }

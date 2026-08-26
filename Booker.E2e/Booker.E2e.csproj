@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Booker\Booker.csproj" />
+    <ProjectReference Include="..\Booker.TestUtils\Booker.TestUtils.csproj" />
   </ItemGroup>
 
   <ItemGroup>

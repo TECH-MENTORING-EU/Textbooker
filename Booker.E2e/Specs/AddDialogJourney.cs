@@ -67,7 +67,7 @@ public class AddDialogJourney(E2eWebAppFixture fixture)
         await page.Locator("#summaryModal button[aria-label='Close']").ClickAsync();
         await Assertions.Expect(page.Locator("#summaryModal")).Not.ToBeVisibleAsync();
 
-        Assert.False(posts.Any(u => u.EndsWith("/Add")), "closing the modal must not POST");
+        Assert.Empty(posts); // closing the modal must not submit anything
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using System.Net;
+using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
 
 namespace Booker.Tests.Integration;

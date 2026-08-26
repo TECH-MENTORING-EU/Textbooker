@@ -1,4 +1,4 @@
-using Booker.E2e.Infrastructure;
+using Booker.TestUtils;
 using Microsoft.Playwright;
 
 namespace Booker.E2e;

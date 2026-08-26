@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity.UI.Services;
 
-namespace Booker.E2e.Infrastructure;
+namespace Booker.TestUtils;
 
 /// <summary>
 /// Replaces SendMailSvc in the test host: records every message instead of talking to SMTP,

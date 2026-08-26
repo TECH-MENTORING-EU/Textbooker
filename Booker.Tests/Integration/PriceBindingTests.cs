@@ -1,5 +1,6 @@
 using System.Net;
 using Booker.Data;
+using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

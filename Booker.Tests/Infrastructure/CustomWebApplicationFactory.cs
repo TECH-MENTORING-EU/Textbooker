@@ -1,5 +1,6 @@
 using Amazon.S3;
 using Booker.Data;
+using Booker.TestUtils;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Testing;

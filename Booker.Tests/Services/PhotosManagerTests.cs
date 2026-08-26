@@ -2,7 +2,7 @@ using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Booker.Services;
-using Booker.Tests.Infrastructure;
+using Booker.TestUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
