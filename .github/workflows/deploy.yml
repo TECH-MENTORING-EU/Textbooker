@@ -91,6 +91,9 @@ jobs:
 
           # Construct the DB_CONNECTION_STRING
           $env:DB_CONNECTION_STRING = "server=$DB_HOST,$DB_PORT;database=$DB_NAME;uid=$DB_USER;pwd=$DB_PASS;TrustServerCertificate=True;"
+          # The string embeds DB_PASS, so mask the composite too - a stray dump
+          # of DB_CONNECTION_STRING would otherwise print the password unredacted.
+          Write-Host "::add-mask::$env:DB_CONNECTION_STRING"
           echo "DB_CONNECTION_STRING=$env:DB_CONNECTION_STRING" >> $env:GITHUB_ENV
 
       # 4. Setup .NET SDK
