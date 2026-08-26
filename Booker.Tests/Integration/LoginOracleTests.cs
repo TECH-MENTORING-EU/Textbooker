@@ -24,10 +24,14 @@ public class LoginOracleTests(CustomWebApplicationFactory factory)
     {
         await TestSeed.CreateUserAsync(factory.Services, "oracle_ok", "oracle_ok@example.edu.pl", schoolId: null);
 
-        var response = await NewFormClient().TryLoginAsync("oracle_ok@example.edu.pl", TestSeed.Password);
+        using var client = NewFormClient();
+        var response = await client.TryLoginAsync("oracle_ok@example.edu.pl", TestSeed.Password);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
+
+        // The issued cookie actually authenticates: the home page renders for the user.
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/")).StatusCode);
     }
 
     [Fact]

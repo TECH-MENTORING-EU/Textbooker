@@ -31,12 +31,15 @@ public class PriceBindingTests(CustomWebApplicationFactory factory)
         var client = factory.CreateClient();
 
         // With the invariant binder "12,50" must filter at twelve and a half, not 1250:
-        // the cheap item stays visible and the 100-zl one is filtered out.
+        // the cheap item stays visible and the 100-zl one is filtered out. The gallery
+        // tiles carry their item id in id="tile-title-{id}", so both sides of the
+        // oracle assert on a marker the page really renders.
         var response = await client.GetAsync("/Browse?MinPrice=12%2C50&MaxPrice=12%2C50");
 
         Assert.True(response.IsSuccessStatusCode, $"got {(int)response.StatusCode}");
         var body = await response.Content.ReadAsStringAsync();
-        Assert.DoesNotContain($"id={expensive}", body);
+        Assert.Contains($"tile-title-{cheap}", body);
+        Assert.DoesNotContain($"tile-title-{expensive}", body);
     }
 
     [Fact(Skip = SkipReason)]
@@ -49,8 +52,8 @@ public class PriceBindingTests(CustomWebApplicationFactory factory)
         var context = scope.ServiceProvider.GetRequiredService<DataContext>();
         var book = await context.Books
             .Include(b => b.Grades)
+            .Where(b => b.Id > 0) // skip the Id=-1 "Inna" placeholder
             .OrderBy(b => b.Id)
-            .Skip(1) // skip the placeholder "Inna" book
             .FirstAsync();
         var grade = book.Grades.OrderBy(g => g.Id).First().GradeNumber;
 

@@ -35,7 +35,6 @@ public static class Browsers
 
 public static class PlaywrightBrowserExtensions
 {
-
     public static async Task<IPage> NewPageAsync(this PlaywrightBrowser browser, string baseUrl)
     {
         var context = await browser.NewContextAsync();
@@ -55,6 +54,13 @@ public static class PlaywrightBrowserExtensions
         await page.FillAsync("input[type=password]", TestSeed.Password);
         await page.ClickAsync("button[type=submit]");
         await page.WaitForURLAsync(u => !u.Contains("/Login"));
+        // The header swap is the real completion signal: the authenticated layout
+        // carries #logoutForm, the anonymous one does not. Attached, not Visible -
+        // the form sits inside the closed account dropdown.
+        await page.WaitForSelectorAsync("#logoutForm", new PageWaitForSelectorOptions
+        {
+            State = WaitForSelectorState.Attached,
+        });
     }
 
     /// <summary>

@@ -1,6 +1,9 @@
 using System.Net;
+using Booker.Data;
 using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Booker.Tests.Integration;
 
@@ -44,6 +47,30 @@ public class BookPageIsolationTests(CustomWebApplicationFactory factory)
         var response = await client.GetAsync($"/Book/{seed.ItemB}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    private async Task<string> TitleOfAsync(int itemId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+        var item = await context.Items.Include(i => i.Book).SingleAsync(i => i.Id == itemId);
+        return item.Book.Title;
+    }
+
+    [Fact]
+    public async Task Same_school_user_gets_the_page_with_the_book_title()
+    {
+        var seed = await SeedAsync();
+        using var client = await factory.LoginAsync("iso_d@b.edu.pl");
+        var title = await TitleOfAsync(seed.ItemB);
+
+        var response = await client.GetAsync($"/Book/{seed.ItemB}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // Razor encodes non-ASCII title characters to numeric entities - decode
+        // before matching so Polish diacritics compare as text.
+        var body = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        Assert.Contains(title, body);
     }
 
     [Fact]
@@ -124,5 +151,16 @@ public class BookPageIsolationTests(CustomWebApplicationFactory factory)
         var response = await client.GetAsync($"/Book/{seed.ItemCHidden}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Hidden_item_is_still_served_to_its_owner()
+    {
+        var seed = await SeedAsync();
+        using var client = await factory.LoginAsync("iso_c@b.edu.pl"); // the owner
+
+        var response = await client.GetAsync($"/Book/{seed.ItemCHidden}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

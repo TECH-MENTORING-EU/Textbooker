@@ -56,4 +56,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         _connection.Dispose();
         base.Dispose(disposing);
     }
+
+    /// <summary>A client that surfaces 302s instead of following them (auth-redirect assertions).</summary>
+    public HttpClient CreateNoRedirectClient() => CreateClient(new WebApplicationFactoryClientOptions
+    {
+        AllowAutoRedirect = false,
+    });
 }

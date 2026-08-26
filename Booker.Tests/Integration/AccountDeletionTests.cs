@@ -37,14 +37,20 @@ public class AccountDeletionTests(CustomWebApplicationFactory factory)
                 ["__RequestVerificationToken"] = token,
             }));
 
+    /// <summary>The seeded admin (idempotent by name) logged in over the real form.</summary>
+    private async Task<HttpClient> LoginAsAdminAsync()
+    {
+        var adminSchool = await TestSeed.CreateSchoolAsync(factory.Services, "Admin school", "admin.edu.pl");
+        var admin = await TestSeed.CreateUserAsync(factory.Services, "gdpr_admin", "gdpr_admin@admin.edu.pl", adminSchool);
+        await TestSeed.MakeAdminAsync(factory.Services, admin);
+        return await factory.LoginAsync("gdpr_admin@admin.edu.pl");
+    }
+
     [Fact]
     public async Task Admin_delete_purges_the_account_and_its_storage_objects()
     {
         var victim = await SeedVictimWithPhotosAsync();
-        var adminSchool = await TestSeed.CreateSchoolAsync(factory.Services, "Admin school", "admin.edu.pl");
-        var admin = await TestSeed.CreateUserAsync(factory.Services, "gdpr_admin", "gdpr_admin@admin.edu.pl", adminSchool);
-        await TestSeed.MakeAdminAsync(factory.Services, admin);
-        using var client = await factory.LoginAsync("gdpr_admin@admin.edu.pl");
+        using var client = await LoginAsAdminAsync();
         var token = await client.GetAntiforgeryTokenAsync("/");
 
         var response = await PostDeleteAsync(client, victim, token);
@@ -68,10 +74,7 @@ public class AccountDeletionTests(CustomWebApplicationFactory factory)
     [Fact]
     public async Task Unknown_user_id_is_404()
     {
-        var adminSchool = await TestSeed.CreateSchoolAsync(factory.Services, "Admin school", "admin.edu.pl");
-        var admin = await TestSeed.CreateUserAsync(factory.Services, "gdpr_admin", "gdpr_admin@admin.edu.pl", adminSchool);
-        await TestSeed.MakeAdminAsync(factory.Services, admin);
-        using var client = await factory.LoginAsync("gdpr_admin@admin.edu.pl");
+        using var client = await LoginAsAdminAsync();
         var token = await client.GetAntiforgeryTokenAsync("/");
 
         var response = await PostDeleteAsync(client, 999_999, token);

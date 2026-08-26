@@ -86,7 +86,7 @@ public sealed class E2eWebAppFixture : WebApplicationFactory<Program>, IAsyncLif
             // (EnsureCreated is a no-op then) and the Admin role (RoleExists
             // short-circuits InitializeRolesAsync's insert).
             await context.Database.EnsureCreatedAsync();
-            if (!await context.Roles.AnyAsync())
+            if (!await context.Roles.AnyAsync(r => r.Name == "Admin"))
             {
                 context.Roles.Add(new IdentityRole<int>("Admin") { NormalizedName = "ADMIN" });
                 await context.SaveChangesAsync();

@@ -56,6 +56,7 @@ public static class TestSeed
             Email = email,
             EmailConfirmed = true, // RequireConfirmedAccount = true in Program.cs
             SchoolId = schoolId,
+            IsVisible = true,
         };
         configure?.Invoke(user);
 
@@ -81,7 +82,9 @@ public static class TestSeed
         var context = scope.ServiceProvider.GetRequiredService<DataContext>();
 
         // StaticData seeds an Id=-1 "Inna" (other) placeholder; items must reference a real book.
-        var book = await context.Books.Where(b => b.Id > 0).OrderBy(b => b.Id).FirstAsync();
+        var book = await context.Books.Where(b => b.Id > 0).OrderBy(b => b.Id).FirstOrDefaultAsync()
+            ?? throw new InvalidOperationException(
+                "HasData books missing - EnsureCreated did not run on the test host");
         var owner = await context.Users.FindAsync(ownerId)
             ?? throw new InvalidOperationException($"seed user {ownerId} missing");
 

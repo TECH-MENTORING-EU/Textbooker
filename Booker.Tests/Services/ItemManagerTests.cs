@@ -69,6 +69,20 @@ public class ItemManagerTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task GetItemAsync_schoolless_users_see_each_others_items()
+    {
+        // The isolation matrix's userNoSchool x userNoSchool2 row: a null school is a
+        // shared pool, not a private one - schoolless viewers see schoolless items
+        // (they still cannot reach schooled items).
+        var userNo2 = await Host.SeedUserAsync("userNo2");
+        var itemNo2 = await Host.SeedItemAsync(userNo2, price: 40m);
+
+        Assert.NotNull(await Items.GetItemAsync(itemNo2, await Host.GetUserAsync(userNo2)));
+        Assert.NotNull(await Items.GetItemAsync(itemNo2, await User(_userNo)));
+        Assert.Null(await Items.GetItemAsync(_itemA, await Host.GetUserAsync(userNo2)));
+    }
+
+    [Fact]
     public async Task GetItemAsync_unknown_id_returns_null_for_everyone()
     {
         Assert.Null(await Items.GetItemAsync(999999, null));
@@ -119,10 +133,9 @@ public class ItemManagerTests : IAsyncDisposable
         // with an all-lowercase run of the title - the fragment that matches on both.
         var anyBook = await Host.Context.Books.OrderBy(b => b.Id).FirstAsync();
         var fragment = new string(anyBook.Title.Skip(1).TakeWhile(char.IsLower).ToArray());
-        if (fragment.Length < 2)
-        {
-            return; // catalog shape changed - no lowercase run to search with
-        }
+        // Fail loudly when the catalog seed changes shape instead of passing vacuously.
+        Assert.True(fragment.Length >= 2,
+            $"first seeded book title \"{anyBook.Title}\" has no 2+ char lowercase run to search with");
 
         var ids = await Items.GetItemIdsByParamsAsync(
             new ItemManager.Parameters(fragment, [], null, null, null, null), null).Materialize();
@@ -172,13 +185,23 @@ public class ItemManagerTests : IAsyncDisposable
         Assert.Equal(1, await Items.GetUserItemsCountAsync(_userB));
     }
 
+    [Fact]
+    public async Task GetUserItemIdsAsync_is_scoped_to_the_owner()
+    {
+        var extra = await Host.SeedItemAsync(_userA);
+
+        var ids = await Items.GetUserItemIdsAsync(_userA).Materialize();
+
+        // No ORDER BY in the query - compare as a set, not a sequence.
+        Assert.Equal(new HashSet<int> { _itemA, extra }, ids.ToHashSet());
+        Assert.DoesNotContain(_itemB, ids);
+    }
+
     // ---------------------------------------------------------------- view tracking
 
     [Fact]
     public async Task TrackViewAsync_second_call_is_a_no_op()
     {
-        var otherSchoolUser = await User(_userB); // any user that is not the owner
-
         await Items.TrackViewAsync(_itemA, _userB);
         await Items.TrackViewAsync(_itemA, _userB);
 
@@ -330,10 +353,9 @@ public class ItemManagerTests : IAsyncDisposable
         // of the submitted list matters. This pins that (surprising) behavior on purpose;
         // if it is ever made order-insensitive, update this test together with the change.
         var parameters = await ValidParametersForFirstBookAsync();
-        if (parameters.Grades.Count < 2)
-        {
-            return; // catalog shape changed - nothing to reorder
-        }
+        // Fail loudly when the catalog seed changes shape instead of passing vacuously.
+        Assert.True(parameters.Grades.Count >= 2,
+            "first seeded book has fewer than 2 grades - nothing to reorder");
         var reordered = parameters with { Grades = [.. parameters.Grades.AsEnumerable().Reverse()] };
 
         var result = await Items.AddItemAsync(Model(_userA, reordered, "key"));
@@ -365,6 +387,8 @@ public class ItemManagerTests : IAsyncDisposable
         Assert.Single(Host.S3.Puts);
         Assert.Equal(Host.S3.Puts[0].Key, item.Photo); // old key gone, replaced by the new one
         Assert.NotNull(item.UpdatedAt);
+        Assert.True(item.UpdatedAt >= item.CreatedAt,
+            $"UpdatedAt {item.UpdatedAt:O} before CreatedAt {item.CreatedAt:O}");
     }
 
     [Fact]
