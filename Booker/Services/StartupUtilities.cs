@@ -126,10 +126,16 @@ namespace Booker.Services
                     options.KnownNetworks.Clear();
                     foreach (var address in knownProxies)
                     {
-                        if (IPAddress.TryParse(address, out var ipAddress))
+                        if (!IPAddress.TryParse(address, out var ipAddress))
                         {
-                            options.KnownProxies.Add(ipAddress);
+                            // Fail fast: silently skipping a typo would leave the app
+                            // trusting only loopback, and every visitor back on one
+                            // shared rate-limit bucket with no hint why.
+                            throw new InvalidOperationException(
+                                $"ForwardedHeaders:KnownProxies contains a value that is not an IP address: '{address}'.");
                         }
+
+                        options.KnownProxies.Add(ipAddress);
                     }
                 }
             });
