@@ -68,6 +68,9 @@ builder.Services.AddRateLimitPolicies();
 builder.Services.AddDbContext<DataContext>(options =>
 {
     //options.UseInMemoryDatabase("InMemoryDatabaseName");
+    // The compat-level 110 pin is gone: id lists then translate to parameterized
+    // OPENJSON instead of thousands of inlined literals. OPENJSON needs compatibility
+    // level 130+ (SQL Server 2016+); below it EF Core silently falls back to literals.
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 

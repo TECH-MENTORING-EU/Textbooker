@@ -13,6 +13,7 @@ public class ItemGalleryViewComponent : ViewComponent
     private readonly PhotosManager _photosManager;
     private readonly UserManager<User> _userManager;
     const int PageSize = 25;
+    static readonly HtmlString EmptyResult = new("<p>Brak wyników...</p>");
 
     public record ItemsListModel(
         IEnumerable<ItemModel> Items,
@@ -54,9 +55,7 @@ public class ItemGalleryViewComponent : ViewComponent
 
         if (itemFilters is null && ids is null or { Count: 0 })
         {
-            return new HtmlContentViewComponentResult(
-                new HtmlString("<p>Brak wyników...</p>")
-            );
+            return new HtmlContentViewComponentResult(EmptyResult);
         }
 
         var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true
@@ -66,6 +65,13 @@ public class ItemGalleryViewComponent : ViewComponent
         var page = itemFilters is not null
             ? await _itemManager.GetPagedItemsByParamsAsync(itemFilters, pageNumber, pageSize, currentUser, includeHidden: showHidden)
             : await _itemManager.GetPagedItemsByIdsAsync(ids!, pageNumber, pageSize, currentUser, includeHidden: showHidden);
+
+        // Filters/ids can be non-empty yet match nothing (e.g. a Browse filter with
+        // no hits), so the empty state must also cover a query that returned zero rows.
+        if (!page.Items.Any())
+        {
+            return new HtmlContentViewComponentResult(EmptyResult);
+        }
 
         var itemsWithPhotos = page.Items.Select(item => new ItemModel(
             Item: item,

@@ -103,6 +103,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         
         return query
             .OrderByDescending(i => i.CreatedAt)
+            .ThenBy(i => i.Id)
             .AsAsyncEnumerable();
     }
 
@@ -147,6 +148,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         return query
             .Where(i => i.IsVisible)
             .OrderByDescending(i => i.CreatedAt)
+            .ThenBy(i => i.Id)
             .Take(count)
             .ToListAsync();
     }
@@ -178,7 +180,10 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         }
 
         var items = await query
+            // Id breaks ties on CreatedAt; without it OFFSET/FETCH ordering is
+            // non-deterministic and rows can repeat or vanish between pages.
             .OrderByDescending(i => i.CreatedAt)
+            .ThenBy(i => i.Id)
             .Skip(pageNumber * pageSize)
             .Take(pageSize + 1)
             .ToListAsync();
