@@ -69,7 +69,9 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
         {
             // Adding requires the same access the offer page enforces: school isolation
             // (GetItemAsync answers cross-school and missing ids alike with null) plus
-            // item visibility, with the owner exempt from the visibility check.
+            // item visibility. One deliberate difference from the offer page: only the
+            // owner may favorite a hidden item. Admins can view hidden offers, but a
+            // favorite is a personal bookmark, not an admin capability.
             var item = await itemManager.GetItemAsync(itemId, user);
 
             if (item == null || (!item.IsVisible && item.UserId != userId))
