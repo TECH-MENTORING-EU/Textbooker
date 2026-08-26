@@ -16,11 +16,15 @@ decimal price binding, and the HTMX/JS add-dialog and browse-filter UX.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001  | Test foundation — xUnit project, WAF host, CI gate | P1 | M | — | TODO |
-| 002  | ItemManager characterization tests | P1 | M | 001 | TODO |
-| 003  | Page-handler integration regression tests | P1 | L | 001 | TODO |
-| 004  | Photo pipeline tests | P2 | M | 001 | TODO |
-| 005  | Playwright E2E suite (in-process host) | P2 | L | 001 | TODO |
+| 001  | Test foundation — xUnit project, WAF host, CI gate | P1 | M | — | DONE |
+| 002  | ItemManager characterization tests | P1 | M | 001 | DONE |
+| 003  | Page-handler integration regression tests | P1 | L | 001 | DONE |
+| 004  | Photo pipeline tests | P2 | M | 001 | DONE |
+| 005  | Playwright E2E suite (in-process host) | P2 | L | 001 | DONE |
+
+All five executed on `feature/automated-test-suite` (001: dd9e921, 002: 956b920,
+003: f3783e1, 004: 3b45ae1, 005 + CI: final commits). 002 additionally fixed a
+production bug it exposed (InvalidTitle titles surviving ItemManager.Add).
 
 002, 003 and 004 are mutually independent after 001 and can run in parallel
 branches. 005 is independent of 002-004 but benefits from landing after 003
