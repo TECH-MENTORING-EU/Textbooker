@@ -121,6 +121,5 @@ jobs:
       - name: Build and Deploy
         shell: pwsh
         run: |   
-          echo $env:MSDEPLOY_PASSWORD
           dotnet build .\Booker\Booker.sln /p:Configuration=Release /p:DeployOnBuild=True /p:WebPublishMethod=MSDeploy /p:MSDeployPublishMethod=WMSVC /p:MSDeployServiceUrl=$env:MSDEPLOY_SERVICE_URL /p:UserName=$env:MSDEPLOY_USERNAME /p:Password=$env:MSDEPLOY_PASSWORD /p:DeployIISAppPath=$env:MSDEPLOY_IIS_APP_PATH /p:SkipExtraFilesOnServer=False /p:OutputPath=".\Booker\build_artifacts"
         
