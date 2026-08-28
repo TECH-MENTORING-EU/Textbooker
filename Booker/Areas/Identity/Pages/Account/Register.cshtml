@@ -69,6 +69,12 @@
                 <li><strong>Rola Organizatora:</strong> Aplikacja pełni jedynie rolę "tablicy ogłoszeniowej" i nie jest stroną w transakcjach. Nie ponosimy odpowiedzialności za stan podręczników ani za przebieg transakcji.</li>
             </ol>
 
+            <p><strong>&sect; 1a. Wiek Użytkowników</strong></p>
+            <ol>
+                <li>Z Aplikacji mogą korzystać osoby, które ukończyły 16 lat.</li>
+                <li>Osoby, które nie ukończyły 16 lat, mogą korzystać z Aplikacji wyłącznie za zgodą rodzica lub opiekuna prawnego.</li>
+            </ol>
+
             <p><strong>&sect; 2. Definicje</strong></p>
             <ol>
                 <li><strong>Aplikacja</strong> – platforma internetowa textbooker.pl służąca do zamieszczania i przeglądania ogłoszeń o sprzedaży książek.</li>
@@ -165,6 +171,14 @@
             </label>
         </fieldset>
         <small><span asp-validation-for="Input.AcceptTerms" class="text-danger" role="alert"></span></small>
+
+        <fieldset>
+            <label for="confirmsAgeRequirementCheckbox" class="form-check-label">
+                <input type="checkbox" id="confirmsAgeRequirementCheckbox" asp-for="Input.ConfirmsAgeRequirement">
+                @Html.DisplayNameFor(m => m.Input.ConfirmsAgeRequirement)
+            </label>
+        </fieldset>
+        <small><span asp-validation-for="Input.ConfirmsAgeRequirement" class="text-danger" role="alert"></span></small>
 
         <button id="registerSubmit" type="submit">Zarejestruj</button>
     </form>

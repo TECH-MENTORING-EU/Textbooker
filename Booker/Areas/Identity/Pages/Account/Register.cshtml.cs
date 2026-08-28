@@ -96,6 +96,11 @@ namespace Booker.Areas.Identity.Pages.Account
             [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
             public bool AcceptTerms { get; set; }
+
+            [Required(ErrorMessage = "Musisz potwierdzić wiek lub zgodę opiekuna.")]
+            [Range(typeof(bool), "true", "true", ErrorMessage = "Musisz potwierdzić wiek lub zgodę opiekuna.")]
+            [Display(Name = "Oświadczam, że ukończyłem/am 16 lat, albo posiadam zgodę rodzica lub opiekuna prawnego na korzystanie z Serwisu.")]
+            public bool ConfirmsAgeRequirement { get; set; }
         }
 
         public async Task OnGetAsync(string returnUrl = null)

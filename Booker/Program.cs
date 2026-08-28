@@ -47,6 +47,7 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(
         path: Path.Combine(logsPath, "log-.txt"),
         rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 365,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
     .CreateLogger();
 
