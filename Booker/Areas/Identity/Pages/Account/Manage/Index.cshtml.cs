@@ -73,8 +73,14 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             [Display(Name = "Messenger (nazwa użytkownika)")]
             public string FbMessenger { get; set; }
 
+            [Display(Name = "Pokaż Messenger jako dostępną formę kontaktu")]
+            public bool DisplayMessenger { get; set; }
+
             [Display(Name = "Instagram (nazwa użytkownika)")]
             public string Instagram { get; set; }
+
+            [Display(Name = "Pokaż Instagram jako dostępną formę kontaktu")]
+            public bool DisplayInstagram { get; set; }
 
             [Display(Name = "Pokaż moje ulubione innym użytkownikom")]
             public bool AreFavoritesPublic { get; set; }
@@ -96,7 +102,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 DisplayPhone = user.DisplayPhone,
                 DisplayWhatsapp = user.DisplayWhatsapp,
                 FbMessenger = user.FbMessenger,
-                Instagram = user.Instagram
+                DisplayMessenger = user.DisplayMessenger,
+                Instagram = user.Instagram,
+                DisplayInstagram = user.DisplayInstagram
             };
         }
 
@@ -120,13 +128,15 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Nie znaleziono użytkownika o ID '{_userManager.GetUserId(User)}'.");
             }
 
-            // The phone number only counts as a contact method when at least one phone-based channel displays it.
+            // The phone number/Messenger/Instagram only count as a contact method when their display switch is on.
             var phoneDisplayed = !string.IsNullOrEmpty(Input.PhoneNumber) && (Input.DisplayPhone || Input.DisplayWhatsapp);
+            var messengerDisplayed = Input.DisplayMessenger && !string.IsNullOrEmpty(Input.FbMessenger);
+            var instagramDisplayed = Input.DisplayInstagram && !string.IsNullOrEmpty(Input.Instagram);
 
             if (!Input.DisplayEmail
                 && !phoneDisplayed
-                && string.IsNullOrEmpty(Input.FbMessenger)
-                && string.IsNullOrEmpty(Input.Instagram))
+                && !messengerDisplayed
+                && !instagramDisplayed)
             {
                 ModelState.AddModelError(string.Empty, "Musisz wybrać przynajmniej jedną formę kontaktu.");
             }
@@ -134,6 +144,16 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             if (Input.DisplayWhatsapp && string.IsNullOrEmpty(Input.PhoneNumber))
             {
                 ModelState.AddModelError("Input.PhoneNumber", "Aby wybrać WhatsApp jako formę kontaktu, musisz podać numer telefonu.");
+            }
+
+            if (Input.DisplayMessenger && string.IsNullOrEmpty(Input.FbMessenger))
+            {
+                ModelState.AddModelError("Input.FbMessenger", "Aby wybrać Messenger jako formę kontaktu, musisz podać nazwę użytkownika.");
+            }
+
+            if (Input.DisplayInstagram && string.IsNullOrEmpty(Input.Instagram))
+            {
+                ModelState.AddModelError("Input.Instagram", "Aby wybrać Instagram jako formę kontaktu, musisz podać nazwę użytkownika.");
             }
 
             if (!ModelState.IsValid)
@@ -159,7 +179,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             user.DisplayPhone = Input.DisplayPhone;
             user.DisplayWhatsapp = Input.DisplayWhatsapp;
             user.FbMessenger = Input.FbMessenger?.Trim();
+            user.DisplayMessenger = Input.DisplayMessenger;
             user.Instagram = Input.Instagram?.Trim();
+            user.DisplayInstagram = Input.DisplayInstagram;
 
             await _userManager.UpdateAsync(user);
 

@@ -46,6 +46,12 @@ namespace Booker.Data
         public string? FbMessenger { get; set; }
 
         [PersonalData]
+        public bool DisplayMessenger { get; set; } = false;
+
+        [PersonalData]
         public string? Instagram { get; set; }
+
+        [PersonalData]
+        public bool DisplayInstagram { get; set; } = false;
     }
 }

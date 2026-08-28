@@ -62,17 +62,27 @@
             <label asp-for="Input.FbMessenger">Messenger (nazwa użytkownika):</label>
             <input asp-for="Input.FbMessenger" placeholder="Messenger (nazwa użytkownika)" />
             <small>
-                Podane konto będzie automatycznie publiczne.<br />
                 <span asp-validation-for="Input.FbMessenger"></span>
             </small>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Input.DisplayMessenger">
+                <input role="switch" asp-for="Input.DisplayMessenger" />
+                Pokaż Messenger jako dostępną formę kontaktu
+            </label>
         </div>
         <div>
             <label asp-for="Input.Instagram">Instagram (nazwa użytkownika):</label>
             <input asp-for="Input.Instagram" placeholder="Instagram (nazwa użytkownika)" />
             <small>
-                Podane konto będzie automatycznie publiczne.<br />
                 <span asp-validation-for="Input.Instagram"></span>
             </small>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Input.DisplayInstagram">
+                <input role="switch" asp-for="Input.DisplayInstagram" />
+                Pokaż Instagram jako dostępną formę kontaktu
+            </label>
         </div>
         <button id="update-profile-button" type="submit">Zapisz</button>
     </form>
