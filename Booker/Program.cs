@@ -1,5 +1,6 @@
 ﻿using Booker.Areas.Identity.Utilities;
 using Booker.Data;
+using Booker.ModelBinding;
 using Booker.Services;
 using Booker.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -56,8 +57,11 @@ builder.Host.UseSerilog();
 builder.Services.AddRazorPages()
     .AddViewOptions(options =>
 {
-    options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
+    // <input type="number"> must render with the invariant culture (HTML spec: "." decimal separator),
+    // otherwise browsers drop values like "12,50". Text inputs stay with the current culture.
+    options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.DetectCultureFromInputType;
 })
+    .AddMvcOptions(options => options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider()))
     .AddCustomRoutes()
     .AddAuthorizationPolicies();
 
