@@ -1,8 +1,12 @@
 ﻿@using Booker.Utilities
 @inject SignInManager<User> SignInManager
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @* @{
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
 } *@
+@{
+    var profilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
+}
 
 <ul role="list" aria-label="Sekcje zarządzania kontem">
     <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.IndexNavClass(ViewContext))" id="profile" asp-page="./Index">Ustawienia profilu</a></li>
@@ -14,5 +18,8 @@
     } *@
     @* <li><a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">Two-factor authentication</a></li> *@
     <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.PersonalDataNavClass(ViewContext))" id="personal-data" asp-page="./PersonalData">Dane osobowe</a></li>
-    <li><a asp-page="./ProfilePictureUpload">Zmień zdjęcie profilowe</a></li>
+    @if (profilePhotosEnabled)
+    {
+        <li><a asp-page="./ProfilePictureUpload">Zmień zdjęcie profilowe</a></li>
+    }
 </ul>

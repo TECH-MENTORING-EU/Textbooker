@@ -3,6 +3,7 @@ using Booker.Pages.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Booker.Data;
 using Booker.Services;
@@ -14,16 +15,21 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<User> _userManager;
         private readonly PhotosManager _photosManager;
         private readonly ILogger<ProfilePictureUploadModel> _logger;
+        private readonly IConfiguration _configuration;
 
         public ProfilePictureUploadModel(
             UserManager<User> userManager,
             PhotosManager photosManager,
-            ILogger<ProfilePictureUploadModel> logger)
+            ILogger<ProfilePictureUploadModel> logger,
+            IConfiguration configuration)
         {
             _userManager = userManager;
             _photosManager = photosManager;
             _logger = logger;
+            _configuration = configuration;
         }
+
+        private bool ProfilePhotosEnabled => _configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
 
         [BindProperty]
         public InputModel Input { get; set; } = new();
@@ -40,6 +46,11 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnGetAsync()
         {
+            if (!ProfilePhotosEnabled)
+            {
+                return NotFound();
+            }
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
@@ -53,6 +64,11 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnPostUploadAsync()
         {
+            if (!ProfilePhotosEnabled)
+            {
+                return NotFound();
+            }
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {

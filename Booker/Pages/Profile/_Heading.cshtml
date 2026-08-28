@@ -1,8 +1,17 @@
 ﻿@model Profile.IndexModel.UserModel
 @using Profile
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+@{
+    var profilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
+    var defaultAvatarPath = Configuration.GetValue<string>("Features:DefaultProfilePicturePath") ?? "/img/default-profile-picture.jpg";
+    var profilePhotoUrl = profilePhotosEnabled && !string.IsNullOrWhiteSpace(Model.RequestUser.Photo)
+        ? Model.RequestUser.Photo
+        : defaultAvatarPath;
+}
 
 <section class="profile-heading" aria-label="Nagłówek profilu użytkownika">
-    <img src="@(string.IsNullOrWhiteSpace(Model.RequestUser.Photo) ? "/img/default-profile-picture.jpg" : Model.RequestUser.Photo)"
+    <img src="@profilePhotoUrl"
          alt="Zdjęcie profilowe użytkownika: @Model.RequestUser.UserName" />
     <hgroup>
         <h1>@Model.RequestUser.UserName</h1>

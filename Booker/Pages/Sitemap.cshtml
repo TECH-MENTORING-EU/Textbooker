@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Mapa strony - TextBooker";
     var isMessagesEnabled = Configuration.GetValue<bool>("Features:MessagesEnabled");
+    var isProfilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
 }
 
 <h1>Mapa strony</h1>
@@ -29,7 +30,10 @@
             <li><a asp-area="Identity" asp-page="/Account/Manage/Email">Zmień e-mail</a></li>
             <li><a asp-area="Identity" asp-page="/Account/Manage/ChangePassword">Zmień hasło</a></li>
             <li><a asp-area="Identity" asp-page="/Account/Manage/PersonalData">Dane osobowe</a></li>
-            <li><a asp-area="Identity" asp-page="/Account/Manage/ProfilePictureUpload">Zdjęcie profilowe</a></li>
+            @if (isProfilePhotosEnabled)
+            {
+                <li><a asp-area="Identity" asp-page="/Account/Manage/ProfilePictureUpload">Zdjęcie profilowe</a></li>
+            }
         </ul>
     }
     else
