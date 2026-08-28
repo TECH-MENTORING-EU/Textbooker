@@ -4,6 +4,7 @@
 
 @{
     ViewData["Title"] = $"{Model.BookItem.Book.Title} - TextBooker";
+    ViewData["Robots"] = "noindex";
 
     var images = Model.Photos;
     var mainImage = images.FirstOrDefault();

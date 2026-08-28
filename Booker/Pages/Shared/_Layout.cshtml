@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+    @if (ViewData["Robots"] is string robotsValue)
+    {
+        <meta name="robots" content="@robotsValue" />
+    }
     <link rel="icon" type="image/png" href="/favicons/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicons/favicon.svg" />
     <link rel="shortcut icon" href="/favicons/favicon.ico" />

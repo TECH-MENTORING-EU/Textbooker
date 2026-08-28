@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /Browse
+Disallow: /Profile/
+Disallow: /Identity/
+Disallow: /Admin
