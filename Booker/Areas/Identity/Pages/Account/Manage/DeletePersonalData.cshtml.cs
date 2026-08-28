@@ -21,19 +21,22 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly ILogger<DeletePersonalDataModel> _logger;
         private readonly FavoritesManager _favoritesManager;
         private readonly UserPhotoManager _userPhotoManager;
+        private readonly DataContext _context;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ILogger<DeletePersonalDataModel> logger,
             FavoritesManager favoritesManager,
-            UserPhotoManager userPhotoManager)
+            UserPhotoManager userPhotoManager,
+            DataContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _favoritesManager = favoritesManager;
             _userPhotoManager = userPhotoManager;
+            _context = context;
         }
 
         /// <summary>
@@ -95,16 +98,26 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             }
 
             var userId = await _userManager.GetUserIdAsync(user);
-            await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
 
             // The keys must be collected before the account is deleted - the item rows
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
 
-            var result = await _userManager.DeleteAsync(user);
-            if (!result.Succeeded)
+            // Favorites removal and account deletion share the same scoped DbContext as
+            // FavoritesManager/UserManager, so one transaction covers both SaveChanges
+            // calls: either the account and its favorites both go, or neither does.
+            await using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                throw new InvalidOperationException($"Nieoczekiwany błąd przy usuwaniu użytkownika.");
+                await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+
+                var result = await _userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    throw new InvalidOperationException($"Nieoczekiwany błąd przy usuwaniu użytkownika.");
+                }
+
+                await transaction.CommitAsync();
             }
 
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
