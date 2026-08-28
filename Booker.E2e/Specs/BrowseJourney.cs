@@ -52,12 +52,16 @@ public class BrowseJourney(E2eWebAppFixture fixture)
         Assert.Contains("search=xyz-no-such-book", page.Url);
     }
 
-    [Fact(Skip = "Red on main until fix/k6-invariant-price-binding (e009560) merges")]
+    [Fact]
     public async Task Price_filter_accepts_comma_decimals()
     {
         var page = await Browsers.Shared.NewPageAsync(fixture.BaseUrl + "/Browse");
 
-        await page.FillAsync("input[name=minPrice]", "10,00");
+        // The price inputs live in the collapsed filter panel - open it first.
+        await page.Locator("#filterSummary").ClickAsync();
+        // k6 renders prices as real <input type=number>: a pl-PL user types the
+        // decimal comma key by key (Fill rejects commas in number inputs).
+        await page.Locator("input[name=minPrice]").PressSequentiallyAsync("10,00");
         await page.WaitForURLAsync(u => u.Contains("minPrice="));
 
         // The seeded 12,50 zł item survives the 10,00 zł lower bound.

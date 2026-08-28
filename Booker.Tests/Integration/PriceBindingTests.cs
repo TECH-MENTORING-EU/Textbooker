@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Booker.Data;
 using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
@@ -8,19 +9,16 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Booker.Tests.Integration;
 
 /// <summary>
-/// Decimal price binding is culture-dependent on main: query strings bind invariantly
-/// (12,50 silently becomes 1250 in the Browse price filters) while form fields bind the
-/// request culture (pl-PL, so 12.50 is a binding error in Add/Edit). The fix lives on the
-/// unmerged branch fix/k6-invariant-price-binding (commit e009560); these tests pin the
-/// intended contract and stay skipped until that branch merges - un-skip them in its PR.
+/// Decimal price binding used to be culture-dependent: query strings bound
+/// invariantly (12,50 silently became 1250 in the Browse price filters) while
+/// form fields bound the request culture (pl-PL, so 12.50 was a binding error
+/// in Add/Edit). The invariant binder landed in main with e009560; these tests
+/// pin the contract so it cannot regress.
 /// </summary>
 public class PriceBindingTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>
 {
-    private const string SkipReason =
-        "Red on main until fix/k6-invariant-price-binding (e009560) merges";
-
-    [Fact(Skip = SkipReason)]
+    [Fact]
     public async Task Browse_query_price_filter_accepts_comma_decimals()
     {
         var school = await TestSeed.CreateSchoolAsync(factory.Services, "Price school", "price.edu.pl");
@@ -42,7 +40,7 @@ public class PriceBindingTests(CustomWebApplicationFactory factory)
         Assert.DoesNotContain($"tile-title-{expensive}", body);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
     public async Task Add_form_accepts_dot_decimal_price_under_plPL_culture()
     {
         var school = await TestSeed.CreateSchoolAsync(factory.Services, "Price school", "price.edu.pl");
@@ -52,6 +50,8 @@ public class PriceBindingTests(CustomWebApplicationFactory factory)
         var context = scope.ServiceProvider.GetRequiredService<DataContext>();
         var book = await context.Books
             .Include(b => b.Grades)
+            .Include(b => b.Subject)
+            .Include(b => b.Level)
             .Where(b => b.Id > 0) // skip the Id=-1 "Inna" placeholder
             .OrderBy(b => b.Id)
             .FirstAsync();
@@ -60,17 +60,22 @@ public class PriceBindingTests(CustomWebApplicationFactory factory)
         using var client = await factory.LoginAsync("price_owner2@price.edu.pl");
         var token = await client.GetAntiforgeryTokenAsync("/Add");
 
-        var response = await client.PostAsync("/Add", new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["Input.Title"] = book.Title,
-            ["Input.Subject"] = book.Subject.Name,
-            ["Input.Grade"] = grade,
-            ["Input.Level"] = book.Level.Name,
-            ["Input.Description"] = "test",
-            ["Input.State"] = "dobry",
-            ["Input.Price"] = "12.50",
-            ["__RequestVerificationToken"] = token,
-        }));
+        // The Add form is multipart and requires at least one photo (the 400 the
+        // form-urlencoded attempt produced is the server-side requireAtLeastOne gate).
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent(book.Title), "Input.Title");
+        content.Add(new StringContent(book.Subject!.Name), "Input.Subject");
+        content.Add(new StringContent(book.Level!.Name), "Input.Level");
+        content.Add(new StringContent(grade), "Input.Grade");
+        content.Add(new StringContent("test"), "Input.Description");
+        content.Add(new StringContent("dobry"), "Input.State");
+        content.Add(new StringContent("12.50"), "Input.Price");
+        content.Add(new StringContent(token), "__RequestVerificationToken");
+        var image = new ByteArrayContent(TestImages.Jpeg);
+        image.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        content.Add(image, "Input.Images", "cover.jpg");
+
+        var response = await client.PostAsync("/Add", content);
 
         Assert.True(response.IsSuccessStatusCode || (int)response.StatusCode == 302,
             $"got {(int)response.StatusCode}");
