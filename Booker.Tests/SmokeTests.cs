@@ -35,7 +35,7 @@ public class SmokeTests(CustomWebApplicationFactory factory)
     {
         var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/Book?id=999999");
+        var response = await client.GetAsync("/Book/999999");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
