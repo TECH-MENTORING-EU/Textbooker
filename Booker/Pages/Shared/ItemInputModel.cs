@@ -33,6 +33,11 @@ public abstract class ItemInputModel
 
     [Display(Name = "Zdjęcia książki")]
     public virtual List<IFormFile> Images { get; set; } = new();
+
+    // RODO — zadanie 08: potwierdzenie świadomej publikacji opisu wyglądającego na zawierający
+    // dane kontaktowe (e-mail/telefon). Nie jest wymagane — pole istnieje tylko po to, żeby
+    // formularz dało się ponownie wysłać po ostrzeżeniu.
+    public bool ConfirmSensitiveDescription { get; set; }
 }
 
 public class ItemAddModel : ItemInputModel

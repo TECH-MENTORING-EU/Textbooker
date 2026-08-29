@@ -4,11 +4,13 @@
         var usersCurrent = AdminNavPages.UsersNavClass(ViewContext);
         var adminsCurrent = AdminNavPages.AdminsNavClass(ViewContext);
         var schoolsCurrent = AdminNavPages.SchoolsNavClass(ViewContext);
+        var itemsCurrent = AdminNavPages.ItemsNavClass(ViewContext);
         var auditLogCurrent = AdminNavPages.AuditLogNavClass(ViewContext);
     }
     <li><a aria-current="@(string.IsNullOrEmpty(indexCurrent) ? null : indexCurrent)" id="summary" asp-page="./Index">Podsumowanie</a></li>
     <li><a aria-current="@(string.IsNullOrEmpty(usersCurrent) ? null : usersCurrent)" id="users" asp-page="./Users">Użytkownicy</a></li>
     <li><a aria-current="@(string.IsNullOrEmpty(adminsCurrent) ? null : adminsCurrent)" id="admins" asp-page="./Admins">Administratorzy</a></li>
     <li><a aria-current="@(string.IsNullOrEmpty(schoolsCurrent) ? null : schoolsCurrent)" id="schools" asp-page="./Schools">Szkoły</a></li>
+    <li><a aria-current="@(string.IsNullOrEmpty(itemsCurrent) ? null : itemsCurrent)" id="items" asp-page="./Items">Ogłoszenia</a></li>
     <li><a aria-current="@(string.IsNullOrEmpty(auditLogCurrent) ? null : auditLogCurrent)" id="audit-log" asp-page="./AuditLog">Dziennik działań</a></li>
 </ul>
