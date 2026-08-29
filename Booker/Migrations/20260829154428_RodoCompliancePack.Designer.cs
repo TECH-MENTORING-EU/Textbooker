@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booker.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260829115047_AddDisplaySchool")]
-    partial class AddDisplaySchool
+    [Migration("20260829154428_RodoCompliancePack")]
+    partial class RodoCompliancePack
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -857,6 +857,51 @@ namespace Booker.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Booker.Data.AdminActionLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("AdminUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdminUserName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Parameters")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminUserName");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("AdminActionLogs");
+                });
+
             modelBuilder.Entity("Booker.Data.Book", b =>
                 {
                     b.Property<int>("Id")
@@ -1553,6 +1598,9 @@ namespace Booker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("FlaggedForReview")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
@@ -1801,6 +1849,9 @@ namespace Booker.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("AgeConfirmationAcceptedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("AreFavoritesPublic")
                         .HasColumnType("bit");
 
@@ -1878,6 +1929,12 @@ namespace Booker.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("TermsAcceptedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TermsAcceptedVersion")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")
