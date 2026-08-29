@@ -16,14 +16,16 @@ namespace Booker.Areas.Admin.Pages
         private readonly ItemManager _itemManager;
         private readonly UserPhotoManager _userPhotoManager;
         private readonly ILogger<UsersModel> _logger;
+        private readonly DataContext _context;
 
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, ILogger<UsersModel> logger)
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, ILogger<UsersModel> logger, DataContext context)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _itemManager = itemManager;
             _userPhotoManager = userPhotoManager;
             _logger = logger;
+            _context = context;
         }
 
         public record LockoutLinkModel(int UserId, string? UserName, bool ShouldLockout);
@@ -64,23 +66,31 @@ namespace Booker.Areas.Admin.Pages
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
+            var deletedUserName = user.UserName ?? id.ToString();
 
             // The keys must be collected before the account is deleted - the item rows
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
 
+            // RODO — zadanie 09: usunięcie konta i wpis w dzienniku administracyjnym w jednej transakcji.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
+                await transaction.RollbackAsync();
                 // Handle deletion failure (e.g., log the error, display a message, etc.)
                 ModelState.AddModelError(string.Empty, "Error deleting user.");
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
 
+            await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserDelete, id, deletedUserName, "User");
+            await transaction.CommitAsync();
+
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {user.UserName}.");
+            _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {deletedUserName}.");
             return Content("User deleted successfully.");
         }
 
@@ -113,19 +123,27 @@ namespace Booker.Areas.Admin.Pages
             }
             
             _sessionCacheManager.InvalidateSession(id);
+
+            // RODO — zadanie 09: blokada konta i wpis w dzienniku administracyjnym w jednej transakcji.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
             if (!result.Succeeded)
             {
+                await transaction.RollbackAsync();
                 // Handle lockout failure (e.g., log the error, display a message, etc.)
                 ModelState.AddModelError(string.Empty, "Error locking out user.");
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
-            
+
             user.IsVisible = false;
             await _userManager.UpdateAsync(user);
 
             await _itemManager.SetItemsVisibilityByUserAsync(id, false);
+
+            await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserLockout, user.Id, user.UserName ?? id.ToString(), "User", $"days={days}");
+            await transaction.CommitAsync();
 
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} zablokował konto użytkownika {user.UserName} na okres {days} dni.");
             return Partial("_UserRows", new List<User> { user });
@@ -141,9 +159,13 @@ namespace Booker.Areas.Admin.Pages
 
             var currentUser = await _userManager.GetUserAsync(User);
 
+            // RODO — zadanie 09: odblokowanie konta i wpis w dzienniku administracyjnym w jednej transakcji.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow);
             if (!result.Succeeded)
             {
+                await transaction.RollbackAsync();
                 // Handle unlock failure (e.g., log the error, display a message, etc.)
                 ModelState.AddModelError(string.Empty, "Error unlocking user.");
                 Users = _userManager.Users.ToList();
@@ -153,6 +175,9 @@ namespace Booker.Areas.Admin.Pages
             user.IsVisible = true;
             await _userManager.UpdateAsync(user);
             await _itemManager.SetItemsVisibilityByUserAsync(id, true);
+
+            await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserUnlock, user.Id, user.UserName ?? id.ToString(), "User");
+            await transaction.CommitAsync();
 
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} odblokował konto użytkownika {user.UserName}.");
             return Partial("_UserRows", new List<User> { user });

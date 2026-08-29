@@ -1,5 +1,6 @@
 using Booker.Data;
 using Booker.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -9,11 +10,21 @@ namespace Booker.Areas.Admin.Pages
     {
         private readonly SchoolService _schoolService;
         private readonly ILogger<SchoolsModel> _logger;
+        private readonly DataContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public SchoolsModel(SchoolService schoolService, ILogger<SchoolsModel> logger)
+        public SchoolsModel(SchoolService schoolService, ILogger<SchoolsModel> logger, DataContext context, UserManager<User> userManager)
         {
             _schoolService = schoolService;
             _logger = logger;
+            _context = context;
+            _userManager = userManager;
+        }
+
+        private async Task LogSchoolActionAsync(string actionType, int schoolId, string schoolName, string? parameters = null)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            await _context.LogAdminActionAsync(currentUser, actionType, schoolId, schoolName, "School", parameters);
         }
 
         public List<SchoolWithUserCount> Schools { get; set; } = [];
@@ -45,9 +56,12 @@ namespace Booker.Areas.Admin.Pages
 
             try
             {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
                 var school = await _schoolService.CreateSchoolAsync(name.Trim(), emailDomain?.Trim());
+                await LogSchoolActionAsync(AdminActionTypes.SchoolCreated, school.Id, school.Name);
+                await transaction.CommitAsync();
                 _logger.LogInformation("Admin created new school: {SchoolName} (ID: {SchoolId})", school.Name, school.Id);
-                
+
                 // Return single row for the new school
                 var schoolWithCount = new SchoolWithUserCount
                 {
@@ -72,11 +86,15 @@ namespace Booker.Areas.Admin.Pages
                 return NotFound();
             }
 
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             var result = await _schoolService.SoftDeleteSchoolAsync(id);
             if (!result)
             {
+                await transaction.RollbackAsync();
                 return new StatusCodeResult(500);
             }
+            await LogSchoolActionAsync(AdminActionTypes.SchoolDeactivated, school.Id, school.Name);
+            await transaction.CommitAsync();
 
             _logger.LogInformation("Admin soft-deleted school: {SchoolName} (ID: {SchoolId})", school.Name, school.Id);
             
@@ -97,11 +115,15 @@ namespace Booker.Areas.Admin.Pages
                 return NotFound();
             }
 
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             var result = await _schoolService.ReactivateSchoolAsync(id);
             if (!result)
             {
+                await transaction.RollbackAsync();
                 return new StatusCodeResult(500);
             }
+            await LogSchoolActionAsync(AdminActionTypes.SchoolReactivated, school.Id, school.Name);
+            await transaction.CommitAsync();
 
             _logger.LogInformation("Admin reactivated school: {SchoolName} (ID: {SchoolId})", school.Name, school.Id);
             
@@ -122,20 +144,26 @@ namespace Booker.Areas.Admin.Pages
             }
 
             School? school;
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 school = await _schoolService.UpdateSchoolAsync(id, name.Trim(), emailDomain?.Trim());
             }
             catch (InvalidOperationException ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogWarning(ex, "Failed to update school {SchoolId}: domain conflict", id);
                 return new BadRequestObjectResult(ex.Message);
             }
 
             if (school == null)
             {
+                await transaction.RollbackAsync();
                 return NotFound();
             }
+
+            await LogSchoolActionAsync(AdminActionTypes.SchoolUpdated, school.Id, school.Name);
+            await transaction.CommitAsync();
 
             _logger.LogInformation("Admin updated school: {SchoolName} (ID: {SchoolId})", school.Name, school.Id);
             
