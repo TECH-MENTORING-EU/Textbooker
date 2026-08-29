@@ -70,6 +70,12 @@ builder.Services.AddRazorPages()
 builder.Services.AddBookerServices(configuration);
 builder.Services.AddRateLimitPolicies();
 
+// RODO — zadanie 07: progi limitu ujawnień danych kontaktowych, konfigurowalne w appsettings.
+// Sam licznik (ContactRevealLimiter) trzyma stan tylko w IMemoryCache, bez zapisu do bazy.
+builder.Services.Configure<Booker.Services.ContactRevealLimitOptions>(
+    configuration.GetSection("ContactRevealLimits"));
+builder.Services.AddSingleton<Booker.Services.ContactRevealLimiter>();
+
 builder.Services.AddDbContext<DataContext>(options =>
 {
     //options.UseInMemoryDatabase("InMemoryDatabaseName");
@@ -86,9 +92,10 @@ builder.Services.AddDefaultIdentity<User>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
+    // RODO — zadanie 07: ok. 10 nieudanych prób logowania -> 2 godziny blokady.
     options.Lockout.AllowedForNewUsers = true;
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 10;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(2);
 })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<DataContext>()

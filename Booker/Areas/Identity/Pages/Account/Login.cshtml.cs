@@ -24,7 +24,12 @@ namespace Booker.Areas.Identity.Pages.Account
         // Single message for every failed sign-in attempt. Distinct messages for
         // unknown email, wrong password, unconfirmed, or locked-out accounts let
         // an attacker enumerate registered addresses (issue #66).
-        private const string GenericLoginFailureMessage = "Błędny login lub hasło.";
+        // RODO — zadanie 07: rozszerzone o wzmiankę o resecie hasła, bez ujawniania,
+        // czy przyczyną jest zła nazwa/hasło czy blokada konta po zbyt wielu próbach —
+        // to samo zdanie obsługuje oba przypadki.
+        private const string GenericLoginFailureMessage =
+            "Błędny login lub hasło. Jeśli logowanie wielokrotnie się nie udaje, odczekaj chwilę " +
+            "albo zresetuj hasło.";
 
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<LoginModel> _logger;
