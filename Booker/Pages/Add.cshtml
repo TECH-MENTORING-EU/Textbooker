@@ -1,12 +1,31 @@
 ﻿@page
 @model Booker.Pages.BookAddingModel
+@inject Microsoft.AspNetCore.Identity.UserManager<Booker.Data.User> UserManager
 
 @{
     ViewData["Title"] = "Dodaj ogłoszenie";
     const string include = "#add-form :not([name = '__RequestVerificationToken'])";
+
+    // RODO — zadanie 05: bez żadnego włączonego kanału kontaktu ogłoszenie jest bezużyteczne
+    // dla obu stron, więc ostrzegamy przed publikacją zamiast blokować ją po fakcie.
+    var currentUser = await UserManager.GetUserAsync(User);
+    var hasAnyContactChannel = currentUser != null && (
+        currentUser.DisplayEmail
+        || (currentUser.DisplayPhone && !string.IsNullOrEmpty(currentUser.PhoneNumber))
+        || (currentUser.DisplayWhatsapp && !string.IsNullOrEmpty(currentUser.PhoneNumber))
+        || (currentUser.DisplayMessenger && !string.IsNullOrEmpty(currentUser.FbMessenger))
+        || (currentUser.DisplayInstagram && !string.IsNullOrEmpty(currentUser.Instagram))
+    );
 }
 
-
+@if (!hasAnyContactChannel)
+{
+    <div role="alert">
+        <strong>Nie masz włączonej żadnej formy kontaktu.</strong> Nikt nie będzie mógł się z Tobą
+        skontaktować w sprawie tego ogłoszenia. Włącz przynajmniej jedną formę kontaktu w
+        <a asp-area="Identity" asp-page="/Account/Manage/Index">ustawieniach profilu</a>.
+    </div>
+}
 
 <h1 id="add-heading">Nowe ogłoszenie:</h1>
 <form method="post" enctype="multipart/form-data" id="add-form" aria-labelledby="add-heading" hx-on:submit="if (!this.dataset.inSummary) showSummary(event)" hx-on:image-upload-state="toggleFormSubmitState(this, event.detail.busy)">

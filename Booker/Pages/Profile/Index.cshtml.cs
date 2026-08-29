@@ -31,7 +31,7 @@ namespace Booker.Pages.Profile
 
         // RODO — zadanie 06: nazwa szkoły dociągana osobno, bo UserManager nie ładuje
         // nawigacji User.School.
-        public record UserModel(User RequestUser, bool IsCurrentUser, string? SchoolName);
+        public record UserModel(User RequestUser, bool IsCurrentUser, string? SchoolName, bool HasActiveListing);
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
@@ -61,8 +61,9 @@ namespace Booker.Pages.Profile
             var schoolName = user.SchoolId.HasValue
                 ? (await _context.Schools.FindAsync(user.SchoolId.Value))?.Name
                 : null;
+            var hasActiveListing = await _itemManager.HasVisibleListingAsync(Id.Value);
 
-            UserInfo = new UserModel(user, user.Id == currentUserId, schoolName);
+            UserInfo = new UserModel(user, user.Id == currentUserId, schoolName, hasActiveListing);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

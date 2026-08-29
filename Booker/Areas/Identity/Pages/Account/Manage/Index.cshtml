@@ -47,15 +47,32 @@
         </div>
         <hr />
         <h4>Formy kontaktu</h4>
+        <p>
+            <small>
+                Gdy masz opublikowane ogłoszenie, zalogowani użytkownicy zainteresowani zakupem mogą
+                kliknąć przycisk kontaktu, żeby zobaczyć wybrane przez Ciebie kanały kontaktu poniżej.
+                Osoby niezalogowane i osoby bez Twojego aktywnego ogłoszenia nigdy ich nie zobaczą.
+                <strong>Jeśli wyłączysz tu wszystkie kanały, nikt nie będzie mógł się z Tobą skontaktować
+                w sprawie ogłoszeń</strong> — dlatego musisz zostawić włączony przynajmniej jeden.
+            </small>
+        </p>
         <div style="margin-bottom: 1rem;">
             <label asp-for="Input.DisplayEmail">
                 <input role="switch" asp-for="Input.DisplayEmail" />
                 Pokaż mój e-mail jako dostępną formę kontaktu
             </label>
             <small>
-                Swój e-mail możesz zmienić <a asp-page="./Email">tutaj</a>.
+                Włączone: Twój e-mail zobaczy zalogowany użytkownik po kliknięciu przycisku kontaktu przy
+                Twoim ogłoszeniu. Wyłączone: nikt nie zobaczy Twojego e-maila. Swój e-mail możesz zmienić
+                <a asp-page="./Email">tutaj</a>.
             </small>
         </div>
+        <p>
+            <small>
+                Poniższe dane są całkowicie dobrowolne. Ich pokazanie innym jest Twoją zgodą, którą możesz
+                wycofać w dowolnym momencie, wyłączając odpowiedni przełącznik.
+            </small>
+        </p>
         <div>
             <label asp-for="Input.PhoneNumber">Numer telefonu:</label>
             <input asp-for="Input.PhoneNumber" placeholder="Numer telefonu"/>

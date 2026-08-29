@@ -42,6 +42,10 @@
     {
         @("Zaloguj się, aby zobaczyć dane kontaktowe użytkownika.")
     }
+    else if (!Model.IsCurrentUser && !Model.HasActiveListing)
+    {
+        @("Ten użytkownik nie ma obecnie żadnych aktywnych ogłoszeń, dlatego jego dane kontaktowe nie są udostępniane.")
+    }
     else
     {
         <partial name="_ContactDetails" for="RequestUser" />
