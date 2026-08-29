@@ -32,11 +32,11 @@
             </a>
 
             <p>@Model.Item.Price.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("pl-PL")) zł</p>
-            @if (User.Identity?.IsAuthenticated == true)
+            @if (User.Identity?.IsAuthenticated == true && Model.Item.User.DisplaySchool && Model.Item.User.School != null)
             {
                 <p>
                     <small>
-                        @(Model.Item.User.School?.Name ?? "Bez szkoły")
+                        @Model.Item.User.School.Name
                     </small>
                 </p>
             }

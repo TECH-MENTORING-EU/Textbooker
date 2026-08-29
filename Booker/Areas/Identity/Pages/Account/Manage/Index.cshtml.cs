@@ -10,6 +10,7 @@ using Booker.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
@@ -17,14 +18,21 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly DataContext _context;
 
         public IndexModel(
             UserManager<User> userManager,
-            SignInManager<User> signInManager)
+            SignInManager<User> signInManager,
+            DataContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _context = context;
         }
+
+        // RODO — zadanie 06: szkoły nie da się zmienić z tego formularza — celowo nie jest to
+        // częścią [BindProperty] Input, żeby żadne dodatkowe pole w POST nie mogło jej nadpisać.
+        public string SchoolName { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -84,6 +92,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
             [Display(Name = "Pokaż moje ulubione innym użytkownikom")]
             public bool AreFavoritesPublic { get; set; }
+
+            [Display(Name = "Pokaż moją szkołę przy moich ogłoszeniach")]
+            public bool DisplaySchool { get; set; }
         }
 
         private async Task LoadAsync(User user)
@@ -93,6 +104,10 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
 
             Username = userName;
+
+            SchoolName = user.SchoolId.HasValue
+                ? (await _context.Schools.FindAsync(user.SchoolId.Value))?.Name
+                : null;
 
             Input = new InputModel
             {
@@ -104,7 +119,8 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 FbMessenger = user.FbMessenger,
                 DisplayMessenger = user.DisplayMessenger,
                 Instagram = user.Instagram,
-                DisplayInstagram = user.DisplayInstagram
+                DisplayInstagram = user.DisplayInstagram,
+                DisplaySchool = user.DisplaySchool
             };
         }
 
@@ -182,6 +198,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             user.DisplayMessenger = Input.DisplayMessenger;
             user.Instagram = Input.Instagram?.Trim();
             user.DisplayInstagram = Input.DisplayInstagram;
+            user.DisplaySchool = Input.DisplaySchool;
 
             await _userManager.UpdateAsync(user);
 

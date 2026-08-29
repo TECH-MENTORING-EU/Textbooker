@@ -23,10 +23,27 @@
             </small>
         </div>
         <div>
+            <label for="school-name">Szkoła</label>
+            <input id="school-name" value="@(Model.SchoolName ?? "Brak przypisanej szkoły")" disabled />
+            <small>
+                Szkoły nie można zmienić po założeniu konta. Jeśli wybrałeś/aś złą szkołę, załóż nowe konto.
+            </small>
+        </div>
+        <div>
             <label asp-for="Input.AreFavoritesPublic">
                 <input role="switch" asp-for="Input.AreFavoritesPublic" />
                 Pokaż moje ulubione innym użytkownikom
             </label>
+        </div>
+        <div>
+            <label asp-for="Input.DisplaySchool">
+                <input role="switch" asp-for="Input.DisplaySchool" />
+                Pokaż moją szkołę przy moich ogłoszeniach
+            </label>
+            <small>
+                Jeśli włączysz, inni zalogowani użytkownicy zobaczą nazwę Twojej szkoły przy Twoich
+                ogłoszeniach i na Twoim profilu. Domyślnie jest wyłączone.
+            </small>
         </div>
         <hr />
         <h4>Formy kontaktu</h4>
