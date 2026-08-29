@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Booker.Services;
+using Booker.Utilities;
 using System.Net;
 
 namespace Booker.Areas.Identity.Pages.Account
@@ -94,6 +95,7 @@ namespace Booker.Areas.Identity.Pages.Account
             public int? SchoolId { get; set; }
 
             [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
+            [Range(typeof(bool), "true", "true", ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
             public bool AcceptTerms { get; set; }
 
@@ -204,6 +206,11 @@ namespace Booker.Areas.Identity.Pages.Account
                 }
 
                 user.Photo = "/img/default-profile-picture.jpg";
+
+                var now = DateTime.Now;
+                user.TermsAcceptedAt = now;
+                user.TermsAcceptedVersion = RegulaminInfo.CurrentVersion;
+                user.AgeConfirmationAcceptedAt = now;
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);

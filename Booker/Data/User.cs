@@ -61,5 +61,15 @@ namespace Booker.Data
         // RODO — zadanie 06
         [PersonalData]
         public bool DisplaySchool { get; set; } = false;
+
+        // RODO — zadanie 04
+        [PersonalData]
+        public DateTime? TermsAcceptedAt { get; set; }
+
+        [PersonalData]
+        public string? TermsAcceptedVersion { get; set; }
+
+        [PersonalData]
+        public DateTime? AgeConfirmationAcceptedAt { get; set; }
     }
 }
