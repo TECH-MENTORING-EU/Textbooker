@@ -1,7 +1,7 @@
 # Scenariusze testowe dla Claude for Chrome — po scaleniu poprawek RODO
 
 Instrukcja do wykonania w przeglądarce, krok po kroku. Celowo krótka — 4 scenariusze dla
-administratora, 7 dla zwykłego użytkownika. Częśeć scenariuszy to uniwersalna regresja (działałaby
+administratora, 7 dla zwykłego użytkownika. Część scenariuszy to uniwersalna regresja (działałaby
 niezależnie od zmian RODO), część celowo sprawdza konkretne nowe zachowania wprowadzone w tej
 serii zmian — każdy scenariusz mówi, co dokładnie sprawdza i dlaczego.
 
@@ -21,7 +21,7 @@ serii zmian — każdy scenariusz mówi, co dokładnie sprawdza i dlaczego.
 
 ---
 
-## Część 1 — Administrator (konto: `a1` / `TstPass123!`)
+## Część 1 — Administrator (konto: `a1` / `TestPass123!`)
 
 ### A1. Podstawowy dostęp do panelu (regresja)
 Zaloguj się jako `a1`. Wejdź na `/Admin`. **Oczekiwane:** panel się ładuje, widać sekcje
