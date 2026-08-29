@@ -68,6 +68,14 @@ namespace Booker.Pages
 
             BookItem = item;
 
+            // RODO — zadanie 05: kontakt sprzedającego ujawniamy tylko w kontekście aktywnego,
+            // publicznie widocznego ogłoszenia (podstawa: wykonanie umowy).
+            var isAuthorized = await authService.AuthorizeAsync(User, item, ItemOperations.Read);
+            if (!item.IsVisible && !isAuthorized.Succeeded)
+            {
+                return NotFound();
+            }
+
             if (currentUser == null)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });

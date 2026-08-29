@@ -27,7 +27,7 @@ namespace Booker.Pages.Profile
         public List<int>? ItemIds { get; set; }
         public StaticDataManager.Parameters Params { get; set; } = null!;
 
-        public record UserModel(User RequestUser, bool IsCurrentUser);
+        public record UserModel(User RequestUser, bool IsCurrentUser, bool HasActiveListing);
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
@@ -54,7 +54,8 @@ namespace Booker.Pages.Profile
 
             Params = new StaticDataManager.Parameters(null, [], null, null);
 
-            UserInfo = new UserModel(user, user.Id == currentUserId);
+            var hasActiveListing = await _itemManager.HasVisibleListingAsync(Id.Value);
+            UserInfo = new UserModel(user, user.Id == currentUserId, hasActiveListing);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

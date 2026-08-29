@@ -33,11 +33,15 @@ namespace Booker.Data
         [PersonalData]
         public bool AreFavoritesPublic { get; set; } = false;
 
+        // RODO — zadanie 05: wartości domyślne widoczności danych kontaktowych.
+        // E-mail jest ujawniany na podstawie wykonania umowy (art. 6 ust. 1 lit. b RODO) — stąd domyślnie
+        // widoczny. Wszystkie pozostałe kanały są opcjonalne i oparte na zgodzie (art. 6 ust. 1 lit. a) —
+        // muszą startować wyłączone.
         [PersonalData]
         public bool DisplayEmail { get; set; } = true;
 
         [PersonalData]
-        public bool DisplayPhone { get; set; } = true;
+        public bool DisplayPhone { get; set; } = false;
 
         [PersonalData]
         public bool DisplayWhatsapp { get; set; } = false;

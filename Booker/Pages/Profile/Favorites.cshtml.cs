@@ -14,11 +14,13 @@ namespace Booker.Pages.Profile
         private readonly ILogger<FavoritesModel> _logger;
         private readonly UserManager<User> _userManager;
         private readonly FavoritesManager _favoritesManager;
-        public FavoritesModel(ILogger<FavoritesModel> logger, UserManager<User> userManager, FavoritesManager favoritesManager)
+        private readonly ItemManager _itemManager;
+        public FavoritesModel(ILogger<FavoritesModel> logger, UserManager<User> userManager, FavoritesManager favoritesManager, ItemManager itemManager)
         {
             _logger = logger;
             _userManager = userManager;
             _favoritesManager = favoritesManager;
+            _itemManager = itemManager;
         }
 
         public record ButtonState(int Id, bool IsFavorite, bool FullSize);
@@ -62,7 +64,8 @@ namespace Booker.Pages.Profile
 
             ItemIds = await _favoritesManager.GetFavoriteIdsAsync(Id.Value);
 
-            UserInfo = new UserModel(user, user.Id == currentUserId);
+            var hasActiveListing = await _itemManager.HasVisibleListingAsync(Id.Value);
+            UserInfo = new UserModel(user, user.Id == currentUserId, hasActiveListing);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

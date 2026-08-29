@@ -31,7 +31,7 @@
             </a>
         </p>
     }
-    @if (Model.DisplayWhatsapp)
+    @if (Model.DisplayWhatsapp && !string.IsNullOrEmpty(Model.PhoneNumber))
     {
         <p>
             <svg icon="brand-whatsapp" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
