@@ -408,5 +408,5 @@ FodyWeavers.xsd
 __blobstorage__/
 __queuestorage__/
 __azurite_db*__.json
-docs/.DS_Store
+.DS_Store
 .gitignore
