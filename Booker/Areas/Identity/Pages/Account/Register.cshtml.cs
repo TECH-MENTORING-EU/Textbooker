@@ -28,6 +28,9 @@ namespace Booker.Areas.Identity.Pages.Account
     [EnableRateLimiting("IpRateLimit")]
     public class RegisterModel : PageModel
     {
+        // TODO scalanie: użyć stałej z zadania 02 (Booker.Utilities.RegulaminInfo.CurrentVersion) zamiast poniższej
+        private const string AcceptedRegulaminVersion = "1.0";
+
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
         private readonly IUserStore<User> _userStore;
@@ -94,6 +97,7 @@ namespace Booker.Areas.Identity.Pages.Account
             public int? SchoolId { get; set; }
 
             [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
+            [Range(typeof(bool), "true", "true", ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
             public bool AcceptTerms { get; set; }
 
@@ -204,6 +208,12 @@ namespace Booker.Areas.Identity.Pages.Account
                 }
 
                 user.Photo = "/img/default-profile-picture.jpg";
+
+                var now = DateTime.Now;
+                user.TermsAcceptedAt = now;
+                // TODO scalanie: użyć stałej z zadania 02 (Booker.Utilities.RegulaminInfo.CurrentVersion) zamiast poniższej
+                user.TermsAcceptedVersion = AcceptedRegulaminVersion;
+                user.AgeConfirmationAcceptedAt = now;
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
