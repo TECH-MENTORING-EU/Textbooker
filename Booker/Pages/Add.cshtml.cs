@@ -14,6 +14,9 @@ namespace Booker.Pages
         {
         }
 
+        // RODO — zadanie 08: opis wygląda na zawierający dane kontaktowe — czeka na potwierdzenie.
+        public bool ShowSensitiveContentWarning { get; set; }
+
         public async Task<IActionResult> OnGetAsync()
         {
             await LoadSelects(string.Empty);
@@ -40,6 +43,20 @@ namespace Booker.Pages
                 return Page();
             }
 
+            var looksSensitive = Shared.ContentModerationHelper.LooksLikeContactInfo(Input.Description);
+            // Set unconditionally (not just on the early-return path below) so the confirmation
+            // checkbox stays visible/checked if the page has to re-render later for an unrelated
+            // reason (photo storage failure, book validation error via ValidateAndReturn).
+            ShowSensitiveContentWarning = looksSensitive;
+            if (looksSensitive && !Input.ConfirmSensitiveDescription)
+            {
+                ModelState.AddModelError("Input.Description",
+                    "Opis wygląda na zawierający adres e-mail lub numer telefonu. Zaznacz potwierdzenie poniżej, jeśli mimo to chcesz opublikować ogłoszenie z taką treścią.");
+                await LoadSelects(string.Empty);
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
+            }
+
             var parameters = await _staticDataManager.ConvertParametersAsync(
                 Input.Title, Input.Grade, Input.Subject, Input.Level
             );
@@ -54,7 +71,8 @@ namespace Booker.Pages
                     Input.State,
                     Input.Price,
                     validatedImages.Streams,
-                    validatedImages.Extensions
+                    validatedImages.Extensions,
+                    FlaggedForReview: looksSensitive
                 ));
             }
             catch (PhotoStorageException ex)

@@ -22,6 +22,11 @@ namespace Booker.Data
         public bool IsVisible { get; set; } = true;
         public bool CanChangeVisibility { get; set; } = true;
         public bool Reserved {  get; set; }
+
+        // RODO — zadanie 08: opis wygląda na zawierający dane kontaktowe (e-mail/telefon) —
+        // do przejrzenia przez administratora. Nie blokuje wyświetlania ogłoszenia.
+        public bool FlaggedForReview { get; set; } = false;
+
         public ICollection<ItemView> Views { get; } = new HashSet<ItemView>();
     }
 }

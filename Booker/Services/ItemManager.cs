@@ -35,7 +35,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         decimal Price,
         List<Stream>? ImageStreams = null,
         List<string>? ImageFileExtensions = null,
-        string? ExistingImageFileNames = null
+        string? ExistingImageFileNames = null,
+        bool FlaggedForReview = false
     );
 
 
@@ -264,7 +265,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             State = model.State,
             Price = model.Price,
             CreatedAt = DateTime.Now,
-            Photo = allPhotos
+            Photo = allPhotos,
+            FlaggedForReview = model.FlaggedForReview
         };
 
         return await AddItemNVAsync(item);
@@ -320,6 +322,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             item.Price = model.Price;
             item.Photo = allPhotos;
             item.UpdatedAt = DateTime.Now;
+            item.FlaggedForReview = model.FlaggedForReview;
 
             await UpdateItemNVAsync(item);
             await transaction.CommitAsync();
