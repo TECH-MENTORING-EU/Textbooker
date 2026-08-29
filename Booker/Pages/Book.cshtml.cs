@@ -10,7 +10,13 @@ using Booker.Authorization;
 
 namespace Booker.Pages
 {
-    public class BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger) : PageModel
+    public class BookModel(
+        UserManager<User> userManager,
+        ItemManager itemManager,
+        FavoritesManager favoritesManager,
+        IAuthorizationService authService,
+        ILogger<BookModel> logger,
+        ContactRevealLimiter contactRevealLimiter) : PageModel
     {
         public List<string> Photos { get; set; } = new();
 
@@ -77,6 +83,21 @@ namespace Booker.Pages
             if (BookItem.User.Id == currentUser.Id)
             {
                 return new NoContentResult();
+            }
+
+            // RODO — zadanie 07: limit ujawnień kontaktu — hojny, ale skończony, liczony per konto
+            // w pamięci procesu (patrz ContactRevealLimiter).
+            if (!contactRevealLimiter.TryRegisterReveal(currentUser.Id))
+            {
+                logger.LogWarning(
+                    "Użytkownik {UserName} przekroczył limit ujawnień danych kontaktowych.",
+                    User.Identity?.Name);
+
+                return Content(
+                    "<p role=\"alert\">Zbyt wiele wyświetlonych kontaktów w krótkim czasie. " +
+                    "Spróbuj ponownie później albo napisz do nas: " +
+                    "<a href=\"mailto:support@textbooker.pl\">support@textbooker.pl</a>.</p>",
+                    "text/html");
             }
 
             return Partial("_ContactDetails", BookItem.User);
