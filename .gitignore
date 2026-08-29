@@ -408,3 +408,4 @@ FodyWeavers.xsd
 __blobstorage__/
 __queuestorage__/
 __azurite_db*__.json
+.DS_Store
