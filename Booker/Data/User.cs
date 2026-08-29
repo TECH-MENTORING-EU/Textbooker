@@ -53,5 +53,9 @@ namespace Booker.Data
 
         [PersonalData]
         public bool DisplayInstagram { get; set; } = false;
+
+        // RODO — zadanie 06
+        [PersonalData]
+        public bool DisplaySchool { get; set; } = false;
     }
 }

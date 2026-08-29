@@ -103,9 +103,9 @@
                  alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName" />
             <div>
                 @Model.BookItem.User.UserName<br />
-                @if (User.Identity?.IsAuthenticated == true)
+                @if (User.Identity?.IsAuthenticated == true && Model.BookItem.User.DisplaySchool && Model.BookItem.User.School != null)
                 {
-                    @(Model.BookItem.User.School?.Name ?? "Bez szkoły")
+                    @Model.BookItem.User.School.Name
                     <br />
                 }
                 <a href="/Profile/@Model.BookItem.UserId" role="button" class="outline">Więcej od tego użytkownika</a>
