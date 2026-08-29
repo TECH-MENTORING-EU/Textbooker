@@ -12,12 +12,14 @@ namespace Booker.Areas.Admin.Pages
         private readonly UserManager<User> _userManager;
         private readonly SessionCacheManager _sessionCacheManager;
         private readonly ILogger<AdminsModel> _logger;
+        private readonly DataContext _context;
 
-        public AdminsModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ILogger<AdminsModel> logger)
+        public AdminsModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ILogger<AdminsModel> logger, DataContext context)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _logger = logger;
+            _context = context;
         }
         public List<User> Admins { get; set; } = [];
         public async Task<IActionResult> OnGetAsync()
@@ -59,12 +61,19 @@ namespace Booker.Areas.Admin.Pages
                 return await OnGetAsync();
             }
 
+            // RODO — zadanie 09: zmiana ról administratorów i wpis w dzienniku w jednej transakcji.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var result = await _userManager.AddToRoleAsync(user, "Admin");
             if (!result.Succeeded)
             {
+                await transaction.RollbackAsync();
                 ModelState.AddModelError(string.Empty, "Nie udało się dodać użytkownika do roli administratora.");
                 return await OnGetAsync();
             }
+
+            await _context.LogAdminActionAsync(currentUser, AdminActionTypes.AdminRoleGranted, user.Id, user.UserName ?? user.Id.ToString(), "User");
+            await transaction.CommitAsync();
 
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} nadał uprawnienia administratora użytkownikowi {user.UserName}.");
             return RedirectToPage();
@@ -92,13 +101,19 @@ namespace Booker.Areas.Admin.Pages
                 return new NoContentResult();
             }
 
+            // RODO — zadanie 09: zmiana ról administratorów i wpis w dzienniku w jednej transakcji.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var result = await _userManager.RemoveFromRoleAsync(user, "Admin");
             if (!result.Succeeded)
             {
+                await transaction.RollbackAsync();
                 ModelState.AddModelError(string.Empty, "Nie udało się usunąć użytkownika z roli administratora.");
                 return new NoContentResult();
             }
 
+            await _context.LogAdminActionAsync(currentUser, AdminActionTypes.AdminRoleRemoved, user.Id, user.UserName ?? user.Id.ToString(), "User");
+            await transaction.CommitAsync();
 
             _sessionCacheManager.InvalidateSession(id);
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął uprawnienia administratora użytkownika {user.UserName}.");

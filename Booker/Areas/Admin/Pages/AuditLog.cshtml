@@ -1,0 +1,70 @@
+@page
+@model AuditLogModel
+@using Booker.Data
+@{
+    ViewData["Title"] = "Dziennik działań - TextBooker";
+    ViewData["ActivePage"] = AdminNavPages.AuditLog;
+
+    static string DescribeAction(string actionType) => actionType switch
+    {
+        AdminActionTypes.UserLockout => "Blokada konta",
+        AdminActionTypes.UserUnlock => "Odblokowanie konta",
+        AdminActionTypes.UserDelete => "Usunięcie konta",
+        AdminActionTypes.AdminRoleGranted => "Nadanie uprawnień administratora",
+        AdminActionTypes.AdminRoleRemoved => "Odebranie uprawnień administratora",
+        AdminActionTypes.SchoolCreated => "Utworzenie szkoły",
+        AdminActionTypes.SchoolDeactivated => "Dezaktywacja szkoły",
+        AdminActionTypes.SchoolReactivated => "Reaktywacja szkoły",
+        AdminActionTypes.SchoolUpdated => "Edycja szkoły",
+        _ => actionType
+    };
+}
+
+<h3>Dziennik działań administracyjnych</h3>
+
+<form method="get">
+    <div class="grid">
+        <div>
+            <label for="filter-admin">Administrator</label>
+            <input type="text" id="filter-admin" name="AdminUserName" value="@Model.AdminUserName" placeholder="Nazwa użytkownika administratora" />
+        </div>
+        <div>
+            <label for="filter-from">Od</label>
+            <input type="date" id="filter-from" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div>
+            <label for="filter-to">Do</label>
+            <input type="date" id="filter-to" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+        </div>
+    </div>
+    <button type="submit">Filtruj</button>
+    <a role="button" class="outline" asp-page="./AuditLog">Wyczyść</a>
+</form>
+
+<p class="table-scroll-hint" id="audit-log-hint">Przewiń tabelę poziomo, aby zobaczyć wszystkie kolumny.</p>
+<div class="table-scroll" role="region" aria-label="Tabela dziennika działań" aria-describedby="audit-log-hint" tabindex="0">
+<table id="audit-log-table">
+    <caption class="visually-hidden">Dziennik działań administracyjnych</caption>
+    <thead>
+        <tr>
+            <th scope="col">Kiedy</th>
+            <th scope="col">Administrator</th>
+            <th scope="col">Działanie</th>
+            <th scope="col">Dotyczyło</th>
+            <th scope="col">Parametry</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entry in Model.Entries)
+        {
+            <tr>
+                <td>@entry.CreatedAt.ToString("g")</td>
+                <td>@entry.AdminUserName (Id: @entry.AdminUserId)</td>
+                <td>@DescribeAction(entry.ActionType)</td>
+                <td>@entry.TargetType „@entry.TargetName” (Id: @entry.TargetId)</td>
+                <td>@(entry.Parameters ?? "—")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+</div>
