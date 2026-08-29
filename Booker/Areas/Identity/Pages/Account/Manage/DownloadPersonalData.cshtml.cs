@@ -65,7 +65,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 account.Add($"{l.LoginProvider} external login provider key", l.ProviderKey);
             }
 
-            account.Add("Authenticator Key", await _userManager.GetAuthenticatorKeyAsync(user));
+            // RODO: the 2FA authenticator key is deliberately excluded - it's a live secret, and
+            // this export file ends up on disks and in inboxes where a leaked key is exploitable
+            // (unlike the rest of the export, which is inert record-keeping).
 
             var itemIds = await _itemManager.GetUserItemIdsAsync(user.Id).ToListAsync();
             var items = new List<object>();

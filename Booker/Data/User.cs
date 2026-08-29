@@ -33,10 +33,10 @@ namespace Booker.Data
         [PersonalData]
         public bool AreFavoritesPublic { get; set; } = false;
 
-        // RODO — zadanie 05: wartości domyślne widoczności danych kontaktowych.
-        // E-mail jest ujawniany na podstawie wykonania umowy (art. 6 ust. 1 lit. b RODO) — stąd domyślnie
-        // widoczny. Wszystkie pozostałe kanały są opcjonalne i oparte na zgodzie (art. 6 ust. 1 lit. a) —
-        // muszą startować wyłączone.
+        // RODO - task 05: default values for contact-visibility flags.
+        // Email is disclosed on the basis of contract performance (RODO art. 6(1)(b)) - hence
+        // visible by default. All other channels are optional and consent-based (art. 6(1)(a)) -
+        // they must start disabled.
         [PersonalData]
         public bool DisplayEmail { get; set; } = true;
 
@@ -58,11 +58,11 @@ namespace Booker.Data
         [PersonalData]
         public bool DisplayInstagram { get; set; } = false;
 
-        // RODO — zadanie 06
+        // RODO - task 06
         [PersonalData]
         public bool DisplaySchool { get; set; } = false;
 
-        // RODO — zadanie 04
+        // RODO - task 04
         [PersonalData]
         public DateTime? TermsAcceptedAt { get; set; }
 

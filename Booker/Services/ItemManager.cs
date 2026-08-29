@@ -171,8 +171,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             .CountAsync();
     }
 
-    // RODO — zadanie 05: podstawa prawna ujawniania kontaktu (wykonanie umowy) wymaga
-    // aktywnego ogłoszenia sprzedającego.
+    // RODO - task 05: the legal basis for disclosing contact details (contract performance)
+    // requires an active listing from the seller.
     public Task<bool> HasVisibleListingAsync(int userId)
     {
         return context.Items.AnyAsync(i => i.UserId == userId && i.IsVisible);

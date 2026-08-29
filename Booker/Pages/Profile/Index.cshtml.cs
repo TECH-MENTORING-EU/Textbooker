@@ -29,8 +29,8 @@ namespace Booker.Pages.Profile
         public List<int>? ItemIds { get; set; }
         public StaticDataManager.Parameters Params { get; set; } = null!;
 
-        // RODO — zadanie 06: nazwa szkoły dociągana osobno, bo UserManager nie ładuje
-        // nawigacji User.School.
+        // RODO - task 06: school name fetched separately, because UserManager doesn't load
+        // the User.School navigation.
         public record UserModel(User RequestUser, bool IsCurrentUser, string? SchoolName, bool HasActiveListing);
         public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)

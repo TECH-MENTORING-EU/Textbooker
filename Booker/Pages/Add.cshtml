@@ -4,10 +4,12 @@
 
 @{
     ViewData["Title"] = "Dodaj ogłoszenie";
-    const string include = "#add-form :not([name = '__RequestVerificationToken'])";
+    // RODO: scoped to the fields that affect the select options - Description/State/Price hold
+    // user-entered text and must never ride along in this GET's query string.
+    const string include = "#Input_Title, #Input_Subject, #Input_Grade, #Input_Level";
 
-    // RODO — zadanie 05: bez żadnego włączonego kanału kontaktu ogłoszenie jest bezużyteczne
-    // dla obu stron, więc ostrzegamy przed publikacją zamiast blokować ją po fakcie.
+    // RODO - task 05: with no contact channel enabled, the listing is useless for both
+    // sides, so we warn before publishing instead of blocking it after the fact.
     var currentUser = await UserManager.GetUserAsync(User);
     var hasAnyContactChannel = currentUser != null && (
         currentUser.DisplayEmail

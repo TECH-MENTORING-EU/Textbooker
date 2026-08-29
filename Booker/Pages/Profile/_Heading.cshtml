@@ -30,7 +30,7 @@
         }
         <a role="button" class="outline" href="/Identity/Account/Manage">Ustawienia konta</a>
     }
-    else if (Model.RequestUser.DisplaySchool && !string.IsNullOrEmpty(Model.SchoolName))
+    else if (User.Identity?.IsAuthenticated == true && Model.RequestUser.DisplaySchool && !string.IsNullOrEmpty(Model.SchoolName))
     {
         <p><small>Szkoła: @Model.SchoolName</small></p>
     }

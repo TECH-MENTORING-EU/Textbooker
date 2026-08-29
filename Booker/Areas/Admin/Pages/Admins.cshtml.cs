@@ -61,7 +61,7 @@ namespace Booker.Areas.Admin.Pages
                 return await OnGetAsync();
             }
 
-            // RODO — zadanie 09: zmiana ról administratorów i wpis w dzienniku w jednej transakcji.
+            // RODO - task 09: admin role change and the log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var result = await _userManager.AddToRoleAsync(user, "Admin");
@@ -101,7 +101,7 @@ namespace Booker.Areas.Admin.Pages
                 return new NoContentResult();
             }
 
-            // RODO — zadanie 09: zmiana ról administratorów i wpis w dzienniku w jednej transakcji.
+            // RODO - task 09: admin role change and the log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var result = await _userManager.RemoveFromRoleAsync(user, "Admin");

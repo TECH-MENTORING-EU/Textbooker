@@ -74,8 +74,8 @@ namespace Booker.Pages
 
             BookItem = item;
 
-            // RODO — zadanie 05: kontakt sprzedającego ujawniamy tylko w kontekście aktywnego,
-            // publicznie widocznego ogłoszenia (podstawa: wykonanie umowy).
+            // RODO - task 05: the seller's contact details are only disclosed in the context of
+            // an active, publicly visible listing (basis: contract performance).
             var isAuthorized = await authService.AuthorizeAsync(User, item, ItemOperations.Read);
             if (!item.IsVisible && !isAuthorized.Succeeded)
             {
@@ -93,8 +93,8 @@ namespace Booker.Pages
                 return new NoContentResult();
             }
 
-            // RODO — zadanie 07: limit ujawnień kontaktu — hojny, ale skończony, liczony per konto
-            // w pamięci procesu (patrz ContactRevealLimiter).
+            // RODO - task 07: contact-reveal limit - generous, but finite, counted per account
+            // in process memory (see ContactRevealLimiter).
             if (!contactRevealLimiter.TryRegisterReveal(currentUser.Id))
             {
                 logger.LogWarning(

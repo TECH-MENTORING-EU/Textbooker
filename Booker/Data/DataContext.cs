@@ -79,7 +79,7 @@ namespace Booker.Data
                 iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
-            // RODO — zadanie 09: brak FK do User celowo — wpis ma przetrwać usunięcie konta.
+            // RODO - task 09: no FK to User by design - the entry must survive account deletion.
             modelBuilder.Entity<AdminActionLog>(al =>
             {
                 al.HasIndex(a => a.CreatedAt);

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Booker.Areas.Admin.Pages
 {
-    // RODO — zadanie 09: prosty podgląd dziennika działań administracyjnych.
+    // RODO - task 09: simple read-only view of the administrative action log.
     public class AuditLogModel : PageModel
     {
         private readonly DataContext _context;

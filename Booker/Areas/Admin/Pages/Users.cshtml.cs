@@ -72,7 +72,7 @@ namespace Booker.Areas.Admin.Pages
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
 
-            // RODO — zadanie 09: usunięcie konta i wpis w dzienniku administracyjnym w jednej transakcji.
+            // RODO - task 09: account deletion and the admin action log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var result = await _userManager.DeleteAsync(user);
@@ -94,7 +94,7 @@ namespace Booker.Areas.Admin.Pages
             return Content("User deleted successfully.");
         }
 
-        public async Task<IActionResult> OnPostLockoutAsync(int id)
+        public async Task<IActionResult> OnPostLockoutAsync(int id, int days)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
@@ -103,14 +103,6 @@ namespace Booker.Areas.Admin.Pages
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
-
-            var daysStr = Request.Headers["HX-Prompt"].ToString();
-            if (!int.TryParse(daysStr, out int days))
-            {
-                ModelState.AddModelError(string.Empty, "Invalid number of days.");
-                Users = _userManager.Users.ToList();
-                return new BadRequestResult();
-            }
 
             DateTimeOffset? lockoutEnd;
             if (days < 0)
@@ -124,7 +116,7 @@ namespace Booker.Areas.Admin.Pages
             
             _sessionCacheManager.InvalidateSession(id);
 
-            // RODO — zadanie 09: blokada konta i wpis w dzienniku administracyjnym w jednej transakcji.
+            // RODO - task 09: account lockout and the admin action log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
@@ -159,7 +151,7 @@ namespace Booker.Areas.Admin.Pages
 
             var currentUser = await _userManager.GetUserAsync(User);
 
-            // RODO — zadanie 09: odblokowanie konta i wpis w dzienniku administracyjnym w jednej transakcji.
+            // RODO - task 09: account unlock and the admin action log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow);

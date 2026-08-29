@@ -81,7 +81,7 @@ namespace Booker.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [Required]
-            [StringLength(100, ErrorMessage = "{0} musi mieć co najmniej {2}, a maksymalnie {1} znaków.", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "{0} musi mieć co najmniej {2}, a maksymalnie {1} znaków.", MinimumLength = 8)]
             [DataType(DataType.Password)]
             [Display(Name = "Hasło")]
             public string Password { get; set; }
@@ -94,13 +94,11 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Szkoła")]
             public int? SchoolId { get; set; }
 
-            [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
-            [Range(typeof(bool), "true", "true", ErrorMessage = "Musisz zaakceptować regulamin.")]
+            [MustBeTrue(ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
             public bool AcceptTerms { get; set; }
 
-            [Required(ErrorMessage = "Musisz potwierdzić wiek lub zgodę opiekuna.")]
-            [Range(typeof(bool), "true", "true", ErrorMessage = "Musisz potwierdzić wiek lub zgodę opiekuna.")]
+            [MustBeTrue(ErrorMessage = "Musisz potwierdzić wiek lub zgodę opiekuna.")]
             [Display(Name = "Oświadczam, że ukończyłem/am 16 lat, albo posiadam zgodę rodzica lub opiekuna prawnego na korzystanie z Serwisu.")]
             public bool ConfirmsAgeRequirement { get; set; }
         }

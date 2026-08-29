@@ -3,10 +3,10 @@ using Microsoft.Extensions.Options;
 
 namespace Booker.Services;
 
-// RODO — zadanie 07: limit ujawnień danych kontaktowych liczony wyłącznie w pamięci procesu
-// (IMemoryCache) — celowo bez żadnego trwałego zapisu, ponieważ audyt działań użytkowników
-// (w odróżnieniu od audytu administratorskiego) nie jest tu wymagany. Licznik resetuje się
-// przy restarcie aplikacji i jest per-instancja, jeśli aplikacja działa na wielu instancjach.
+// RODO - task 07: the contact-reveal limit is counted purely in process memory (IMemoryCache) -
+// deliberately without any persistent storage, since an audit trail of user actions (as opposed
+// to an administrative audit trail) isn't required here. The counter resets on app restart and
+// is per-instance if the app ever runs on multiple instances.
 public class ContactRevealLimiter(IMemoryCache cache, IOptions<ContactRevealLimitOptions> options)
 {
     private static string CacheKey(int userId) => $"contact-reveal-times:{userId}";

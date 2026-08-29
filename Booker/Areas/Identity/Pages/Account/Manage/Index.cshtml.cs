@@ -30,8 +30,8 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             _context = context;
         }
 
-        // RODO — zadanie 06: szkoły nie da się zmienić z tego formularza — celowo nie jest to
-        // częścią [BindProperty] Input, żeby żadne dodatkowe pole w POST nie mogło jej nadpisać.
+        // RODO - task 06: the school can't be changed from this form - deliberately not part
+        // of [BindProperty] Input, so no extra field in the POST body can overwrite it.
         public string SchoolName { get; set; }
 
         /// <summary>

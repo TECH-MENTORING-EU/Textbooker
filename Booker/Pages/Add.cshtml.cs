@@ -14,7 +14,7 @@ namespace Booker.Pages
         {
         }
 
-        // RODO — zadanie 08: opis wygląda na zawierający dane kontaktowe — czeka na potwierdzenie.
+        // RODO - task 08: the description looks like it contains contact details - awaiting confirmation.
         public bool ShowSensitiveContentWarning { get; set; }
 
         public async Task<IActionResult> OnGetAsync()

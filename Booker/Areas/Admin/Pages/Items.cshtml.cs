@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Booker.Areas.Admin.Pages
 {
-    // RODO — zadanie 08: minimalna lista ogłoszeń z oznaczeniem tych do przejrzenia
-    // (opis wygląda na zawierający dane kontaktowe). Bez pełnej kolejki moderacyjnej.
+    // RODO - task 08: a minimal listing of items flagging the ones that need review
+    // (description looks like it contains contact details). No full moderation queue.
     public class ItemsModel : PageModel
     {
         private readonly ItemManager _itemManager;

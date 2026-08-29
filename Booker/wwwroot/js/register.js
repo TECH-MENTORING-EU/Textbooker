@@ -36,4 +36,9 @@
     };
     updateSubmitState();
     acceptTerms?.addEventListener("change", updateSubmitState);
+
+    document.querySelectorAll('#registerForm input[type="checkbox"][required]').forEach(checkbox => {
+        checkbox.addEventListener("invalid", () => checkbox.setCustomValidity("Zaznacz to pole, aby kontynuować."));
+        checkbox.addEventListener("change", () => checkbox.setCustomValidity(""));
+    });
 })();

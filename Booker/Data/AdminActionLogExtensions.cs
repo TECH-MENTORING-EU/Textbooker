@@ -2,8 +2,8 @@ namespace Booker.Data;
 
 public static class AdminActionLogExtensions
 {
-    // RODO — zadanie 09: wspólny zapis wpisu w dzienniku administracyjnym, żeby uniknąć
-    // powielania tego samego Add + SaveChangesAsync w każdej stronie Admin.
+    // RODO - task 09: shared helper for writing an admin action log entry, to avoid
+    // duplicating the same Add + SaveChangesAsync in every Admin page.
     public static async Task LogAdminActionAsync(
         this DataContext context,
         User? adminUser,

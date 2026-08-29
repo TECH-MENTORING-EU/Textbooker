@@ -1,7 +1,7 @@
 namespace Booker.Data;
 
-// RODO — zadanie 09: dziennik działań administracyjnych. Celowo bez kluczy obcych/nawigacji do
-// User — wpis musi przetrwać usunięcie konta lub innego obiektu, którego dotyczył.
+// RODO - task 09: administrative action log. Deliberately without foreign keys/navigation to
+// User - an entry must survive deletion of the account or other object it refers to.
 public class AdminActionLog
 {
     public int Id { get; set; }

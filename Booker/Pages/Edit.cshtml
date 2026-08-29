@@ -3,7 +3,10 @@
 @inject Booker.Services.PhotosManager PhotosManager
 @{
     ViewData["Title"] = "Edytuj ogłoszenie";
-    const string include = "#edit-form :not([name = '__RequestVerificationToken'])";
+    // RODO: scoped to the fields that affect the select options - Description/State/Price hold
+    // user-entered text (here, the real saved listing content) and must never ride along in
+    // this GET's query string.
+    const string include = "#Input_Title, #Input_Subject, #Input_Grade, #Input_Level";
 }
 
 <article aria-labelledby="edit-heading">
