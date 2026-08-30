@@ -58,7 +58,7 @@ public class ItemGalleryViewComponent : ViewComponent
             return new HtmlContentViewComponentResult(EmptyResult);
         }
 
-        var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true
+        var currentUser = UserClaimsPrincipal.Identity is { IsAuthenticated: true }
             ? await _userManager.GetUserAsync(UserClaimsPrincipal)
             : null;
 
