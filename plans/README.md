@@ -19,9 +19,9 @@ stack of branches and PRs. They stay in the repo while the stack is in
 flight because each open PR's review context (regression history, STOP
 conditions, known-bug notes like the price-binding one below) lives here,
 not in the tests it produced. The plans are one-time executor artifacts:
-plans 002-004 already rode the stack into this branch (#88, #89, #90);
-delete this directory in the last stack PR to merge (#87 here, #86 for
-plan 005) - the tests and workflows are the durable output.
+plans 002-004 already rode the stack into this branch (#88, #89, #90).
+PR #86 (plan 005) merges last, so that PR deletes this directory - the
+tests and workflows are the durable output.
 
 ## Execution order & status
 
