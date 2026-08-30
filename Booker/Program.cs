@@ -166,4 +166,8 @@ if (app.Environment.IsDevelopment())
 await app.InitializeRolesAsync();
 
 app.Run();
+
+// Top-level statements compile into an internal Program class; this partial
+// makes it public so the test assembly can boot the app via
+// WebApplicationFactory<Program> (Booker.Tests/Infrastructure/CustomWebApplicationFactory).
 public partial class Program { }
