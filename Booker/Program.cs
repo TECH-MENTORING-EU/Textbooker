@@ -68,10 +68,10 @@ builder.Services.AddRateLimitPolicies();
 builder.Services.AddDbContext<DataContext>(options =>
 {
     //options.UseInMemoryDatabase("InMemoryDatabaseName");
-    // The compat-level 110 pin is gone: id lists then translate to parameterized
-    // OPENJSON instead of thousands of inlined literals. OPENJSON needs compatibility
-    // level 130+ (SQL Server 2016+); below it EF Core silently falls back to literals.
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    // Production runs SQL Server 2012 (Webio), which has no OPENJSON (SQL 2016+).
+    // The compat-level pin makes EF Core inline list parameters (ids, grades) as
+    // literals instead of translating them to OPENJSON, which would fail at runtime.
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), o => o.UseCompatibilityLevel(110));
 });
 
 builder.Services.AddDefaultIdentity<User>(options =>
