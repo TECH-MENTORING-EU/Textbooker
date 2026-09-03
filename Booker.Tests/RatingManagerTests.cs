@@ -143,7 +143,7 @@ public class RatingManagerTests
         var result = await manager.AddRatingAsync(1, 2, 4, null);
 
         Assert.False(result.Success);
-        Assert.Contains("zarezerwowanej książki", result.Error);
+        Assert.Contains("zakończonej transakcji", result.Error);
     }
 
     [Fact]
@@ -629,14 +629,77 @@ public class RatingManagerTests
     }
 
     [Fact]
-    public async Task CanRateAsync_ReverseDirection_BuyerRatesSeller_SoldItem_ReturnsTrue()
+    public async Task CanRateAsync_SellerCannotRateBuyer_EvenAfterSoldItem()
     {
+        // Ratings are one-directional: buyer rates seller. The seller of the sold
+        // item cannot rate back.
         await using var context = CreateContext();
         SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
         var manager = new RatingManager(context);
 
+        var canRate = await manager.CanRateAsync(2, 1);
+
+        Assert.False(canRate);
+    }
+
+    [Fact]
+    public async Task AddRatingAsync_ReservedButNotSoldItemInThread_ReturnsError()
+    {
+        // Pins the new semantics on AddRatingAsync itself (not just CanRateAsync):
+        // a shared thread about an item that is only reserved — not sold — never
+        // qualifies, under old or new rules alike.
+        await using var context = CreateContext();
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1, sold: false);
+        var manager = new RatingManager(context);
+
+        var result = await manager.AddRatingAsync(1, 2, 5, "great");
+
+        Assert.False(result.Success);
+        Assert.Contains("zakończonej transakcji", result.Error);
+    }
+
+    [Fact]
+    public async Task CanRateAsync_ThreadWithoutItem_ReturnsFalse()
+    {
+        // Legacy bare threads (no listing attached) never enable ratings, even
+        // between two users who already completed some other transaction.
+        await using var context = CreateContext();
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
+        context.ChatThreads.Add(new ChatThread { Id = 2, ChannelId = "ch-2", UserAId = 1, UserBId = 2, ItemId = null });
+        context.SaveChanges();
+        var manager = new RatingManager(context);
+
         var canRate = await manager.CanRateAsync(1, 2);
 
-        Assert.True(canRate);
+        Assert.True(canRate); // via the sold item in thread ch-1
+        context.ChatThreads.Remove(context.ChatThreads.Find(1)!);
+        context.SaveChanges();
+
+        Assert.False(await manager.CanRateAsync(1, 2)); // only the bare thread left
+    }
+
+    [Fact]
+    public async Task AddRatingAsync_AfterAutoClose_EnablesRating()
+    {
+        // End-to-end: reservation auto-closed after 30 days (no seller decision)
+        // still counts as a completed transaction for the rating gate.
+        await using var context = CreateContext(); // users 1 (buyer), 2 (seller) seeded
+        var book = new Book { Id = 1, Title = "T", Grades = new List<Grade>(), Subject = new Subject { Id = 1, Name = "M" }, Level = new Level { Id = 1, Name = "B" } };
+        context.Items.Add(new Item
+        {
+            Id = 1, Book = book, User = context.Users.Find(2)!, UserId = 2,
+            Price = 45m, CreatedAt = DateTime.UtcNow.AddDays(-31), Description = "", State = "Good", Photo = "",
+            Reserved = true, ReservedAt = DateTime.UtcNow.AddDays(-31),
+        });
+        context.ChatThreads.Add(new ChatThread { Id = 1, ChannelId = "ch-1", UserAId = 1, UserBId = 2, ItemId = 1 });
+        context.SaveChanges();
+
+        var itemManager = new ItemManager(context, null!, null!, null!);
+        await itemManager.AutoCloseStaleReservationsAsync();
+
+        var manager = new RatingManager(context);
+        var result = await manager.AddRatingAsync(1, 2, 4, null);
+
+        Assert.True(result.Success);
     }
 }
