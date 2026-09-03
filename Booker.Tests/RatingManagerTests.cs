@@ -31,7 +31,7 @@ public class RatingManagerTests
         context.SaveChanges();
     }
 
-    private void SeedReservedItemAndChat(DataContext context, int sellerId, int buyerId)
+    private void SeedSoldTransaction(DataContext context, int sellerId, int buyerId, bool sold = true)
     {
         var book = new Book
         {
@@ -55,7 +55,10 @@ public class RatingManagerTests
             Description = "Test",
             State = "Good",
             Photo = "",
-            Reserved = true,
+            Reserved = false,
+            IsSold = sold,
+            SoldAt = sold ? DateTime.UtcNow : null,
+            ReservedAt = DateTime.UtcNow.AddDays(-30),
         });
 
         context.ChatThreads.Add(new ChatThread
@@ -64,6 +67,7 @@ public class RatingManagerTests
             ChannelId = "ch-1",
             UserAId = buyerId,
             UserBId = sellerId,
+            ItemId = 1,
         });
 
         context.SaveChanges();
@@ -75,7 +79,7 @@ public class RatingManagerTests
     public async Task AddRatingAsync_Valid_ReturnsSuccess()
     {
         await using var context = CreateContext();
-        SeedReservedItemAndChat(context, sellerId: 2, buyerId: 1);
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
         var manager = new RatingManager(context);
 
         var result = await manager.AddRatingAsync(1, 2, 4, "Great seller");
@@ -107,7 +111,7 @@ public class RatingManagerTests
     public async Task AddRatingAsync_InvalidRange_ReturnsError(int value)
     {
         await using var context = CreateContext();
-        SeedReservedItemAndChat(context, sellerId: 2, buyerId: 1);
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
         var manager = new RatingManager(context);
 
         var result = await manager.AddRatingAsync(1, 2, value, null);
@@ -120,7 +124,7 @@ public class RatingManagerTests
     public async Task AddRatingAsync_Duplicate_ReturnsError()
     {
         await using var context = CreateContext();
-        SeedReservedItemAndChat(context, sellerId: 2, buyerId: 1);
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
         var manager = new RatingManager(context);
 
         await manager.AddRatingAsync(1, 2, 4, null);
@@ -529,12 +533,14 @@ public class RatingManagerTests
     }
 
     // === CanRateAsync ===
+    // New semantics: a rating requires a completed transaction — the seller's item
+    // linked to the shared chat thread is sold. Reserved-state alone never qualifies.
 
     [Fact]
-    public async Task CanRateAsync_WithReservedItemAndChat_ReturnsTrue()
+    public async Task CanRateAsync_WithSoldItemAndThread_ReturnsTrue()
     {
         await using var context = CreateContext();
-        SeedReservedItemAndChat(context, sellerId: 2, buyerId: 1);
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
         var manager = new RatingManager(context);
 
         var canRate = await manager.CanRateAsync(1, 2);
@@ -554,7 +560,19 @@ public class RatingManagerTests
     }
 
     [Fact]
-    public async Task CanRateAsync_ItemNotReserved_ReturnsFalse()
+    public async Task CanRateAsync_ThreadButItemNotSold_ReturnsFalse()
+    {
+        await using var context = CreateContext();
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1, sold: false);
+        var manager = new RatingManager(context);
+
+        var canRate = await manager.CanRateAsync(1, 2);
+
+        Assert.False(canRate);
+    }
+
+    [Fact]
+    public async Task CanRateAsync_SoldItemButNoThread_ReturnsFalse()
     {
         await using var context = CreateContext();
         var book = new Book
@@ -566,9 +584,9 @@ public class RatingManagerTests
         context.Items.Add(new Item
         {
             Id = 1, Book = book, User = context.Users.Find(2)!, UserId = 2,
-            Price = 10m, CreatedAt = DateTime.UtcNow, Description = "", State = "", Photo = "", Reserved = false,
+            Price = 10m, CreatedAt = DateTime.UtcNow, Description = "", State = "", Photo = "",
+            IsSold = true, SoldAt = DateTime.UtcNow,
         });
-        context.ChatThreads.Add(new ChatThread { Id = 1, ChannelId = "ch-1", UserAId = 1, UserBId = 2 });
         context.SaveChanges();
         var manager = new RatingManager(context);
 
@@ -578,9 +596,11 @@ public class RatingManagerTests
     }
 
     [Fact]
-    public async Task CanRateAsync_ReservedItemButNoChat_ReturnsFalse()
+    public async Task CanRateAsync_SoldItemButThreadWithOtherItem_ReturnsFalse()
     {
         await using var context = CreateContext();
+        // The thread exists and user 2 has a sold item — but the thread points at
+        // a different listing, so this sale does not justify the rating.
         var book = new Book
         {
             Id = 1, Title = "Test", Grades = new List<Grade>(),
@@ -590,8 +610,16 @@ public class RatingManagerTests
         context.Items.Add(new Item
         {
             Id = 1, Book = book, User = context.Users.Find(2)!, UserId = 2,
-            Price = 10m, CreatedAt = DateTime.UtcNow, Description = "", State = "", Photo = "", Reserved = true,
+            Price = 10m, CreatedAt = DateTime.UtcNow, Description = "", State = "", Photo = "",
+            IsSold = true, SoldAt = DateTime.UtcNow,
         });
+        context.Items.Add(new Item
+        {
+            Id = 2, Book = book, User = context.Users.Find(2)!, UserId = 2,
+            Price = 5m, CreatedAt = DateTime.UtcNow, Description = "", State = "", Photo = "",
+            IsSold = false,
+        });
+        context.ChatThreads.Add(new ChatThread { Id = 1, ChannelId = "ch-1", UserAId = 1, UserBId = 2, ItemId = 2 });
         context.SaveChanges();
         var manager = new RatingManager(context);
 
@@ -601,25 +629,13 @@ public class RatingManagerTests
     }
 
     [Fact]
-    public async Task CanRateAsync_ReverseDirection_ReviewerHasReservedItem_ReturnsTrue()
+    public async Task CanRateAsync_ReverseDirection_BuyerRatesSeller_SoldItem_ReturnsTrue()
     {
         await using var context = CreateContext();
-        var book = new Book
-        {
-            Id = 1, Title = "Test", Grades = new List<Grade>(),
-            Subject = new Subject { Id = 1, Name = "Math" },
-            Level = new Level { Id = 1, Name = "Basic" },
-        };
-        context.Items.Add(new Item
-        {
-            Id = 1, Book = book, User = context.Users.Find(1)!, UserId = 1,
-            Price = 10m, CreatedAt = DateTime.UtcNow, Description = "", State = "", Photo = "", Reserved = true,
-        });
-        context.ChatThreads.Add(new ChatThread { Id = 1, ChannelId = "ch-1", UserAId = 1, UserBId = 2 });
-        context.SaveChanges();
+        SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
         var manager = new RatingManager(context);
 
-        var canRate = await manager.CanRateAsync(2, 1);
+        var canRate = await manager.CanRateAsync(1, 2);
 
         Assert.True(canRate);
     }
