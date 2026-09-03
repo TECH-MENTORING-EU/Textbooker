@@ -32,6 +32,7 @@ namespace Booker.Services
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
             services.AddScoped<IChatService, ChatService>(); // chat message service
+            services.AddSingleton<ChatModerationService>(); // anti-spam (rate limit, dupes, links) — shared state
             services.AddSingleton<InMemoryChatStore>(); // in-memory chat store
             services.AddScoped<IChatThreadService, ChatThreadService>(); // thread service
 

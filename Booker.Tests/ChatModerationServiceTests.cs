@@ -1,0 +1,109 @@
+using Booker.Services;
+using Xunit;
+
+namespace Booker.Tests;
+
+/// <summary>
+/// Chat anti-spam gate: sliding-window rate limit (10 msg/min), duplicate
+/// suppression, link blocking.
+/// </summary>
+public class ChatModerationServiceTests
+{
+    private static (ChatModerationService Svc, DateTimeOffset T0) New() =>
+        (new ChatModerationService(), new DateTimeOffset(2026, 9, 3, 12, 0, 0, TimeSpan.Zero));
+
+    [Fact]
+    public void AcceptsNormalMessage()
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
+            svc.Check(1, "Cześć, książka jeszcze dostępna?", t0));
+    }
+
+    [Fact]
+    public void BlocksEleventhMessageWithinWindow()
+    {
+        var (svc, t0) = New();
+
+        for (var i = 0; i < 10; i++)
+        {
+            Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
+                svc.Check(1, $"Message {i}", t0.AddSeconds(i)));
+        }
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.RateLimited,
+            svc.Check(1, "Message 10", t0.AddSeconds(10)));
+    }
+
+    [Fact]
+    public void WindowSlides_MessageAllowedAgainAfter60Seconds()
+    {
+        var (svc, t0) = New();
+
+        for (var i = 0; i < 10; i++)
+        {
+            svc.Check(1, $"Message {i}", t0.AddSeconds(i));
+        }
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.RateLimited,
+            svc.Check(1, "too soon", t0.AddSeconds(30)));
+
+        // oldest message left the window
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
+            svc.Check(1, "later is fine", t0.AddSeconds(61)));
+    }
+
+    [Fact]
+    public void RateLimitIsPerUser()
+    {
+        var (svc, t0) = New();
+
+        for (var i = 0; i < 10; i++)
+        {
+            svc.Check(1, $"Message {i}", t0.AddSeconds(i));
+        }
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
+            svc.Check(2, "other user is unaffected", t0.AddSeconds(5)));
+    }
+
+    [Fact]
+    public void BlocksImmediateDuplicate()
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted, svc.Check(1, "ok", t0));
+        Assert.Equal(ChatModerationService.ModerationVerdict.Duplicate, svc.Check(1, "ok", t0.AddSeconds(1)));
+    }
+
+    [Fact]
+    public void DuplicateCheckIsCaseAndWhitespaceInsensitive()
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted, svc.Check(1, "Do zamka!", t0));
+        Assert.Equal(ChatModerationService.ModerationVerdict.Duplicate, svc.Check(1, "  do zamka!  ", t0.AddSeconds(1)));
+    }
+
+    [Theory]
+    [InlineData("Kup tanio na https://scam.example.de/okazja")]
+    [InlineData("See www.aliexpress.com deal")]
+    [InlineData("Napisz do mnie: kupujacy123@interia.pl x www.onet.pl")]
+    [InlineData("link bez protokołu: scam.xyz/branie")]
+    public void BlocksLinksWithAndWithoutProtocol(string content)
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.LinkBlocked, svc.Check(1, content, t0));
+    }
+
+    [Fact]
+    public void AcceptsPlainTextWithDotsAndNumbers()
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
+            svc.Check(1, "Mam 3. wydanie, stan dobry, cena 45 zl do negocjacji", t0));
+    }
+}
