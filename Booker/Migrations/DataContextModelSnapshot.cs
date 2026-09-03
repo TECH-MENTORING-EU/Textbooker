@@ -1533,6 +1533,9 @@ namespace Booker.Migrations
                     b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("ItemId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("LastMessageUtc")
                         .HasColumnType("datetime2");
 
@@ -1546,6 +1549,8 @@ namespace Booker.Migrations
 
                     b.HasIndex("ChannelId")
                         .IsUnique();
+
+                    b.HasIndex("ItemId");
 
                     b.HasIndex("UserAId", "UserBId");
 
@@ -1617,6 +1622,9 @@ namespace Booker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsSold")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
@@ -1630,6 +1638,12 @@ namespace Booker.Migrations
 
                     b.Property<bool>("Reserved")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReservedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SoldAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -1648,6 +1662,21 @@ namespace Booker.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Items");
+                });
+
+            modelBuilder.Entity("Booker.Data.ItemView", b =>
+                {
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ItemId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ItemViews");
                 });
 
             modelBuilder.Entity("Booker.Data.Level", b =>
@@ -1691,6 +1720,47 @@ namespace Booker.Migrations
                         {
                             Id = 4,
                             Name = "Dwujęzyczny"
+                        });
+                });
+
+            modelBuilder.Entity("Booker.Data.School", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmailDomain")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Schools");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EmailDomain = "hogwart.edu.pl",
+                            IsActive = true,
+                            Name = "Hogwart"
                         });
                 });
 
@@ -1880,9 +1950,8 @@ namespace Booker.Migrations
                     b.Property<string>("Photo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("School")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("SchoolId")
+                        .HasColumnType("int");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -1904,7 +1973,49 @@ namespace Booker.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
+                    b.HasIndex("SchoolId");
+
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Booker.Data.UserRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RatingValue")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reply")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RevieweeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RevieweeId");
+
+                    b.HasIndex("ReviewerId", "RevieweeId")
+                        .IsUnique();
+
+                    b.ToTable("UserRatings");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -2104,6 +2215,16 @@ namespace Booker.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Booker.Data.ChatThread", b =>
+                {
+                    b.HasOne("Booker.Data.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("Booker.Data.Item", b =>
                 {
                     b.HasOne("Booker.Data.Book", "Book")
@@ -2121,6 +2242,54 @@ namespace Booker.Migrations
                     b.Navigation("Book");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Booker.Data.ItemView", b =>
+                {
+                    b.HasOne("Booker.Data.Item", "Item")
+                        .WithMany("Views")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Booker.Data.User", "User")
+                        .WithMany("ItemViews")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Booker.Data.User", b =>
+                {
+                    b.HasOne("Booker.Data.School", "School")
+                        .WithMany("Users")
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("School");
+                });
+
+            modelBuilder.Entity("Booker.Data.UserRating", b =>
+                {
+                    b.HasOne("Booker.Data.User", "Reviewee")
+                        .WithMany()
+                        .HasForeignKey("RevieweeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Booker.Data.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Reviewee");
+
+                    b.Navigation("Reviewer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -2189,72 +2358,25 @@ namespace Booker.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Booker.Data.UserRating", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RatingValue")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RevieweeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReviewerId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Reply")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RepliedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RevieweeId");
-
-                    b.HasIndex("ReviewerId", "RevieweeId")
-                        .IsUnique();
-
-                    b.ToTable("UserRatings");
-                });
-
-            modelBuilder.Entity("Booker.Data.UserRating", b =>
-                {
-                    b.HasOne("Booker.Data.User", "Reviewee")
-                        .WithMany()
-                        .HasForeignKey("RevieweeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Booker.Data.User", "Reviewer")
-                        .WithMany()
-                        .HasForeignKey("ReviewerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Reviewee");
-
-                    b.Navigation("Reviewer");
-                });
-
             modelBuilder.Entity("Booker.Data.Book", b =>
                 {
                     b.Navigation("Items");
                 });
 
+            modelBuilder.Entity("Booker.Data.Item", b =>
+                {
+                    b.Navigation("Views");
+                });
+
+            modelBuilder.Entity("Booker.Data.School", b =>
+                {
+                    b.Navigation("Users");
+                });
+
             modelBuilder.Entity("Booker.Data.User", b =>
                 {
+                    b.Navigation("ItemViews");
+
                     b.Navigation("Items");
                 });
 #pragma warning restore 612, 618

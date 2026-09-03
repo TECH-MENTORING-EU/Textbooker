@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booker.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260504112127_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260903165813_AddTransactionLifecycle")]
+    partial class AddTransactionLifecycle
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1536,6 +1536,9 @@ namespace Booker.Migrations
                     b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("ItemId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("LastMessageUtc")
                         .HasColumnType("datetime2");
 
@@ -1549,6 +1552,8 @@ namespace Booker.Migrations
 
                     b.HasIndex("ChannelId")
                         .IsUnique();
+
+                    b.HasIndex("ItemId");
 
                     b.HasIndex("UserAId", "UserBId");
 
@@ -1620,6 +1625,9 @@ namespace Booker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsSold")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
@@ -1633,6 +1641,12 @@ namespace Booker.Migrations
 
                     b.Property<bool>("Reserved")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReservedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SoldAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -1651,6 +1665,21 @@ namespace Booker.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Items");
+                });
+
+            modelBuilder.Entity("Booker.Data.ItemView", b =>
+                {
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ItemId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ItemViews");
                 });
 
             modelBuilder.Entity("Booker.Data.Level", b =>
@@ -1734,7 +1763,7 @@ namespace Booker.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             EmailDomain = "hogwart.edu.pl",
                             IsActive = true,
-                            Name = "Hogwort"
+                            Name = "Hogwart"
                         });
                 });
 
@@ -1961,13 +1990,20 @@ namespace Booker.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Comment")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("RatingValue")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("RepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reply")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("RevieweeId")
                         .HasColumnType("int");
@@ -2182,6 +2218,16 @@ namespace Booker.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Booker.Data.ChatThread", b =>
+                {
+                    b.HasOne("Booker.Data.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("Booker.Data.Item", b =>
                 {
                     b.HasOne("Booker.Data.Book", "Book")
@@ -2201,6 +2247,25 @@ namespace Booker.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Booker.Data.ItemView", b =>
+                {
+                    b.HasOne("Booker.Data.Item", "Item")
+                        .WithMany("Views")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Booker.Data.User", "User")
+                        .WithMany("ItemViews")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Booker.Data.User", b =>
                 {
                     b.HasOne("Booker.Data.School", "School")
@@ -2214,13 +2279,13 @@ namespace Booker.Migrations
             modelBuilder.Entity("Booker.Data.UserRating", b =>
                 {
                     b.HasOne("Booker.Data.User", "Reviewee")
-                        .WithMany("RatingsReceived")
+                        .WithMany()
                         .HasForeignKey("RevieweeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Booker.Data.User", "Reviewer")
-                        .WithMany("RatingsGiven")
+                        .WithMany()
                         .HasForeignKey("ReviewerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -2301,6 +2366,11 @@ namespace Booker.Migrations
                     b.Navigation("Items");
                 });
 
+            modelBuilder.Entity("Booker.Data.Item", b =>
+                {
+                    b.Navigation("Views");
+                });
+
             modelBuilder.Entity("Booker.Data.School", b =>
                 {
                     b.Navigation("Users");
@@ -2308,11 +2378,9 @@ namespace Booker.Migrations
 
             modelBuilder.Entity("Booker.Data.User", b =>
                 {
+                    b.Navigation("ItemViews");
+
                     b.Navigation("Items");
-
-                    b.Navigation("RatingsGiven");
-
-                    b.Navigation("RatingsReceived");
                 });
 #pragma warning restore 612, 618
         }
