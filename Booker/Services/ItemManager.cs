@@ -194,7 +194,7 @@ public class ItemManager
     {
         var cutoff = DateTime.UtcNow.AddDays(-SaleConfirmationDays * 4 - 2); // ~30 days
         var stale = await GetAllItemsQueryable()
-            .Where(i => i.ReservedAt != null && !i.IsSold)
+            .Where(i => i.Reserved && i.ReservedAt != null && !i.IsSold)
             .Where(i => i.ReservedAt <= cutoff)
             .ToListAsync();
 

@@ -182,6 +182,26 @@ public class TransactionLifecycleTests
     }
 
     [Fact]
+    public async Task AutoCloseStaleReservationsAsync_SkipsUnreservedItemWithStaleReservedAt()
+    {
+        // Invariant guard: ReservedAt without Reserved (broken state, e.g. after a
+        // partial clear) must never be auto-sold.
+        await using var context = CreateContext();
+        NewItem(context, sellerId: 1, i =>
+        {
+            i.Reserved = false;
+            i.ReservedAt = DateTime.UtcNow.AddDays(-60);
+        });
+        var manager = new ItemManager(context, null!, null!, null!);
+
+        var closed = await manager.AutoCloseStaleReservationsAsync();
+
+        Assert.Equal(0, closed);
+        var item = await context.Items.FindAsync(1);
+        Assert.False(item!.IsSold);
+    }
+
+    [Fact]
     public async Task RatingGate_FullFlow_SellerConfirmsThenBuyerCanRate()
     {
         await using var context = CreateContext();

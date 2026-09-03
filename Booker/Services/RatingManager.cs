@@ -42,7 +42,7 @@ namespace Booker.Services
 
             var canRate = await CanRateAsync(reviewerId, revieweeId);
             if (!canRate)
-                return (false, "Możesz ocenić tylko użytkownika, z którym miałeś interakcję dotyczącą zarezerwowanej książki.");
+                return (false, "Możesz ocenić sprzedającego tylko po zakończonej transakcji (zakup jego przedmiotu).");
 
             var rating = new UserRating
             {
@@ -54,7 +54,16 @@ namespace Booker.Services
             };
 
             _context.UserRatings.Add(rating);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Unique index IX_UserRatings_ReviewerId_RevieweeId — a concurrent
+                // rating for the same pair slipped past the pre-check above.
+                return (false, "Już oceniłeś tego użytkownika.");
+            }
             return (true, null);
         }
 
@@ -156,16 +165,17 @@ namespace Booker.Services
 
         public async Task<bool> CanRateAsync(int reviewerId, int revieweeId)
         {
-            // A rating requires a completed transaction: a chat thread linking the two
-            // users to a specific listing, whose seller-side item is sold. Reserved-state
-            // alone never qualifies — the sale must be confirmed (or auto-closed).
+            // Ratings are one-directional: only the BUYER rates the SELLER, and only
+            // after a completed transaction — a chat thread linking the two users to
+            // the seller's listing, which is sold. Reserved-state alone never
+            // qualifies: the sale must be confirmed (or auto-closed after 30 days).
             return await _context.ChatThreads
                 .Where(t =>
                     (t.UserAId == reviewerId && t.UserBId == revieweeId) ||
                     (t.UserAId == revieweeId && t.UserBId == reviewerId))
                 .AnyAsync(t => t.Item != null
-                    && ((t.Item.UserId == revieweeId && t.Item.IsSold)
-                        || (t.Item.UserId == reviewerId && t.Item.IsSold)));
+                    && t.Item.UserId == revieweeId
+                    && t.Item.IsSold);
         }
     }
 }
