@@ -18,6 +18,7 @@ namespace Booker.Pages
         private readonly ItemManager _itemManager;
         private readonly FavoritesManager _favoritesManager;
         private readonly IAuthorizationService _authService;
+        private readonly IChatThreadService _chatThreadService;
         private readonly ILogger<BookModel> _logger;
 
 
@@ -25,12 +26,13 @@ namespace Booker.Pages
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
 
-        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger)
+        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, IChatThreadService chatThreadService, ILogger<BookModel> logger)
         {
             _userManager = userManager;
             _itemManager = itemManager;
             _favoritesManager = favoritesManager;
             _authService = authService;
+            _chatThreadService = chatThreadService;
             _logger = logger;
         }
 
@@ -110,6 +112,30 @@ namespace Booker.Pages
 
             Response.Headers["HX-Refresh"] = "true";
             return new NoContentResult();
+        }
+
+        /// <summary>
+        /// Starts (or reopens) the conversation about this listing with its seller.
+        /// Threads about offers can only be created from here — never user-to-user "cold".
+        /// </summary>
+        public async Task<IActionResult> OnPostChatAsync(int id, CancellationToken ct)
+        {
+            var userId = _userManager.GetUserId(User).IntOrDefault();
+            if (userId == -1)
+            {
+                return Challenge();
+            }
+
+            try
+            {
+                var thread = await _chatThreadService.GetOrCreateForItemAsync(userId, id, ct);
+                return RedirectToPage("/Chat", new { DealId = thread.ChannelId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning("Chat start for item {ItemId} by user {UserId} rejected: {Reason}", id, userId, ex.Message);
+                return BadRequest();
+            }
         }
 
         public static string FormatDateWithSpecialCases(DateTime? dateTime)
