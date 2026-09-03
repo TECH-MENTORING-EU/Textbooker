@@ -94,8 +94,8 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
             // Idempotent insert: a row added concurrently is a no-op, so two racing
             // requests cannot create duplicates or throw.
             await context.Database.ExecuteSqlAsync($"""
-                IF NOT EXISTS (SELECT 1 FROM Favorites WHERE UserId = {userId} AND ItemId = {itemId})
-                    INSERT INTO Favorites (UserId, ItemId) VALUES ({userId}, {itemId})
+                IF NOT EXISTS (SELECT 1 FROM UserFavorites WHERE UserId = {userId} AND ItemId = {itemId})
+                    INSERT INTO UserFavorites (UserId, ItemId) VALUES ({userId}, {itemId})
                 """);
         }
         else
@@ -121,7 +121,7 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
 
             // Set-based delete: idempotent under concurrent removals.
             await context.Database.ExecuteSqlAsync($"""
-                DELETE FROM Favorites WHERE UserId = {userId} AND ItemId = {itemId}
+                DELETE FROM UserFavorites WHERE UserId = {userId} AND ItemId = {itemId}
                 """);
         }
 
