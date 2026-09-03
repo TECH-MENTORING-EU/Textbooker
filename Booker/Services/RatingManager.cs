@@ -156,22 +156,16 @@ namespace Booker.Services
 
         public async Task<bool> CanRateAsync(int reviewerId, int revieweeId)
         {
-            var hasChatThread = await _context.ChatThreads
-                .AnyAsync(t =>
+            // A rating requires a completed transaction: a chat thread linking the two
+            // users to a specific listing, whose seller-side item is sold. Reserved-state
+            // alone never qualifies — the sale must be confirmed (or auto-closed).
+            return await _context.ChatThreads
+                .Where(t =>
                     (t.UserAId == reviewerId && t.UserBId == revieweeId) ||
-                    (t.UserAId == revieweeId && t.UserBId == reviewerId));
-
-            if (!hasChatThread)
-                return false;
-
-            // Check if either user has a reserved item — they must have transacted
-            var hasReservedItem = await _context.Items
-                .AnyAsync(i => i.UserId == revieweeId && i.Reserved);
-
-            var reviewerHasReservedItem = await _context.Items
-                .AnyAsync(i => i.UserId == reviewerId && i.Reserved);
-
-            return hasReservedItem || reviewerHasReservedItem;
+                    (t.UserAId == revieweeId && t.UserBId == reviewerId))
+                .AnyAsync(t => t.Item != null
+                    && ((t.Item.UserId == revieweeId && t.Item.IsSold)
+                        || (t.Item.UserId == reviewerId && t.Item.IsSold)));
         }
     }
 }

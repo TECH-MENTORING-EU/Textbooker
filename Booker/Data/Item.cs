@@ -22,6 +22,23 @@ namespace Booker.Data
         public bool IsVisible { get; set; } = true;
         public bool CanChangeVisibility { get; set; } = true;
         public bool Reserved {  get; set; }
+
+        /// <summary>
+        /// UTC timestamp of the moment the seller marked the item as reserved.
+        /// Starts the transaction lifecycle: after 7 days the seller is asked
+        /// whether the sale happened, after 30 days the item auto-completes as sold.
+        /// </summary>
+        public DateTime? ReservedAt { get; set; }
+
+        /// <summary>
+        /// True once the transaction completed: the seller confirmed the sale,
+        /// or the 30-day auto-close window elapsed. Only sold items allow ratings.
+        /// </summary>
+        public bool IsSold { get; set; }
+
+        /// <summary>UTC timestamp when the item was marked sold (manually or auto).</summary>
+        public DateTime? SoldAt { get; set; }
+
         public ICollection<ItemView> Views { get; } = new HashSet<ItemView>();
     }
 }

@@ -100,6 +100,7 @@ namespace Booker.Data
             {
                 ct.HasIndex(t => t.ChannelId).IsUnique();
                 ct.HasIndex(t => new { t.UserAId, t.UserBId });
+                ct.HasOne(t => t.Item).WithMany().HasForeignKey(t => t.ItemId).OnDelete(DeleteBehavior.SetNull).IsRequired(false);
             });
         }
 

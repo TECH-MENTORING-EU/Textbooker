@@ -127,8 +127,90 @@ public class ItemManager
     {
         var item = await GetItemAsync(itemId);
         item!.Reserved = reserved;
+        item.ReservedAt = reserved ? DateTime.UtcNow : null;
+
+        // Re-listing an item clears any stale sale confirmation from a previous cycle.
+        if (!reserved && !item.IsSold)
+        {
+            item.SoldAt = null;
+        }
 
         await UpdateItemNVAsync(item!);
+    }
+
+    /// <summary>
+    /// Number of items the seller should be asked about: reserved at least
+    /// <see cref="SaleConfirmationDays"/> ago, not yet marked sold and not declined.
+    /// </summary>
+    public static readonly int SaleConfirmationDays = 7;
+
+    /// <summary>
+    /// Items reserved longer than <see cref="SaleConfirmationDays"/> days with no
+    /// seller decision yet ("IsSold" still false) — candidates for the UI prompt
+    /// and for the 30-day auto-close.
+    /// </summary>
+    public Task<List<Item>> GetItemsAwaitingSaleConfirmationAsync(int sellerId) =>
+        GetAllItemsQueryable()
+            .Where(i => i.UserId == sellerId)
+            .Where(i => i.ReservedAt != null && !i.IsSold)
+            .Where(i => i.ReservedAt <= DateTime.UtcNow.AddDays(-SaleConfirmationDays))
+            .ToListAsync();
+
+    public record SalePendingItem(int Id, string Title, DateTime ReservedAt, decimal Price);
+
+    /// <summary>Projection for the seller's sale-confirmation prompt.</summary>
+    public async Task<List<SalePendingItem>> GetSalePendingItemsAsync(int sellerId) =>
+        (await GetItemsAwaitingSaleConfirmationAsync(sellerId))
+            .Select(i => new SalePendingItem(i.Id, i.Book.Title, i.ReservedAt!.Value, i.Price))
+            .ToList();
+
+    /// <summary>Seller confirms the sale happened. Enables ratings for this listing.</summary>
+    public async Task MarkItemSoldAsync(int itemId)
+    {
+        var item = await GetItemAsync(itemId);
+        item!.IsSold = true;
+        item.SoldAt = DateTime.UtcNow;
+        item.Reserved = false;
+
+        await UpdateItemNVAsync(item);
+    }
+
+    /// <summary>Seller says the sale did not happen. Closes the reservation cycle without a rating.</summary>
+    public async Task MarkItemNotSoldAsync(int itemId)
+    {
+        var item = await GetItemAsync(itemId);
+        item!.Reserved = false;
+        item.ReservedAt = null;
+
+        await UpdateItemNVAsync(item);
+    }
+
+    /// <summary>
+    /// Auto-close: items reserved at least 30 days with no seller decision count as
+    /// sold, so buyers and sellers can rate and the listing does not linger as reserved.
+    /// Returns the number of items closed.
+    /// </summary>
+    public async Task<int> AutoCloseStaleReservationsAsync()
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-SaleConfirmationDays * 4 - 2); // ~30 days
+        var stale = await GetAllItemsQueryable()
+            .Where(i => i.ReservedAt != null && !i.IsSold)
+            .Where(i => i.ReservedAt <= cutoff)
+            .ToListAsync();
+
+        foreach (var item in stale)
+        {
+            item.IsSold = true;
+            item.SoldAt = DateTime.UtcNow;
+            item.Reserved = false;
+        }
+
+        if (stale.Count > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return stale.Count;
     }
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
