@@ -20,6 +20,12 @@ namespace Booker.Data
         public required string State { get; set; }
         public required string Photo { get; set; }
         public bool IsVisible { get; set; } = true;
+
+        /// <summary>
+        /// False while the item's visibility is admin-controlled (user was blocked).
+        /// On unlock, only items with this flag are re-published — offers the user
+        /// had hidden themselves stay hidden.
+        /// </summary>
         public bool CanChangeVisibility { get; set; } = true;
         public bool Reserved {  get; set; }
         public ICollection<ItemView> Views { get; } = new HashSet<ItemView>();
