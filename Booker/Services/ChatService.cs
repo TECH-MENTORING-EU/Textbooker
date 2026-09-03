@@ -9,11 +9,13 @@ namespace Booker.Services
         private readonly DataContext _context;
         private readonly ILogger<ChatService> _logger;
         private readonly IChatThreadService _threadService; // added
-        public ChatService(DataContext context, ILogger<ChatService> logger, IChatThreadService threadService)
+        private readonly ChatModerationService _moderation;
+        public ChatService(DataContext context, ILogger<ChatService> logger, IChatThreadService threadService, ChatModerationService moderation)
         {
             _context = context;
             _logger = logger;
             _threadService = threadService; // added
+            _moderation = moderation;
         }
 
         public async Task<IReadOnlyList<ChatMessageDto>> GetMessagesAsync(string dealId, int take, CancellationToken cancellationToken)
@@ -36,6 +38,15 @@ namespace Booker.Services
             if (string.IsNullOrWhiteSpace(content)) return ChatMessageResult.Failure("Content required");
             content = Sanitize(content);
             if (content.Length > 500) return ChatMessageResult.Failure("Too long");
+
+            // Anti-spam: rate limit, duplicate suppression, link filtering.
+            var verdict = _moderation.Check(userId, content, DateTimeOffset.UtcNow);
+            if (verdict == ChatModerationService.ModerationVerdict.RateLimited)
+                return ChatMessageResult.Failure("Wysyłasz wiadomości zbyt szybko — odczekaj chwilę.");
+            if (verdict == ChatModerationService.ModerationVerdict.Duplicate)
+                return ChatMessageResult.Failure("Ta wiadomość została już wysłana.");
+            if (verdict == ChatModerationService.ModerationVerdict.LinkBlocked)
+                return ChatMessageResult.Failure("Wiadomości nie mogą zawierać linków.");
 
             var user = await _context.Users.FindAsync([userId], cancellationToken);
             if (user == null) return ChatMessageResult.Failure("User not found");
