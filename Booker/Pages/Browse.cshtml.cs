@@ -39,8 +39,24 @@ namespace Booker.Pages
             public string? Search { get; set; }
             public string? Grade { get; set; }
             public string? Subject { get; set; }
-            public decimal? MinPrice { get; set; }
-            public decimal? MaxPrice { get; set; }
+
+            // Prices bind as strings: Polish users type the decimal comma
+            // ("10,50"), but decimal model binding only accepts the dot — a
+            // comma value would silently bind to null and drop the filter.
+            public string? MinPrice { get; set; }
+            public string? MaxPrice { get; set; }
+
+            public decimal? MinPriceValue => ParseFlexibleDecimal(MinPrice);
+            public decimal? MaxPriceValue => ParseFlexibleDecimal(MaxPrice);
+
+            private static decimal? ParseFlexibleDecimal(string? raw)
+            {
+                if (string.IsNullOrWhiteSpace(raw)) return null;
+                var normalized = raw.Trim().Replace(',', '.');
+                return decimal.TryParse(normalized, System.Globalization.CultureInfo.InvariantCulture,
+                    out var value) ? value : null;
+            }
+
             public string? Level { get; set; }
         }
 
@@ -60,8 +76,8 @@ namespace Booker.Pages
                 Params.Grades,
                 Params.Subject,
                 Params.Level,
-                Input?.MinPrice,
-                Input?.MaxPrice
+                Input?.MinPriceValue,
+                Input?.MaxPriceValue
             );
 
             var currentUser = User.Identity?.IsAuthenticated == true
