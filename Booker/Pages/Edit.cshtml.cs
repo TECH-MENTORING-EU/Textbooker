@@ -53,6 +53,8 @@ namespace Booker.Pages
             return Page();
         }
 
+        [BindProperty] public List<string>? KeptPhotos { get; set; }
+
         public async Task<IActionResult> OnPostAsync(int id)
         {
             if (Input == null)
@@ -104,6 +106,14 @@ namespace Booker.Pages
                 // Keep reservation update in the same persistence operation as other edits.
                 ItemToEdit.Reserved = Input.Reserved;
 
+                // Photos that survive the edit = the checkboxes the user left ticked
+                // (subset of the current photos). New uploads are appended to them.
+                // Unchecked photos are removed from the listing AND from storage.
+                var kept = (KeptPhotos ?? new List<string>())
+                    .Where(p => !string.IsNullOrWhiteSpace(p))
+                    .Select(p => p.Trim())
+                    .ToList();
+
                 result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
                     ItemToEdit.User,
                     parameters,
@@ -112,7 +122,7 @@ namespace Booker.Pages
                     Input.Price,
                     validatedImages.Streams,
                     validatedImages.Extensions,
-                    ItemToEdit.Photo
+                    string.Join(";", kept)
                 ));
             }
             catch (PhotoStorageException ex)
