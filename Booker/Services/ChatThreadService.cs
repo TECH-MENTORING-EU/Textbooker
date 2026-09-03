@@ -38,6 +38,37 @@ namespace Booker.Services
             return thread;
         }
 
+        public async Task<ChatThread> GetOrCreateForItemAsync(int requesterId, int itemId, CancellationToken ct)
+        {
+            var item = await _ctx.Items.AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == itemId, ct)
+                ?? throw new InvalidOperationException($"Item {itemId} not found");
+
+            if (item.UserId == requesterId)
+                throw new InvalidOperationException("Cannot start a conversation about your own listing");
+
+            // A conversation about a given listing between the requester and its seller
+            // is unique: one thread per (item, pair).
+            var channelId = ThreadIdBuilder.CreateForItem(requesterId, item.UserId, itemId);
+            var existing = await _ctx.ChatThreads
+                .FirstOrDefaultAsync(t => t.ChannelId == channelId, ct);
+            if (existing != null) return existing;
+
+            var thread = new ChatThread
+            {
+                ChannelId = channelId,
+                UserAId = Math.Min(requesterId, item.UserId),
+                UserBId = Math.Max(requesterId, item.UserId),
+                ItemId = item.Id,
+                CreatedUtc = DateTime.UtcNow,
+                LastMessageUtc = DateTime.UtcNow
+            };
+            _ctx.ChatThreads.Add(thread);
+            await _ctx.SaveChangesAsync(ct);
+            _log.LogInformation("Chat thread {ChannelId} created for item {ItemId}", channelId, itemId);
+            return thread;
+        }
+
         public async Task<IReadOnlyList<ChatThread>> GetThreadsForUserAsync(int userId, CancellationToken ct)
         {
             return await _ctx.ChatThreads.AsNoTracking()
