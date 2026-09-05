@@ -97,6 +97,7 @@ namespace Booker.Areas.Admin.Pages
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserDelete, id, deletedUserName, "User");
             await transaction.CommitAsync();
 
+            _sessionCacheManager.InvalidateSession(id);
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {deletedUserName}.");
