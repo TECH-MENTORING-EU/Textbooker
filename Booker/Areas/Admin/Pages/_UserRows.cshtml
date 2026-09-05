@@ -51,7 +51,7 @@
                hx-vals='{"id": @user.Id}'
                hx-target="closest tr"
                hx-swap="delete"
-               hx-confirm="Na pewno chcesz usunąć użytkownika @user.UserName?"
+               hx-prompt="Podaj swoje hasło, aby usunąć użytkownika @user.UserName"
                href=""
                aria-label="Usuń użytkownika @user.UserName"
                antiforgery

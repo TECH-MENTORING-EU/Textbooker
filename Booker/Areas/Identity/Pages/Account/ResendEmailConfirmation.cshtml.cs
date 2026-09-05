@@ -65,9 +65,11 @@ namespace Booker.Areas.Identity.Pages.Account
             }
 
             var user = await _userManager.FindByEmailAsync(Input.Email);
-            if (user == null)
+            // Unknown and already-confirmed accounts get the same neutral response
+            // as the send path: no email is sent and nothing is disclosed.
+            if (user == null || user.EmailConfirmed)
             {
-                ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail..");
+                ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.");
                 return Page();
             }
 

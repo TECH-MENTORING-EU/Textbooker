@@ -64,6 +64,29 @@ namespace Booker.Areas.Admin.Pages
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            if (user.Id == currentUser.Id)
+            {
+                ModelState.AddModelError(string.Empty, "Nie możesz usunąć własnego konta z panelu administratora.");
+                return new BadRequestResult();
+            }
+
+            // The admin's password arrives in the HX-Prompt header, same as the
+            // lockout duration; deleting an account must not be weaker than
+            // granting a role.
+            var password = Request.Headers["HX-Prompt"].ToString();
+            if (string.IsNullOrWhiteSpace(password) || !await _userManager.CheckPasswordAsync(currentUser, password))
+            {
+                ModelState.AddModelError(string.Empty, "Niepoprawne hasło.");
+                _logger.LogWarning(
+                    "Użytkownik {AdminUserName} próbował usunąć konto użytkownika {TargetUserName}, ale wpisał błędne hasło.",
+                    currentUser.UserName, user.UserName);
+                return new BadRequestResult();
+            }
 
             // The keys must be collected before the account is deleted - the item rows
             // cascade away with the account and the keys cannot be read afterwards.
@@ -78,9 +101,11 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
+            await _sessionCacheManager.InvalidateSessionAsync(id);
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {user.UserName}.");
+            _logger.LogInformation("Użytkownik {AdminUserName} usunął konto użytkownika {TargetUserName}.",
+                currentUser.UserName, user.UserName);
             return Content("User deleted successfully.");
         }
 
@@ -112,7 +137,6 @@ namespace Booker.Areas.Admin.Pages
                 lockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
             }
             
-            _sessionCacheManager.InvalidateSession(id);
             var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
             if (!result.Succeeded)
             {
@@ -121,13 +145,18 @@ namespace Booker.Areas.Admin.Pages
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
-            
+
+            // Only invalidate after the lockout succeeded - signing the user out
+            // for a lockout that never happened cannot be rolled back.
+            await _sessionCacheManager.InvalidateSessionAsync(id);
+
             user.IsVisible = false;
             await _userManager.UpdateAsync(user);
 
             await _itemManager.SetItemsVisibilityByUserAsync(id, false);
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} zablokował konto użytkownika {user.UserName} na okres {days} dni.");
+            _logger.LogInformation("Użytkownik {AdminUserName} zablokował konto użytkownika {TargetUserName} na okres {Days} dni.",
+                currentUser?.UserName, user.UserName, days);
             return Partial("_UserRows", new List<User> { user });
         }
 
@@ -150,11 +179,16 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
+            // Drop the invalid entry left by the lockout so the user can sign in
+            // again immediately instead of waiting for the next cleanup pass.
+            _sessionCacheManager.RemoveCachedSession(id);
+
             user.IsVisible = true;
             await _userManager.UpdateAsync(user);
             await _itemManager.SetItemsVisibilityByUserAsync(id, true);
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} odblokował konto użytkownika {user.UserName}.");
+            _logger.LogInformation("Użytkownik {AdminUserName} odblokował konto użytkownika {TargetUserName}.",
+                currentUser?.UserName, user.UserName);
             return Partial("_UserRows", new List<User> { user });
         }
     }

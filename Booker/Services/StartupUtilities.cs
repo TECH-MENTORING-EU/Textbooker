@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 using System.Net;
+using System.Security.Claims;
 using Amazon.S3;
 
 
@@ -74,6 +75,7 @@ namespace Booker.Services
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
 
             services.AddScoped<SessionCacheManager>();
+            services.AddSingleton<SessionCacheStore>();
             services.AddHostedService<MaintenanceService>();
 
             return services;
@@ -199,7 +201,89 @@ namespace Booker.Services
             return builder.AddRazorPagesOptions(options =>
             {
                 options.Conventions.AuthorizeAreaFolder("Admin", "/", "AdminHidden");
+                // Folder-level fallback so account-management pages stay protected
+                // even when a page model is missing its own [Authorize].
+                options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
             });
+        }
+
+        public static WebApplication UseSecurityHeaders(this WebApplication app)
+        {
+            var imgSrc = ResolveImgSrc(app.Configuration, app.Logger);
+
+            // 'unsafe-inline' is required by the inline <script> blocks and style
+            // attributes used across the pages; 'unsafe-eval' by htmx, which
+            // compiles hx-on:* attributes through new Function(). Every source
+            // still stays same-origin.
+            var contentSecurityPolicy = string.Join("; ",
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                "font-src 'self' https://fonts.gstatic.com",
+                $"img-src {imgSrc}",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+                "frame-ancestors 'none'");
+
+            app.Use(async (context, next) =>
+            {
+                var headers = context.Response.Headers;
+                headers["X-Content-Type-Options"] = "nosniff";
+                headers["X-Frame-Options"] = "DENY";
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+                headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+                headers["Content-Security-Policy"] = contentSecurityPolicy;
+                await next();
+            });
+
+            return app;
+        }
+
+        // The CDN origin allowed by CSP img-src comes from CF:PublicUrl; when the
+        // setting is missing or malformed, img-src stays at 'self'.
+        private static string ResolveImgSrc(IConfiguration configuration, ILogger logger)
+        {
+            var imgSrc = "'self'";
+            var publicUrlSetting = configuration["CF:PublicUrl"];
+            if (string.IsNullOrWhiteSpace(publicUrlSetting))
+            {
+                return imgSrc;
+            }
+
+            if (Uri.TryCreate(publicUrlSetting, UriKind.Absolute, out var publicUrl))
+            {
+                return imgSrc + $" {publicUrl.GetLeftPart(UriPartial.Authority)}";
+            }
+
+            logger.LogWarning(
+                "CF:PublicUrl '{PublicUrl}' is not an absolute URL; img-src falls back to 'self'.",
+                publicUrlSetting);
+            return imgSrc;
+        }
+
+        // Only an authenticated principal can have a cached session; skipping the
+        // check for anonymous traffic avoids a scope, a session lookup, and a
+        // database round-trip on every public request.
+        public static WebApplication UseSessionValidation(this WebApplication app)
+        {
+            app.Use(async (context, next) =>
+            {
+                if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    using var scope = app.Services.CreateScope();
+                    var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
+                    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
+                    if (!await sessionCacheManager.CheckSession(context))
+                    {
+                        await signInManager.SignOutAsync();
+                        context.User = new ClaimsPrincipal();
+                    }
+                }
+                await next();
+            });
+
+            return app;
         }
 
         public static IServiceCollection ConfigureAuthorization(this IServiceCollection services)
@@ -208,6 +292,14 @@ namespace Booker.Services
             {
                 options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
                 options.AddPolicy("AdminHidden", policy => policy.Requirements.Add(new AdminHiddenAuthorizationRequirement()));
+            });
+
+            // How often a signed-in cookie is re-checked against the user's
+            // current security stamp; bounds how long a cookie survives an
+            // InvalidateSessionAsync call once the cache entry is cleaned up.
+            services.Configure<SecurityStampValidatorOptions>(options =>
+            {
+                options.ValidationInterval = TimeSpan.FromMinutes(5);
             });
 
             services.ConfigureApplicationCookie(options =>

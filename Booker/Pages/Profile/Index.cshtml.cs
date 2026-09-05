@@ -33,15 +33,12 @@ namespace Booker.Pages.Profile
         {
             var currentUserId = _userManager.GetUserId(User).IntOrDefault();
 
-            if (!Id.HasValue)
+            if (!Id.HasValue && currentUserId == -1)
             {
-                if (currentUserId == 0)
-                {
-                    return Redirect("/Identity/Account/Login");
-                }
+                return Redirect("/Identity/Account/Login");
+            }
 
-                Id = currentUserId;
-            }            
+            Id ??= currentUserId;
 
             var user = await _userManager.FindByIdAsync(Id.Value.ToString());
 
