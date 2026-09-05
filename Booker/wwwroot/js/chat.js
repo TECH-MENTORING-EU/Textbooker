@@ -1,3 +1,5 @@
+'use strict';
+
 // Chat page helpers: keep the transcript pinned to the newest message and
 // feed the polling cursor (hx-vals evaluates chatLastMessageId per request).
 
