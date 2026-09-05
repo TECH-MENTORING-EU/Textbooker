@@ -44,6 +44,9 @@ namespace Booker.Pages
         public async Task<IActionResult> OnPostSendAsync(string dealId, string text, CancellationToken ct)
         {
             var userId = userManager.GetUserId(User).IntOrDefault();
+            // IsParticipantAsync reads CurrentUserId; handlers other than OnGetAsync
+            // must set it themselves or the participant check compares against 0.
+            CurrentUserId = userId;
             if (string.IsNullOrWhiteSpace(dealId))
             {
                 return BadRequest();
@@ -66,6 +69,7 @@ namespace Booker.Pages
         public async Task<IActionResult> OnGetSinceAsync(string dealId, int afterMessageId, CancellationToken ct)
         {
             var userId = userManager.GetUserId(User).IntOrDefault();
+            CurrentUserId = userId;
             if (string.IsNullOrWhiteSpace(dealId) || !await IsParticipantAsync(dealId, ct))
             {
                 return Content(string.Empty, "text/html");
@@ -88,7 +92,7 @@ namespace Booker.Pages
         }
 
         public string FormatLocalTime(DateTime utc) =>
-            TimeZoneInfo.ConvertTime(utc, PolishTimeZone).ToString("HH:mm");
+            ConvertToLocal(utc).ToString("HH:mm");
 
         private async Task<bool> IsParticipantAsync(string? dealId = null, CancellationToken ct = default)
         {
@@ -103,16 +107,23 @@ namespace Booker.Pages
             var side = m.UserId == currentUserId ? "self" : "other";
             var escapedName = System.Net.WebUtility.HtmlEncode(m.UserDisplayName);
             var escapedContent = System.Net.WebUtility.HtmlEncode(m.Content);
-            var localTime = TimeZoneInfo.ConvertTime(m.CreatedUtc, PolishTimeZone);
+            var utc = DateTime.SpecifyKind(m.CreatedUtc, DateTimeKind.Utc);
+            var localTime = TimeZoneInfo.ConvertTimeFromUtc(utc, PolishTimeZone);
             return $"<li class=\"msg {side}\" data-msg-id=\"{m.Id}\">" +
                    $"<div class=\"bubble\"><div class=\"meta\"><span class=\"user\">{escapedName}</span>" +
-                   $"<time datetime=\"{m.CreatedUtc:o}\">{localTime:HH:mm}</time></div>" +
+                   $"<time datetime=\"{utc:o}\">{localTime:HH:mm}</time></div>" +
                    $"<p class=\"content\">{escapedContent}</p></div></li>";
         }
 
         private static string RenderNotice(string error) =>
             "<li class=\"msg other\" role=\"alert\"><div class=\"bubble\"><p class=\"content\">" +
             $"{System.Net.WebUtility.HtmlEncode(error)}</p></div></li>";
+
+        private static DateTime ConvertToLocal(DateTime utc) =>
+            // EF materializes DateTime with Kind=Unspecified; ConvertTime would
+            // then interpret it in the machine zone instead of UTC.
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.SpecifyKind(utc, DateTimeKind.Utc), PolishTimeZone);
 
         private static readonly TimeZoneInfo PolishTimeZone = CreatePolishTimeZone();
 
