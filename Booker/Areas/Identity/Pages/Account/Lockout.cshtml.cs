@@ -26,9 +26,12 @@ namespace Booker.Areas.Identity.Pages.Account
         public void OnGet(long? lockoutEnd)
         {
             HasDateTime = lockoutEnd.HasValue;
-            LockoutEnd = DateTimeOffset.FromUnixTimeSeconds(lockoutEnd ?? 0).LocalDateTime;
-            IsLongLockout = LockoutEnd.Value > DateTime.UtcNow.AddMinutes(5);
-            IsForever = LockoutEnd.Value > DateTime.UtcNow.AddYears(100);
+            var end = DateTimeOffset.FromUnixTimeSeconds(lockoutEnd ?? 0);
+            LockoutEnd = end.LocalDateTime;
+            // Judge the branches on the instant: comparing the machine-local
+            // DateTime against UtcNow misclassifies lockouts on non-UTC hosts.
+            IsLongLockout = end > DateTimeOffset.UtcNow.AddMinutes(5);
+            IsForever = end > DateTimeOffset.UtcNow.AddYears(100);
         }
     }
 }
