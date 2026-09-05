@@ -13,8 +13,10 @@ namespace Booker.Migrations
             // Items hidden before CanChangeVisibility existed were all hidden by an
             // admin block (no user-side hide ships yet), but carry the column default
             // of true. Without this backfill the fixed unlock query would never match
-            // them and those users could never be re-published.
-            migrationBuilder.Sql("UPDATE Items SET CanChangeVisibility = 0 WHERE IsVisible = 0");
+            // them and those users could never be re-published. The extra predicate
+            // skips rows that are already backfilled, keeping the statement cheap
+            // when the migration is replayed on a large table.
+            migrationBuilder.Sql("UPDATE Items SET CanChangeVisibility = 0 WHERE IsVisible = 0 AND CanChangeVisibility <> 0");
         }
 
         /// <inheritdoc />

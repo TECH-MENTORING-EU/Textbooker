@@ -385,7 +385,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
             if (blocked.Count > 0)
             {
-                context.Items.UpdateRange(blocked);
+                // blocked is tracked from the query above; SaveChanges persists
+                // just the two flags without re-marking every column.
                 await context.SaveChangesAsync();
             }
         }
@@ -405,7 +406,6 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
             if (visible.Count > 0)
             {
-                context.Items.UpdateRange(visible);
                 await context.SaveChangesAsync();
             }
         }
