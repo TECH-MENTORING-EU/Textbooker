@@ -33,9 +33,18 @@
                        .Split(';', StringSplitOptions.RemoveEmptyEntries)
                        .Select((val, i) => (val, i)))
                         {
-                            <img src="@PhotosManager.GetPhotoUrl(img.Trim())"
-                                 alt="Zdjęcie książki @(index + 1)"
-                                 class="book-image-preview @(index == 0 ? "main" : "")" />
+                            @* checked replays the submitted selection after a failed POST so
+                               the user's deselections survive the round trip; on GET KeptPhotos
+                               is null and every photo starts out kept. *@
+                            <label class="book-image-item @(index == 0 ? "main" : "")">
+                                <input type="checkbox" name="keptPhotos" value="@img.Trim()"
+                                       checked="@(Model.KeptPhotos?.Contains(img.Trim()) ?? true)"
+                                       class="keep-photo-checkbox"
+                                       aria-label="Zachowaj zdjęcie @(index + 1)" />
+                                <img src="@PhotosManager.GetPhotoUrl(img.Trim())"
+                                     alt="Zdjęcie książki @(index + 1)"
+                                     class="book-image-preview" />
+                            </label>
                         }
                     </div>
 

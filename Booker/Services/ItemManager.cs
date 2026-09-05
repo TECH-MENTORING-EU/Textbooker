@@ -17,7 +17,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         InvalidSubject = 4,
         InvalidGrades = 8,
         InvalidLevel = 16,
-        NotFound = 32
+        NotFound = 32,
+        NoPhotos = 64
     }
 
     public record Result(Status Status, int Id)
@@ -293,6 +294,19 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         var uploadedPhotoUris = new List<string>();
         var shouldReplacePhotos = model.ImageStreams != null && model.ImageStreams.Count > 0;
 
+        // Sanitize the kept-photo list: only file names that are actually attached
+        // to this item may survive; anything else (or an empty list when the user
+        // removed every photo) is evaluated below.
+        var currentPhotos = (item.Photo ?? "")
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Trim())
+            .ToList();
+        var keptPhotos = (model.ExistingImageFileNames ?? "")
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(currentPhotos.Contains)
+            .Distinct()
+            .ToList();
+
         if (shouldReplacePhotos)
         {
             if (!IsValidImagePayload(model.ImageStreams, model.ImageFileExtensions))
@@ -307,7 +321,19 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
                 uploadedPhotoUris.Add(uri.ToString());
             }
 
-            allPhotos = string.Join(";", uploadedPhotoUris);
+            allPhotos = string.Join(";", keptPhotos.Concat(uploadedPhotoUris));
+        }
+        else if (keptPhotos.Count > 0)
+        {
+            // No new uploads: keep only the user's selection.
+            allPhotos = string.Join(";", keptPhotos);
+        }
+        else
+        {
+            // Every photo deselected and nothing uploaded. Item.Photo is required,
+            // so refuse instead of saving an image-less listing.
+            logger.LogWarning("Edycja ogłoszenia o ID {ItemId} bez zdjęć wynikowych: odrzucono.", item.Id);
+            return Status.Error | Status.NoPhotos;
         }
 
         var oldPrice = item.Price;
@@ -334,6 +360,23 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         {
             logger.LogInformation("Cena ogłoszenia o ID {ItemId} użytkownika {UserName} została zmieniona z {OldPrice} zł na {NewPrice} zł.",
                 item.Id, item.User.UserName, oldPrice, item.Price);
+        }
+
+        // Photos detached by this edit are removed from storage AFTER the DB commit:
+        // a storage outage then only leaves orphans (logged), never a listing with
+        // missing images.
+        var finalPhotos = allPhotos.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim());
+        var removedPhotos = currentPhotos.Except(finalPhotos);
+        var removedKeys = PhotosManager.StorageKeys(string.Join(";", removedPhotos)).ToList();
+
+        if (removedKeys.Count > 0)
+        {
+            var orphaned = await photosManager.DeletePhotosAsync(removedKeys);
+            if (orphaned.Count > 0)
+            {
+                logger.LogWarning("Nie udało się usunąć {Count} odłączonych zdjęć ogłoszenia o ID {ItemId}: {Keys}",
+                    orphaned.Count, item.Id, string.Join(", ", orphaned));
+            }
         }
 
         return Status.Success;
