@@ -37,10 +37,10 @@
 </section>
 
 <h2>Ogłoszenia</h2>
-<section class="grid-gallery">
+<section class="grid-gallery" aria-label="Ogłoszenia użytkownika">
     <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" show-hidden="@Model.UserInfo.IsCurrentUser" />
 </section>
 
 <section>
-    <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+    <div aria-busy="false" class="htmx-indicator" id="ind" role="status" aria-live="polite"></div>
 </section>

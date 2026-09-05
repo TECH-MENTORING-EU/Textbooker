@@ -2,30 +2,39 @@
 @model Booker.Pages.BookModel
 
 @{
-    ViewData["Title"] = @Model.BookItem.Book.Title + " - TextBooker" ?? "Szczegóły książki";
+    ViewData["Title"] = $"{Model.BookItem.Book.Title} - TextBooker";
 
-    var images = (Model.BookItem.Photo ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
+    var images = Model.Photos;
     var mainImage = images.FirstOrDefault();
 }
 
-<article class="book-display">
+<article class="book-display" aria-labelledby="book-title">
 
-    <section class="image">
+    <section class="image" aria-label="Zdjęcia książki">
         @if (images.Any())
         {
             <img src="@mainImage" alt="Główne zdjęcie książki: @Model.BookItem.Book.Title" class="main-book-photo" />
 
-            <div class="thumbnail-images">
-                @foreach (var img in images)
+            <div class="thumbnail-images" aria-label="Wybierz zdjęcie do podglądu">
+                @foreach (var (img, idx) in images.Select((value, i) => (value, i)))
                 {
-                    <img src="@img" alt="Zdjęcie książki" class="thumbnail-book-photo" />
+                    var isActive = img == mainImage;
+                    <button type="button"
+                            class="thumbnail-button@(isActive ? " active" : string.Empty)"
+                            aria-pressed="@AriaHelpers.Bool(isActive)"
+                            aria-label="Pokaż zdjęcie @(idx + 1)"
+                            data-index="@idx">
+                        <img src="@img"
+                             alt="Zdjęcie książki @(idx + 1) z @images.Count()"
+                             class="thumbnail-book-photo" />
+                    </button>
                 }
             </div>
         }
     </section>
 
     <section class="data">
-        <h2>@Model.BookItem.Book.Title</h2>
+        <h1 id="book-title">@Model.BookItem.Book.Title</h1>
         <p>
             <small>
                 Dodane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.CreatedAt))
@@ -34,12 +43,17 @@
                     <br />
                     <text>Edytowane: @(Booker.Pages.BookModel.FormatDateWithSpecialCases(Model.BookItem.UpdatedAt.Value))</text>
                 }
+                @if (Model.IsCurrentUserOwner)
+                {
+                    <br />
+                    <text>Wyświetleń: @Model.ViewCount</text>
+                }
             </small>
         </p>
-        <p><strong>@Model.BookItem.Price.ToString("C")</strong></p>
+        <p><strong aria-label="Cena: @Model.BookItem.Price.ToString("C")">@Model.BookItem.Price.ToString("C")</strong></p>
         @if (Model.BookItem.Reserved)
         {
-            <p><strong>Ten przedmiot jest obecnie zarezerwowany.</strong></p>
+            <p role="status"><strong>Ten przedmiot jest obecnie zarezerwowany.</strong></p>
         }
 
         <ul>
@@ -53,7 +67,7 @@
         </ul>
     </section>
 
-    <section class="actions">
+    <section class="actions" aria-label="Akcje dla tego ogłoszenia">
         @if (Model.IsCurrentUserOwner)
         {
             <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button" style="margin-inline-end: 1em;">Edytuj ogłoszenie</a>
@@ -68,25 +82,23 @@
             <form method="post" asp-page-handler="Chat" asp-route-id="@Model.BookItem.Id" style="display: inline;">
                 <button type="submit">Napisz do sprzedającego</button>
             </form>
-            <button hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
+            <button type="button" hx-get="?handler=Email" hx-swap="outerHTML">Zapytaj o przedmiot</button>
         }
     </section>
 
     <section class="description">
-        <h3>Opis</h3>
+        <h2>Opis</h2>
         <p>@Model.BookItem.Description</p>
     </section>
 
-
-
-    <section class="seller">
-        <h3>Sprzedaje</h3>
+    <section class="seller" aria-label="Informacje o sprzedającym">
+        <h2>Sprzedaje</h2>
         <div>
-            <img src="@Model.BookItem.User.Photo"
-                 alt="Profil sprzedającego" />
+            <img src="@(string.IsNullOrWhiteSpace(Model.BookItem.User.Photo) ? "/img/default-profile-picture.jpg" : Model.BookItem.User.Photo)"
+                 alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName" />
             <div>
                 @Model.BookItem.User.UserName<br />
-                @Model.BookItem.User.School<br />
+                @(Model.BookItem.User.School?.Name ?? "Bez szkoły")<br />
                 <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.5em;">
                     <a href="/Profile/@Model.BookItem.UserId" role="button" class="outline">Więcej od tego użytkownika</a>
                     @if (!Model.IsCurrentUserOwner && User.Identity?.IsAuthenticated == true)
@@ -103,11 +115,29 @@
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const mainImg = document.querySelector(".main-book-photo");
-        const thumbnails = document.querySelectorAll(".thumbnail-book-photo");
+        const thumbnails = document.querySelectorAll(".thumbnail-button");
 
         thumbnails.forEach(th => {
-            th.addEventListener("click", () => {
-                mainImg.src = th.src;
+            var activate = () => {
+                if (!mainImg) return;
+                const thumbnailImage = th.querySelector(".thumbnail-book-photo");
+                if (!thumbnailImage) return;
+
+                mainImg.src = thumbnailImage.src;
+                thumbnails.forEach(other => {
+                    const isActive = other === th;
+                    other.setAttribute("aria-pressed", isActive);
+                    other.classList.toggle("active", isActive);
+                });
+                mainImg.setAttribute("alt", `Główne zdjęcie książki: ${document.getElementById("book-title")?.textContent?.trim() ?? ""}`);
+            };
+
+            th.addEventListener("click", activate);
+            th.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    activate();
+                }
             });
         });
     });

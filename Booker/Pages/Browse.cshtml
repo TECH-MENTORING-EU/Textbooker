@@ -1,0 +1,62 @@
+@page
+@model BrowseModel
+@{
+    ViewData["Title"] = "Przeglądaj ogłoszenia";
+}
+
+<section class="filter">
+    <form novalidate
+          hx-get="/Browse"
+          hx-trigger="submit, input changed delay:500ms, change"
+          hx-target=".grid-gallery"
+          hx-push-url="true">
+        <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" hx-on:focus="this.nextElementSibling.style.display = 'block';" hx-on:keydown="this.nextElementSibling.style.display = 'none';" />
+        <small style="display: none;">Szukasz książki do przedmiotu zawodowego lub innej rzadko występującej? Wpisz "inna".</small>
+
+        <details id="filterDetails">
+            <summary id="filterSummary">
+                <svg icon="adjustments-horizontal" aria-hidden="true" style="vertical-align: -0.15em;"></svg>
+                Filtry
+            </summary>
+
+            <div class="grid">
+                <select name="grade" asp-for="Input.Grade" asp-items="Model?.Grades" data-val="false">
+                    <option value="">Wszystkie klasy</option>
+                </select>
+
+                <select name="subject" asp-for="Input.Subject" asp-items="Model?.Subjects" data-val="false">
+                    <option value="">Wszystkie przedmioty</option>
+                </select>
+
+                <select name="level" asp-for="Input.Level" asp-items="Model?.Levels">
+                    <option value="">Wszystkie poziomy</option>
+                </select>
+
+                <input type="number" name="minPrice" asp-for="Input.MinPrice" placeholder="Cena min." data-val="false" />
+                <input type="number" name="maxPrice" asp-for="Input.MaxPrice" placeholder="Cena max." data-val="false" />
+            </div>
+
+            <div class="filter-actions">
+                @* Deliberately a self-contained GET to /Browse: inheriting the form's trigger or
+                   parameters would re-send the URL-provided filters (issue #57). *@
+                <button type="button" id="clearFilters" class="secondary"
+                        hx-get="/Browse" hx-trigger="click" hx-target=".grid-gallery" hx-push-url="/Browse">
+                    Wyczyść filtry
+                </button>
+                <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>
+            </div>
+        </details>
+    </form>
+</section>
+
+<section class="grid-gallery">
+    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
+</section>
+
+<section>
+    <div aria-busy="true" class="htmx-indicator" id="ind"></div>
+</section>
+
+@section Scripts {
+    <script src="~/js/browse.js" asp-append-version="true"></script>
+}

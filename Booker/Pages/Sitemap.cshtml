@@ -1,0 +1,55 @@
+@page
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    ViewData["Title"] = "Mapa strony - TextBooker";
+    var isMessagesEnabled = Configuration.GetValue<bool>("Features:MessagesEnabled");
+}
+
+<h1>Mapa strony</h1>
+
+<nav class="sitemap" aria-label="Mapa strony TextBooker">
+    <h2>Strony główne</h2>
+    <ul>
+        <li><a asp-page="/Index">Ogłoszenia</a></li>
+        @if (isMessagesEnabled)
+        {
+            <li><a asp-page="/Chat">Wiadomości</a></li>
+        }
+        <li><a asp-page="/Privacy">Polityka prywatności</a></li>
+    </ul>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <h2>Konto</h2>
+        <ul>
+            <li><a asp-page="/Add">Dodaj ogłoszenie</a></li>
+            <li><a asp-page="/Profile/Index">Profil</a></li>
+            <li><a asp-page="/Profile/Favorites">Ulubione</a></li>
+            <li><a asp-area="Identity" asp-page="/Account/Manage/Index">Ustawienia profilu</a></li>
+            <li><a asp-area="Identity" asp-page="/Account/Manage/Email">Zmień e-mail</a></li>
+            <li><a asp-area="Identity" asp-page="/Account/Manage/ChangePassword">Zmień hasło</a></li>
+            <li><a asp-area="Identity" asp-page="/Account/Manage/PersonalData">Dane osobowe</a></li>
+            <li><a asp-area="Identity" asp-page="/Account/Manage/ProfilePictureUpload">Zdjęcie profilowe</a></li>
+        </ul>
+    }
+    else
+    {
+        <h2>Konto</h2>
+        <ul>
+            <li><a asp-area="Identity" asp-page="/Account/Login">Logowanie</a></li>
+            <li><a asp-area="Identity" asp-page="/Account/Register">Rejestracja</a></li>
+            <li><a asp-area="Identity" asp-page="/Account/ForgotPassword">Odzyskiwanie hasła</a></li>
+        </ul>
+    }
+
+    @if (User.IsInRole("Admin"))
+    {
+        <h2>Administracja</h2>
+        <ul>
+            <li><a asp-area="Admin" asp-page="/Index">Podsumowanie</a></li>
+            <li><a asp-area="Admin" asp-page="/Users">Użytkownicy</a></li>
+            <li><a asp-area="Admin" asp-page="/Admins">Administratorzy</a></li>
+            <li><a asp-area="Admin" asp-page="/Schools">Szkoły</a></li>
+        </ul>
+    }
+</nav>

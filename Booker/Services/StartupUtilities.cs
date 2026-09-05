@@ -20,7 +20,42 @@ namespace Booker.Services
     {
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton(x => new BlobServiceClient(configuration["AzureStorage:ConnectionString"]));
+            services.AddSingleton(serviceProvider =>
+            {
+                var accessKey = configuration["S3:AccessKeyId"];
+                var secretKey = configuration["S3:SecretAccessKey"];
+                var serviceUrl = configuration["CF:ServiceUrl"];
+                var region = configuration["S3:Region"];
+                var logger = serviceProvider.GetRequiredService<ILogger<PhotosManager>>();
+
+                if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey))
+                {
+                    logger.LogWarning("Photo uploads are disabled because S3 credentials are not configured.");
+                }
+
+                if (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region))
+                {
+                    logger.LogWarning("Photo uploads are disabled because neither CF:ServiceUrl nor S3:Region is configured.");
+                }
+
+                return new Lazy<IAmazonS3>(() =>
+                {
+                    if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey) ||
+                        (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region)))
+                    {
+                        throw new InvalidOperationException("Photo storage is not configured.");
+                    }
+
+                    var clientConfiguration = new AmazonS3Config { ForcePathStyle = true };
+
+                    if (!string.IsNullOrWhiteSpace(serviceUrl))
+                        clientConfiguration.ServiceURL = serviceUrl;
+                    else
+                        clientConfiguration.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region);
+
+                    return new AmazonS3Client(accessKey, secretKey, clientConfiguration);
+                });
+            });
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();
@@ -31,11 +66,10 @@ namespace Booker.Services
             services.AddScoped<FavoritesManager>();
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
-            services.AddScoped<IChatService, ChatService>(); // chat message service
-            services.AddSingleton<ChatModerationService>(); // anti-spam (rate limit, dupes, links) — shared state
-            services.AddSingleton<InMemoryChatStore>(); // in-memory chat store
-            services.AddScoped<IChatThreadService, ChatThreadService>(); // thread service
-
+            services.AddScoped<UserPhotoManager>();
+            services.AddScoped<IChatService, ChatService>();
+            services.AddSingleton<ChatModerationService>(); // anti-spam: in-memory sliding-window state, single instance
+            services.AddScoped<IChatThreadService, ChatThreadService>();
             services.AddScoped<SchoolService>();
             services.AddScoped<SchoolMappingService>();
             services.AddScoped<IRatingManager, RatingManager>();
@@ -258,10 +292,11 @@ namespace Booker.Services
         {
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             try
             {
-                await DevDbInitializer.Initialize(dbContext, itemsCount, usersCount);
+                await SeedData.InitializeDevelopmentDataAsync(dbContext, userManager, itemsCount, usersCount);
                 logger.LogInformation("Database initialized with {ItemsCount} items and {UsersCount} users.", itemsCount, usersCount);
             }
             catch (Exception ex)
@@ -275,13 +310,25 @@ namespace Booker.Services
         {
             using var scope = app.Services.CreateScope();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
             if (!await roleManager.RoleExistsAsync("Admin"))
                 await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
 
+            if (!app.Environment.IsDevelopment())
+                 return app;
+                 
+            var adminUser = await userManager.FindByNameAsync("a1");
+            if (adminUser is null)
+                return app;
+
+            if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+            {
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+
             return app;
         }
-
 
     }
 }

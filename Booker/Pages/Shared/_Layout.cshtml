@@ -25,41 +25,54 @@
         <base href="~/" />
     }
 </head>
-<body>
-    <nav class="container-fluid" role="navigation" data-breakpoint="md">
-        <ul>
-            <li>
-                <a asp-area="" asp-page="/Index">
-                    <img src="/img/logo-text.svg" alt="TextBooker" style="height: 2.25rem; vertical-align: baseline;">
-                </a>
-            </li>
-            <li>
-                <a asp-area="" asp-page="/Index" aria-label="Strona główna" title="Strona główna">
-                    <svg icon="home" variant="solid" aria-hidden="true" style="vertical-align: -0.2em; width: auto;"></svg>
-                </a>
-            </li>
-        </ul>
-        @await Html.PartialAsync("_LoginPartial")
-    </nav>
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+<body class="page-shell @(Configuration.GetValue<bool>("testingPhase") ? "testing-phase-on" : null)">
+    @if (Configuration.GetValue<bool>("testingPhase"))
+    {
+        <div class="testing-phase-badge"
+             role="note"
+             aria-label="Aplikacja ma wgrane dane testowe. Zachęcamy do załozenia konta, testowania i zglaszania usterek .">
+            Aplikacja ma wgrane dane testowe. Zachęcamy do załozenia konta, testowania i zglaszania usterek .
+        </div>
+    }
 
-    <main class="container">
+    <a href="#main-content" class="skip-link">Przejdź do treści głównej</a>
+
+    <header role="banner">
+        <nav class="container-fluid" role="navigation" aria-label="Główna nawigacja" data-breakpoint="md">
+            <ul>
+                <li>
+                    <a asp-area="" asp-page="/Index" aria-label="TextBooker - strona główna">
+                        <img src="/img/logo-text.svg" alt="TextBooker" style="height: 2.25rem; vertical-align: baseline;">
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-page="/Index" aria-label="Strona główna" title="Strona główna">
+                        <svg icon="home" variant="solid" aria-hidden="true" style="vertical-align: -0.2em; width: auto;"></svg>
+                    </a>
+                </li>
+            </ul>
+            @await Html.PartialAsync("_LoginPartial")
+        </nav>
+    </header>
+
+    <main id="main-content" class="container @(ViewData["MainClass"])" tabindex="-1">
         @RenderBody()
     </main>
 
-    <button class="float-right"
-            style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1000; padding: 0.5rem;"
+    <button class="float-right help-trigger"
             data-target="modal-example"
-            onclick="document.getElementById(this.dataset.target).showModal()"
-            aria-label="Pomoc"
+            onclick="openDialog(this)"
+            aria-label="Pomoc" aria-haspopup="dialog"
             title="Pomoc">
         <svg icon="help" variant="outline" aria-hidden="true" style="width: 2rem; height: auto;"></svg>
     </button>
 
-    <dialog id="modal-example">
+    <dialog id="modal-example" aria-labelledby="help-dialog-title">
         <article>
             <header>
-                <button aria-label="Close" rel="prev" onclick="this.closest('dialog').close()"></button>
-                <h5>Potrzebujesz pomocy? Skontaktuj się z nami! 💬</h5>
+                <button aria-label="Zamknij okno pomocy" rel="prev" onclick="closeDialog(this)" type="button"></button>
+                <h5 id="help-dialog-title">Potrzebujesz pomocy? Skontaktuj się z nami! 💬</h5>
             </header>
             <p>
                 Możemy pomóc na przykład w następujących przypadkach:
@@ -72,15 +85,15 @@
             </p>
             <footer>
                 <div class="grid one-col" style="grid-template-columns: 1fr;">
-                    <a href="https://www.facebook.com/profile.php?id=61578317232992" target="_blank" role="button" class="outline contrast">
+                    <a href="https://www.facebook.com/profile.php?id=61578317232992" target="_blank" rel="noopener" role="button" class="outline contrast">
                         <svg icon="brand-facebook" variant="outline" aria-hidden="true"></svg>
                         Facebook
                     </a>
-                    <a href="https://www.instagram.com/textbooker.pl/" target="_blank" role="button" class="outline contrast" style="margin-left: 0;">
+                    <a href="https://www.instagram.com/textbooker.pl/" target="_blank" rel="noopener" role="button" class="outline contrast" style="margin-left: 0;">
                         <svg icon="brand-instagram" variant="outline" aria-hidden="true"></svg>
                         Instagram
                     </a>
-                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfWQrj0IlDS8a8y03Sy-_TFvcDP1FMCwWtoRbZxdKskqCgoxQ/viewform" target="_blank" role="button" class="contrast" style="margin-left: 0;">
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfWQrj0IlDS8a8y03Sy-_TFvcDP1FMCwWtoRbZxdKskqCgoxQ/viewform" target="_blank" rel="noopener" role="button" class="contrast" style="margin-left: 0;">
                         Formularz feedback
                     </a>
                     <a href="mailto:support@textbooker.pl" role="button" style="margin-left: 0;">
@@ -91,7 +104,29 @@
         </article>
     </dialog>
 
-    <footer class="container">
+    <footer class="container-fluid" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <a asp-area="" asp-page="/Index">
+                    <img src="/img/logo-text.svg" alt="TextBooker" style="height: 1.75rem;">
+                </a>
+                <nav aria-label="Nawigacja dodatkowa">
+                    <ul role="list">
+                        <li><a asp-area="" asp-page="/Sitemap">Mapa strony</a></li>
+                        <li><a asp-area="" asp-page="/Privacy">Polityka prywatności</a></li>
+                        <li>
+                            <button class="footer-help-link"
+                                    type="button"
+                                    data-target="modal-example"
+                                    onclick="document.getElementById(this.dataset.target).showModal()">
+                                Centrum pomocy
+                            </button>
+                        </li>
+                        <li><a href="mailto:support@textbooker.pl">Kontakt</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
     </footer>
 
     <script src="~/js/validation/aspnet-validation.min.js" asp-append-version="true"></script>

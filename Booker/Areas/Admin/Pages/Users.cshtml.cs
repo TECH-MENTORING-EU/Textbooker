@@ -14,13 +14,15 @@ namespace Booker.Areas.Admin.Pages
         private readonly UserManager<User> _userManager;
         private readonly SessionCacheManager _sessionCacheManager;
         private readonly ItemManager _itemManager;
+        private readonly UserPhotoManager _userPhotoManager;
         private readonly ILogger<UsersModel> _logger;
 
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, ILogger<UsersModel> logger)
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, ILogger<UsersModel> logger)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _itemManager = itemManager;
+            _userPhotoManager = userPhotoManager;
             _logger = logger;
         }
 
@@ -63,6 +65,10 @@ namespace Booker.Areas.Admin.Pages
 
             var currentUser = await _userManager.GetUserAsync(User);
 
+            // The keys must be collected before the account is deleted - the item rows
+            // cascade away with the account and the keys cannot be read afterwards.
+            var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
@@ -71,6 +77,8 @@ namespace Booker.Areas.Admin.Pages
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
+
+            await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {user.UserName}.");
             return Content("User deleted successfully.");

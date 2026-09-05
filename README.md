@@ -84,6 +84,62 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is part of TECH-MENTORING-EU organization. 
 
+## 🤖 Apply PR review comments with Copilot CLI
+
+This repository includes the script `..\.agents\skills\textbooker-pr-review\scripts\apply_review_comments_agent_v2.py` to fetch unresolved review comments from the open pull request for your current branch and hand them off to GitHub Copilot CLI.
+
+### Prerequisites
+Requires (minimum supported versions):
+- Python 3.13.7
+- git 2.53.0.windows3
+- GitHub Copilot CLI 1.0.70+ authenticated with `copilot login`
+- GitHub CLI 2.96.0 authenticated with `gh auth login`
+
+### How it works
+
+The script:
+
+1. Detects the currently checked out branch
+2. Finds the open pull request for that branch
+3. Fetches unresolved review threads that are not outdated
+4. Writes a prompt file to the repository root
+5. Starts Copilot CLI in autopilot mode to apply the requested fixes
+
+### Run the script
+
+From the repository root:
+
+```bash
+python .\.agents\skills\textbooker-pr-review\scripts\apply_review_comments_agent_v2.py
+```
+
+### Useful options
+
+- Only generate the prompt file without launching Copilot:
+
+  ```bash
+  python .\.agents\skills\textbooker-pr-review\scripts\apply_review_comments_agent_v2.py --no-copilot
+  ```
+
+- Explicitly specify the repository if auto-detection is not enough:
+
+  ```bash
+  python .\.agents\skills\textbooker-pr-review\scripts\apply_review_comments_agent_v2.py --repo TECH-MENTORING-EU/Textbooker
+  ```
+
+- Change the generated prompt file name:
+
+  ```bash
+  python .\.agents\skills\textbooker-pr-review\scripts\apply_review_comments_agent_v2.py --prompt-file my-review-prompt.txt
+  ```
+
+### Notes
+
+- Run the script from a branch that already has an open pull request.
+- The script does not create a commit.
+- The script leaves changes uncommitted in your working tree.
+- If there are no unresolved current review threads, the script exits without making changes.
+
 ## 📧 Contact
 
 Organization: [TECH-MENTORING-EU](https://github.com/TECH-MENTORING-EU)

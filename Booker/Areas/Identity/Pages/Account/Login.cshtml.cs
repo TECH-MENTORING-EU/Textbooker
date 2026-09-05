@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -20,15 +21,22 @@ namespace Booker.Areas.Identity.Pages.Account
 {
     public class LoginModel : PageModel
     {
+        // Single message for every failed sign-in attempt. Distinct messages for
+        // unknown email, wrong password, unconfirmed, or locked-out accounts let
+        // an attacker enumerate registered addresses (issue #66).
+        private const string GenericLoginFailureMessage = "Błędny login lub hasło.";
+
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly UserManager<User> _userManager;
+        private readonly IWebHostEnvironment _environment;
 
-        public LoginModel(SignInManager<User> signInManager, ILogger<LoginModel> logger, UserManager<User> userManager)
+        public LoginModel(SignInManager<User> signInManager, ILogger<LoginModel> logger, UserManager<User> userManager, IWebHostEnvironment environment)
         {
             _signInManager = signInManager;
             _logger = logger;
             _userManager = userManager;
+            _environment = environment;
         }
 
         /// <summary>
@@ -120,20 +128,15 @@ namespace Booker.Areas.Identity.Pages.Account
                     var user = await _userManager.FindByEmailAsync(Input.Email);
                     if (user == null)
                     {
-                        ModelState.AddModelError(string.Empty, "Nieprawidłowa próba logowania.");
+                        ModelState.AddModelError(string.Empty, GenericLoginFailureMessage);
                         return Page();
                     }
-                    else
-                    {
-                        userName = user.UserName;
-                    }
+                    userName = user.UserName;
                 }
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(userName, Input.Password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
-                    var user = await _userManager.GetUserAsync(User);
+                    var user = await _userManager.FindByNameAsync(userName);
                     if (user != null)
                     {
                         user.LastActiveAt = DateTime.Now;
@@ -147,15 +150,23 @@ namespace Booker.Areas.Identity.Pages.Account
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning($"Konto użytkownika {userName} zostało zablokowane po zbyt dużej liczbie nieudanych prób logowania.");
-                    var user = await _userManager.FindByNameAsync(userName);
-                    return RedirectToPage("./Lockout", new { lockoutEnd = user.LockoutEnd?.ToUnixTimeSeconds()});
+                    _logger.LogWarning("Konto użytkownika {UserName} zostało zablokowane po zbyt dużej liczbie nieudanych prób logowania.", userName);
+                    // The Lockout page discloses the lockout end time, so it must
+                    // stay unreachable from the public login flow outside development.
+                    if (_environment.IsDevelopment())
+                    {
+                        var user = await _userManager.FindByNameAsync(userName);
+                        if (user?.LockoutEnd is DateTimeOffset lockoutEnd)
+                        {
+                            return RedirectToPage("./Lockout", new { lockoutEnd = lockoutEnd.ToUnixTimeSeconds() });
+                        }
+                    }
                 }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Błędny login lub hasło.");
-                    return Page();
-                }
+                // Wrong password, unconfirmed account, and (outside development)
+                // lockout all end here on purpose: the response must not reveal
+                // whether the account exists or what state it is in.
+                ModelState.AddModelError(string.Empty, GenericLoginFailureMessage);
+                return Page();
             }
 
             // If we got this far, something failed, redisplay form

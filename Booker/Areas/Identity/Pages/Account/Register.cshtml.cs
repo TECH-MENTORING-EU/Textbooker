@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Booker.Services;
+using System.Net;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
@@ -29,13 +34,19 @@ namespace Booker.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<User> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly DataContext _context;
+        private readonly SchoolMappingService _schoolMappingService;
+        private readonly IWebHostEnvironment _environment;
 
         public RegisterModel(
             UserManager<User> userManager,
             IUserStore<User> userStore,
             SignInManager<User> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            DataContext context,
+            SchoolMappingService schoolMappingService,
+            IWebHostEnvironment environment)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -43,6 +54,9 @@ namespace Booker.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context;
+            _schoolMappingService = schoolMappingService;
+            _environment = environment;
         }
 
         [BindProperty]
@@ -51,6 +65,8 @@ namespace Booker.Areas.Identity.Pages.Account
         public string ReturnUrl { get; set; }
 
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
+        
+        public SelectList AvailableSchools { get; set; }
 
         public class InputModel
         {
@@ -73,6 +89,9 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Potwierdź hasło")]
             [Compare("Password", ErrorMessage = "Hasła się nie zgadzają.")]
             public string ConfirmPassword { get; set; }
+            
+            [Display(Name = "Szkoła")]
+            public int? SchoolId { get; set; }
 
             [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
@@ -83,17 +102,102 @@ namespace Booker.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            var activeSchools = await _context.Schools.Where(s => s.IsActive).OrderBy(s => s.Id).ToListAsync();
+            AvailableSchools = new SelectList(activeSchools, "Id", "Name");
+            Input ??= new InputModel();
+        }
+
+        public async Task<IActionResult> OnGetAutoSchoolAsync([FromQuery(Name = "Input.Email")] string email)
+        {
+            var activeSchools = await _context.Schools
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.Id)
+                .ToListAsync();
+
+            var options = new StringBuilder();
+            options.Append("<option value=\"\">Wybierz szkołę</option>");
+
+            if (activeSchools.Count == 0)
+            {
+                return Content(options.ToString(), "text/html; charset=utf-8");
+            }
+
+            var schoolId = string.IsNullOrWhiteSpace(email)
+                ? null
+                : await _schoolMappingService.GetSchoolIdByEmailAsync(email);
+
+            if (schoolId.HasValue)
+            {
+                var matchedSchool = activeSchools.FirstOrDefault(s => s.Id == schoolId.Value);
+                if (matchedSchool is not null)
+                {
+                    var matchedOption = $"<option value=\"{matchedSchool.Id}\" selected>{WebUtility.HtmlEncode(matchedSchool.Name)}</option>";
+                    return Content(matchedOption, "text/html; charset=utf-8");
+                }
+            }
+
+            foreach (var school in activeSchools)
+            {
+                options.Append($"<option value=\"{school.Id}\">{WebUtility.HtmlEncode(school.Name)}</option>");
+            }
+
+            return Content(options.ToString(), "text/html; charset=utf-8");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            var activeSchools = await _context.Schools.Where(s => s.IsActive).OrderBy(s => s.Id).ToListAsync();
+            AvailableSchools = new SelectList(activeSchools, "Id", "Name");
+            Input ??= new InputModel();
+            
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
 
-                user.SchoolId = 1;
+                var autoAssignedSchoolId = await _schoolMappingService.GetSchoolIdByEmailAsync(Input.Email);
+                if (autoAssignedSchoolId.HasValue)
+                {
+                    user.SchoolId = autoAssignedSchoolId.Value;
+                    _logger.LogInformation(
+                        "User automatically assigned to school ID {SchoolId} based on email domain",
+                        autoAssignedSchoolId.Value
+                    );
+                }
+                else if (Input.SchoolId.HasValue)
+                {
+                    var selectedSchool = await _context.Schools
+                        .FirstOrDefaultAsync(s => s.Id == Input.SchoolId.Value && s.IsActive);
+
+                    if (selectedSchool is null)
+                    {
+                        _logger.LogWarning(
+                            "User tried to register with inactive/nonexistent school ID {SchoolId}",
+                            Input.SchoolId.Value
+                        );
+                        ModelState.AddModelError(
+                            nameof(Input.SchoolId),
+                            "Wybrana szkoła nie jest dostępna. Wybierz inną szkołę."
+                        );
+                        return Page();
+                    }
+
+                    user.SchoolId = Input.SchoolId.Value;
+                    _logger.LogInformation(
+                        "User manually assigned to school ID {SchoolId}",
+                        Input.SchoolId.Value
+                    );
+                }
+                else
+                {
+                    ModelState.AddModelError(
+                        nameof(Input.SchoolId),
+                        "Nie znaleziono szkoły dla podanego adresu e-mail. Wybierz szkołę ręcznie."
+                    );
+                    return Page();
+                }
+
                 user.Photo = "/img/default-profile-picture.jpg";
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);

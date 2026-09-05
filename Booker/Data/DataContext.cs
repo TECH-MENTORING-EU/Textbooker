@@ -40,8 +40,6 @@ namespace Booker.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<School>().HasData(SeedData.Schools);
-
             modelBuilder.Entity<Subject>().HasData(SeedData.Subjects);
 
             modelBuilder.Entity<Grade>().HasData(SeedData.Grades);

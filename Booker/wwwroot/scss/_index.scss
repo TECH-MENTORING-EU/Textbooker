@@ -6,26 +6,114 @@
 .filter {
     @keyframes slideDown {
         0% {
-            opacity: 0;
             transform: translateY(-0.5rem);
         }
 
         100% {
-            opacity: 1;
             transform: translateY(0);
         }
     }
 
-    details summary svg {
-        transition: transform 0.3s ease-out;
+    .filter-search {
+        display: block;
+        width: 100%;
+        box-shadow: none;
+        border-radius: 0;
     }
 
-    details[open] summary svg {
-        transform: rotate(90deg);
+    .search-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 0 0.5rem;
+
+        #search {
+            width: 100%;
+            min-width: 0;
+            margin-bottom: 0;
+        }
+
+        .filter-toggle {
+            width: max-content;
+            margin: 0;
+            padding-inline: 0.75rem;
+            background: transparent;
+            border-color: transparent;
+            box-shadow: none;
+            color: var(--pico-primary);
+            white-space: nowrap;
+        }
+
+        .filter-toggle svg {
+            transition: transform 0.3s ease-out;
+        }
+
+        .filter-toggle[aria-expanded="true"] svg {
+            transform: rotate(90deg);
+        }
     }
 
-    details[open] div.grid {
+    #search-hint {
+        display: block;
+        max-width: 100%;
+        margin: 0.25rem 0 0;
+        overflow-wrap: anywhere;
+        line-height: 1.35;
+    }
+
+    #search-hint[hidden] {
+        display: none;
+    }
+
+    .filter-panel {
+        margin-top: 0.75rem;
         animation: slideDown 0.3s ease-out forwards;
+
+        .grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        select,
+        input,
+        button {
+            width: 100%;
+            min-width: 0;
+        }
+
+        input::placeholder {
+            color: #4f5968;
+            opacity: 1;
+        }
+
+        button {
+            background-color: var(--pico-primary-background);
+            border-color: var(--pico-primary-border);
+            color: var(--pico-primary-inverse);
+        }
+
+        button.secondary {
+            background-color: var(--pico-secondary-background);
+            border-color: var(--pico-secondary-border);
+            color: var(--pico-secondary-inverse);
+        }
+
+        button {
+            margin-top: 0.5rem;
+        }
+    }
+
+    .filter-panel[hidden] {
+        display: none;
+    }
+}
+
+@media (max-width: map.get(map.get(pico.$breakpoints, "md"), "breakpoint") - 1) {
+    .filter .filter-panel {
+        .grid {
+            grid-template-columns: 1fr;
+        }
     }
 }
 
@@ -39,24 +127,10 @@
     @include utils.auto-grid(225px);
 }
 
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
-        transform: translateY(1rem);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .book-tile {
     display: flex;
     flex-direction: column;
     --pico-typography-spacing-vertical: 0.25rem;
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    animation: fadeIn 0.5s ease-out forwards;
 
     img {
         width: 100%;
@@ -66,17 +140,22 @@
         background-color: var(--pico-card-background-color);
     }
 
+    a.cover {
+        display: block;
+    }
+
     h2 {
         @include utils.h5-size;
     }
 
     footer {
         flex: 1;
+        position: relative;
         display: grid;
         gap: 0.25rem;
         grid-template-areas:
             "main main" "categories fav";
-        grid-template-columns: auto 1rem;
+        grid-template-columns: minmax(0, auto) 40px;
         grid-template-rows: auto max-content;
 
         .info a {
@@ -92,7 +171,9 @@
             height: 100%;
         }
 
-        button, [role="button"] {
+        button,
+        [role="button"],
+        .actions a {
             position: relative;
             z-index: 1;
         }
@@ -103,12 +184,36 @@
 
         .actions {
             grid-area: categories;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
             align-content: end;
 
-            button {
-                font-size: 0.75em;
-                padding: 0 0.5em;
+            .tag-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.375rem;
+                width: 100%;
+            }
+
+            button,
+            a[role="button"] {
+                width: auto;
+                min-height: 32px;
+                padding: 0.125em 0.625em;
+                font-size: 0.7em;
+                line-height: 1.2;
                 border-radius: 100vmax;
+                margin-bottom: 0;
+                white-space: nowrap;
+            }
+
+            .tag-row-subject,
+            .tag-row-level {
+                button,
+                a[role="button"] {
+                    white-space: normal;
+                }
             }
         }
 
@@ -118,15 +223,17 @@
             margin-bottom: -0.25rem;
 
             button, [role=button] {
+                display: grid;
+                place-items: center;
                 border: none;
                 padding: 0;
-                width: 1.5rem;
-                height: 1.5rem;
+                width: 40px;
+                height: 40px;
                 overflow: hidden;
 
                 svg {
-                    width: 100%;
-                    height: 100%;
+                    width: 24px;
+                    height: 24px;
                     vertical-align: top;
                 }
             }
@@ -135,6 +242,8 @@
 }
 
 .book-tile.reserved {
+    position: relative;
+
     img {
         filter: saturate(0.2);       
     }
@@ -149,6 +258,7 @@
         color: white;
         padding: 0.25em 0.5em;
         border-radius: 0.25em;
+        pointer-events: none;
     }
 }
 

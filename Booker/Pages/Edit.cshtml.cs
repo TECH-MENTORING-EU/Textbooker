@@ -86,24 +86,42 @@ namespace Booker.Pages
                 Input.Level
             );
 
-            if(Input.Reserved != ItemToEdit.Reserved)
+            var validatedImages = await Shared.ImageUploadValidation.ValidateAndReadAsync(
+                Input.Images,
+                requireAtLeastOne: false,
+                ModelState);
+
+            if (validatedImages == null)
             {
-                await _itemManager.MarkItemReservedAsync(id, Input.Reserved);
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
+                return Page();
             }
 
-            var imageStreams = Input.Images?.Select(f => f.OpenReadStream()).ToList();
-            var imageExtensions = Input.Images?.Select(f => Path.GetExtension(f.FileName)).ToList();
+            ItemManager.Status result;
+            try
+            {
+                // Keep reservation update in the same persistence operation as other edits.
+                ItemToEdit.Reserved = Input.Reserved;
 
-            var result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
-                ItemToEdit.User,
-                parameters,
-                Input.Description,
-                Input.State,
-                Input.Price,
-                imageStreams,
-                imageExtensions,
-                ItemToEdit.Photo
-            ));
+                result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
+                    ItemToEdit.User,
+                    parameters,
+                    Input.Description,
+                    Input.State,
+                    Input.Price,
+                    validatedImages.Streams,
+                    validatedImages.Extensions,
+                    ItemToEdit.Photo
+                ));
+            }
+            catch (PhotoStorageException ex)
+            {
+                ModelState.AddModelError("Input.Images", ex.Message);
+                Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
             return ValidateAndReturn(ItemToEdit.Id, result);
         }
@@ -121,7 +139,7 @@ namespace Booker.Pages
             }
 
             await _itemManager.DeleteItemAsync(itemId);
-            return RedirectToPage("/Index");
+            return RedirectToPage("/Browse");
         }
     }
 }

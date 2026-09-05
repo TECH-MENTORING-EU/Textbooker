@@ -5,59 +5,52 @@ using Microsoft.AspNetCore.Identity;
 using System.Globalization;
 using Booker.Services;
 using Booker.Utilities;
-using SQLitePCL;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Authorization;
 
-
 namespace Booker.Pages
 {
-    public class BookModel : PageModel
+    public class BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, IChatThreadService chatThreadService, ILogger<BookModel> logger) : PageModel
     {
-        private readonly UserManager<User> _userManager;
-        private readonly ItemManager _itemManager;
-        private readonly FavoritesManager _favoritesManager;
-        private readonly IAuthorizationService _authService;
-        private readonly IChatThreadService _chatThreadService;
-        private readonly ILogger<BookModel> _logger;
-
+        public List<string> Photos { get; set; } = new();
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
-
-        public BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, IChatThreadService chatThreadService, ILogger<BookModel> logger)
-        {
-            _userManager = userManager;
-            _itemManager = itemManager;
-            _favoritesManager = favoritesManager;
-            _authService = authService;
-            _chatThreadService = chatThreadService;
-            _logger = logger;
-        }
+        public int ViewCount { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var item = await _itemManager.GetItemAsync(id);
+            var currentUser = await userManager.GetUserAsync(User);
+            var item = await itemManager.GetItemAsync(id, currentUser);
             if (item == null)
             {
                 return NotFound();
             }
 
+            Photos = itemManager.GetPhotosUrl(item);
             BookItem = item;
 
-            var userId = _userManager.GetUserId(User).IntOrDefault();
+            IsCurrentUserOwner = currentUser != null && currentUser.Id == BookItem.User.Id;
+            IsFavorite = currentUser != null && await favoritesManager.IsFavoriteAsync(currentUser.Id, id);
 
-            IsFavorite = await _favoritesManager.IsFavoriteAsync(userId, id);
-
-            IsCurrentUserOwner = userId == BookItem.User.Id;
-
-            var isAuthorized = await _authService.AuthorizeAsync(User, item, ItemOperations.Read);
+            var isAuthorized = await authService.AuthorizeAsync(User, item, ItemOperations.Read);
 
             if (!item.IsVisible && !isAuthorized.Succeeded)
             {
-                _logger.LogWarning($"Użytkownik {User.Identity?.Name} próbował wykonać nieuprawnioną akcję {ItemOperations.Read.Name} na zasobie o ID {id}.");
+                logger.LogWarning("Użytkownik {UserName} próbował wykonać nieuprawnioną akcję {ActionName} na zasobie o ID {ItemId}.",
+                    User.Identity?.Name, ItemOperations.Read.Name, id);
                 return NotFound();
+            }
+
+            if (currentUser != null && !IsCurrentUserOwner)
+            {
+                await itemManager.TrackViewAsync(id, currentUser.Id);
+            }
+
+            if (IsCurrentUserOwner)
+            {
+                ViewCount = await itemManager.GetViewCountAsync(id);
             }
 
             return Page();
@@ -65,7 +58,8 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetEmailAsync(int id)
         {
-            var item = await _itemManager.GetItemAsync(id);
+            var currentUser = await userManager.GetUserAsync(User);
+            var item = await itemManager.GetItemAsync(id, currentUser);
 
             if (item == null)
             {
@@ -73,16 +67,14 @@ namespace Booker.Pages
             }
 
             BookItem = item;
-            
-            var userId = _userManager.GetUserId(User).IntOrDefault();
 
-            if (userId == -1)
+            if (currentUser == null)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
                 return new NoContentResult();
             }
 
-            if (BookItem.User.Id == userId)
+            if (BookItem.User.Id == currentUser.Id)
             {
                 return new NoContentResult();
             }
@@ -92,22 +84,21 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostReserveAsync(int id, bool reserve)
         {
-            var item = await _itemManager.GetItemAsync(id);
+            var currentUser = await userManager.GetUserAsync(User);
+            var item = await itemManager.GetItemAsync(id, currentUser);
             if (item == null)
             {
                 return NotFound();
             }
 
-            var userId = _userManager.GetUserId(User).IntOrDefault();
-
-            if (userId == -1 || userId != item.User.Id)
+            if (currentUser == null || currentUser.Id != item.User.Id)
             {
                 return Forbid();
             }
 
             if (item.Reserved != reserve)
             {
-                await _itemManager.MarkItemReservedAsync(id, reserve);
+                await itemManager.MarkItemReservedAsync(id, reserve);
             }
 
             Response.Headers["HX-Refresh"] = "true";
@@ -116,11 +107,11 @@ namespace Booker.Pages
 
         /// <summary>
         /// Starts (or reopens) the conversation about this listing with its seller.
-        /// Threads about offers can only be created from here — never user-to-user "cold".
+        /// Threads about offers can only be created from here, never user-to-user "cold".
         /// </summary>
         public async Task<IActionResult> OnPostChatAsync(int id, CancellationToken ct)
         {
-            var userId = _userManager.GetUserId(User).IntOrDefault();
+            var userId = userManager.GetUserId(User).IntOrDefault();
             if (userId == -1)
             {
                 return Challenge();
@@ -128,12 +119,12 @@ namespace Booker.Pages
 
             try
             {
-                var thread = await _chatThreadService.GetOrCreateForItemAsync(userId, id, ct);
+                var thread = await chatThreadService.GetOrCreateForItemAsync(userId, id, ct);
                 return RedirectToPage("/Chat", new { DealId = thread.ChannelId });
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning("Chat start for item {ItemId} by user {UserId} rejected: {Reason}", id, userId, ex.Message);
+                logger.LogWarning("Chat start for item {ItemId} by user {UserId} rejected: {Reason}", id, userId, ex.Message);
                 return BadRequest();
             }
         }

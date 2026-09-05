@@ -2,13 +2,16 @@
 
 @use "pico"  with ( $theme-color: "azure" );
 @use "index";
+@use "landing";
 @use "book";
+@use "browse";
 @use "add";
 @use "identity";
 @use "hamburger";
 @use "profile";
 @use "edit";
 @use "rating";
+@use "a11y";
 
 @use "sass:map";
 
@@ -37,6 +40,34 @@
 svg.icon {
     width: 1em;
     height: 1.5rem;
+}
+
+// Global environment marker rendered from layout when testingPhase is enabled.
+.testing-phase-badge {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 5000;
+    padding: 0.45rem 1rem;
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 2px solid #083f78;
+    background-color: #0d6fd1;
+    background-image: none;
+    color: #ffffff;
+    font-size: clamp(0.9rem, 0.75rem + 0.45vw, 1.1rem);
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-align: center;
+    text-wrap: balance;
+    line-height: 1.25;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+.testing-phase-on {
+    padding-top: clamp(2.3rem, 2rem + 1.2vw, 3rem);
 }
 
 /*

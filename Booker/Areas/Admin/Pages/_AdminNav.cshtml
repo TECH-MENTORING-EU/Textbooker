@@ -1,6 +1,14 @@
-﻿<ul>
-    <li><a aria-current="@AdminNavPages.IndexNavClass(ViewContext)" id="summary" asp-page="./Index">Podsumowanie</a></li>
-    <li><a aria-current="@AdminNavPages.UsersNavClass(ViewContext)" id="users" asp-page="./Users">Użytkownicy</a></li>
-    <li><a aria-current="@AdminNavPages.AdminsNavClass(ViewContext)" id="admins" asp-page="./Admins">Administratorzy</a></li>
-    <li><a aria-current="@AdminNavPages.RatingsNavClass(ViewContext)" id="ratings" asp-page="./Ratings">Oceny</a></li>
+﻿﻿<ul role="list" aria-label="Sekcje panelu administracyjnego">
+    @{
+        var indexCurrent = AdminNavPages.IndexNavClass(ViewContext);
+        var usersCurrent = AdminNavPages.UsersNavClass(ViewContext);
+        var adminsCurrent = AdminNavPages.AdminsNavClass(ViewContext);
+        var schoolsCurrent = AdminNavPages.SchoolsNavClass(ViewContext);
+        var ratingsCurrent = AdminNavPages.RatingsNavClass(ViewContext);
+    }
+    <li><a aria-current="@(string.IsNullOrEmpty(indexCurrent) ? null : indexCurrent)" id="summary" asp-page="./Index">Podsumowanie</a></li>
+    <li><a aria-current="@(string.IsNullOrEmpty(usersCurrent) ? null : usersCurrent)" id="users" asp-page="./Users">Użytkownicy</a></li>
+    <li><a aria-current="@(string.IsNullOrEmpty(adminsCurrent) ? null : adminsCurrent)" id="admins" asp-page="./Admins">Administratorzy</a></li>
+    <li><a aria-current="@(string.IsNullOrEmpty(schoolsCurrent) ? null : schoolsCurrent)" id="schools" asp-page="./Schools">Szkoły</a></li>
+    <li><a aria-current="@(string.IsNullOrEmpty(ratingsCurrent) ? null : ratingsCurrent)" id="ratings" asp-page="./Ratings">Oceny</a></li>
 </ul>

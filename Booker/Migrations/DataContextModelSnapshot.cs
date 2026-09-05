@@ -34,7 +34,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("GradeId");
 
-                    b.ToTable("BookGrades");
+                    b.ToTable("BookGrades", (string)null);
 
                     b.HasData(
                         new
@@ -878,7 +878,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Books");
+                    b.ToTable("Books", (string)null);
 
                     b.HasData(
                         new
@@ -1485,78 +1485,6 @@ namespace Booker.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Booker.Data.ChatMessage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DealId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("DealId", "CreatedUtc");
-
-                    b.ToTable("ChatMessages");
-                });
-
-            modelBuilder.Entity("Booker.Data.ChatThread", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChannelId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ItemId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("LastMessageUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserAId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserBId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChannelId")
-                        .IsUnique();
-
-                    b.HasIndex("ItemId");
-
-                    b.HasIndex("UserAId", "UserBId");
-
-                    b.ToTable("ChatThreads");
-                });
-
             modelBuilder.Entity("Booker.Data.Grade", b =>
                 {
                     b.Property<int>("Id")
@@ -1571,7 +1499,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Grades");
+                    b.ToTable("Grades", (string)null);
 
                     b.HasData(
                         new
@@ -1622,9 +1550,6 @@ namespace Booker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsSold")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
@@ -1638,12 +1563,6 @@ namespace Booker.Migrations
 
                     b.Property<bool>("Reserved")
                         .HasColumnType("bit");
-
-                    b.Property<DateTime?>("ReservedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("SoldAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -1661,7 +1580,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Items");
+                    b.ToTable("Items", (string)null);
                 });
 
             modelBuilder.Entity("Booker.Data.ItemView", b =>
@@ -1676,7 +1595,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ItemViews");
+                    b.ToTable("ItemViews", (string)null);
                 });
 
             modelBuilder.Entity("Booker.Data.Level", b =>
@@ -1693,7 +1612,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Levels");
+                    b.ToTable("Levels", (string)null);
 
                     b.HasData(
                         new
@@ -1751,17 +1670,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Schools");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EmailDomain = "hogwart.edu.pl",
-                            IsActive = true,
-                            Name = "Hogwart"
-                        });
+                    b.ToTable("Schools", (string)null);
                 });
 
             modelBuilder.Entity("Booker.Data.Subject", b =>
@@ -1778,7 +1687,7 @@ namespace Booker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", (string)null);
 
                     b.HasData(
                         new
@@ -1902,6 +1811,9 @@ namespace Booker.Migrations
                     b.Property<bool>("DisplayEmail")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("DisplayPhone")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("DisplayWhatsapp")
                         .HasColumnType("bit");
 
@@ -1976,46 +1888,6 @@ namespace Booker.Migrations
                     b.HasIndex("SchoolId");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("Booker.Data.UserRating", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RatingValue")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("RepliedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Reply")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RevieweeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReviewerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RevieweeId");
-
-                    b.HasIndex("ReviewerId", "RevieweeId")
-                        .IsUnique();
-
-                    b.ToTable("UserRatings");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -2167,7 +2039,7 @@ namespace Booker.Migrations
 
                     b.HasIndex("ItemId");
 
-                    b.ToTable("UserFavorites");
+                    b.ToTable("UserFavorites", (string)null);
                 });
 
             modelBuilder.Entity("BookGrades", b =>
@@ -2202,27 +2074,6 @@ namespace Booker.Migrations
                     b.Navigation("Level");
 
                     b.Navigation("Subject");
-                });
-
-            modelBuilder.Entity("Booker.Data.ChatMessage", b =>
-                {
-                    b.HasOne("Booker.Data.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Booker.Data.ChatThread", b =>
-                {
-                    b.HasOne("Booker.Data.Item", "Item")
-                        .WithMany()
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("Booker.Data.Item", b =>
@@ -2271,25 +2122,6 @@ namespace Booker.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("School");
-                });
-
-            modelBuilder.Entity("Booker.Data.UserRating", b =>
-                {
-                    b.HasOne("Booker.Data.User", "Reviewee")
-                        .WithMany()
-                        .HasForeignKey("RevieweeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Booker.Data.User", "Reviewer")
-                        .WithMany()
-                        .HasForeignKey("ReviewerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Reviewee");
-
-                    b.Navigation("Reviewer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
