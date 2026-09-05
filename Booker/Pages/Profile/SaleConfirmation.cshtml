@@ -1,0 +1,54 @@
+﻿@page
+@model Booker.Pages.Profile.SaleConfirmationModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Potwierdź sprzedaż";
+    var pl = new CultureInfo("pl-PL");
+}
+
+<article>
+    <header>
+        <h2>Czy udało Ci się sprzedać?</h2>
+        <p>Poniższe ogłoszenia są zarezerwowane od co najmniej @ItemManager.SaleConfirmationDays dni.
+        Potwierdź, czy transakcja doszła do skutku i komu sprzedałeś książkę - po potwierdzeniu
+        kupujący może wystawić Ci ocenę.</p>
+    </header>
+
+    <div asp-validation-summary="ModelOnly" role="alert" aria-live="assertive"></div>
+
+    @if (Model.PendingItems.Count == 0)
+    {
+        <p class="secondary">Brak ogłoszeń oczekujących na potwierdzenie. 🎉</p>
+    }
+
+    @foreach (var item in Model.PendingItems)
+    {
+        var buyers = Model.BuyersByItem.GetValueOrDefault(item.Id) ?? [];
+        <article>
+            <header>
+                <strong>@item.Title</strong> - @item.Price.ToString("0.00") zł
+                <br />
+                <small>Zarezerwowano: @TimeZoneInfo.ConvertTimeFromUtc(item.ReservedAt, TimeZoneInfo.Local).ToString("d", pl)</small>
+            </header>
+            <form method="post" class="sale-confirm-actions">
+                <input type="hidden" name="itemId" value="@item.Id" />
+                <fieldset>
+                    <legend>Kupujący:</legend>
+                    @foreach (var buyer in buyers)
+                    {
+                        <label>
+                            <input type="radio" name="soldToUserId" value="@buyer.UserId" required />
+                            @buyer.DisplayName
+                        </label>
+                    }
+                    <label>
+                        <input type="radio" name="soldToUserId" value="" checked="@(buyers.Count == 0)" />
+                        Sprzedałem poza TextBookerem (bez oceny)
+                    </label>
+                </fieldset>
+                <button asp-page-handler="Confirm" asp-route-itemId="@item.Id">Tak, udało mi się sprzedać</button>
+                <button asp-page-handler="Decline" asp-route-itemId="@item.Id" class="outline">Nie, nie udało mi się sprzedać</button>
+            </form>
+        </article>
+    }
+</article>

@@ -1,4 +1,4 @@
-﻿@page
+@page
 @* Custom route defined in StartupUtilities *@
 @model Profile.FavoritesModel
 @{
@@ -9,7 +9,7 @@
 
 <h2>Ulubione</h2>
 <section class="grid-gallery" aria-label="Ulubione ogłoszenia">
-    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
+    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" show-sold="true" />
 </section>
 
 <section>

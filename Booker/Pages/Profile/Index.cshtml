@@ -1,4 +1,4 @@
-﻿@page
+@page
 @* Custom routes defined in StartupUtilities *@
 @model Booker.Pages.Profile.IndexModel
 @{
@@ -7,9 +7,42 @@
 
 <partial name="_Heading" for="UserInfo" />
 
+<section class="profile-rating">
+    <h2>Oceny</h2>
+    @if (TempData["ReplyError"] is string replyError)
+    {
+        <p class="error" role="alert">@replyError</p>
+    }
+    <div class="rating-summary">
+        <partial name="Shared/_StarRating" model="@Model.AverageRating" />
+        <span class="rating-count">(@Model.RatingCount ocen)</span>
+    </div>
+
+    @if (!Model.UserInfo.IsCurrentUser && User.Identity?.IsAuthenticated == true)
+    {
+        if (Model.HasExistingRating)
+        {
+            <p class="secondary">Już oceniłeś tego użytkownika.</p>
+        }
+        else if (Model.CanRate)
+        {
+            <a asp-page="/Rating/Create" asp-route-userId="@Model.UserInfo.RequestUser.Id" role="button" class="outline">Oceń użytkownika</a>
+        }
+        else
+        {
+            <details>
+                <summary class="secondary">Dlaczego nie mogę ocenić?</summary>
+                <p>Oceny wystawia się tylko po zakończonej transakcji: kup książkę, a sprzedawca potwierdzi sprzedaż przy jej ogłoszeniu. Wtedy pojawi się tu opcja wystawienia oceny.</p>
+            </details>
+        }
+    }
+
+    <partial name="Shared/_RatingList" model="@Model.Ratings" />
+</section>
+
 <h2>Ogłoszenia</h2>
 <section class="grid-gallery" aria-label="Ogłoszenia użytkownika">
-    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" show-hidden="@Model.UserInfo.IsCurrentUser" />
+    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" show-hidden="@Model.UserInfo.IsCurrentUser" show-sold="true" />
 </section>
 
 <section>

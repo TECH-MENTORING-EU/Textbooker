@@ -170,6 +170,26 @@ nav[role=navigation] > [role=list] {
     background-color: transparent;
 }
 
+// Unread counter next to the Messages entry, at every viewport width.
+nav[role=navigation] details.dropdown > summary + ul .messages-link {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+nav[role=navigation] details.dropdown > summary + ul .menu-badge {
+    min-width: 1.4rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.3;
+}
+
 @media (max-width: map.get(map.get(pico.$breakpoints, "md"), "viewport")) {
     #{$parent-selector} nav[role="navigation"][data-breakpoint="md"] {
         position: relative;

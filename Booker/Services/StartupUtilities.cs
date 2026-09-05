@@ -67,8 +67,15 @@ namespace Booker.Services
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
             services.AddScoped<UserPhotoManager>();
-            services.AddScoped<SchoolMappingService>();
+            services.AddScoped<IChatService, ChatService>();
+            // anti-spam: in-memory sliding-window state, single instance;
+            // the banned word list is read live from ChatModeration config
+            services.Configure<ChatModerationOptions>(configuration.GetSection("ChatModeration"));
+            services.AddSingleton<ChatModerationService>();
+            services.AddScoped<IChatThreadService, ChatThreadService>();
             services.AddScoped<SchoolService>();
+            services.AddScoped<SchoolMappingService>();
+            services.AddScoped<IRatingManager, RatingManager>();
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
@@ -241,46 +248,8 @@ namespace Booker.Services
             return services;
         }
 
-        public static async Task<bool> RunMaintenanceMode(IConfiguration configuration, string[] args)
-        {
-            if (!configuration.GetValue<bool>("Maintenance"))
-            {
-                return false;
-            }
-
-            var builder = WebApplication.CreateBuilder(args);
-            var app = builder.Build();
-
-            var maintenancePagePath = Path.Combine(
-                app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"),
-                "_MaintenancePage.html");
-
-            app.Run(async context =>
-            {
-                if (!File.Exists(maintenancePagePath))
-                {
-                    context.Response.StatusCode = StatusCodes.Status200OK;
-                    context.Response.ContentType = "text/plain; charset=utf-8";
-                    await context.Response.WriteAsync("Maintenance. Please visit us later");
-                    return;
-                }
-
-                context.Response.StatusCode = StatusCodes.Status200OK;
-                context.Response.ContentType = "text/html; charset=utf-8";
-                await context.Response.SendFileAsync(maintenancePagePath);
-            });
-
-            await app.RunAsync();
-            return true;
-        }
-
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)
         {
-            if (configuration.GetValue<bool>("Maintenance"))
-            {
-                return app;
-            }
-
             using var scope = app.Services.CreateScope();
 
             bool clearDatabase = configuration.GetValue<bool>("DatabaseSettings:ClearDatabaseOnStartup");

@@ -1,0 +1,64 @@
+@model Booker.Pages.ChatModel
+@inject Booker.Services.PhotosManager PhotosManager
+@* The conversation pane of the chat page. Rendered by the page itself and
+   swapped in by HTMX when the user picks a thread from the sidebar. /Chat
+   without a thread renders the inbox instead of this pane. *@
+@{ var active = Model.ActiveThread; }
+@if (active != null)
+{
+<section id="conversation" class="chat-conversation" aria-label="Rozmowa">
+    <header class="chat-header">
+        <img class="thread-thumb"
+             src="@(string.IsNullOrEmpty(active.ItemPhoto) ? "/img/default-book.svg" : PhotosManager.GetPhotoUrl(active.ItemPhoto))"
+             alt="" />
+        <div class="chat-thread-subject">
+            @if (!string.IsNullOrEmpty(active.ItemTitle))
+            {
+                <h2><a href="/Book/@active.ItemId">@active.ItemTitle</a></h2>
+                <small>
+                    z: <a asp-page="/Profile/Index" asp-route-id="@active.OtherUserId">@active.DisplayName</a>
+                </small>
+            }
+            else
+            {
+                <h2>Rozmowa z <a asp-page="/Profile/Index" asp-route-id="@active.OtherUserId">@active.DisplayName</a></h2>
+            }
+        </div>
+        <a class="chat-back-link" href="/Chat">Wszystkie rozmowy</a>
+    </header>
+
+    <ul class="chat-history" id="chat-history" role="log" aria-live="polite" aria-label="Historia rozmowy">
+        @if (Model.Messages.Count == 0)
+        {
+            <li class="chat-empty">Brak wiadomości. Napisz pierwszą!</li>
+        }
+        @foreach (var message in Model.Messages)
+        {
+            <li class="msg @(message.UserId == Model.CurrentUserId ? "self" : "other")" data-msg-id="@message.Id">
+                <div class="bubble">
+                    <div class="meta">
+                        <span class="user">@message.UserDisplayName</span>
+                        <time datetime="@message.CreatedUtc.ToString("o")">@Model.FormatLocalTime(message.CreatedUtc)</time>
+                    </div>
+                    <p class="content">@message.Content</p>
+                </div>
+            </li>
+        }
+    </ul>
+
+    <form class="chat-input" method="post" asp-page-handler="Send"
+          hx-post="?handler=Send" hx-target="#chat-history" hx-swap="beforeend"
+          hx-on::after-request="chatAfterSend(this)">
+        <input type="hidden" name="dealId" value="@Model.DealId" />
+        <label for="chat-text">Twoja wiadomość</label>
+        <textarea id="chat-text" name="text" rows="2" maxlength="500" required placeholder="Napisz wiadomość"></textarea>
+        <button type="submit">Wyślij</button>
+    </form>
+
+    <span class="chat-status"
+          hx-get="?handler=Since&dealId=@Model.DealId"
+          hx-trigger="every 3s" hx-target="#chat-history" hx-swap="beforeend"
+          hx-vals="js:{ afterMessageId: chatLastMessageId() }"
+          hx-on::after-request="chatScrollToNewest()"></span>
+</section>
+}

@@ -21,19 +21,22 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly ILogger<DeletePersonalDataModel> _logger;
         private readonly FavoritesManager _favoritesManager;
         private readonly UserPhotoManager _userPhotoManager;
+        private readonly IChatThreadService _chatThreadService;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ILogger<DeletePersonalDataModel> logger,
             FavoritesManager favoritesManager,
-            UserPhotoManager userPhotoManager)
+            UserPhotoManager userPhotoManager,
+            IChatThreadService chatThreadService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _favoritesManager = favoritesManager;
             _userPhotoManager = userPhotoManager;
+            _chatThreadService = chatThreadService;
         }
 
         /// <summary>
@@ -96,6 +99,13 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
             var userId = await _userManager.GetUserIdAsync(user);
             await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+
+            // Threads point at users through non-cascading foreign keys, so the
+            // conversations (with their messages) are removed explicitly here.
+            // CancellationToken.None: the deletion must run to the end even if
+            // the browser walks away mid-request, or the account is stuck in a
+            // partially deleted state.
+            await _chatThreadService.DeleteThreadsForUserAsync(user.Id, CancellationToken.None);
 
             // The keys must be collected before the account is deleted - the item rows
             // cascade away with the account and the keys cannot be read afterwards.

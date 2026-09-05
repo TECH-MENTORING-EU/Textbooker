@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", false)
     <script src="~/lib/htmx/dist/htmx.min.js" asp-append-version="true"></script>
+
 </head>
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <body class="page-shell @(Configuration.GetValue<bool>("testingPhase") ? "testing-phase-on" : null)">
