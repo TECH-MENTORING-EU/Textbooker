@@ -191,15 +191,6 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         return new PagedItems(items.Take(pageSize).ToList(), items.Count > pageSize);
     }
 
-    public Task<int> GetItemsCountByParamsAsync(Parameters input, User? currentUser = null)
-    {
-        var query = GetAllItemsQueryable();
-        query = FilterByUserSchool(query, currentUser);
-        query = ApplyFilters(query, input);
-
-        return query.CountAsync();
-    }
-
     public IAsyncEnumerable<int> GetUserItemIdsAsync(int userId)
     {
         return GetAllItemsQueryable()
