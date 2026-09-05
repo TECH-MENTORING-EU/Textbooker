@@ -73,6 +73,43 @@ namespace Booker.Services
                 .ToListAsync(ct);
         }
 
+        public async Task<IReadOnlyList<ChatInboxEntry>> GetInboxAsync(int currentUserId, CancellationToken ct)
+        {
+            var threads = await GetThreadsForUserAsync(currentUserId, ct);
+
+            var otherUserIds = threads
+                .Select(t => t.UserAId == currentUserId ? t.UserBId : t.UserAId)
+                .Distinct()
+                .ToList();
+            var displayNames = await ctx.Users.AsNoTracking()
+                .Where(u => otherUserIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.UserName ?? $"U{u.Id}", ct);
+
+            var itemIds = threads
+                .Where(t => t.ItemId != null)
+                .Select(t => t.ItemId!.Value)
+                .Distinct()
+                .ToList();
+            var itemTitles = await ctx.Items.AsNoTracking()
+                .Where(i => itemIds.Contains(i.Id))
+                .Select(i => new { i.Id, Title = i.Book.Title })
+                .ToDictionaryAsync(x => x.Id, x => (string?)x.Title, ct);
+
+            return threads
+                .Select(t =>
+                {
+                    var otherId = t.UserAId == currentUserId ? t.UserBId : t.UserAId;
+                    return new ChatInboxEntry(
+                        t.ChannelId,
+                        otherId,
+                        displayNames.GetValueOrDefault(otherId, "Konto usunięte"),
+                        t.ItemId,
+                        t.ItemId != null ? itemTitles.GetValueOrDefault(t.ItemId.Value) : null,
+                        t.LastMessageUtc);
+                })
+                .ToList();
+        }
+
         public async Task UpdateLastMessageUtcAsync(string channelId, DateTime utcNow, CancellationToken ct)
         {
             var thread = await ctx.ChatThreads.FirstOrDefaultAsync(t => t.ChannelId == channelId, ct);
