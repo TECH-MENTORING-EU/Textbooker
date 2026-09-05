@@ -87,4 +87,8 @@
 		<RemoveDir Directories="wwwroot\css" />
 	</Target>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Booker.Tests" />
+  </ItemGroup>
+
 </Project>

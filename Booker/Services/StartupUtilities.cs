@@ -68,7 +68,10 @@ namespace Booker.Services
             services.AddScoped<PhotosManager>();
             services.AddScoped<UserPhotoManager>();
             services.AddScoped<IChatService, ChatService>();
-            services.AddSingleton<ChatModerationService>(); // anti-spam: in-memory sliding-window state, single instance
+            // anti-spam: in-memory sliding-window state, single instance;
+            // the banned word list is read live from ChatModeration config
+            services.Configure<ChatModerationOptions>(configuration.GetSection("ChatModeration"));
+            services.AddSingleton<ChatModerationService>();
             services.AddScoped<IChatThreadService, ChatThreadService>();
             services.AddScoped<SchoolService>();
             services.AddScoped<SchoolMappingService>();
