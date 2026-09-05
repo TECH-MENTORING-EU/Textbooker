@@ -47,6 +47,8 @@ namespace Booker.Services
                 return ChatMessageResult.Failure("Ta wiadomość została już wysłana.");
             if (verdict == ChatModerationService.ModerationVerdict.LinkBlocked)
                 return ChatMessageResult.Failure("Wiadomości nie mogą zawierać linków.");
+            if (verdict == ChatModerationService.ModerationVerdict.ProfanityBlocked)
+                return ChatMessageResult.Failure("Twoja wiadomość zawiera słowa niedozwolone. Zachowaj kulturę wypowiedzi.");
 
             var user = await _context.Users.FindAsync([userId], cancellationToken);
             if (user == null) return ChatMessageResult.Failure("Nie znaleziono użytkownika.");

@@ -5,12 +5,14 @@ namespace Booker.Tests;
 
 /// <summary>
 /// Chat anti-spam gate: sliding-window rate limit (10 msg/min), duplicate
-/// suppression, link blocking.
+/// suppression, link blocking, banned word filtering.
 /// </summary>
 public class ChatModerationServiceTests
 {
+    private static readonly string[] TestBannedWords = ["kurwa", "nigga"];
+
     private static (ChatModerationService Svc, DateTimeOffset T0) New() =>
-        (new ChatModerationService(), new DateTimeOffset(2026, 9, 3, 12, 0, 0, TimeSpan.Zero));
+        (new ChatModerationService(TestBannedWords), new DateTimeOffset(2026, 9, 3, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
     public void AcceptsNormalMessage()
@@ -105,5 +107,36 @@ public class ChatModerationServiceTests
 
         Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
             svc.Check(1, "Mam 3. wydanie, stan dobry, cena 45 zl do negocjacji", t0));
+    }
+
+    [Theory]
+    [InlineData("nigga")]
+    [InlineData("NIGGA")]
+    [InlineData("no co ty nigga")]
+    [InlineData("k.u.r.w.a!")]
+    [InlineData("kurw a")]
+    public void BlocksBannedWordsIncludingObfuscatedOnes(string content)
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.ProfanityBlocked, svc.Check(1, content, t0));
+    }
+
+    [Fact]
+    public void AcceptsWordsThatMerelyLookSimilar()
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
+            svc.Check(1, "napisze ci wieczorem", t0));
+    }
+
+    [Fact]
+    public void EmptyWordListDisablesTheFilter()
+    {
+        var svc = new ChatModerationService(Array.Empty<string>());
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
+            svc.Check(1, "kurwa", DateTimeOffset.UtcNow));
     }
 }

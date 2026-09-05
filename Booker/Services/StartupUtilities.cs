@@ -33,11 +33,13 @@ namespace Booker.Services
             services.AddScoped<FavoritesManager>();
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
-            services.AddScoped<IChatService, ChatService>(); // chat message service
-            services.AddSingleton<ChatModerationService>(); // anti-spam (rate limit, dupes, links) — shared state
-            services.AddSingleton<InMemoryChatStore>(); // in-memory chat store
-            services.AddScoped<IChatThreadService, ChatThreadService>(); // thread service
-
+            services.AddScoped<UserPhotoManager>();
+            services.AddScoped<IChatService, ChatService>();
+            // anti-spam: in-memory sliding-window state, single instance;
+            // the banned word list is read live from ChatModeration config
+            services.Configure<ChatModerationOptions>(configuration.GetSection("ChatModeration"));
+            services.AddSingleton<ChatModerationService>();
+            services.AddScoped<IChatThreadService, ChatThreadService>();
             services.AddScoped<SchoolService>();
             services.AddScoped<SchoolMappingService>();
             services.AddScoped<IRatingManager, RatingManager>();

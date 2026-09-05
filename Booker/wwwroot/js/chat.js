@@ -39,4 +39,14 @@ function chatAfterSend(form) {
     chatScrollToNewest();
 }
 
+// Enter sends the message, Shift+Enter inserts a newline (standard chat UX).
+// Delegated on document so it keeps working after HTMX swaps the pane.
+document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || e.shiftKey) return;
+    const target = e.target;
+    if (!(target instanceof HTMLTextAreaElement) || target.id !== "chat-text") return;
+    e.preventDefault();
+    target.form?.requestSubmit();
+});
+
 document.addEventListener("DOMContentLoaded", chatScrollToNewest);

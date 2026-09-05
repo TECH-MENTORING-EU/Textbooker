@@ -1,12 +1,24 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Options;
 
 namespace Booker.Services
 {
     /// <summary>
-    /// Anti-spam gate for chat messages: per-user sliding-window rate limit,
-    /// duplicate-message suppression and link filtering. All checks are local
-    /// and in-memory, so they are cheap and dependency-free.
+    /// Moderation settings. The banned word list lives in configuration
+    /// (ChatModeration:BannedWords) so it can be curated per environment
+    /// without a code change; the running service picks edits up live.
+    /// </summary>
+    public class ChatModerationOptions
+    {
+        public string[] BannedWords { get; set; } = [];
+    }
+
+    /// <summary>
+    /// Anti-spam and civility gate for chat messages: per-user sliding-window
+    /// rate limit, duplicate-message suppression, link filtering and banned
+    /// word filtering. All checks are local and in-memory, so they are cheap
+    /// and dependency-free.
     /// </summary>
     public class ChatModerationService
     {
@@ -28,6 +40,22 @@ namespace Booker.Services
         }
 
         private readonly ConcurrentDictionary<int, SenderState> _senders = new();
+
+        // Swapped atomically when the configured word list changes; readers
+        // either see the old or the new pattern, both are self-consistent.
+        private volatile Regex _bannedWordPattern;
+
+        public ChatModerationService(IOptionsMonitor<ChatModerationOptions> options)
+        {
+            _bannedWordPattern = BuildBannedPattern(options.CurrentValue.BannedWords);
+            options.OnChange(o => _bannedWordPattern = BuildBannedPattern(o.BannedWords));
+        }
+
+        /// <summary>Test and explicit-configuration constructor.</summary>
+        internal ChatModerationService(IEnumerable<string> bannedWords)
+        {
+            _bannedWordPattern = BuildBannedPattern(bannedWords);
+        }
 
         public ModerationVerdict Check(int userId, string content, DateTimeOffset now)
         {
@@ -61,6 +89,11 @@ namespace Booker.Services
                     return ModerationVerdict.LinkBlocked;
                 }
 
+                if (_bannedWordPattern.IsMatch(content))
+                {
+                    return ModerationVerdict.ProfanityBlocked;
+                }
+
                 state.Timestamps.Enqueue(now);
                 state.LastContent = content.Trim();
                 state.LastContentAt = now;
@@ -69,12 +102,34 @@ namespace Booker.Services
             return ModerationVerdict.Accepted;
         }
 
+        /// <summary>
+        /// Matches every configured word even when non-letter characters are
+        /// scattered between its letters, so asterisk-style masking of single
+        /// characters does not sneak a word past the filter.
+        /// </summary>
+        private static Regex BuildBannedPattern(IEnumerable<string> words)
+        {
+            var list = words?.Where(w => !string.IsNullOrWhiteSpace(w)).ToList() ?? [];
+            if (list.Count == 0)
+            {
+                // Never-matching placeholder: an empty list disables the filter.
+                return new Regex("(?!x)x", RegexOptions.Compiled);
+            }
+
+            // \b relies on word characters, so keep the separators to letters only.
+            var separator = @"[^a-ząćęłńóśźż]*";
+            var alternation = string.Join("|",
+                list.Select(w => string.Join(separator, w.Trim().Select(c => c.ToString()))));
+            return new Regex($@"(?i)\b(?:{alternation})\b", RegexOptions.Compiled);
+        }
+
         public enum ModerationVerdict
         {
             Accepted,
             RateLimited,
             Duplicate,
-            LinkBlocked
+            LinkBlocked,
+            ProfanityBlocked
         }
     }
 }
