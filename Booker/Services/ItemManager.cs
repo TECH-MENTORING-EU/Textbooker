@@ -368,19 +368,46 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
     public async Task SetItemsVisibilityByUserAsync(int userId, bool isVisible)
     {
-        var items = await context.Items
-            .Where(i => i.UserId == userId && i.IsVisible != isVisible)
-            .ToListAsync();
-
-        foreach (var item in items)
+        if (isVisible)
         {
-            item.IsVisible = isVisible;
+            // Unlock: re-publish ONLY the items the block had hidden
+            // (CanChangeVisibility == false). Offers the user had hidden
+            // themselves before the block stay hidden.
+            var blocked = await context.Items
+                .Where(i => i.UserId == userId && !i.CanChangeVisibility)
+                .ToListAsync();
+
+            foreach (var item in blocked)
+            {
+                item.IsVisible = true;
+                item.CanChangeVisibility = true;
+            }
+
+            if (blocked.Count > 0)
+            {
+                // blocked is tracked from the query above; SaveChanges persists
+                // just the two flags without re-marking every column.
+                await context.SaveChangesAsync();
+            }
         }
-
-        if (items.Count > 0)
+        else
         {
-            context.Items.UpdateRange(items);
-            await context.SaveChangesAsync();
+            // Block: hide all currently visible items and mark them
+            // admin-controlled so unlock knows exactly what to restore.
+            var visible = await context.Items
+                .Where(i => i.UserId == userId && i.IsVisible)
+                .ToListAsync();
+
+            foreach (var item in visible)
+            {
+                item.IsVisible = false;
+                item.CanChangeVisibility = false;
+            }
+
+            if (visible.Count > 0)
+            {
+                await context.SaveChangesAsync();
+            }
         }
     }
 
