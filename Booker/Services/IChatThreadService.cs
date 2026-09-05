@@ -3,8 +3,9 @@ using Booker.Data;
 namespace Booker.Services
 {
     /// <summary>
-    /// One row of the user's inbox: who the conversation is with and which
-    /// listing it is about, ready for the sidebar on the chat page.
+    /// One row of the user's inbox: which listing it is about and who the
+    /// conversation is with, ready for the sidebar on the chat page.
+    /// ItemPhoto is the raw first-photo path; views resolve it to a URL.
     /// </summary>
     public record ChatInboxEntry(
         string ChannelId,
@@ -12,6 +13,7 @@ namespace Booker.Services
         string DisplayName,
         int? ItemId,
         string? ItemTitle,
+        string? ItemPhoto,
         DateTime LastMessageUtc);
 
     public interface IChatThreadService

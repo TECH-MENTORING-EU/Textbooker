@@ -90,21 +90,34 @@ namespace Booker.Services
                 .Select(t => t.ItemId!.Value)
                 .Distinct()
                 .ToList();
-            var itemTitles = await ctx.Items.AsNoTracking()
+            var items = await ctx.Items.AsNoTracking()
                 .Where(i => itemIds.Contains(i.Id))
-                .Select(i => new { i.Id, Title = i.Book.Title })
-                .ToDictionaryAsync(x => x.Id, x => (string?)x.Title, ct);
+                .Select(i => new { i.Id, Title = i.Book.Title, i.Photo })
+                .ToDictionaryAsync(x => x.Id, ct);
 
             return threads
                 .Select(t =>
                 {
                     var otherId = t.UserAId == currentUserId ? t.UserBId : t.UserAId;
+                    string? itemTitle = null;
+                    string? itemPhoto = null;
+                    if (t.ItemId != null && items.TryGetValue(t.ItemId.Value, out var item))
+                    {
+                        itemTitle = item.Title;
+                        // Item.Photo stores a semicolon-separated list; the
+                        // first entry is the cover shown in thread rows.
+                        itemPhoto = item.Photo?
+                            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(p => p.Trim())
+                            .FirstOrDefault();
+                    }
                     return new ChatInboxEntry(
                         t.ChannelId,
                         otherId,
                         displayNames.GetValueOrDefault(otherId, "Konto usunięte"),
                         t.ItemId,
-                        t.ItemId != null ? itemTitles.GetValueOrDefault(t.ItemId.Value) : null,
+                        itemTitle,
+                        itemPhoto,
                         t.LastMessageUtc);
                 })
                 .ToList();

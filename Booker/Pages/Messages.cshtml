@@ -1,5 +1,6 @@
 @page
 @model Booker.Pages.MessagesModel
+@inject Booker.Services.PhotosManager PhotosManager
 @{
     ViewData["Title"] = "Wiadomości";
 }
@@ -18,8 +19,17 @@
             {
                 <li>
                     <a href="/Chat/@t.ChannelId">
-                        <strong>@t.DisplayName</strong>
-                        <small>ostatnia wiadomość: @t.LastMessageLocal</small>
+                        <img class="thread-thumb"
+                             src="@(string.IsNullOrEmpty(t.ItemPhoto) ? "/img/default-book.svg" : PhotosManager.GetPhotoUrl(t.ItemPhoto))"
+                             alt="" />
+                        <span class="thread-info">
+                            <span class="name">@t.Title</span>
+                            @if (t.IsItemThread)
+                            {
+                                <small class="about">z: @t.DisplayName</small>
+                            }
+                        </span>
+                        <small class="when">ostatnia wiadomość: @t.LastMessageLocal</small>
                     </a>
                 </li>
             }

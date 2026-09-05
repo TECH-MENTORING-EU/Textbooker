@@ -50,6 +50,25 @@ namespace Booker.Pages
             return Page();
         }
 
+        public async Task<IActionResult> OnGetThreadAsync(string dealId, CancellationToken ct)
+        {
+            // Sidebar navigation swaps only this pane; the full page reload is
+            // the no-JavaScript fallback (the sidebar links keep their href).
+            DealId = dealId ?? string.Empty;
+            CurrentUserId = userManager.GetUserId(User).IntOrDefault();
+            Threads = await threadService.GetInboxAsync(CurrentUserId, ct);
+            ActiveThread = Threads.FirstOrDefault(t => t.ChannelId == DealId);
+
+            if (ActiveThread == null || !await IsParticipantAsync(ct: ct))
+            {
+                return NotFound();
+            }
+
+            var messages = await chatService.GetMessagesAsync(DealId, 200, ct);
+            Messages = messages.ToList();
+            return Partial("_Conversation", this);
+        }
+
         public async Task<IActionResult> OnPostSendAsync(string dealId, string text, CancellationToken ct)
         {
             var userId = userManager.GetUserId(User).IntOrDefault();
