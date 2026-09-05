@@ -17,7 +17,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         InvalidSubject = 4,
         InvalidGrades = 8,
         InvalidLevel = 16,
-        NotFound = 32
+        NotFound = 32,
+        NoPhotos = 64
     }
 
     public record Result(Status Status, int Id)
@@ -324,15 +325,15 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         }
         else if (keptPhotos.Count > 0)
         {
-            // No new uploads — keep only the user's selection.
+            // No new uploads: keep only the user's selection.
             allPhotos = string.Join(";", keptPhotos);
         }
         else
         {
-            // Every photo deselected and nothing uploaded: the listing keeps at
-            // least its current photo set rather than silently losing them all.
-            logger.LogWarning("Edycja ogłoszenia o ID {ItemId} bez zdjęć wynikowych — zachowano istniejące zdjęcia.", item.Id);
-            allPhotos = string.Join(";", currentPhotos);
+            // Every photo deselected and nothing uploaded. Item.Photo is required,
+            // so refuse instead of saving an image-less listing.
+            logger.LogWarning("Edycja ogłoszenia o ID {ItemId} bez zdjęć wynikowych: odrzucono.", item.Id);
+            return Status.Error | Status.NoPhotos;
         }
 
         var oldPrice = item.Price;
