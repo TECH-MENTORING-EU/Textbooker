@@ -10,8 +10,20 @@ namespace Booker.Tests;
 /// </summary>
 public class BookPageDateTests
 {
-    private static readonly TimeZoneInfo Warsaw =
-        TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
+    private static readonly TimeZoneInfo Warsaw = CreateWarsawZone();
+
+    private static TimeZoneInfo CreateWarsawZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
+        }
+        // Without ICU, Windows only knows its own zone id (same fallback as BookModel).
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+        }
+    }
 
     [Fact]
     public void FormatDateWithSpecialCases_Null_ReturnsBrakDaty()
