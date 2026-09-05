@@ -23,22 +23,56 @@
             </small>
         </div>
         <div>
+            <label for="school-name">Szkoła</label>
+            <input id="school-name" value="@(Model.SchoolName ?? "Brak przypisanej szkoły")" disabled />
+            <small>
+                Szkoły nie można zmienić po założeniu konta. Jeśli wybrałeś/aś złą szkołę, załóż nowe konto.
+            </small>
+        </div>
+        <div>
             <label asp-for="Input.AreFavoritesPublic">
                 <input role="switch" asp-for="Input.AreFavoritesPublic" />
                 Pokaż moje ulubione innym użytkownikom
             </label>
         </div>
+        <div>
+            <label asp-for="Input.DisplaySchool">
+                <input role="switch" asp-for="Input.DisplaySchool" />
+                Pokaż moją szkołę przy moich ogłoszeniach
+            </label>
+            <small>
+                Jeśli włączysz, inni zalogowani użytkownicy zobaczą nazwę Twojej szkoły przy Twoich
+                ogłoszeniach i na Twoim profilu. Domyślnie jest wyłączone.
+            </small>
+        </div>
         <hr />
         <h4>Formy kontaktu</h4>
+        <p>
+            <small>
+                Gdy masz opublikowane ogłoszenie, zalogowani użytkownicy zainteresowani zakupem mogą
+                kliknąć przycisk kontaktu, żeby zobaczyć wybrane przez Ciebie kanały kontaktu poniżej.
+                Osoby niezalogowane i osoby bez Twojego aktywnego ogłoszenia nigdy ich nie zobaczą.
+                <strong>Jeśli wyłączysz tu wszystkie kanały, nikt nie będzie mógł się z Tobą skontaktować
+                w sprawie ogłoszeń</strong> — dlatego musisz zostawić włączony przynajmniej jeden.
+            </small>
+        </p>
         <div style="margin-bottom: 1rem;">
             <label asp-for="Input.DisplayEmail">
                 <input role="switch" asp-for="Input.DisplayEmail" />
                 Pokaż mój e-mail jako dostępną formę kontaktu
             </label>
             <small>
-                Swój e-mail możesz zmienić <a asp-page="./Email">tutaj</a>.
+                Włączone: Twój e-mail zobaczy zalogowany użytkownik po kliknięciu przycisku kontaktu przy
+                Twoim ogłoszeniu. Wyłączone: nikt nie zobaczy Twojego e-maila. Swój e-mail możesz zmienić
+                <a asp-page="./Email">tutaj</a>.
             </small>
         </div>
+        <p>
+            <small>
+                Poniższe dane są całkowicie dobrowolne. Ich pokazanie innym jest Twoją zgodą, którą możesz
+                wycofać w dowolnym momencie, wyłączając odpowiedni przełącznik.
+            </small>
+        </p>
         <div>
             <label asp-for="Input.PhoneNumber">Numer telefonu:</label>
             <input asp-for="Input.PhoneNumber" placeholder="Numer telefonu"/>
@@ -62,17 +96,27 @@
             <label asp-for="Input.FbMessenger">Messenger (nazwa użytkownika):</label>
             <input asp-for="Input.FbMessenger" placeholder="Messenger (nazwa użytkownika)" />
             <small>
-                Podane konto będzie automatycznie publiczne.<br />
                 <span asp-validation-for="Input.FbMessenger"></span>
             </small>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Input.DisplayMessenger">
+                <input role="switch" asp-for="Input.DisplayMessenger" />
+                Pokaż Messenger jako dostępną formę kontaktu
+            </label>
         </div>
         <div>
             <label asp-for="Input.Instagram">Instagram (nazwa użytkownika):</label>
             <input asp-for="Input.Instagram" placeholder="Instagram (nazwa użytkownika)" />
             <small>
-                Podane konto będzie automatycznie publiczne.<br />
                 <span asp-validation-for="Input.Instagram"></span>
             </small>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Input.DisplayInstagram">
+                <input role="switch" asp-for="Input.DisplayInstagram" />
+                Pokaż Instagram jako dostępną formę kontaktu
+            </label>
         </div>
         <button id="update-profile-button" type="submit">Zapisz</button>
     </form>

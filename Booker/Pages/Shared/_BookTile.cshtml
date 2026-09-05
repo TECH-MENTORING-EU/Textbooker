@@ -32,11 +32,14 @@
             </a>
 
             <p>@Model.Item.Price.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("pl-PL")) zł</p>
-            <p>
-                <small>
-                    @(Model.Item.User.School?.Name ?? "Bez szkoły")
-                </small>
-            </p>
+            @if (User.Identity?.IsAuthenticated == true && Model.Item.User.DisplaySchool && Model.Item.User.School != null)
+            {
+                <p>
+                    <small>
+                        @Model.Item.User.School.Name
+                    </small>
+                </p>
+            }
         </div>
         <div class="actions">
             <div class="tag-row tag-row-subject">

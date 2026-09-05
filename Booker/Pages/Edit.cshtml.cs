@@ -22,6 +22,9 @@ namespace Booker.Pages
 
         public Item? ItemToEdit { get; set; }
 
+        // RODO - task 08: the description looks like it contains contact details - awaiting confirmation.
+        public bool ShowSensitiveContentWarning { get; set; }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
             ItemToEdit = await _itemManager.GetItemAsync(id);
@@ -44,7 +47,7 @@ namespace Booker.Pages
                 Description = ItemToEdit.Description,
                 State = ItemToEdit.State,
                 Price = ItemToEdit.Price,
-                Images = new List<IFormFile>(), // multiple images handled
+                Images = null,
                 Reserved = ItemToEdit.Reserved
             };
 
@@ -98,6 +101,20 @@ namespace Booker.Pages
                 return Page();
             }
 
+            var looksSensitive = Shared.ContentModerationHelper.LooksLikeContactInfo(Input.Description);
+            // Set unconditionally (not just on the early-return path below) so the confirmation
+            // checkbox stays visible/checked if the page has to re-render later for an unrelated
+            // reason (photo storage failure, book validation error via ValidateAndReturn).
+            ShowSensitiveContentWarning = looksSensitive;
+            if (looksSensitive && !Input.ConfirmSensitiveDescription)
+            {
+                ModelState.AddModelError("Input.Description",
+                    "Opis wygląda na zawierający adres e-mail lub numer telefonu. Zaznacz potwierdzenie poniżej, jeśli mimo to chcesz opublikować ogłoszenie z taką treścią.");
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
+
             ItemManager.Status result;
             try
             {
@@ -112,7 +129,8 @@ namespace Booker.Pages
                     Input.Price,
                     validatedImages.Streams,
                     validatedImages.Extensions,
-                    ItemToEdit.Photo
+                    ItemToEdit.Photo,
+                    FlaggedForReview: looksSensitive
                 ));
             }
             catch (PhotoStorageException ex)

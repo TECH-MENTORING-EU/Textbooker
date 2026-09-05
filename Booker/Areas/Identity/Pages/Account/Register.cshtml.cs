@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Booker.Services;
+using Booker.Utilities;
 using System.Net;
 
 namespace Booker.Areas.Identity.Pages.Account
@@ -80,7 +81,7 @@ namespace Booker.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [Required]
-            [StringLength(100, ErrorMessage = "{0} musi mieć co najmniej {2}, a maksymalnie {1} znaków.", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "{0} musi mieć co najmniej {2}, a maksymalnie {1} znaków.", MinimumLength = 8)]
             [DataType(DataType.Password)]
             [Display(Name = "Hasło")]
             public string Password { get; set; }
@@ -93,9 +94,13 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Szkoła")]
             public int? SchoolId { get; set; }
 
-            [Required(ErrorMessage = "Musisz zaakceptować regulamin.")]
+            [MustBeTrue(ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
             public bool AcceptTerms { get; set; }
+
+            [MustBeTrue(ErrorMessage = "Musisz potwierdzić wiek lub zgodę opiekuna.")]
+            [Display(Name = "Oświadczam, że ukończyłem/am 16 lat, albo posiadam zgodę rodzica lub opiekuna prawnego na korzystanie z Serwisu.")]
+            public bool ConfirmsAgeRequirement { get; set; }
         }
 
         public async Task OnGetAsync(string returnUrl = null)
@@ -199,6 +204,11 @@ namespace Booker.Areas.Identity.Pages.Account
                 }
 
                 user.Photo = "/img/default-profile-picture.jpg";
+
+                var now = DateTime.Now;
+                user.TermsAcceptedAt = now;
+                user.TermsAcceptedVersion = RegulaminInfo.CurrentVersion;
+                user.AgeConfirmationAcceptedAt = now;
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);

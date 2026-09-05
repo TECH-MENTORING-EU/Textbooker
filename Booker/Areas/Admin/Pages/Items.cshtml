@@ -1,0 +1,86 @@
+@page
+@model ItemsModel
+@{
+    ViewData["Title"] = "Ogłoszenia - TextBooker";
+    ViewData["ActivePage"] = AdminNavPages.Items;
+}
+
+<h3>Ogłoszenia</h3>
+<p>
+    <small>
+        Ogłoszenia oznaczone jako „Do przejrzenia” mają opis, który wygląda na zawierający
+        adres e-mail lub numer telefonu.
+    </small>
+</p>
+
+<form method="get">
+    <label>
+        <input type="checkbox" name="OnlyFlagged" value="true" @(Model.OnlyFlagged ? "checked" : "") />
+        Pokaż tylko ogłoszenia do przejrzenia
+    </label>
+    <button type="submit">Filtruj</button>
+</form>
+
+<p class="table-scroll-hint" id="items-table-hint">Przewiń tabelę poziomo, aby zobaczyć wszystkie kolumny.</p>
+<div class="table-scroll" role="region" aria-label="Tabela ogłoszeń" aria-describedby="items-table-hint" tabindex="0">
+<table id="items-table">
+    <caption class="visually-hidden">Lista ogłoszeń w serwisie</caption>
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Tytuł</th>
+            <th scope="col">Sprzedający</th>
+            <th scope="col">Dodano</th>
+            <th scope="col">Status</th>
+            <th scope="col">Opis</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.BookTitle</td>
+                <td>@item.SellerUserName</td>
+                <td>@item.CreatedAt.ToString("g")</td>
+                <td>
+                    @if (item.FlaggedForReview)
+                    {
+                        <text>⚠ Do przejrzenia</text>
+                    }
+                    else
+                    {
+                        <text>—</text>
+                    }
+                </td>
+                <td>@item.Description</td>
+            </tr>
+        }
+    </tbody>
+</table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Stronicowanie ogłoszeń">
+        <ul class="pagination">
+            @if (Model.PageNumber > 0)
+            {
+                <li>
+                    <a role="button" class="outline" asp-page="./Items"
+                       asp-route-OnlyFlagged="@Model.OnlyFlagged"
+                       asp-route-PageNumber="@(Model.PageNumber - 1)">Poprzednia</a>
+                </li>
+            }
+            <li>Strona @(Model.PageNumber + 1) z @Model.TotalPages</li>
+            @if (Model.PageNumber + 1 < Model.TotalPages)
+            {
+                <li>
+                    <a role="button" class="outline" asp-page="./Items"
+                       asp-route-OnlyFlagged="@Model.OnlyFlagged"
+                       asp-route-PageNumber="@(Model.PageNumber + 1)">Następna</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

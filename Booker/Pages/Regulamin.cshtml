@@ -1,0 +1,128 @@
+@page
+@model RegulaminModel
+@{
+    ViewData["Title"] = "Regulamin - TextBooker";
+}
+
+<article class="privacy-policy">
+    <h1>Regulamin aplikacji textbooker.pl</h1>
+    <p>
+        <small>
+            Wersja @RegulaminInfo.CurrentVersion, obowiązuje od @RegulaminInfo.EffectiveDateDisplay
+        </small>
+    </p>
+
+    <p><strong>&sect; 1. Postanowienia Ogólne</strong></p>
+    <ol>
+        <li><strong>Cel Aplikacji:</strong> Nasza Aplikacja została stworzona, aby ułatwić uczniom i absolwentom sprzedaż i zakup używanych podręczników.</li>
+        <li><strong>Rola Organizatora:</strong> Aplikacja pełni jedynie rolę „tablicy ogłoszeniowej” i nie jest stroną w transakcjach. Nie ponosimy odpowiedzialności za stan podręczników ani za przebieg transakcji.</li>
+    </ol>
+
+    <p><strong>&sect; 1a. Wiek Użytkowników</strong></p>
+    <ol>
+        <li>Z Aplikacji mogą korzystać osoby, które ukończyły 16 lat.</li>
+        <li>Osoby, które nie ukończyły 16 lat, mogą korzystać z Aplikacji wyłącznie za zgodą rodzica lub opiekuna prawnego.</li>
+    </ol>
+
+    <p><strong>&sect; 1b. Szkoła Użytkownika</strong></p>
+    <ol>
+        <li>Szkołę wskazuje się jednorazowo podczas zakładania konta. Po założeniu konta nie ma możliwości zmiany przypisanej szkoły — zmiana szkoły wymaga założenia nowego konta.</li>
+        <li>Nazwa szkoły Użytkownika może być prezentowana przy jego ogłoszeniach innym Użytkownikom Serwisu wyłącznie wtedy, gdy Użytkownik samodzielnie włączy tę opcję w ustawieniach profilu. Domyślnie widoczność szkoły jest wyłączona.</li>
+        <li>Niezależnie od ustawienia widoczności, zalogowany Użytkownik zawsze widzi nazwę własnej szkoły we własnym profilu.</li>
+    </ol>
+
+    <p><strong>&sect; 2. Definicje</strong></p>
+    <ol>
+        <li><strong>Aplikacja</strong> – platforma internetowa textbooker.pl służąca do zamieszczania i przeglądania ogłoszeń o sprzedaży książek.</li>
+        <li><strong>Użytkownik</strong> – każda osoba fizyczna korzystająca z Aplikacji.</li>
+        <li><strong>Ogłoszenie</strong> – treść zamieszczona przez Użytkownika w Aplikacji, zawierająca ofertę sprzedaży książki.</li>
+        <li><strong>Konto Użytkownika</strong> – indywidualny obszar w Aplikacji, utworzony po procesie rejestracji, umożliwiający zarządzanie ogłoszeniami.</li>
+    </ol>
+
+    <p><strong>&sect; 3. Zasady dla Sprzedających</strong></p>
+    <ol>
+        <li>Użytkownik może wystawić ogłoszenie o sprzedaży wyłącznie książek, których jest legalnym właścicielem.</li>
+        <li>
+            <strong>Tworzenie Ogłoszenia:</strong> Każde ogłoszenie musi zawierać:
+            <ul>
+                <li><strong>Tytuł podręcznika, autora i wydawnictwo.</strong></li>
+                <li><strong>Przedmiot i klasę</strong>, do której jest przeznaczony.</li>
+                <li><strong>Proponowaną cenę.</strong></li>
+                <li><strong>Prawdziwy opis stanu książki</strong> (np. <em>bardzo dobry, dobry, z widocznymi śladami użytkowania, z notatkami ołówkiem</em>).</li>
+                <li><strong>Aktualne zdjęcie</strong> (jeśli to możliwe, zawsze pomaga!).</li>
+                <li><strong>Preferowaną formę kontaktu</strong> (np. przez komunikator, e-mail).</li>
+            </ul>
+        </li>
+        <li><strong>Uczciwość:</strong> Opis podręcznika musi być zgodny z prawdą. Zatajanie wad (np. wyrwanych kartek) jest niedozwolone.</li>
+        <li><strong>Jedno ogłoszenie = Jeden przedmiot:</strong> Aby zachować porządek, prosimy o tworzenie osobnych ogłoszeń dla każdego podręcznika.</li>
+        <li><strong>Po Sprzedaży:</strong> Po sprzedaży podręcznika, sprzedający ma obowiązek <strong>niezwłocznie usunąć swoje ogłoszenie</strong>.</li>
+        <li>Administrator zastrzega sobie prawo do usunięcia Ogłoszenia, które narusza niniejszy Regulamin, bez podania przyczyny.</li>
+    </ol>
+
+    <p><strong>&sect; 4. Zasady dla Kupujących</strong></p>
+    <ol>
+        <li><strong>Czytaj uważnie:</strong> Przed skontaktowaniem się ze sprzedającym, dokładnie przeczytaj opis podręcznika.</li>
+        <li><strong>Obejrzyj przed zakupem:</strong> Masz pełne prawo do obejrzenia podręcznika na żywo przed podjęciem ostatecznej decyzji o zakupie.</li>
+        <li><strong>Negocjacje:</strong> Podana cena jest zazwyczaj ceną wyjściową. Możesz spróbować negocjować, ale pamiętaj o kulturze i szacunku.</li>
+        <li><strong>Umowa to umowa:</strong> Jeśli umawiasz się na zakup i odbiór, bądź słowny/słowna i pojaw się w umówionym miejscu i czasie.</li>
+    </ol>
+
+    <p><strong>&sect; 5. Transakcja i Bezpieczeństwo</strong></p>
+    <ol>
+        <li><strong>Bezpośredni kontakt:</strong> Wszystkie ustalenia (cena, miejsce i czas spotkania) odbywają się <strong>bezpośrednio</strong> między sprzedającym a kupującym.</li>
+        <li><strong>Bezpieczne miejsce:</strong> Sugerowanym i najbezpieczniejszym miejscem finalizacji transakcji jest teren szkoły w czasie przerw lub po lekcjach. Unikajcie spotkań w odosobnionych miejscach.</li>
+        <li><strong>Forma płatności:</strong> Najprostszą formą płatności jest gotówka lub przelew BLIK przy odbiorze osobistym.</li>
+        <li><strong>Rozwiązywanie sporów:</strong> Wszelkie nieporozumienia sprzedający i kupujący rozwiązują między sobą. Organizatorzy serwisu nie pośredniczą w sporach.</li>
+    </ol>
+
+    <p><strong>&sect; 6. Odpowiedzialność</strong></p>
+    <ol>
+        <li>
+            Administrator Aplikacji nie ponosi odpowiedzialności za:
+            <ul>
+                <li>treści zamieszczane przez Użytkowników,</li>
+                <li>niewykonanie lub nienależyte wykonanie umowy sprzedaży pomiędzy Użytkownikami.</li>
+            </ul>
+        </li>
+        <li>Użytkownicy ponoszą pełną odpowiedzialność za treści publikowane na swoich kontach i w ofertach.</li>
+    </ol>
+
+    <p><strong>&sect; 7. Czego nie wolno robić?</strong></p>
+    <ol>
+        <li>
+            <strong>Zabronione jest wystawianie ogłoszeń dotyczących:</strong>
+            <ul>
+                <li>Podrobionych lub pirackich kopii książek (np. fotokopie, skany, ebooki bez licencji).</li>
+                <li>Książek, których obrót jest zabroniony przez prawo.</li>
+                <li>Treści, które naruszają prawa autorskie lub dobra osobiste.</li>
+            </ul>
+        </li>
+        <li><strong>Zakaz spamu</strong> i publikowania ogłoszeń niezwiązanych z tematyką szkolną.</li>
+        <li><strong>Zakaz używania wulgaryzmów</strong> i obrażania innych użytkowników.</li>
+        <li><strong>Zakaz wstawiania wulgarnych zdjęć i opisów książek</strong> oraz opisów i zdjęć profili użytkowników.</li>
+    </ol>
+
+    <p><strong>&sect; 7a. Zdjęcia profilowe</strong></p>
+    <ol>
+        <li>Funkcja zdjęć profilowych jest w obecnej wersji Aplikacji nieaktywna. Zdjęcia profilowe nie są prezentowane innym Użytkownikom.</li>
+    </ol>
+
+    <p><strong>&sect; 8. Dane osobowe i polityka prywatności</strong></p>
+    <ol>
+        <li>
+            Zasady przetwarzania danych osobowych Użytkowników, w tym cele, podstawy prawne, okresy
+            przechowywania oraz przysługujące prawa, opisuje odrębny dokument —
+            <a asp-page="/Privacy">Polityka prywatności</a>. W razie sprzeczności między tym paragrafem
+            a treścią polityki prywatności, rozstrzyga polityka prywatności.
+        </li>
+    </ol>
+
+    <p><strong>&sect; 9. Postanowienia Końcowe</strong></p>
+    <ol>
+        <li>Korzystanie z Aplikacji jest równoznaczne z akceptacją tego regulaminu.</li>
+        <li>Nieprzestrzeganie zasad może skutkować usunięciem ogłoszenia, a w skrajnych przypadkach zablokowaniem dostępu do serwisu.</li>
+        <li>Organizatorzy zastrzegają sobie prawo do wprowadzania zmian w regulaminie.</li>
+    </ol>
+    <hr>
+    <p><em>Pamiętajcie: Celem Aplikacji jest wzajemna pomoc. Bądźmy dla siebie życzliwi, uczciwi i szanujmy swój czas. Udanych transakcji!</em></p>
+</article>

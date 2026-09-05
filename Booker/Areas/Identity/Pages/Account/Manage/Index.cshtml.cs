@@ -4,12 +4,14 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Booker.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
@@ -17,14 +19,24 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly DataContext _context;
+        private readonly ILogger<IndexModel> _logger;
 
         public IndexModel(
             UserManager<User> userManager,
-            SignInManager<User> signInManager)
+            SignInManager<User> signInManager,
+            DataContext context,
+            ILogger<IndexModel> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _context = context;
+            _logger = logger;
         }
+
+        // RODO - task 06: the school can't be changed from this form - deliberately not part
+        // of [BindProperty] Input, so no extra field in the POST body can overwrite it.
+        public string SchoolName { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -73,20 +85,35 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             [Display(Name = "Messenger (nazwa użytkownika)")]
             public string FbMessenger { get; set; }
 
+            [Display(Name = "Pokaż Messenger jako dostępną formę kontaktu")]
+            public bool DisplayMessenger { get; set; }
+
             [Display(Name = "Instagram (nazwa użytkownika)")]
             public string Instagram { get; set; }
 
+            [Display(Name = "Pokaż Instagram jako dostępną formę kontaktu")]
+            public bool DisplayInstagram { get; set; }
+
             [Display(Name = "Pokaż moje ulubione innym użytkownikom")]
             public bool AreFavoritesPublic { get; set; }
+
+            [Display(Name = "Pokaż moją szkołę przy moich ogłoszeniach")]
+            public bool DisplaySchool { get; set; }
+        }
+
+        private async Task LoadStaticDataAsync(User user)
+        {
+            Username = await _userManager.GetUserNameAsync(user);
+
+            SchoolName = user.SchoolId.HasValue
+                ? (await _context.Schools.FindAsync(user.SchoolId.Value))?.Name
+                : null;
         }
 
         private async Task LoadAsync(User user)
         {
-            var userName = await _userManager.GetUserNameAsync(user);
+            await LoadStaticDataAsync(user);
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-
-
-            Username = userName;
 
             Input = new InputModel
             {
@@ -96,7 +123,10 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 DisplayPhone = user.DisplayPhone,
                 DisplayWhatsapp = user.DisplayWhatsapp,
                 FbMessenger = user.FbMessenger,
-                Instagram = user.Instagram
+                DisplayMessenger = user.DisplayMessenger,
+                Instagram = user.Instagram,
+                DisplayInstagram = user.DisplayInstagram,
+                DisplaySchool = user.DisplaySchool
             };
         }
 
@@ -120,13 +150,19 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Nie znaleziono użytkownika o ID '{_userManager.GetUserId(User)}'.");
             }
 
-            // The phone number only counts as a contact method when at least one phone-based channel displays it.
+            // The phone number/Messenger/Instagram only count as a contact method when their display switch is on.
+            // Validate against the trimmed value, matching what actually gets persisted below - a
+            // whitespace-only entry must not be treated as a configured contact channel.
+            var trimmedFbMessenger = Input.FbMessenger?.Trim();
+            var trimmedInstagram = Input.Instagram?.Trim();
             var phoneDisplayed = !string.IsNullOrEmpty(Input.PhoneNumber) && (Input.DisplayPhone || Input.DisplayWhatsapp);
+            var messengerDisplayed = Input.DisplayMessenger && !string.IsNullOrWhiteSpace(trimmedFbMessenger);
+            var instagramDisplayed = Input.DisplayInstagram && !string.IsNullOrWhiteSpace(trimmedInstagram);
 
             if (!Input.DisplayEmail
                 && !phoneDisplayed
-                && string.IsNullOrEmpty(Input.FbMessenger)
-                && string.IsNullOrEmpty(Input.Instagram))
+                && !messengerDisplayed
+                && !instagramDisplayed)
             {
                 ModelState.AddModelError(string.Empty, "Musisz wybrać przynajmniej jedną formę kontaktu.");
             }
@@ -136,9 +172,28 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 ModelState.AddModelError("Input.PhoneNumber", "Aby wybrać WhatsApp jako formę kontaktu, musisz podać numer telefonu.");
             }
 
+            if (Input.DisplayMessenger && string.IsNullOrWhiteSpace(trimmedFbMessenger))
+            {
+                ModelState.AddModelError("Input.FbMessenger", "Aby wybrać Messenger jako formę kontaktu, musisz podać nazwę użytkownika.");
+            }
+
+            if (Input.DisplayInstagram && string.IsNullOrWhiteSpace(trimmedInstagram))
+            {
+                ModelState.AddModelError("Input.Instagram", "Aby wybrać Instagram jako formę kontaktu, musisz podać nazwę użytkownika.");
+            }
+
             if (!ModelState.IsValid)
             {
-                await LoadAsync(user);
+                // Keep the posted Input so the re-rendered form matches what the user actually
+                // submitted: checkbox tag helpers render their state from the model, not from
+                // ModelState attempted values, so reloading Input from the database here would
+                // silently flip every switch back to the saved state while text fields and
+                // validation messages still describe the failed submission.
+                // StatusMessage may be stale TempData (e.g. the post-redirect success page was
+                // served from the browser back/forward cache, so the key was never consumed) -
+                // don't render it next to validation errors.
+                StatusMessage = null;
+                await LoadStaticDataAsync(user);
                 return Page();
             }
 
@@ -148,7 +203,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
                 if (!setPhoneResult.Succeeded)
                 {
-                    StatusMessage = "Wystąpił nieznany błąd podczas próby zmiany numeru telefonu.";
+                    _logger.LogWarning("Zmiana numeru telefonu użytkownika {UserId} nie powiodła się: {Errors}.",
+                        _userManager.GetUserId(User), DescribeErrors(setPhoneResult));
+                    StatusMessage = $"Nie udało się zmienić numeru telefonu: {DescribeErrors(setPhoneResult)}";
                     return RedirectToPage();
                 }
             }
@@ -158,14 +215,31 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             user.DisplayEmail = Input.DisplayEmail;
             user.DisplayPhone = Input.DisplayPhone;
             user.DisplayWhatsapp = Input.DisplayWhatsapp;
-            user.FbMessenger = Input.FbMessenger?.Trim();
-            user.Instagram = Input.Instagram?.Trim();
+            user.FbMessenger = trimmedFbMessenger;
+            user.DisplayMessenger = Input.DisplayMessenger;
+            user.Instagram = trimmedInstagram;
+            user.DisplayInstagram = Input.DisplayInstagram;
+            user.DisplaySchool = Input.DisplaySchool;
 
-            await _userManager.UpdateAsync(user);
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                _logger.LogWarning("Aktualizacja profilu użytkownika {UserId} nie powiodła się: {Errors}.",
+                    _userManager.GetUserId(User), DescribeErrors(updateResult));
+                StatusMessage = $"Nie udało się zapisać profilu: {DescribeErrors(updateResult)}";
+                return RedirectToPage();
+            }
 
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Twój profil został zaktualizowany.";
             return RedirectToPage();
         }
+
+        // A failed IdentityResult always carries its reasons - surface them (already translated
+        // by ErrorDescriber) instead of claiming the cause is unknown.
+        private static string DescribeErrors(IdentityResult result)
+            => result.Errors.Any()
+                ? string.Join(" ", result.Errors.Select(e => e.Description))
+                : "spróbuj ponownie za chwilę.";
     }
 }

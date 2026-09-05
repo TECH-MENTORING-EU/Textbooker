@@ -3,7 +3,10 @@
 @inject Booker.Services.PhotosManager PhotosManager
 @{
     ViewData["Title"] = "Edytuj ogłoszenie";
-    const string include = "#edit-form :not([name = '__RequestVerificationToken'])";
+    // RODO: scoped to the fields that affect the select options - Description/State/Price hold
+    // user-entered text (here, the real saved listing content) and must never ride along in
+    // this GET's query string.
+    const string include = "#Input_Title, #Input_Subject, #Input_Grade, #Input_Level";
 }
 
 <article aria-labelledby="edit-heading">
@@ -20,6 +23,10 @@
         <form method="post" enctype="multipart/form-data" id="edit-form" class="upload-form" data-in-summary="" hx-on:submit="event.preventDefault(); showConfirmSaveModal(event);" hx-on:image-upload-state="toggleFormSubmitState(this, event.detail.busy)">
             <div class="grid">
                 <section>
+                    <p role="note">
+                        <strong>Nie wysyłaj zdjęć, na których widać osoby, twarze, adresy, plan lekcji,
+                        legitymację ani inne dane osobowe.</strong> Sfotografuj sam podręcznik.
+                    </p>
                     <label asp-for="Input.Images">Zmień zdjęcia książki (opcjonalnie):</label>
                     <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)" aria-describedby="Input_Images-error imageErrorMsg">
                     <small>
@@ -66,8 +73,24 @@
                     <small><span asp-validation-for="Input.Level" id="Input_Level-error" role="alert"></span></small>
 
                     <label asp-for="Input.Description">Opis ogłoszenia:</label>
-                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." aria-describedby="Input_Description-counter"></textarea>
-                    <small id="Input_Description-counter"><span class="char-count">0 / 200</span></small>
+                    <p role="note">
+                        <small>
+                            Nie wpisuj tu swojego numeru telefonu, e-maila ani innych danych o sobie —
+                            od kontaktu jest przycisk przy ogłoszeniu. Wszystko, co tu wpiszesz, zobaczy
+                            każda osoba odwiedzająca ogłoszenie, także niezalogowana.
+                        </small>
+                    </p>
+                    <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." aria-describedby="Input_Description-error Input_Description-counter"></textarea>
+                    <small id="Input_Description-counter">
+                        <span asp-validation-for="Input.Description" id="Input_Description-error" role="alert"></span>
+                        <span class="char-count">0 / 200</span>
+                    </small>
+                    <fieldset id="sensitiveDescriptionConfirmation" hidden="@(!Model.ShowSensitiveContentWarning)">
+                        <label for="confirmSensitiveDescriptionCheckbox" class="form-check-label">
+                            <input type="checkbox" id="confirmSensitiveDescriptionCheckbox" asp-for="Input.ConfirmSensitiveDescription">
+                            Rozumiem, że mój opis może zawierać dane kontaktowe, i mimo to chcę zapisać to ogłoszenie.
+                        </label>
+                    </fieldset>
 
                     <label asp-for="Input.State">Stan książki:</label>
                     <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…" aria-describedby="Input_State-error Input_State-counter"></textarea>

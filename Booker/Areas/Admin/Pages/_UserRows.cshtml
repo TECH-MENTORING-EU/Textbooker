@@ -1,4 +1,4 @@
-﻿@*
+@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @model List<Booker.Data.User>
@@ -6,13 +6,14 @@
 
 @foreach (var user in Model)
 {
+    var isLockedOut = user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now;
     <tr>
         <td>@user.Id</td>
         <td>@user.UserName</td>
         <td>@user.Email</td>
         <td>@(user.LastActiveAt?.ToString("g") ?? "Nigdy")</td>
         <td>
-            @if (user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now)
+            @if (isLockedOut)
             {
                 <text>Zablokowany do @user.LockoutEnd?.LocalDateTime.ToString("g")</text>
             }
@@ -22,42 +23,83 @@
             }
         </td>
         <td>
-            @if (user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now)
+            @if (isLockedOut)
             {
-                <a hx-post="?handler=Unlock"
-                   hx-vals='{"id": @user.Id}'
-                   hx-target="closest tr"
-                   hx-swap="outerHTML"
-                   hx-confirm="Na pewno chcesz odblokować użytkownika @user.UserName?"
-                   href=""
-                   aria-label="Odblokuj użytkownika @user.UserName"
-                   antiforgery
-                >Odblokuj</a>       
+                <button type="button" class="outline"
+                        onclick="document.getElementById('unlockModal-@user.Id').showModal()"
+                        aria-label="Odblokuj użytkownika @user.UserName">Odblokuj</button>
+
+                <dialog id="unlockModal-@user.Id" aria-labelledby="unlock-title-@user.Id">
+                    <article>
+                        <h2 id="unlock-title-@user.Id">Odblokuj użytkownika</h2>
+                        <p>Na pewno chcesz odblokować użytkownika <strong>@user.UserName</strong>?</p>
+                        <footer>
+                            <button type="button" class="secondary" onclick="this.closest('dialog').close()">Anuluj</button>
+                            <button type="button"
+                                    hx-post="?handler=Unlock"
+                                    hx-vals='{"id": @user.Id}'
+                                    hx-target="closest tr"
+                                    hx-swap="outerHTML"
+                                    antiforgery
+                                    onclick="this.closest('dialog').close()">Odblokuj</button>
+                        </footer>
+                    </article>
+                </dialog>
             }
             else
             {
-                <a hx-post="?handler=Lockout"
-                   hx-vals='{"id": @user.Id}'
-                   hx-target="closest tr"
-                   hx-swap="outerHTML"
-                   hx-prompt="Na ile dni zablokować użytkownika @user.UserName (-1 do odwołania)?"
-                   href=""
-                   aria-label="Zablokuj użytkownika @user.UserName"
-                   antiforgery
-                >Zablokuj</a>
-            }
-            
-            <a hx-post="?handler=Delete"
-               hx-vals='{"id": @user.Id}'
-               hx-target="closest tr"
-               hx-swap="delete"
-               hx-confirm="Na pewno chcesz usunąć użytkownika @user.UserName?"
-               href=""
-               aria-label="Usuń użytkownika @user.UserName"
-               antiforgery
-              >Usuń</a>
+                <button type="button" class="outline"
+                        onclick="document.getElementById('lockout-days-@user.Id').value='7'; document.getElementById('lockoutModal-@user.Id').showModal()"
+                        aria-label="Zablokuj użytkownika @user.UserName">Zablokuj</button>
 
-            <a href="" aria-label="Szczegóły użytkownika @user.UserName">Więcej...</a>
+                <dialog id="lockoutModal-@user.Id" aria-labelledby="lockout-title-@user.Id">
+                    <article>
+                        <h2 id="lockout-title-@user.Id">Zablokuj użytkownika</h2>
+                        <p>
+                            Na ile dni zablokować użytkownika <strong>@user.UserName</strong>?
+                            Wpisz <code>-1</code>, żeby zablokować bezterminowo.
+                        </p>
+                        <label for="lockout-days-@user.Id">Liczba dni</label>
+                        <input type="number" id="lockout-days-@user.Id" name="days" value="7" step="1" />
+                        <small id="lockout-error-@user.Id" role="alert" class="text-danger"></small>
+                        <footer>
+                            <button type="button" class="secondary" onclick="document.getElementById('lockout-days-@user.Id').value='7'; document.getElementById('lockout-error-@user.Id').textContent=''; this.closest('dialog').close()">Anuluj</button>
+                            <button type="button" id="confirmLockout"
+                                    hx-post="?handler=Lockout"
+                                    hx-vals='{"id": @user.Id}'
+                                    hx-include="#lockout-days-@user.Id"
+                                    hx-target="closest tr"
+                                    hx-swap="outerHTML"
+                                    data-error-target="lockout-error-@user.Id"
+                                    antiforgery>Zablokuj</button>
+                        </footer>
+                    </article>
+                </dialog>
+            }
+
+            <button type="button" class="outline"
+                    onclick="document.getElementById('deleteUserModal-@user.Id').showModal()"
+                    aria-label="Usuń użytkownika @user.UserName">Usuń</button>
+
+            <dialog id="deleteUserModal-@user.Id" aria-labelledby="delete-user-title-@user.Id">
+                <article>
+                    <h2 id="delete-user-title-@user.Id">Usuń użytkownika</h2>
+                    <p>
+                        Na pewno chcesz trwale usunąć użytkownika <strong>@user.UserName</strong>?
+                        Tej operacji nie można cofnąć.
+                    </p>
+                    <footer>
+                        <button type="button" class="secondary" onclick="this.closest('dialog').close()">Anuluj</button>
+                        <button type="button"
+                                hx-post="?handler=Delete"
+                                hx-vals='{"id": @user.Id}'
+                                hx-target="closest tr"
+                                hx-swap="delete"
+                                antiforgery
+                                onclick="this.closest('dialog').close()">Usuń</button>
+                    </footer>
+                </article>
+            </dialog>
         </td>
     </tr>
 }

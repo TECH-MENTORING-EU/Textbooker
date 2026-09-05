@@ -1,17 +1,42 @@
 ﻿@page
 @model Booker.Pages.BookAddingModel
+@inject Microsoft.AspNetCore.Identity.UserManager<Booker.Data.User> UserManager
 
 @{
     ViewData["Title"] = "Dodaj ogłoszenie";
-    const string include = "#add-form :not([name = '__RequestVerificationToken'])";
+    // RODO: scoped to the fields that affect the select options - Description/State/Price hold
+    // user-entered text and must never ride along in this GET's query string.
+    const string include = "#Input_Title, #Input_Subject, #Input_Grade, #Input_Level";
+
+    // RODO - task 05: with no contact channel enabled, the listing is useless for both
+    // sides, so we warn before publishing instead of blocking it after the fact.
+    var currentUser = await UserManager.GetUserAsync(User);
+    var hasAnyContactChannel = currentUser != null && (
+        currentUser.DisplayEmail
+        || (currentUser.DisplayPhone && !string.IsNullOrEmpty(currentUser.PhoneNumber))
+        || (currentUser.DisplayWhatsapp && !string.IsNullOrEmpty(currentUser.PhoneNumber))
+        || (currentUser.DisplayMessenger && !string.IsNullOrEmpty(currentUser.FbMessenger))
+        || (currentUser.DisplayInstagram && !string.IsNullOrEmpty(currentUser.Instagram))
+    );
 }
 
-
+@if (!hasAnyContactChannel)
+{
+    <div role="alert">
+        <strong>Nie masz włączonej żadnej formy kontaktu.</strong> Nikt nie będzie mógł się z Tobą
+        skontaktować w sprawie tego ogłoszenia. Włącz przynajmniej jedną formę kontaktu w
+        <a asp-area="Identity" asp-page="/Account/Manage/Index">ustawieniach profilu</a>.
+    </div>
+}
 
 <h1 id="add-heading">Nowe ogłoszenie:</h1>
 <form method="post" enctype="multipart/form-data" id="add-form" aria-labelledby="add-heading" hx-on:submit="if (!this.dataset.inSummary) showSummary(event)" hx-on:image-upload-state="toggleFormSubmitState(this, event.detail.busy)">
     <div class="grid">
         <section>
+            <p role="note">
+                <strong>Nie wysyłaj zdjęć, na których widać osoby, twarze, adresy, plan lekcji,
+                legitymację ani inne dane osobowe.</strong> Sfotografuj sam podręcznik.
+            </p>
             <label for="add-image">Prześlij zdjęcia swojej książki:</label>
             <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)" id="add-image" aria-describedby="Input_Images-error imageErrorMsg">
             <small>
@@ -54,8 +79,24 @@
             <small><span asp-validation-for="Input.Level" id="Input_Level-error" role="alert"></span></small>
 
             <label asp-for="Input.Description">Opis ogłoszenia:</label>
-            <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." aria-describedby="Input_Description-counter"></textarea>
-            <small id="Input_Description-counter"><span class="char-count">0 / 200</span></small>
+            <p role="note">
+                <small>
+                    Nie wpisuj tu swojego numeru telefonu, e-maila ani innych danych o sobie —
+                    od kontaktu jest przycisk przy ogłoszeniu. Wszystko, co tu wpiszesz, zobaczy
+                    każda osoba odwiedzająca ogłoszenie, także niezalogowana.
+                </small>
+            </p>
+            <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." aria-describedby="Input_Description-error Input_Description-counter"></textarea>
+            <small id="Input_Description-counter">
+                <span asp-validation-for="Input.Description" id="Input_Description-error" role="alert"></span>
+                <span class="char-count">0 / 200</span>
+            </small>
+            <fieldset id="sensitiveDescriptionConfirmation" hidden="@(!Model.ShowSensitiveContentWarning)">
+                <label for="confirmSensitiveDescriptionCheckbox" class="form-check-label">
+                    <input type="checkbox" id="confirmSensitiveDescriptionCheckbox" asp-for="Input.ConfirmSensitiveDescription">
+                    Rozumiem, że mój opis może zawierać dane kontaktowe, i mimo to chcę opublikować to ogłoszenie.
+                </label>
+            </fieldset>
 
             <label asp-for="Input.State">Stan książki:</label>
             <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…" aria-describedby="Input_State-error Input_State-counter"></textarea>

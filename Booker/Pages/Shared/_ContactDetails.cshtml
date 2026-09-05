@@ -31,7 +31,7 @@
             </a>
         </p>
     }
-    @if (Model.DisplayWhatsapp)
+    @if (Model.DisplayWhatsapp && !string.IsNullOrEmpty(Model.PhoneNumber))
     {
         <p>
             <svg icon="brand-whatsapp" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
@@ -40,7 +40,7 @@
             </a>
         </p>
     }
-    @if (!string.IsNullOrEmpty(Model.FbMessenger))
+    @if (Model.DisplayMessenger && !string.IsNullOrEmpty(Model.FbMessenger))
     {
         <p>
             <svg icon="brand-messenger" aria-hidden="true" style="vertical-align: -0.4em;"></svg>
@@ -49,7 +49,7 @@
             </a>
         </p>
     }
-    @if (!string.IsNullOrEmpty(Model.Instagram))
+    @if (Model.DisplayInstagram && !string.IsNullOrEmpty(Model.Instagram))
     {
         <p>
             <svg icon="brand-instagram" aria-hidden="true" style="vertical-align: -0.4em;"></svg>

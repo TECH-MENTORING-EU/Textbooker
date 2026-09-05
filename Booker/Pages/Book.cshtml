@@ -1,11 +1,19 @@
 ﻿@page "{id:int}"
 @model Booker.Pages.BookModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     ViewData["Title"] = $"{Model.BookItem.Book.Title} - TextBooker";
+    ViewData["Robots"] = "noindex";
 
     var images = Model.Photos;
     var mainImage = images.FirstOrDefault();
+
+    var profilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
+    var defaultAvatarPath = Configuration.GetValue<string>("Features:DefaultProfilePicturePath") ?? "/img/default-profile-picture.jpg";
+    var sellerPhotoUrl = profilePhotosEnabled && !string.IsNullOrWhiteSpace(Model.BookItem.User.Photo)
+        ? Model.BookItem.User.Photo
+        : defaultAvatarPath;
 }
 
 <article class="book-display" aria-labelledby="book-title">
@@ -91,11 +99,15 @@
     <section class="seller" aria-label="Informacje o sprzedającym">
         <h2>Sprzedaje</h2>
         <div>
-            <img src="@(string.IsNullOrWhiteSpace(Model.BookItem.User.Photo) ? "/img/default-profile-picture.jpg" : Model.BookItem.User.Photo)"
+            <img src="@sellerPhotoUrl"
                  alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName" />
             <div>
                 @Model.BookItem.User.UserName<br />
-                @(Model.BookItem.User.School?.Name ?? "Bez szkoły")<br />
+                @if (User.Identity?.IsAuthenticated == true && Model.BookItem.User.DisplaySchool && Model.BookItem.User.School != null)
+                {
+                    @Model.BookItem.User.School.Name
+                    <br />
+                }
                 <a href="/Profile/@Model.BookItem.UserId" role="button" class="outline">Więcej od tego użytkownika</a>
             </div>
         </div>

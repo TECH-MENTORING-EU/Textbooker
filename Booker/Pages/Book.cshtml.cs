@@ -10,7 +10,13 @@ using Booker.Authorization;
 
 namespace Booker.Pages
 {
-    public class BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, ILogger<BookModel> logger) : PageModel
+    public class BookModel(
+        UserManager<User> userManager,
+        ItemManager itemManager,
+        FavoritesManager favoritesManager,
+        IAuthorizationService authService,
+        ILogger<BookModel> logger,
+        ContactRevealLimiter contactRevealLimiter) : PageModel
     {
         public List<string> Photos { get; set; } = new();
 
@@ -68,6 +74,14 @@ namespace Booker.Pages
 
             BookItem = item;
 
+            // RODO - task 05: the seller's contact details are only disclosed in the context of
+            // an active, publicly visible listing (basis: contract performance).
+            var isAuthorized = await authService.AuthorizeAsync(User, item, ItemOperations.Read);
+            if (!item.IsVisible && !isAuthorized.Succeeded)
+            {
+                return NotFound();
+            }
+
             if (currentUser == null)
             {
                 Response.Headers["HX-Redirect"] = Url.Page("/Account/Login", new { area = "Identity" });
@@ -77,6 +91,24 @@ namespace Booker.Pages
             if (BookItem.User.Id == currentUser.Id)
             {
                 return new NoContentResult();
+            }
+
+            // RODO - task 07: contact-reveal limit - generous, but finite, counted per account
+            // in process memory (see ContactRevealLimiter).
+            if (!contactRevealLimiter.TryRegisterReveal(currentUser.Id))
+            {
+                if (contactRevealLimiter.ShouldLogRejection(currentUser.Id))
+                {
+                    logger.LogWarning(
+                        "Użytkownik {UserName} przekroczył limit ujawnień danych kontaktowych.",
+                        User.Identity?.Name);
+                }
+
+                return Content(
+                    "<p role=\"alert\">Zbyt wiele wyświetlonych kontaktów w krótkim czasie. " +
+                    "Spróbuj ponownie później albo napisz do nas: " +
+                    "<a href=\"mailto:support@textbooker.pl\">support@textbooker.pl</a>.</p>",
+                    "text/html");
             }
 
             return Partial("_ContactDetails", BookItem.User);

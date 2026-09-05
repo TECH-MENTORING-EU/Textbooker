@@ -22,6 +22,11 @@ namespace Booker.Data
         public bool IsVisible { get; set; } = true;
         public bool CanChangeVisibility { get; set; } = true;
         public bool Reserved {  get; set; }
+
+        // RODO - task 08: description looks like it contains contact details (email/phone) -
+        // flagged for admin review. Does not block the listing from being displayed.
+        public bool FlaggedForReview { get; set; } = false;
+
         public ICollection<ItemView> Views { get; } = new HashSet<ItemView>();
     }
 }

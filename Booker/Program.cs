@@ -47,6 +47,7 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(
         path: Path.Combine(logsPath, "log-.txt"),
         rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 365,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
     .CreateLogger();
 
@@ -69,6 +70,15 @@ builder.Services.AddRazorPages()
 builder.Services.AddBookerServices(configuration);
 builder.Services.AddRateLimitPolicies();
 
+// RODO - task 07: thresholds for the contact-reveal limit, configurable via appsettings.
+// The counter itself (ContactRevealLimiter) keeps state only in IMemoryCache, no DB writes.
+builder.Services.Configure<Booker.Services.ContactRevealLimitOptions>(
+    configuration.GetSection("ContactRevealLimits"));
+builder.Services.AddSingleton<Booker.Services.ContactRevealLimiter>();
+
+builder.Services.Configure<Booker.Services.AdminLockoutOptions>(
+    configuration.GetSection("AdminLockout"));
+
 builder.Services.AddDbContext<DataContext>(options =>
 {
     //options.UseInMemoryDatabase("InMemoryDatabaseName");
@@ -85,9 +95,10 @@ builder.Services.AddDefaultIdentity<User>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
+    // RODO - task 07: ~10 failed login attempts -> 2-hour lockout.
     options.Lockout.AllowedForNewUsers = true;
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 10;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(2);
 })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<DataContext>()

@@ -38,9 +38,13 @@
 
             <div class="filter-actions">
                 @* Deliberately a self-contained GET to /Browse: inheriting the form's trigger or
-                   parameters would re-send the URL-provided filters (issue #57). *@
+                   parameters would re-send the URL-provided filters (issue #57).
+                   hx-sync replace: clicking this button blurs a focused price input, whose change
+                   event fires a still-filtered form request a moment before the click. The in-flight
+                   request is aborted so its response/URL push can't win the race against the clean one. *@
                 <button type="button" id="clearFilters" class="secondary"
-                        hx-get="/Browse" hx-trigger="click" hx-target=".grid-gallery" hx-push-url="/Browse">
+                        hx-get="/Browse" hx-trigger="click" hx-target=".grid-gallery" hx-push-url="/Browse"
+                        hx-sync="closest form:replace">
                     Wyczyść filtry
                 </button>
                 <button type="button" id="mobileFilterSubmit">Zatwierdź filtry</button>

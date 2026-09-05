@@ -35,7 +35,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         decimal Price,
         List<Stream>? ImageStreams = null,
         List<string>? ImageFileExtensions = null,
-        string? ExistingImageFileNames = null
+        string? ExistingImageFileNames = null,
+        bool FlaggedForReview = false
     );
 
 
@@ -103,6 +104,35 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             .AsAsyncEnumerable();
     }
 
+    public record AdminItemSummary(int Id, string BookTitle, string? SellerUserName, DateTime CreatedAt, bool FlaggedForReview, string Description);
+
+    // RODO - task 08 admin review: projects only the fields the moderation table displays
+    // (instead of materializing the full book/grades/subject/level/user/school graph via
+    // GetAllItemsAsync) and paginates server-side, since this listing spans every school
+    // and grows without bound as more listings are created.
+    public async Task<List<AdminItemSummary>> GetAdminItemsPageAsync(int pageNumber, int pageSize, bool onlyFlagged = false)
+    {
+        var query = onlyFlagged
+            ? context.Items.AsNoTracking().Where(i => i.FlaggedForReview)
+            : context.Items.AsNoTracking();
+
+        return await query
+            .OrderByDescending(i => i.CreatedAt)
+            .Skip(pageNumber * pageSize)
+            .Take(pageSize)
+            .Select(i => new AdminItemSummary(i.Id, i.Book.Title, i.User.UserName, i.CreatedAt, i.FlaggedForReview, i.Description))
+            .ToListAsync();
+    }
+
+    public Task<int> GetAdminItemsCountAsync(bool onlyFlagged = false)
+    {
+        var query = onlyFlagged
+            ? context.Items.AsNoTracking().Where(i => i.FlaggedForReview)
+            : context.Items.AsNoTracking();
+
+        return query.CountAsync();
+    }
+
     public Task<int> GetAllItemsCountAsync(User? currentUser = null)
     {
         var query = GetAllItemsQueryable();
@@ -168,6 +198,17 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         return GetAllItemsQueryable()
             .Where(i => i.UserId == userId)
             .CountAsync();
+    }
+
+    // RODO - task 05: the legal basis for disclosing contact details (contract performance)
+    // requires an active listing from the seller. School isolation must be applied using the
+    // requesting user, otherwise any globally-visible listing makes this return true even when
+    // the viewer could not actually see the seller's items in their own school.
+    public Task<bool> HasVisibleListingAsync(int userId, User? currentUser = null)
+    {
+        var query = context.Items.Where(i => i.UserId == userId && i.IsVisible);
+        query = FilterByUserSchool(query, currentUser);
+        return query.AnyAsync();
     }
 
     public async Task MarkItemReservedAsync(int itemId, bool reserved)
@@ -264,7 +305,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             State = model.State,
             Price = model.Price,
             CreatedAt = DateTime.Now,
-            Photo = allPhotos
+            Photo = allPhotos,
+            FlaggedForReview = model.FlaggedForReview
         };
 
         return await AddItemNVAsync(item);
@@ -320,6 +362,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             item.Price = model.Price;
             item.Photo = allPhotos;
             item.UpdatedAt = DateTime.Now;
+            item.FlaggedForReview = model.FlaggedForReview;
 
             await UpdateItemNVAsync(item);
             await transaction.CommitAsync();

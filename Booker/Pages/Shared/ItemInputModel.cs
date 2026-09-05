@@ -23,6 +23,7 @@ public abstract class ItemInputModel
     public required string Grade { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę wybrać poziom.")]
     public required string Level { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Proszę dodać opis ogłoszenia.")]
     public required string Description { get; set; } = string.Empty;
     [Required(ErrorMessage = "Proszę opisać stan książki.")]
     [StringLength(40, ErrorMessage = "Opis stanu książki nie może przekraczać 40 znaków.")]
@@ -32,7 +33,12 @@ public abstract class ItemInputModel
     public required decimal Price { get; set; } = 0;
 
     [Display(Name = "Zdjęcia książki")]
-    public virtual List<IFormFile> Images { get; set; } = new();
+    public virtual List<IFormFile>? Images { get; set; }
+
+    // RODO - task 08: confirms the user knowingly published a description that looks like it
+    // contains contact details (email/phone). Not required - this field only exists so the
+    // form can be resubmitted after the warning.
+    public bool ConfirmSensitiveDescription { get; set; }
 }
 
 public class ItemAddModel : ItemInputModel
