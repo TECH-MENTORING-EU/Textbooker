@@ -6,7 +6,7 @@ namespace Booker.Tests;
 /// <summary>
 /// Date rendering on the offer page after the UtcNow migration: storage is UTC,
 /// so "dzisiaj"/"wczoraj" must be evaluated in Polish local time, not server time.
-/// The deterministic cases pin the Polish-time judgement with an explicit clock.
+/// Every case pins the Polish-time judgement with an explicit clock.
 /// </summary>
 public class BookPageDateTests
 {
@@ -34,21 +34,30 @@ public class BookPageDateTests
     [Fact]
     public void FormatDateWithSpecialCases_VeryOldDate_DoesNotSayDzisiaj()
     {
-        var old = DateTime.UtcNow.AddDays(-30);
+        var nowUtc = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
 
-        var result = BookModel.FormatDateWithSpecialCases(old);
+        var result = BookModel.FormatDateWithSpecialCases(
+            new DateTime(2025, 12, 16, 12, 0, 0, DateTimeKind.Utc), nowUtc, Warsaw);
 
         Assert.DoesNotContain("dzisiaj", result);
+        // A month-old offer falls through to the plain Polish date format.
+        Assert.Equal("16 grudnia o 13:00", result);
     }
 
     [Fact]
     public void FormatDateWithSpecialCases_RecentDate_UsesSpecialCase()
     {
-        // Five minutes ago is at worst "wczoraj" (Polish midnight just passed),
-        // never the plain date format reserved for older dates.
-        var result = BookModel.FormatDateWithSpecialCases(DateTime.UtcNow.AddMinutes(-5));
+        // Around Polish midnight the special cases flip on the Warsaw calendar,
+        // not on UTC: offers seven real minutes apart land on different sides.
+        var nowUtc = new DateTime(2026, 1, 16, 0, 5, 0, DateTimeKind.Utc);
 
-        Assert.Matches(@"^(dzisiaj|wczoraj) o \d{2}:\d{2}$", result);
+        var justAfterMidnight = BookModel.FormatDateWithSpecialCases(
+            new DateTime(2026, 1, 15, 23, 58, 0, DateTimeKind.Utc), nowUtc, Warsaw);
+        var justBeforeMidnight = BookModel.FormatDateWithSpecialCases(
+            new DateTime(2026, 1, 15, 22, 57, 0, DateTimeKind.Utc), nowUtc, Warsaw);
+
+        Assert.Equal("dzisiaj o 00:58", justAfterMidnight);
+        Assert.Equal("wczoraj o 23:57", justBeforeMidnight);
     }
 
     [Fact]
