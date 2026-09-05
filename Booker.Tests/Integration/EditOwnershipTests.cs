@@ -1,4 +1,5 @@
 using System.Net;
+using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
 
 namespace Booker.Tests.Integration;
@@ -24,10 +25,7 @@ public class EditOwnershipTests(CustomWebApplicationFactory factory)
     public async Task Anonymous_edit_is_redirected_to_login()
     {
         var (_, _, item) = await SeedAsync();
-        var client = factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false,
-        });
+        var client = factory.CreateNoRedirectClient();
 
         var response = await client.GetAsync($"/Edit/{item}");
 

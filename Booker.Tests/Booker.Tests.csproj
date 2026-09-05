@@ -1,10 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <!-- net8.0 runtime is not installed on this machine; the test host targets net10.0
-             while the app project stays on net8.0 (higher TFM referencing lower is allowed,
-             and the app assemblies roll forward inside the net10 test host process). -->
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
@@ -25,6 +22,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Booker\Booker.csproj" />
+        <ProjectReference Include="..\Booker.TestUtils\Booker.TestUtils.csproj" />
     </ItemGroup>
 
     <ItemGroup>

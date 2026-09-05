@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Booker.Services;
 
-public class FavoritesManager(DataContext context, IMemoryCache cache)
+public class FavoritesManager(DataContext context, ItemManager itemManager, IMemoryCache cache)
 {
 
     public enum Status
@@ -65,24 +65,43 @@ public class FavoritesManager(DataContext context, IMemoryCache cache)
             return Status.Forbidden;
         }
 
-        var item = await context.Items.FindAsync(itemId);
-
-        if (item == null)
-        {
-            return Status.NotFound;
-        }
-
-        if (user.Favorites.Any(f => f.Id == itemId) == isAdding)
-        {
-            return Status.NotModified;
-        }
-
         if (isAdding)
         {
+            // Adding requires the same access the offer page enforces: school isolation
+            // (GetItemAsync answers cross-school and missing ids alike with null) plus
+            // item visibility. One deliberate difference from the offer page: only the
+            // owner may favorite a hidden item. Admins can view hidden offers, but a
+            // favorite is a personal bookmark, not an admin capability.
+            var item = await itemManager.GetItemAsync(itemId, user);
+
+            if (item == null || (!item.IsVisible && item.UserId != userId))
+            {
+                return Status.NotFound;
+            }
+
+            if (user.Favorites.Any(f => f.Id == itemId))
+            {
+                return Status.NotModified;
+            }
+
             user.Favorites.Add(item);
         }
         else
         {
+            // Removal stays unrestricted so favorites that no longer pass the checks
+            // above (hidden item, cross-school owner) can still be removed.
+            var item = await context.Items.FindAsync(itemId);
+
+            if (item == null)
+            {
+                return Status.NotFound;
+            }
+
+            if (!user.Favorites.Any(f => f.Id == itemId))
+            {
+                return Status.NotModified;
+            }
+
             user.Favorites.Remove(item);
         }
 

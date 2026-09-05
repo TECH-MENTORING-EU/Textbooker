@@ -11,10 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # SDK 10 builds both the net8.0 app and the net10.0 test project.
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 8.0.x
 
       - name: Restore
         run: dotnet restore Booker/Booker.sln
@@ -24,3 +23,26 @@ jobs:
 
       - name: Test
         run: dotnet test Booker/Booker.sln --no-build --nologo
+
+  # E2E is not part of the solution: it needs a real browser, so it runs as its
+  # own job.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore Booker.E2e/Booker.E2e.csproj
+
+      - name: Build
+        run: dotnet build Booker.E2e/Booker.E2e.csproj --no-restore --nologo
+
+      - name: Install Chromium for Playwright
+        run: pwsh Booker.E2e/bin/Debug/net8.0/playwright.ps1 install --with-deps chromium
+
+      - name: E2E tests
+        run: dotnet test Booker.E2e/Booker.E2e.csproj --no-build --nologo

@@ -120,6 +120,9 @@ ipch/
 
 # Visual Studio Trace Files
 *.e2e
+# ...except the E2E test project: on case-insensitive filesystems (Windows)
+# its directory name Booker.E2e matches the trace-file rule above.
+!Booker.E2e/
 
 # TFS 2012 Local Workspace
 $tf/
@@ -398,3 +401,13 @@ FodyWeavers.xsd
 *.sln.iml
 /Booker/.config/dotnet-tools.json
 /copilot-agent-prompt.txt
+
+# Local database files (*.db plus WAL/SHM sidecars)
+*.db
+*.db-shm
+*.db-wal
+
+# Azurite emulator data
+__blobstorage__/
+__queuestorage__/
+__azurite_db*__.json

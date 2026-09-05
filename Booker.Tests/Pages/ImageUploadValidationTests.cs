@@ -13,10 +13,7 @@ namespace Booker.Tests.Pages;
 /// </summary>
 public class ImageUploadValidationTests
 {
-    private static readonly byte[] JpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
-    private static readonly byte[] PngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00];
-
-    private static IFormFile File(
+    private static IFormFile Upload(
         byte[] content, string fileName, string contentType = "image/jpeg")
     {
         var file = new FormFile(new MemoryStream(content), 0, content.Length, "Input.Images", fileName)
@@ -62,7 +59,7 @@ public class ImageUploadValidationTests
     public async Task More_than_six_files_fail()
     {
         var modelState = new ModelStateDictionary();
-        var files = Enumerable.Range(1, 7).Select(i => File(JpegBytes, $"a{i}.jpg")).ToList();
+        var files = Enumerable.Range(1, 7).Select(i => Upload(TestImages.Jpeg, $"a{i}.jpg")).ToList();
 
         var batch = await ImageUploadValidation.ValidateAndReadAsync(files, false, modelState);
 
@@ -76,7 +73,7 @@ public class ImageUploadValidationTests
         var modelState = new ModelStateDictionary();
 
         var batch = await ImageUploadValidation.ValidateAndReadAsync(
-            [File(JpegBytes, "a.pdf", "application/pdf")], false, modelState);
+            [Upload(TestImages.Jpeg, "a.pdf", "application/pdf")], false, modelState);
 
         Assert.Null(batch);
         Assert.Contains(Errors(modelState), e => e.Contains("nie jest obrazem"));
@@ -88,7 +85,7 @@ public class ImageUploadValidationTests
         var modelState = new ModelStateDictionary();
 
         var batch = await ImageUploadValidation.ValidateAndReadAsync(
-            [File([], "a.jpg")], false, modelState);
+            [Upload([], "a.jpg")], false, modelState);
 
         Assert.Null(batch);
         Assert.Contains(Errors(modelState), e => e.Contains("jest pusty"));
@@ -101,7 +98,7 @@ public class ImageUploadValidationTests
         var sixMb = new byte[6 * 1024 * 1024];
 
         var batch = await ImageUploadValidation.ValidateAndReadAsync(
-            [File(sixMb, "a.jpg")], false, modelState);
+            [Upload(sixMb, "a.jpg")], false, modelState);
 
         Assert.Null(batch);
         Assert.Contains(Errors(modelState), e => e.Contains("przekracza limit 5 MB"));
@@ -113,7 +110,7 @@ public class ImageUploadValidationTests
         var modelState = new ModelStateDictionary();
 
         var batch = await ImageUploadValidation.ValidateAndReadAsync(
-            [File(JpegBytes, "a.gif", "image/gif")], false, modelState);
+            [Upload(TestImages.Jpeg, "a.gif", "image/gif")], false, modelState);
 
         Assert.Null(batch);
         Assert.Contains(Errors(modelState), e => e.Contains("niedozwolone rozszerzenie"));
@@ -125,7 +122,7 @@ public class ImageUploadValidationTests
         var modelState = new ModelStateDictionary();
 
         var batch = await ImageUploadValidation.ValidateAndReadAsync(
-            [File(Encoding.UTF8.GetBytes("definitely not an image"), "fake.jpg")], false, modelState);
+            [Upload(Encoding.UTF8.GetBytes("definitely not an image"), "fake.jpg")], false, modelState);
 
         Assert.Null(batch);
         Assert.Contains(Errors(modelState), e => e.Contains("nie jest prawidłowym obrazem"));
@@ -136,7 +133,7 @@ public class ImageUploadValidationTests
     {
         var modelState = new ModelStateDictionary();
 
-        var batch = await ImageUploadValidation.ValidateAndReadAsync([File(JpegBytes, "a.jpeg")], false, modelState);
+        var batch = await ImageUploadValidation.ValidateAndReadAsync([Upload(TestImages.Jpeg, "a.jpeg")], false, modelState);
 
         Assert.NotNull(batch);
         Assert.True(modelState.IsValid);
@@ -149,7 +146,7 @@ public class ImageUploadValidationTests
     {
         var modelState = new ModelStateDictionary();
 
-        var batch = await ImageUploadValidation.ValidateAndReadAsync([File(PngBytes, "a.png", "image/png")], false, modelState);
+        var batch = await ImageUploadValidation.ValidateAndReadAsync([Upload(TestImages.Png, "a.png", "image/png")], false, modelState);
 
         Assert.NotNull(batch);
         Assert.Equal([".png"], batch.Extensions);
@@ -161,7 +158,7 @@ public class ImageUploadValidationTests
         var modelState = new ModelStateDictionary();
 
         var batch = await ImageUploadValidation.ValidateAndReadAsync(
-            [File(JpegBytes, "good.jpg"), File(Encoding.UTF8.GetBytes("x"), "bad.jpg")], false, modelState);
+            [Upload(TestImages.Jpeg, "good.jpg"), Upload(Encoding.UTF8.GetBytes("x"), "bad.jpg")], false, modelState);
 
         Assert.Null(batch);
         Assert.False(modelState.IsValid);

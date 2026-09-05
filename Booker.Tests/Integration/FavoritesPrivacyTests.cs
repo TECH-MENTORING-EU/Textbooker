@@ -1,5 +1,6 @@
 using System.Net;
 using Booker.Data;
+using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -94,10 +95,7 @@ public class FavoritesPrivacyTests(CustomWebApplicationFactory factory)
     [Fact]
     public async Task Anonymous_own_favorites_redirect_to_login()
     {
-        var client = factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false,
-        });
+        var client = factory.CreateNoRedirectClient();
 
         var response = await client.GetAsync("/Profile/Favorites");
 
@@ -106,8 +104,23 @@ public class FavoritesPrivacyTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
+    public async Task Anonymous_favorites_with_an_id_are_served_when_public()
+    {
+        // The spec's conditional branch, resolved against the real handler: favorites
+        // with an explicit id skip the login redirect, so an opted-in target is
+        // readable anonymously (NOTES: the no-id form redirects, see the test above).
+        var (_, _, publicUser, _, _) = await SeedAsync();
+        var client = factory.CreateNoRedirectClient();
+
+        var response = await client.GetAsync($"/Profile/{publicUser}/Favorites");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Unknown_user_favorites_return_404()
     {
+        await SeedAsync();
         using var client = await factory.LoginAsync("fav_req@fav.edu.pl");
 
         var response = await client.GetAsync("/Profile/999999/Favorites");

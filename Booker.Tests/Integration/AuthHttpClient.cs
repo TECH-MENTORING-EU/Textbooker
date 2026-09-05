@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -31,7 +32,7 @@ public static class AuthHttpClient
         });
 
         var response = await client.TryLoginAsync(email, password);
-        if ((int)response.StatusCode != 302)
+        if (response.StatusCode != HttpStatusCode.Redirect)
         {
             throw new InvalidOperationException(
                 $"login as {email} failed: {(int)response.StatusCode} {response.StatusCode}");

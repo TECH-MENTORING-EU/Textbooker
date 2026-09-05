@@ -2,7 +2,7 @@ using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Booker.Services;
-using Booker.Tests.Infrastructure;
+using Booker.TestUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -16,9 +16,6 @@ namespace Booker.Tests.Services;
 /// </summary>
 public class PhotosManagerTests
 {
-    private static readonly byte[] JpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
-    private static readonly byte[] PngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00];
-
     private static IConfiguration ConfigWithBucket() => new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?>
         {
@@ -38,7 +35,7 @@ public class PhotosManagerTests
         var recorder = new S3Recorder();
         var manager = Create(recorder);
 
-        var key = await manager.AddPhotoAsync(new MemoryStream(JpegBytes), ".jpg");
+        var key = await manager.AddPhotoAsync(new MemoryStream(TestImages.Jpeg), ".jpg");
 
         Assert.EndsWith(".jpg", key);
         var put = Assert.Single(recorder.Puts);
@@ -56,7 +53,7 @@ public class PhotosManagerTests
         var recorder = new S3Recorder();
         var manager = Create(recorder);
 
-        var key = await manager.AddPhotoAsync(new MemoryStream(PngBytes), ".jpg");
+        var key = await manager.AddPhotoAsync(new MemoryStream(TestImages.Png), ".jpg");
 
         Assert.EndsWith(".jpg", key);
         Assert.Equal("image/png", Assert.Single(recorder.Puts).ContentType);
@@ -68,7 +65,7 @@ public class PhotosManagerTests
         var manager = Create(new S3Recorder(), new ConfigurationBuilder().AddInMemoryCollection().Build());
 
         await Assert.ThrowsAsync<PhotoStorageException>(
-            () => manager.AddPhotoAsync(new MemoryStream(JpegBytes), ".jpg"));
+            () => manager.AddPhotoAsync(new MemoryStream(TestImages.Jpeg), ".jpg"));
     }
 
     [Fact]

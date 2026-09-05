@@ -3,7 +3,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using NSubstitute;
 
-namespace Booker.Tests.Infrastructure;
+namespace Booker.TestUtils;
 
 /// <summary>
 /// Records S3 traffic so tests can assert on object keys, content types, ACLs and delete

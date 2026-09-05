@@ -1,4 +1,5 @@
 using System.Net;
+using Booker.TestUtils;
 using Booker.Tests.Infrastructure;
 
 namespace Booker.Tests.Integration;
@@ -14,10 +15,7 @@ public class AdminHidingTests(CustomWebApplicationFactory factory)
     [Fact]
     public async Task Anonymous_admin_request_is_404_not_a_redirect()
     {
-        var client = factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false,
-        });
+        var client = factory.CreateNoRedirectClient();
 
         var response = await client.GetAsync("/Admin/Index");
 
