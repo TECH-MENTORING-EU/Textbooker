@@ -175,8 +175,6 @@ namespace Booker.Areas.Admin.Pages
                 lockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
             }
             
-            await _sessionCacheManager.InvalidateSessionAsync(id);
-
             // RODO - task 09: account lockout and the admin action log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -190,6 +188,10 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
+            // Only invalidate after the lockout succeeded - signing the user out
+            // for a lockout that never happened cannot be rolled back.
+            await _sessionCacheManager.InvalidateSessionAsync(id);
+
             user.IsVisible = false;
             var visibilityResult = await _userManager.UpdateAsync(user);
             if (!visibilityResult.Succeeded)
@@ -202,15 +204,11 @@ namespace Booker.Areas.Admin.Pages
 
             await _itemManager.SetItemsVisibilityByUserAsync(id, false);
 
-<<<<<<< HEAD
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserLockout, user.Id, user.UserName ?? id.ToString(), "User", $"days={days}");
             await transaction.CommitAsync();
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} zablokował konto użytkownika {user.UserName} na okres {days} dni.");
-=======
             _logger.LogInformation("Użytkownik {AdminUserName} zablokował konto użytkownika {TargetUserName} na okres {Days} dni.",
                 currentUser?.UserName, user.UserName, days);
->>>>>>> 33579ed (Fix session CAS false sign-outs and structured logging)
             return Partial("_UserRows", new List<User> { user });
         }
 
