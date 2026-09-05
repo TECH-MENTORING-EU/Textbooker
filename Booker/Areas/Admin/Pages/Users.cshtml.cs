@@ -84,6 +84,10 @@ namespace Booker.Areas.Admin.Pages
             // account is deleted or DeleteAsync fails with a foreign key constraint violation.
             await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
 
+            // The ItemView-to-user FK is NO ACTION in the database, so views must be
+            // removed explicitly before the account is deleted.
+            await _itemManager.DeleteViewsByUserAsync(user.Id);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
