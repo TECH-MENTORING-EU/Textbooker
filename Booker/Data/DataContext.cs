@@ -75,7 +75,10 @@ namespace Booker.Data
             {
                 iv.HasKey(v => new { v.ItemId, v.UserId });
                 iv.HasOne(v => v.Item).WithMany(i => i.Views).HasForeignKey(v => v.ItemId).OnDelete(DeleteBehavior.Cascade);
-                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.Cascade);
+                // The database enforces NO ACTION here (every migration that ran used NoAction;
+                // a cascade ALTER is rejected by SQL Server as a second cascade path). Callers
+                // must delete the user's views before deleting the user.
+                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.NoAction);
             });
         }
 

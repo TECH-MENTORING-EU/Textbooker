@@ -192,6 +192,11 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
     public Task<int> GetViewCountAsync(int itemId) =>
         context.ItemViews.CountAsync(v => v.ItemId == itemId);
 
+    // The ItemView-to-user FK is NO ACTION in the database, so views must be
+    // removed explicitly before the user account is deleted.
+    public Task DeleteViewsByUserAsync(int userId) =>
+        context.ItemViews.Where(v => v.UserId == userId).ExecuteDeleteAsync();
+
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
         if (model.Parameters.Title == null

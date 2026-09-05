@@ -21,19 +21,25 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly ILogger<DeletePersonalDataModel> _logger;
         private readonly FavoritesManager _favoritesManager;
         private readonly UserPhotoManager _userPhotoManager;
+        private readonly ItemManager _itemManager;
+        private readonly DataContext _dataContext;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ILogger<DeletePersonalDataModel> logger,
             FavoritesManager favoritesManager,
-            UserPhotoManager userPhotoManager)
+            UserPhotoManager userPhotoManager,
+            ItemManager itemManager,
+            DataContext dataContext)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _favoritesManager = favoritesManager;
             _userPhotoManager = userPhotoManager;
+            _itemManager = itemManager;
+            _dataContext = dataContext;
         }
 
         /// <summary>
@@ -95,17 +101,25 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             }
 
             var userId = await _userManager.GetUserIdAsync(user);
-            await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
 
             // The keys must be collected before the account is deleted - the item rows
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
+
+            // One transaction so a failed account deletion cannot leave the
+            // favorites and view history deleted while the account survives.
+            await using var transaction = await _dataContext.Database.BeginTransactionAsync();
+
+            await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+            await _itemManager.DeleteViewsByUserAsync(user.Id);
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException($"Nieoczekiwany błąd przy usuwaniu użytkownika.");
             }
+
+            await transaction.CommitAsync();
 
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 

@@ -15,14 +15,16 @@ namespace Booker.Areas.Admin.Pages
         private readonly SessionCacheManager _sessionCacheManager;
         private readonly ItemManager _itemManager;
         private readonly UserPhotoManager _userPhotoManager;
+        private readonly DataContext _dataContext;
         private readonly ILogger<UsersModel> _logger;
 
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, ILogger<UsersModel> logger)
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, DataContext dataContext, ILogger<UsersModel> logger)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _itemManager = itemManager;
             _userPhotoManager = userPhotoManager;
+            _dataContext = dataContext;
             _logger = logger;
         }
 
@@ -69,6 +71,12 @@ namespace Booker.Areas.Admin.Pages
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
 
+            // One transaction so a failed account deletion cannot leave the
+            // view history deleted while the account survives.
+            await using var transaction = await _dataContext.Database.BeginTransactionAsync();
+
+            await _itemManager.DeleteViewsByUserAsync(user.Id);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
@@ -77,6 +85,8 @@ namespace Booker.Areas.Admin.Pages
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
+
+            await transaction.CommitAsync();
 
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
