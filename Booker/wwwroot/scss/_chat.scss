@@ -112,7 +112,6 @@
     .chat-header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 0.75rem;
         border-bottom: 1px solid var(--pico-muted-border-color);
         padding-bottom: 0.5rem;
@@ -136,6 +135,7 @@
 
         .chat-back-link {
             display: none;
+            margin-left: auto;
             font-size: 0.85rem;
             white-space: nowrap;
         }
@@ -203,6 +203,11 @@
         }
 
         .bubble {
+            // Size to the widest child so short messages are not squeezed
+            // into per-character wrapping by the meta row's width; the small
+            // floor keeps one-word messages on a single line.
+            width: fit-content;
+            min-width: 4.5rem;
             max-width: min(70%, 32rem);
             padding: 0.5rem 0.75rem;
             border-radius: var(--pico-border-radius);
@@ -239,6 +244,8 @@
         gap: 0.5rem;
         // The button stretches to the textarea's height on the shared row.
         align-items: stretch;
+        // Keep the corner clear for the fixed help button.
+        padding-right: 4.5rem;
 
         label {
             // The visible label is redundant next to the placeholder; keep it
@@ -345,5 +352,10 @@
     // Same specificity as the base display:none rule so it actually wins.
     .chat-conversation .chat-header .chat-back-link {
         display: inline-block;
+    }
+
+    // Taller bottom reserve so the input clears the fixed help button.
+    .chat-conversation {
+        height: calc(100dvh - 16rem);
     }
 }

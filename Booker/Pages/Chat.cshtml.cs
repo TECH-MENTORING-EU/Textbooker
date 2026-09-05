@@ -30,16 +30,18 @@ namespace Booker.Pages
         public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
         {
             CurrentUserId = userManager.GetUserId(User).IntOrDefault();
-
             Threads = await threadService.GetInboxAsync(CurrentUserId, cancellationToken);
-            ActiveThread = Threads.FirstOrDefault(t => t.ChannelId == DealId);
 
+            // Without a thread the chat page IS the inbox: the full thread
+            // list renders in place, no separate /Messages page.
             if (string.IsNullOrWhiteSpace(DealId))
             {
                 return Page();
             }
 
-            if (!await IsParticipantAsync(ct: cancellationToken))
+            ActiveThread = Threads.FirstOrDefault(t => t.ChannelId == DealId);
+
+            if (ActiveThread == null || !await IsParticipantAsync(ct: cancellationToken))
             {
                 logger.LogWarning("Unauthorized access attempt to channel {ChannelId} by user {UserId}", DealId, CurrentUserId);
                 return NotFound();

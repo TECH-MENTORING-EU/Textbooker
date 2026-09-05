@@ -118,6 +118,18 @@
     padding: 0.5rem;
 }
 
+// On chat pages the trigger renders after a full-height conversation pane,
+// which pushes it below the fold and adds pointless scroll; pin it to the
+// corner there instead of letting it sit in the flow. The half-rem offset
+// keeps it fully in the container margin, clear of the pane's send button.
+body:has(.chat-layout) .help-trigger {
+    position: fixed;
+    right: 0.5rem;
+    bottom: 1rem;
+    margin: 0;
+    z-index: 500;
+}
+
 .page-shell {
     display: flex;
     min-height: 100vh;

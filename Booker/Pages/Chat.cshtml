@@ -5,17 +5,44 @@
     ViewData["Title"] = "Czat";
 }
 
-<div class="chat-layout">
-    <aside class="chat-sidebar" aria-label="Twoje rozmowy">
-        <h2>Wiadomości</h2>
-        @if (Model.Threads.Count == 0)
-        {
-            <p class="chat-sidebar-empty">
-                Brak rozmów. Rozmowy zaczynasz z poziomu ogłoszenia - otwórz książkę i kliknij „Napisz do sprzedającego”.
-            </p>
-        }
-        else
-        {
+@if (string.IsNullOrWhiteSpace(Model.DealId))
+{
+    @* No thread selected: the chat page is the inbox. *@
+    <h1>Wiadomości</h1>
+
+    @if (Model.Threads.Count == 0)
+    {
+        <p class="secondary">Brak rozmów. Rozmowy zaczynasz z poziomu ogłoszenia - otwórz książkę i kliknij „Napisz do sprzedającego”.</p>
+    }
+
+    <section aria-label="Twoje rozmowy">
+        <ul class="thread-list page-list">
+            @foreach (var t in Model.Threads)
+            {
+                <li>
+                    <a href="/Chat/@t.ChannelId">
+                        <img class="thread-thumb"
+                             src="@(string.IsNullOrEmpty(t.ItemPhoto) ? "/img/default-book.svg" : PhotosManager.GetPhotoUrl(t.ItemPhoto))"
+                             alt="" />
+                        <span class="thread-info">
+                            <span class="name">@(t.ItemTitle ?? t.DisplayName)</span>
+                            @if (t.ItemTitle != null)
+                            {
+                                <small class="about">z: @t.DisplayName</small>
+                            }
+                        </span>
+                        <small class="when">@PolishTime.ToLocal(t.LastMessageUtc).ToString("dd.MM HH:mm")</small>
+                    </a>
+                </li>
+            }
+        </ul>
+    </section>
+}
+else
+{
+    <div class="chat-layout">
+        <aside class="chat-sidebar" aria-label="Twoje rozmowy">
+            <h2>Wiadomości</h2>
             <ul class="thread-list">
                 @foreach (var t in Model.Threads)
                 {
@@ -42,10 +69,10 @@
                     </li>
                 }
             </ul>
-        }
-    </aside>
+        </aside>
 
-    <partial name="_Conversation" model="Model" />
-</div>
+        <partial name="_Conversation" model="Model" />
+    </div>
+}
 
 <script src="~/js/chat.js" asp-append-version="true" defer></script>

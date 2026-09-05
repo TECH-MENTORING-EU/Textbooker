@@ -21,7 +21,9 @@
                     <li><a asp-area="" asp-page="/Profile/Favorites">Ulubione</a></li>
                     @if (isMessagesEnabled)
                     {
-                        <li><a asp-page="/Messages">Wiadomości</a></li>
+                        // Plain href: asp-page would inherit the current DealId
+                        // route value and point the menu at the open thread.
+                        <li><a href="/Chat">Wiadomości</a></li>
                     }
                     <li><a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index">Ustawienia</a></li>
                     @if (User.IsInRole("Admin"))
