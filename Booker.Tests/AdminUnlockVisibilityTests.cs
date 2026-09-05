@@ -44,7 +44,11 @@ public class AdminUnlockVisibilityTests : IDisposable
         _context.SaveChanges();
     }
 
-    public void Dispose() => _context.Database.EnsureDeleted();
+    public void Dispose()
+    {
+        _context.Database.EnsureDeleted();
+        _context.Dispose();
+    }
 
     [Fact]
     public async Task BlockHidesVisibleItemsAndMarksThemAdminControlled()
