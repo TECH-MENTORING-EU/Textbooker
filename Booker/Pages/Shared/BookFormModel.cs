@@ -67,6 +67,10 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             {
                 ModelState.AddModelError(string.Empty, "Nie znaleziono pasującej książki. Proszę sprawdzić wprowadzone dane.");
             }
+            if (result.HasFlag(ItemManager.Status.NoPhotos))
+            {
+                ModelState.AddModelError("Input.Images", "Ogłoszenie musi mieć co najmniej jedno zdjęcie. Zostaw zaznaczone jakieś zdjęcie albo dodaj nowe.");
+            }
 
             Response.StatusCode = StatusCodes.Status400BadRequest;
             return Page();
