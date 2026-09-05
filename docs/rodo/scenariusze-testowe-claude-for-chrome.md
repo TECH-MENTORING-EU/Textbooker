@@ -103,7 +103,7 @@ taki sam.
 - **Nie testuj blokady logowania przez 10 nieudanych prób.** Jedna próba z błędnym hasłem
   wystarczy, żeby zobaczyć, że komunikat błędu jest ogólny (nie zdradza, czy konto istnieje).
   Doprowadzenie do faktycznej blokady zablokuje to konto na 2 godziny i utrudni dalsze testy.
-- **Nie próbuj wyczerpać limitu ujawnień danych kontaktowych** (60/godzinę) — to wymagałoby
+- **Nie próbuj wyczerpać limitu ujawnień danych kontaktowych** (100/godzinę) — to wymagałoby
   dziesiątek kliknięć bez realnej wartości testowej na tym etapie.
 - **Nie usuwaj żadnego konta testowego** (`/Identity/Account/Manage/DeletePersonalData`) bez
   wyraźnej zgody użytkownika — to nieodwracalne.

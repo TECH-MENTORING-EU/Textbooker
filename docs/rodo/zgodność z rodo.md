@@ -51,7 +51,7 @@ zaimplementowanych w aplikacji.
 - Blokada logowania: 10 nieudanych prób → 2 godziny blokady, zerowane po sukcesie
   (`Program.cs`, `options.Lockout.MaxFailedAccessAttempts = 10`,
   `DefaultLockoutTimeSpan = TimeSpan.FromHours(2)`).
-- Limit ujawniania danych kontaktowych: 60/godzinę, 200/dobę na konto, progi w konfiguracji
+- Limit ujawniania danych kontaktowych: 100/godzinę, 600/dobę na konto, progi w konfiguracji
   (`appsettings.json` → `ContactRevealLimits`), egzekwowane w
   `Services/ContactRevealLimiter.cs`, wpięte w `Pages/Book.cshtml.cs`.
 - Retry z logowaniem przy usuwaniu obiektów z Cloudflare R2 — błędy nie giną po cichu
