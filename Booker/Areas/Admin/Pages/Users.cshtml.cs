@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Booker.Areas.Admin.Pages
 {
@@ -15,17 +16,21 @@ namespace Booker.Areas.Admin.Pages
         private readonly SessionCacheManager _sessionCacheManager;
         private readonly ItemManager _itemManager;
         private readonly UserPhotoManager _userPhotoManager;
+        private readonly FavoritesManager _favoritesManager;
         private readonly ILogger<UsersModel> _logger;
         private readonly DataContext _context;
+        private readonly AdminLockoutOptions _adminLockoutOptions;
 
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, ILogger<UsersModel> logger, DataContext context)
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, FavoritesManager favoritesManager, ILogger<UsersModel> logger, DataContext context, IOptions<AdminLockoutOptions> adminLockoutOptions)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _itemManager = itemManager;
             _userPhotoManager = userPhotoManager;
+            _favoritesManager = favoritesManager;
             _logger = logger;
             _context = context;
+            _adminLockoutOptions = adminLockoutOptions.Value;
         }
 
         public record LockoutLinkModel(int UserId, string? UserName, bool ShouldLockout);
@@ -75,6 +80,10 @@ namespace Booker.Areas.Admin.Pages
             // RODO - task 09: account deletion and the admin action log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
+            // Favorites use DeleteBehavior.Restrict, so they must be removed before the user
+            // account is deleted or DeleteAsync fails with a foreign key constraint violation.
+            await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
@@ -96,6 +105,16 @@ namespace Booker.Areas.Admin.Pages
 
         public async Task<IActionResult> OnPostLockoutAsync(int id, int days)
         {
+            // Reject anything but the indefinite sentinel (-1) or a bounded positive
+            // number of days: empty/invalid input binds as 0 (an immediate, already-expired
+            // lockout that still hides the user), and unbounded values could overflow AddDays.
+            if (days != -1 && (days < 1 || days > _adminLockoutOptions.MaxDurationDays))
+            {
+                ModelState.AddModelError(string.Empty, "Nieprawidłowa liczba dni blokady.");
+                Users = _userManager.Users.ToList();
+                return new StatusCodeResult(400);
+            }
+
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
@@ -130,7 +149,14 @@ namespace Booker.Areas.Admin.Pages
             }
 
             user.IsVisible = false;
-            await _userManager.UpdateAsync(user);
+            var visibilityResult = await _userManager.UpdateAsync(user);
+            if (!visibilityResult.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError(string.Empty, "Nie udało się zaktualizować widoczności użytkownika.");
+                Users = _userManager.Users.ToList();
+                return new StatusCodeResult(500);
+            }
 
             await _itemManager.SetItemsVisibilityByUserAsync(id, false);
 
@@ -165,7 +191,15 @@ namespace Booker.Areas.Admin.Pages
             }
 
             user.IsVisible = true;
-            await _userManager.UpdateAsync(user);
+            var visibilityResult = await _userManager.UpdateAsync(user);
+            if (!visibilityResult.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError(string.Empty, "Nie udało się zaktualizować widoczności użytkownika.");
+                Users = _userManager.Users.ToList();
+                return new StatusCodeResult(500);
+            }
+
             await _itemManager.SetItemsVisibilityByUserAsync(id, true);
 
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserUnlock, user.Id, user.UserName ?? id.ToString(), "User");

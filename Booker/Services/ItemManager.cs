@@ -172,10 +172,14 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
     }
 
     // RODO - task 05: the legal basis for disclosing contact details (contract performance)
-    // requires an active listing from the seller.
-    public Task<bool> HasVisibleListingAsync(int userId)
+    // requires an active listing from the seller. School isolation must be applied using the
+    // requesting user, otherwise any globally-visible listing makes this return true even when
+    // the viewer could not actually see the seller's items in their own school.
+    public Task<bool> HasVisibleListingAsync(int userId, User? currentUser = null)
     {
-        return context.Items.AnyAsync(i => i.UserId == userId && i.IsVisible);
+        var query = context.Items.Where(i => i.UserId == userId && i.IsVisible);
+        query = FilterByUserSchool(query, currentUser);
+        return query.AnyAsync();
     }
 
     public async Task MarkItemReservedAsync(int itemId, bool reserved)

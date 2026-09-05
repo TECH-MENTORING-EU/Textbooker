@@ -11,19 +11,26 @@ public class ContactRevealLimiter(IMemoryCache cache, IOptions<ContactRevealLimi
 {
     private static string CacheKey(int userId) => $"contact-reveal-times:{userId}";
 
+    // Per-user locks guard cache initialization: IMemoryCache.GetOrCreate does not serialize
+    // concurrent factories, so two first-requests for the same user could otherwise each create
+    // and lock a different list, silently discarding one and letting a user exceed the limit.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<int, object> _userLocks = new();
+
     public bool TryRegisterReveal(int userId)
     {
         var now = DateTime.Now;
         var limits = options.Value;
 
-        var reveals = cache.GetOrCreate(CacheKey(userId), entry =>
-        {
-            entry.SlidingExpiration = TimeSpan.FromDays(1);
-            return new List<DateTime>();
-        })!;
+        var userLock = _userLocks.GetOrAdd(userId, static _ => new object());
 
-        lock (reveals)
+        lock (userLock)
         {
+            var reveals = cache.GetOrCreate(CacheKey(userId), entry =>
+            {
+                entry.SlidingExpiration = TimeSpan.FromDays(1);
+                return new List<DateTime>();
+            })!;
+
             reveals.RemoveAll(t => t < now.AddDays(-1));
 
             var revealsLastHour = reveals.Count(t => t >= now.AddHours(-1));

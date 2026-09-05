@@ -49,7 +49,7 @@
             else
             {
                 <button type="button" class="outline"
-                        onclick="document.getElementById('lockoutModal-@user.Id').showModal()"
+                        onclick="document.getElementById('lockout-days-@user.Id').value='7'; document.getElementById('lockoutModal-@user.Id').showModal()"
                         aria-label="Zablokuj użytkownika @user.UserName">Zablokuj</button>
 
                 <dialog id="lockoutModal-@user.Id" aria-labelledby="lockout-title-@user.Id">
@@ -62,7 +62,7 @@
                         <label for="lockout-days-@user.Id">Liczba dni</label>
                         <input type="number" id="lockout-days-@user.Id" name="days" value="7" step="1" />
                         <footer>
-                            <button type="button" class="secondary" onclick="this.closest('dialog').close()">Anuluj</button>
+                            <button type="button" class="secondary" onclick="document.getElementById('lockout-days-@user.Id').value='7'; this.closest('dialog').close()">Anuluj</button>
                             <button type="button"
                                     hx-post="?handler=Lockout"
                                     hx-vals='{"id": @user.Id}'
@@ -70,7 +70,7 @@
                                     hx-target="closest tr"
                                     hx-swap="outerHTML"
                                     antiforgery
-                                    onclick="this.closest('dialog').close()">Zablokuj</button>
+                                    onclick="document.getElementById('lockout-days-@user.Id').value='7'; this.closest('dialog').close()">Zablokuj</button>
                         </footer>
                     </article>
                 </dialog>

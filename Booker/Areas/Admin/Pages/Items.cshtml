@@ -31,7 +31,7 @@
         {
             <tr>
                 <td>@item.Id</td>
-                <td><a asp-page="/Book" asp-route-id="@item.Id">@item.Book.Title</a></td>
+                <td><a asp-page="/Book" asp-area="" asp-route-id="@item.Id">@item.Book.Title</a></td>
                 <td>@item.User.UserName</td>
                 <td>@item.CreatedAt.ToString("g")</td>
                 <td>

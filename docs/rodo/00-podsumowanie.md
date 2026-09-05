@@ -22,7 +22,7 @@ Drugie odstępstwo: nazwy branchy używają myślnika (`rodo-01-nawigacja-kontak
 | 08 | `rodo-08-tresci-ogloszen` | `../tb-wt/08-tresci-ogloszen` | `docs/rodo/08-tresci-ogloszen.md` | zrobione |
 | 09 | `rodo-09-dziennik-admina` | `../tb-wt/09-dziennik-admina` | `docs/rodo/09-dziennik-admina.md` | zrobione |
 
-Wszystkie 9 zadań: `dotnet build` czysty (0 błędów, 0 ostrzeżeń), przetestowane end-to-end (uruchomienie aplikacji + rzeczywiste żądania HTTP, weryfikacja w bazie danych), raport napisany.
+Wszystkie 9 zadań: `dotnet build` czysty (0 błędów, 0 ostrzeżeń), przetestowane end-to-end (uruchomienie aplikacji + rzeczywiste żądania HTTP, weryfikacja w bazie danych) — z jednym udokumentowanym wyjątkiem: przepływ POST na `/Add`/`/Edit` w zadaniu 08 nie został w pełni zweryfikowany end-to-end przez curl (patrz sekcja „Do decyzji właściciela” niżej), raport napisany dla każdego zadania.
 
 ## Pliki dotknięte poza przypisanym zakresem (ryzyko konfliktu przy scalaniu)
 
@@ -68,9 +68,10 @@ Każde zadanie, które zmieniało model danych (04, 05 pominęło — bez migrac
 Migracje dodane w tej serii:
 - 04: `AddTermsAndAgeAcceptance`
 - 06: `AddDisplaySchool`
-- 07: `AddContactRevealLog`
 - 08: `AddItemFlaggedForReview`
 - 09: `AddAdminActionLog`
+
+Zadanie 07 nie dodało migracji: pierwsza wersja tworzyła encję/migrację `ContactReveal` do zapisu ujawnień kontaktu w bazie, ale finalna implementacja przeszła na licznik wyłącznie w `IMemoryCache` (patrz `07-limity.md`), więc tabela i migracja zostały usunięte — nie istnieją w finalnym stanie kodu.
 
 Zadanie 05 **nie** dodało migracji — zmiana domyślnej wartości `DisplayPhone` z `true` na `false` to czysto C#-owa zmiana (właściwość klasy), bez odpowiadającej jej zmiany w `OnModelCreating`/`HasDefaultValue`, więc `dotnet ef migrations add` nie wygenerował żadnej różnicy (potwierdzone testem w raporcie zadania 05).
 

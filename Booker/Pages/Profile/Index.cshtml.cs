@@ -61,7 +61,8 @@ namespace Booker.Pages.Profile
             var schoolName = user.SchoolId.HasValue
                 ? (await _context.Schools.FindAsync(user.SchoolId.Value))?.Name
                 : null;
-            var hasActiveListing = await _itemManager.HasVisibleListingAsync(Id.Value);
+            var requestingUser = await _userManager.GetUserAsync(User);
+            var hasActiveListing = await _itemManager.HasVisibleListingAsync(Id.Value, requestingUser);
 
             UserInfo = new UserModel(user, user.Id == currentUserId, schoolName, hasActiveListing);
 

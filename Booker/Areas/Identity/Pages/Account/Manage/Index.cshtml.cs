@@ -10,7 +10,6 @@ using Booker.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
@@ -145,9 +144,13 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             }
 
             // The phone number/Messenger/Instagram only count as a contact method when their display switch is on.
+            // Validate against the trimmed value, matching what actually gets persisted below - a
+            // whitespace-only entry must not be treated as a configured contact channel.
+            var trimmedFbMessenger = Input.FbMessenger?.Trim();
+            var trimmedInstagram = Input.Instagram?.Trim();
             var phoneDisplayed = !string.IsNullOrEmpty(Input.PhoneNumber) && (Input.DisplayPhone || Input.DisplayWhatsapp);
-            var messengerDisplayed = Input.DisplayMessenger && !string.IsNullOrEmpty(Input.FbMessenger);
-            var instagramDisplayed = Input.DisplayInstagram && !string.IsNullOrEmpty(Input.Instagram);
+            var messengerDisplayed = Input.DisplayMessenger && !string.IsNullOrWhiteSpace(trimmedFbMessenger);
+            var instagramDisplayed = Input.DisplayInstagram && !string.IsNullOrWhiteSpace(trimmedInstagram);
 
             if (!Input.DisplayEmail
                 && !phoneDisplayed
@@ -162,12 +165,12 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 ModelState.AddModelError("Input.PhoneNumber", "Aby wybrać WhatsApp jako formę kontaktu, musisz podać numer telefonu.");
             }
 
-            if (Input.DisplayMessenger && string.IsNullOrEmpty(Input.FbMessenger))
+            if (Input.DisplayMessenger && string.IsNullOrWhiteSpace(trimmedFbMessenger))
             {
                 ModelState.AddModelError("Input.FbMessenger", "Aby wybrać Messenger jako formę kontaktu, musisz podać nazwę użytkownika.");
             }
 
-            if (Input.DisplayInstagram && string.IsNullOrEmpty(Input.Instagram))
+            if (Input.DisplayInstagram && string.IsNullOrWhiteSpace(trimmedInstagram))
             {
                 ModelState.AddModelError("Input.Instagram", "Aby wybrać Instagram jako formę kontaktu, musisz podać nazwę użytkownika.");
             }
@@ -194,9 +197,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             user.DisplayEmail = Input.DisplayEmail;
             user.DisplayPhone = Input.DisplayPhone;
             user.DisplayWhatsapp = Input.DisplayWhatsapp;
-            user.FbMessenger = Input.FbMessenger?.Trim();
+            user.FbMessenger = trimmedFbMessenger;
             user.DisplayMessenger = Input.DisplayMessenger;
-            user.Instagram = Input.Instagram?.Trim();
+            user.Instagram = trimmedInstagram;
             user.DisplayInstagram = Input.DisplayInstagram;
             user.DisplaySchool = Input.DisplaySchool;
 

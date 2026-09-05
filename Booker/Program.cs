@@ -76,6 +76,9 @@ builder.Services.Configure<Booker.Services.ContactRevealLimitOptions>(
     configuration.GetSection("ContactRevealLimits"));
 builder.Services.AddSingleton<Booker.Services.ContactRevealLimiter>();
 
+builder.Services.Configure<Booker.Services.AdminLockoutOptions>(
+    configuration.GetSection("AdminLockout"));
+
 builder.Services.AddDbContext<DataContext>(options =>
 {
     //options.UseInMemoryDatabase("InMemoryDatabaseName");
