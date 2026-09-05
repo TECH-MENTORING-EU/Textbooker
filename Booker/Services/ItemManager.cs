@@ -203,7 +203,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         var title = model.Parameters.Title;
 
         var books = await staticDataManager.GetBooksByTitleAsync(title);
-        if (books.Count == 0) return Status.InvalidTitle;
+        if (books.Count == 0) return Status.Error | Status.InvalidTitle;
 
         Status status = 0;
 
