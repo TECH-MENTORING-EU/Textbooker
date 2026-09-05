@@ -25,17 +25,21 @@ public class AdminHiddenAuthorizationHandler : AuthorizationHandler<AdminHiddenA
         // HideUnauthorized marker into a 404 without a redirect.
         if (context.Resource is AuthorizationFilterContext afc)
         {
-            afc.HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            afc.HttpContext.Items["HideUnauthorized"] = true;
+            MarkAsHidden(afc.HttpContext);
             afc.Result = new NotFoundResult();
         }
         else if (context.Resource is HttpContext httpContext)
         {
-            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            httpContext.Items["HideUnauthorized"] = true;
+            MarkAsHidden(httpContext);
         }
 
         context.Fail();
         return Task.CompletedTask;
+    }
+
+    private static void MarkAsHidden(HttpContext httpContext)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+        httpContext.Items[AdminHiddenAuthorizationRequirement.HideUnauthorizedItemKey] = true;
     }
 }
