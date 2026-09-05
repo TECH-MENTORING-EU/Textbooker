@@ -32,6 +32,8 @@
                     <option value="">Wszystkie poziomy</option>
                 </select>
 
+                @* type="text" (not number): the browser would reject the decimal comma
+                   before it ever reached the server-side invariant binder. *@
                 <input type="text" inputmode="decimal" name="minPrice" asp-for="Input.MinPrice"
                        placeholder="Cena min." aria-label="Cena minimalna (zł)" data-val="false" />
                 <input type="text" inputmode="decimal" name="maxPrice" asp-for="Input.MaxPrice"
