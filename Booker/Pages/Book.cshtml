@@ -75,8 +75,8 @@
     <section class="actions" aria-label="Akcje dla tego ogłoszenia">
         @if (Model.IsCurrentUserOwner)
         {
-            <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button" style="margin-inline-end: 1em;">Edytuj ogłoszenie</a>
-            
+            <a asp-page="/Edit" asp-route-id="@Model.BookItem.Id" role="button">Edytuj ogłoszenie</a>
+
             @if (!Model.BookItem.IsSold)
             {
                 <input type="checkbox" checked="@Model.BookItem.Reserved" antiforgery
@@ -89,7 +89,7 @@
             @await Html.PartialAsync("_FavoriteButton", new Profile.FavoritesModel.ButtonState(Model.BookItem.Id, Model.IsFavorite, true))
             @if (!Model.BookItem.IsSold)
             {
-                <form method="post" asp-page-handler="Chat" asp-route-id="@Model.BookItem.Id" style="display: inline;">
+                <form method="post" asp-page-handler="Chat" asp-route-id="@Model.BookItem.Id">
                     <button type="submit">Napisz do sprzedającego</button>
                 </form>
             }
