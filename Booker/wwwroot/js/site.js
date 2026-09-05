@@ -276,12 +276,15 @@ document.addEventListener("DOMContentLoaded", () => {
         setOpen(!nav.classList.contains("hamburger-open"));
     });
 
-    document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && nav.classList.contains("hamburger-open")) {
-            setOpen(false);
-            hamburgerTrigger.focus();
+    // Wired into the shared document-level Escape handler above; Escape is
+    // its only trigger, so no separate keydown listener is needed here.
+    closeHamburgerMenu = () => {
+        if (!nav.classList.contains("hamburger-open")) {
+            return;
         }
-    });
+        setOpen(false);
+        hamburgerTrigger.focus();
+    };
 
     hamburgerMenu.querySelectorAll("a, button").forEach(item => {
         item.addEventListener("click", () => setOpen(false));
@@ -366,6 +369,11 @@ document.addEventListener("close", function (event) {
     }
 }, true);
 
+// Set by the hamburger initializer; lets the shared Escape handler close the
+// mobile menu without knowing the nav internals. No-op while it is unset or
+// the menu is closed.
+let closeHamburgerMenu = () => {};
+
 // One delegated Escape handler for every dismissible overlay. It stays at
 // document level on purpose: focus can leave an open menu (e.g. tabbing past
 // its last item), so an element-scoped listener would stop firing while the
@@ -376,7 +384,8 @@ document.addEventListener("keydown", function (event) {
     document.querySelectorAll("dialog[open]").forEach(d => {
         if (typeof d.close === "function") d.close();
     });
-    closeOpenDropdowns();
+    closeOpenDropdowns({ returnFocus: true });
+    closeHamburgerMenu();
 });
 
 function focusFirstFocusable(container) {
@@ -421,12 +430,13 @@ function initDropdownBehavior() {
     });
 }
 
-// Close every open dropdown, returning focus to its summary when focus was
-// inside the menu (the keyboard flow starts from the summary).
-function closeOpenDropdowns() {
+// Close every open dropdown. Returns focus to the summary only when asked
+// (Escape): the keyboard flow starts from the summary, while outside clicks
+// should leave focus where the user clicked.
+function closeOpenDropdowns({ returnFocus = false } = {}) {
     document.querySelectorAll("details.dropdown[open]").forEach(details => {
         const summary = details.querySelector("summary");
-        if (summary && details.contains(document.activeElement)) {
+        if (returnFocus && summary && details.contains(document.activeElement)) {
             summary.focus();
         }
         details.removeAttribute("open");
