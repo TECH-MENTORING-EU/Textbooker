@@ -35,6 +35,19 @@ namespace Booker.Services
         /// </summary>
         Task<IReadOnlyList<ChatInboxEntry>> GetInboxAsync(int currentUserId, CancellationToken ct);
 
-        Task UpdateLastMessageUtcAsync(string channelId, DateTime utcNow, CancellationToken ct);
+        /// <summary>
+        /// How many of the user's threads hold a message they have not seen:
+        /// the thread's last message is newer than their read stamp.
+        /// </summary>
+        Task<int> GetUnreadCountAsync(int currentUserId, CancellationToken ct);
+
+        /// <summary>Records that the user has seen the thread up to now.</summary>
+        Task MarkThreadReadAsync(string channelId, int userId, DateTime utcNow, CancellationToken ct);
+
+        /// <summary>
+        /// Moves the thread's last-message stamp and marks the SENDER as
+        /// caught up, so own messages never count as unread for their author.
+        /// </summary>
+        Task UpdateLastMessageUtcAsync(string channelId, int senderId, DateTime utcNow, CancellationToken ct);
     }
 }

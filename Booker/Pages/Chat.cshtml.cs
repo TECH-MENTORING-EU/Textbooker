@@ -49,6 +49,8 @@ namespace Booker.Pages
 
             var messages = await chatService.GetMessagesAsync(DealId, 200, cancellationToken);
             Messages = messages.ToList();
+            // Rendering the conversation means the user has seen it up to now.
+            await threadService.MarkThreadReadAsync(DealId, CurrentUserId, DateTime.UtcNow, cancellationToken);
             return Page();
         }
 
@@ -68,6 +70,7 @@ namespace Booker.Pages
 
             var messages = await chatService.GetMessagesAsync(DealId, 200, ct);
             Messages = messages.ToList();
+            await threadService.MarkThreadReadAsync(DealId, CurrentUserId, DateTime.UtcNow, ct);
             return Partial("_Conversation", this);
         }
 
@@ -118,6 +121,8 @@ namespace Booker.Pages
             {
                 sb.Append(RenderMessage(message, userId));
             }
+            // New messages were delivered to an open conversation: seen.
+            await threadService.MarkThreadReadAsync(dealId, userId, DateTime.UtcNow, ct);
             return Content(sb.ToString(), "text/html");
         }
 

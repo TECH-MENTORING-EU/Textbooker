@@ -16,5 +16,13 @@ namespace Booker.Data
 
         public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
         public DateTime LastMessageUtc { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Per-participant read stamps: a message newer than the reader's
+        /// stamp (or than creation for someone who never opened the thread)
+        /// counts as unread for exactly that participant.
+        /// </summary>
+        public DateTime? UserAReadUtc { get; set; }
+        public DateTime? UserBReadUtc { get; set; }
     }
 }
