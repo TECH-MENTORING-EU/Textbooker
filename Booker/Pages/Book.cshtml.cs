@@ -105,13 +105,17 @@ namespace Booker.Pages
             return new NoContentResult();
         }
 
-        public static string FormatDateWithSpecialCases(DateTime? dateTime)
+        public static string FormatDateWithSpecialCases(DateTime? dateTime) =>
+            FormatDateWithSpecialCases(dateTime, DateTime.UtcNow, PolishTimeZone);
+
+        // Storage keeps UTC; "dzisiaj"/"wczoraj" must be judged in Polish local time.
+        public static string FormatDateWithSpecialCases(DateTime? dateTime, DateTime nowUtc, TimeZoneInfo timeZone)
         {
             if (!dateTime.HasValue)
                 return "Brak daty";
 
-            var now = DateTime.Now;
-            var date = dateTime.Value;
+            var now = TimeZoneInfo.ConvertTime(nowUtc, timeZone);
+            var date = TimeZoneInfo.ConvertTime(dateTime.Value, timeZone);
 
             if (date.Date == now.Date)
                 return $"dzisiaj o {date:HH:mm}";
@@ -119,6 +123,21 @@ namespace Booker.Pages
                 return $"wczoraj o {date:HH:mm}";
 
             return date.ToString("d MMMM 'o' HH:mm", new CultureInfo("pl-PL"));
+        }
+
+        private static readonly TimeZoneInfo PolishTimeZone = CreatePolishTimeZone();
+
+        private static TimeZoneInfo CreatePolishTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
+            }
+            // Without ICU, Windows only knows its own zone id.
+            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+            }
         }
     }
 }

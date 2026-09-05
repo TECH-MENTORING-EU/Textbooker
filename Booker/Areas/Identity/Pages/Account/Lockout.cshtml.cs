@@ -27,8 +27,8 @@ namespace Booker.Areas.Identity.Pages.Account
         {
             HasDateTime = lockoutEnd.HasValue;
             LockoutEnd = DateTimeOffset.FromUnixTimeSeconds(lockoutEnd ?? 0).LocalDateTime;
-            IsLongLockout = LockoutEnd.Value > DateTime.Now.AddMinutes(5);
-            IsForever = LockoutEnd.Value > DateTime.Now.AddYears(100);
+            IsLongLockout = LockoutEnd.Value > DateTime.UtcNow.AddMinutes(5);
+            IsForever = LockoutEnd.Value > DateTime.UtcNow.AddYears(100);
         }
     }
 }
