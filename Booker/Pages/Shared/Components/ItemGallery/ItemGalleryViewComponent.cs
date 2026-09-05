@@ -41,7 +41,8 @@ public class ItemGalleryViewComponent : ViewComponent
         int pageNumber = 0,
         int pageSize = PageSize,
         bool showHidden = false,
-        bool linkFilters = false
+        bool linkFilters = false,
+        bool showSold = false
     )
     {
         if (!itemIds.Any())
@@ -51,14 +52,20 @@ public class ItemGalleryViewComponent : ViewComponent
             );
         }
 
-        var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true 
-            ? await _userManager.GetUserAsync(UserClaimsPrincipal) 
+        var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true
+            ? await _userManager.GetUserAsync(UserClaimsPrincipal)
             : null;
 
         var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize, currentUser);
         if (!showHidden)
         {
             query = query.Where(i => i.IsVisible);
+        }
+        if (!showSold)
+        {
+            // Sold books are completed listings: hidden from browsing galleries,
+            // but profiles and favorites keep them (rendered with a "Sprzedane" badge).
+            query = query.Where(i => !i.IsSold);
         }
         var itemsFromDb = await query.ToListAsync();
 

@@ -178,14 +178,14 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             return;
         }
 
+        // A confirmed sale closes the listing's lifecycle: it cannot be reserved again.
+        if (item.IsSold)
+        {
+            return;
+        }
+
         item.Reserved = reserved;
         item.ReservedAt = reserved ? DateTime.UtcNow : null;
-
-        // Re-listing an item clears any stale sale timestamp from a previous cycle.
-        if (!reserved && !item.IsSold)
-        {
-            item.SoldAt = null;
-        }
 
         await UpdateItemNVAsync(item);
     }
@@ -218,8 +218,11 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             .Select(i => new SalePendingItem(i.Id, i.Book.Title, i.ReservedAt!.Value, i.Price))
             .ToListAsync();
 
-    /// <summary>Seller confirms the sale happened. Enables ratings for this listing.</summary>
-    public async Task MarkItemSoldAsync(int itemId)
+    /// <summary>
+    /// Seller confirms the sale happened and names the buyer. Only that buyer
+    /// earns the right to rate the seller for this listing.
+    /// </summary>
+    public async Task MarkItemSoldAsync(int itemId, int? soldToUserId)
     {
         var item = await GetItemAsync(itemId);
         if (item == null)
@@ -229,7 +232,9 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
         item.IsSold = true;
         item.SoldAt = DateTime.UtcNow;
+        item.SoldToUserId = soldToUserId;
         item.Reserved = false;
+        item.ReservedAt = null;
 
         await UpdateItemNVAsync(item);
     }
@@ -515,6 +520,9 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
     
     private static IQueryable<Item> ApplyFilters(IQueryable<Item> query, Parameters input)
     {
+        // Sold books are completed listings: excluded from browse results,
+        // but still reachable by direct link for the buyer and seller.
+        query = query.Where(i => !i.IsSold);
         query = ApplySearchFilter(query, input.Search);
         query = ApplyGradesFilter(query, input.Grades);
         query = ApplySubjectFilter(query, input.Subject);

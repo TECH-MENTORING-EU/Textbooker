@@ -30,6 +30,12 @@ namespace Booker.Migrations
                 type: "datetime2",
                 nullable: true);
 
+            migrationBuilder.AddColumn<int>(
+                name: "SoldToUserId",
+                table: "Items",
+                type: "int",
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "ChatMessages",
                 columns: table => new
@@ -87,7 +93,7 @@ namespace Booker.Migrations
                     RatingValue = table.Column<int>(type: "int", nullable: false),
                     Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Reply = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Reply = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     RepliedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
@@ -106,6 +112,11 @@ namespace Booker.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Items_SoldToUserId",
+                table: "Items",
+                column: "SoldToUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChatMessages_DealId_CreatedUtc",
@@ -143,11 +154,23 @@ namespace Booker.Migrations
                 table: "UserRatings",
                 columns: new[] { "ReviewerId", "RevieweeId" },
                 unique: true);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Items_AspNetUsers_SoldToUserId",
+                table: "Items",
+                column: "SoldToUserId",
+                principalTable: "AspNetUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Items_AspNetUsers_SoldToUserId",
+                table: "Items");
+
             migrationBuilder.DropTable(
                 name: "ChatMessages");
 
@@ -156,6 +179,10 @@ namespace Booker.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserRatings");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Items_SoldToUserId",
+                table: "Items");
 
             migrationBuilder.DropColumn(
                 name: "IsSold",
@@ -167,6 +194,10 @@ namespace Booker.Migrations
 
             migrationBuilder.DropColumn(
                 name: "SoldAt",
+                table: "Items");
+
+            migrationBuilder.DropColumn(
+                name: "SoldToUserId",
                 table: "Items");
         }
     }

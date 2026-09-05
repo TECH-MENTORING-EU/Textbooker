@@ -18,7 +18,7 @@
                             <strong>
                                 <a asp-page="/Profile/Index" asp-route-id="@rating.ReviewerId">@rating.Reviewer.UserName</a>
                             </strong>
-                            <div class="star-rating small">
+                            <div class="star-rating small" role="img" aria-label="Ocena @rating.RatingValue z 5">
                                 @for (int i = 0; i < rating.RatingValue; i++)
                                 {
                                     <svg icon="star" variant="filled" aria-hidden="true"></svg>

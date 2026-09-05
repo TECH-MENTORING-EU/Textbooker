@@ -26,18 +26,27 @@ namespace Booker.Data
         /// <summary>
         /// UTC timestamp of the moment the seller marked the item as reserved.
         /// Starts the transaction lifecycle: after 7 days the seller is asked
-        /// whether the sale happened, after 30 days the item auto-completes as sold.
+        /// whether the sale happened, after 30 days the reservation auto-releases.
         /// </summary>
         public DateTime? ReservedAt { get; set; }
 
         /// <summary>
-        /// True once the transaction completed: the seller confirmed the sale,
-        /// or the 30-day auto-close window elapsed. Only sold items allow ratings.
+        /// True once the seller confirmed the transaction completed. Sold listings
+        /// disappear from browsing but stay reachable by their direct link.
         /// </summary>
         public bool IsSold { get; set; }
 
-        /// <summary>UTC timestamp when the item was marked sold (manually or auto).</summary>
+        /// <summary>UTC timestamp when the seller confirmed the sale.</summary>
         public DateTime? SoldAt { get; set; }
+
+        /// <summary>
+        /// The buyer the seller named when confirming the sale. Only this user may
+        /// rate the seller for this listing; null means the sale happened outside
+        /// TextBooker (or the buyer is unknown), so nobody earns rating rights.
+        /// </summary>
+        public int? SoldToUserId { get; set; }
+
+        public User? SoldToUser { get; set; }
 
         public ICollection<ItemView> Views { get; } = new HashSet<ItemView>();
     }

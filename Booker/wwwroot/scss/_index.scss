@@ -261,6 +261,26 @@
         pointer-events: none;
     }
 }
+.book-tile.sold {
+    position: relative;
+
+    img {
+        filter: saturate(0.2);       
+    }
+
+    &::after {
+        display: block;
+        content: "Sprzedane";
+        position: absolute;
+        top: 1.5em;
+        left: 1.5em;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 0.25em 0.5em;
+        border-radius: 0.25em;
+        pointer-events: none;
+    }
+}
 
 @media (max-height: map.get(map.get(pico.$breakpoints, "sm"), "breakpoint")-1) and (min-width: 480px) {
     .grid-gallery {

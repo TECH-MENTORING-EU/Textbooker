@@ -16,9 +16,7 @@ using System.Net;
 using System.Threading.RateLimiting;
 using System.Security.Claims;
 using Serilog.Events;
-using Microsoft.AspNetCore.SignalR; // added
 using Microsoft.AspNetCore.Components;
-using Booker.Messenger; // added
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
@@ -61,11 +59,6 @@ builder.Services.AddRazorPages()
     .AddCustomRoutes()
     .AddAuthorizationPolicies();
 
-// Add Razor Components + interactive server support for islands
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents(o => { o.DetailedErrors = builder.Environment.IsDevelopment(); });
-// Add SignalR for chat hub
-builder.Services.AddSignalR();
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -160,8 +153,6 @@ app.UseRateLimiter();
 app.UseAntiforgery();
 
 app.MapRazorPages();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
 
 if (app.Environment.IsDevelopment())
 {

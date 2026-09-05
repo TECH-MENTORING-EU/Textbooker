@@ -1,4 +1,5 @@
 using Booker.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Booker.Services
@@ -8,25 +9,16 @@ namespace Booker.Services
         Task<(bool Success, string? Error)> AddRatingAsync(int reviewerId, int revieweeId, int value, string? comment);
         Task<double> GetAverageRatingAsync(int userId);
         Task<int> GetRatingCountAsync(int userId);
-        Task<(int Min, int Max)> GetMinMaxRatingAsync(int userId);
         Task<List<UserRating>> GetRatingsForUserAsync(int userId);
         Task<UserRating?> GetRatingAsync(int reviewerId, int revieweeId);
         Task<UserRating?> GetRatingByIdAsync(int ratingId);
-        Task<(bool Success, string? Error)> UpdateRatingAsync(int ratingId, int userId, int value, string? comment);
         Task<bool> DeleteRatingAsync(int ratingId, int userId, bool isAdmin);
         Task<(bool Success, string? Error)> AddReplyAsync(int ratingId, int revieweeId, string reply);
         Task<bool> CanRateAsync(int reviewerId, int revieweeId);
     }
 
-    public class RatingManager : IRatingManager
+    public class RatingManager(DataContext context) : IRatingManager
     {
-        private readonly DataContext _context;
-
-        public RatingManager(DataContext context)
-        {
-            _context = context;
-        }
-
         public async Task<(bool Success, string? Error)> AddRatingAsync(int reviewerId, int revieweeId, int value, string? comment)
         {
             if (reviewerId == revieweeId)
@@ -35,7 +27,7 @@ namespace Booker.Services
             if (value < 1 || value > 5)
                 return (false, "Ocena musi być w zakresie od 1 do 5.");
 
-            var exists = await _context.UserRatings
+            var exists = await context.UserRatings
                 .AnyAsync(ur => ur.ReviewerId == reviewerId && ur.RevieweeId == revieweeId);
             if (exists)
                 return (false, "Już oceniłeś tego użytkownika.");
@@ -53,14 +45,14 @@ namespace Booker.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.UserRatings.Add(rating);
+            context.UserRatings.Add(rating);
             try
             {
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
             {
-                // Unique index IX_UserRatings_ReviewerId_RevieweeId — a concurrent
+                // Unique index IX_UserRatings_ReviewerId_RevieweeId: a concurrent
                 // rating for the same pair slipped past the pre-check above.
                 return (false, "Już oceniłeś tego użytkownika.");
             }
@@ -69,32 +61,19 @@ namespace Booker.Services
 
         public async Task<double> GetAverageRatingAsync(int userId)
         {
-            return await _context.UserRatings
+            return await context.UserRatings
                 .Where(ur => ur.RevieweeId == userId)
                 .AverageAsync(ur => (double?)ur.RatingValue) ?? 0;
         }
 
         public async Task<int> GetRatingCountAsync(int userId)
         {
-            return await _context.UserRatings.CountAsync(ur => ur.RevieweeId == userId);
-        }
-
-        public async Task<(int Min, int Max)> GetMinMaxRatingAsync(int userId)
-        {
-            var ratings = await _context.UserRatings
-                .Where(ur => ur.RevieweeId == userId)
-                .Select(ur => ur.RatingValue)
-                .ToListAsync();
-
-            if (ratings.Count == 0)
-                return (0, 0);
-
-            return (ratings.Min(), ratings.Max());
+            return await context.UserRatings.CountAsync(ur => ur.RevieweeId == userId);
         }
 
         public async Task<List<UserRating>> GetRatingsForUserAsync(int userId)
         {
-            return await _context.UserRatings
+            return await context.UserRatings
                 .Include(ur => ur.Reviewer)
                 .Where(ur => ur.RevieweeId == userId)
                 .OrderByDescending(ur => ur.CreatedAt)
@@ -103,42 +82,24 @@ namespace Booker.Services
 
         public async Task<UserRating?> GetRatingAsync(int reviewerId, int revieweeId)
         {
-            return await _context.UserRatings
+            return await context.UserRatings
                 .FirstOrDefaultAsync(ur => ur.ReviewerId == reviewerId && ur.RevieweeId == revieweeId);
         }
 
         public async Task<UserRating?> GetRatingByIdAsync(int ratingId)
         {
-            return await _context.UserRatings.FindAsync(ratingId);
-        }
-
-        public async Task<(bool Success, string? Error)> UpdateRatingAsync(int ratingId, int userId, int value, string? comment)
-        {
-            if (value < 1 || value > 5)
-                return (false, "Ocena musi być w zakresie od 1 do 5.");
-
-            var rating = await _context.UserRatings.FindAsync(ratingId);
-            if (rating == null)
-                return (false, "Ocena nie została znaleziona.");
-
-            if (rating.ReviewerId != userId)
-                return (false, "Możesz edytować tylko swoje oceny.");
-
-            rating.RatingValue = value;
-            rating.Comment = comment;
-            await _context.SaveChangesAsync();
-            return (true, null);
+            return await context.UserRatings.FindAsync(ratingId);
         }
 
         public async Task<bool> DeleteRatingAsync(int ratingId, int userId, bool isAdmin)
         {
-            var rating = await _context.UserRatings.FindAsync(ratingId);
+            var rating = await context.UserRatings.FindAsync(ratingId);
             if (rating == null) return false;
 
             if (!isAdmin && rating.ReviewerId != userId) return false;
 
-            _context.UserRatings.Remove(rating);
-            await _context.SaveChangesAsync();
+            context.UserRatings.Remove(rating);
+            await context.SaveChangesAsync();
             return true;
         }
 
@@ -147,7 +108,10 @@ namespace Booker.Services
             if (string.IsNullOrWhiteSpace(reply))
                 return (false, "Odpowiedź nie może być pusta.");
 
-            var rating = await _context.UserRatings.FindAsync(ratingId);
+            if (reply.Trim().Length > 500)
+                return (false, "Odpowiedź nie może przekraczać 500 znaków.");
+
+            var rating = await context.UserRatings.FindAsync(ratingId);
             if (rating == null)
                 return (false, "Ocena nie została znaleziona.");
 
@@ -159,23 +123,20 @@ namespace Booker.Services
 
             rating.Reply = reply.Trim();
             rating.RepliedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return (true, null);
         }
 
         public async Task<bool> CanRateAsync(int reviewerId, int revieweeId)
         {
             // Ratings are one-directional: only the BUYER rates the SELLER, and only
-            // after a completed transaction — a chat thread linking the two users to
-            // the seller's listing, which is sold. Reserved-state alone never
-            // qualifies: the sale must be confirmed (or auto-closed after 30 days).
-            return await _context.ChatThreads
-                .Where(t =>
-                    (t.UserAId == reviewerId && t.UserBId == revieweeId) ||
-                    (t.UserAId == revieweeId && t.UserBId == reviewerId))
-                .AnyAsync(t => t.Item != null
-                    && t.Item.UserId == revieweeId
-                    && t.Item.IsSold);
+            // after a completed transaction. The seller names the buyer when
+            // confirming the sale (SoldToUserId); a reservation alone, a chat
+            // thread alone, or an auto-closed reservation never qualifies.
+            return await context.Items
+                .AnyAsync(i => i.UserId == revieweeId
+                    && i.IsSold
+                    && i.SoldToUserId == reviewerId);
         }
     }
 }

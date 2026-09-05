@@ -16,14 +16,6 @@
     @await RenderSectionAsync("Styles", false)
     <script src="~/lib/htmx/dist/htmx.min.js" asp-append-version="true"></script>
 
-    @if (Context.Request.Path.StartsWithSegments("/Chat"))
-    {
-        <base href="/Chat/" />
-    }
-    else
-    {
-        <base href="~/" />
-    }
 </head>
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <body class="page-shell @(Configuration.GetValue<bool>("testingPhase") ? "testing-phase-on" : null)">

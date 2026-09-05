@@ -10,13 +10,14 @@ using Booker.Authorization;
 
 namespace Booker.Pages
 {
-    public class BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, IChatThreadService chatThreadService, ILogger<BookModel> logger) : PageModel
+    public class BookModel(UserManager<User> userManager, ItemManager itemManager, FavoritesManager favoritesManager, IAuthorizationService authService, IChatThreadService chatThreadService, IRatingManager ratingManager, ILogger<BookModel> logger) : PageModel
     {
         public List<string> Photos { get; set; } = new();
 
         public Item BookItem { get; set; } = null!;
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
+        public bool CanRateSeller { get; set; }
         public int ViewCount { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -51,6 +52,10 @@ namespace Booker.Pages
             if (IsCurrentUserOwner)
             {
                 ViewCount = await itemManager.GetViewCountAsync(id);
+            }
+            else if (currentUser != null)
+            {
+                CanRateSeller = await ratingManager.CanRateAsync(currentUser.Id, BookItem.UserId);
             }
 
             return Page();

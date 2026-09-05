@@ -42,7 +42,7 @@ namespace Booker.Services
             // Anti-spam: rate limit, duplicate suppression, link filtering.
             var verdict = _moderation.Check(userId, content, DateTimeOffset.UtcNow);
             if (verdict == ChatModerationService.ModerationVerdict.RateLimited)
-                return ChatMessageResult.Failure("Wysyłasz wiadomości zbyt szybko — odczekaj chwilę.");
+                return ChatMessageResult.Failure("Wysyłasz wiadomości zbyt szybko, odczekaj chwilę.");
             if (verdict == ChatModerationService.ModerationVerdict.Duplicate)
                 return ChatMessageResult.Failure("Ta wiadomość została już wysłana.");
             if (verdict == ChatModerationService.ModerationVerdict.LinkBlocked)

@@ -1,4 +1,4 @@
-﻿# GitHub Copilot & Generative AI Instructions
+# GitHub Copilot & Generative AI Instructions
 
 ---
 # Main technical ideas
@@ -161,18 +161,18 @@ Primary goal → help build a **secure, maintainable, performant Razor Pages + B
 
 ## 9. Repository Layout
 
-- Dependencies — Project references and NuGet packages (node, not a folder).
-- Properties — Project settings (e.g., `launchSettings.json`), assembly info.
-- wwwroot — Public static files (CSS, JS, images) served directly.
-- Areas — Feature areas with their own `Pages/` and routing; optional.
-- Authorization — Policies, requirements, handlers, and related helpers.
-- Data — Persistence types (DbContext, repositories, seeders).
-- Migrations — EF Core migration snapshots and scripts.
-- Pages — Razor Pages (`*.cshtml` + `*.cshtml.cs`) and folders per feature.
-- Resources — Localization resources (`.resx`) and shared strings.
-- Services — Application/UI-layer services registered via DI.
-- TagHelpers — Reusable Razor Tag Helpers for UI concerns.
-- Utilities — Cross-cutting helpers and extensions (e.g., guards, helpers).
+- Dependencies - Project references and NuGet packages (node, not a folder).
+- Properties - Project settings (e.g., `launchSettings.json`), assembly info.
+- wwwroot - Public static files (CSS, JS, images) served directly.
+- Areas - Feature areas with their own `Pages/` and routing; optional.
+- Authorization - Policies, requirements, handlers, and related helpers.
+- Data - Persistence types (DbContext, repositories, seeders).
+- Migrations - EF Core migration snapshots and scripts.
+- Pages - Razor Pages (`*.cshtml` + `*.cshtml.cs`) and folders per feature.
+- Resources - Localization resources (`.resx`) and shared strings.
+- Services - Application/UI-layer services registered via DI.
+- TagHelpers - Reusable Razor Tag Helpers for UI concerns.
+- Utilities - Cross-cutting helpers and extensions (e.g., guards, helpers).
 - Components - Blazor components
 
 ## 10. Configuration & Environment

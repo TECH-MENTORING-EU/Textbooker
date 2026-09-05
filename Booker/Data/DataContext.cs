@@ -74,6 +74,16 @@ namespace Booker.Data
                     });
             });
 
+            modelBuilder.Entity<Item>(i =>
+            {
+                // The buyer recorded at sale confirmation. Restrict avoids a second
+                // cascade path to Users (the seller FK already cascades) on SQL Server.
+                i.HasOne(i => i.SoldToUser).WithMany()
+                    .HasForeignKey(i => i.SoldToUserId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired(false);
+            });
+
             modelBuilder.Entity<ItemView>(iv =>
             {
                 iv.HasKey(v => new { v.ItemId, v.UserId });

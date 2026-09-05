@@ -58,6 +58,7 @@ public class RatingManagerTests
             Reserved = false,
             IsSold = sold,
             SoldAt = sold ? DateTime.UtcNow : null,
+            SoldToUserId = sold ? buyerId : null,
             ReservedAt = DateTime.UtcNow.AddDays(-30),
         });
 
@@ -227,37 +228,6 @@ public class RatingManagerTests
         Assert.Equal(2, count);
     }
 
-    // === GetMinMaxRatingAsync ===
-
-    [Fact]
-    public async Task GetMinMaxRatingAsync_NoRatings_ReturnsZeroZero()
-    {
-        await using var context = CreateContext();
-        var manager = new RatingManager(context);
-
-        var result = await manager.GetMinMaxRatingAsync(1);
-
-        Assert.Equal(0, result.Min);
-        Assert.Equal(0, result.Max);
-    }
-
-    [Fact]
-    public async Task GetMinMaxRatingAsync_WithRatings_ReturnsCorrectRange()
-    {
-        await using var context = CreateContext();
-        context.UserRatings.AddRange(
-            new UserRating { ReviewerId = 2, RevieweeId = 1, RatingValue = 2, CreatedAt = DateTime.UtcNow },
-            new UserRating { ReviewerId = 3, RevieweeId = 1, RatingValue = 5, CreatedAt = DateTime.UtcNow }
-        );
-        context.SaveChanges();
-        var manager = new RatingManager(context);
-
-        var result = await manager.GetMinMaxRatingAsync(1);
-
-        Assert.Equal(2, result.Min);
-        Assert.Equal(5, result.Max);
-    }
-
     // === GetRatingsForUserAsync ===
 
     [Fact]
@@ -305,70 +275,6 @@ public class RatingManagerTests
         var rating = await manager.GetRatingAsync(1, 2);
 
         Assert.Null(rating);
-    }
-
-    // === UpdateRatingAsync ===
-
-    [Fact]
-    public async Task UpdateRatingAsync_OwnerCanUpdate_ReturnsSuccess()
-    {
-        await using var context = CreateContext();
-        context.UserRatings.Add(
-            new UserRating { Id = 10, ReviewerId = 1, RevieweeId = 2, RatingValue = 3, CreatedAt = DateTime.UtcNow }
-        );
-        context.SaveChanges();
-        var manager = new RatingManager(context);
-
-        var result = await manager.UpdateRatingAsync(10, 1, 5, "Updated");
-
-        Assert.True(result.Success);
-        Assert.Null(result.Error);
-        Assert.Equal(5, context.UserRatings.Find(10)!.RatingValue);
-        Assert.Equal("Updated", context.UserRatings.Find(10)!.Comment);
-    }
-
-    [Fact]
-    public async Task UpdateRatingAsync_NotOwner_ReturnsError()
-    {
-        await using var context = CreateContext();
-        context.UserRatings.Add(
-            new UserRating { Id = 10, ReviewerId = 1, RevieweeId = 2, RatingValue = 3, CreatedAt = DateTime.UtcNow }
-        );
-        context.SaveChanges();
-        var manager = new RatingManager(context);
-
-        var result = await manager.UpdateRatingAsync(10, 2, 5, null);
-
-        Assert.False(result.Success);
-        Assert.Contains("swoje oceny", result.Error);
-    }
-
-    [Fact]
-    public async Task UpdateRatingAsync_InvalidRange_ReturnsError()
-    {
-        await using var context = CreateContext();
-        context.UserRatings.Add(
-            new UserRating { Id = 10, ReviewerId = 1, RevieweeId = 2, RatingValue = 3, CreatedAt = DateTime.UtcNow }
-        );
-        context.SaveChanges();
-        var manager = new RatingManager(context);
-
-        var result = await manager.UpdateRatingAsync(10, 1, 0, null);
-
-        Assert.False(result.Success);
-        Assert.Contains("1 do 5", result.Error);
-    }
-
-    [Fact]
-    public async Task UpdateRatingAsync_NotFound_ReturnsError()
-    {
-        await using var context = CreateContext();
-        var manager = new RatingManager(context);
-
-        var result = await manager.UpdateRatingAsync(999, 1, 3, null);
-
-        Assert.False(result.Success);
-        Assert.Contains("nie została znaleziona", result.Error);
     }
 
     // === DeleteRatingAsync ===
@@ -533,8 +439,9 @@ public class RatingManagerTests
     }
 
     // === CanRateAsync ===
-    // New semantics: a rating requires a completed transaction — the seller's item
-    // linked to the shared chat thread is sold. Reserved-state alone never qualifies.
+    // New semantics: a rating requires a completed transaction - the seller
+    // confirmed the sale and named this buyer (SoldToUserId). Reservations,
+    // chat threads alone, or auto-closed reservations never qualify.
 
     [Fact]
     public async Task CanRateAsync_WithSoldItemAndThread_ReturnsTrue()
@@ -572,7 +479,7 @@ public class RatingManagerTests
     }
 
     [Fact]
-    public async Task CanRateAsync_SoldItemButNoThread_ReturnsFalse()
+    public async Task CanRateAsync_SoldWithoutNamedBuyer_ReturnsFalse()
     {
         await using var context = CreateContext();
         var book = new Book
@@ -596,11 +503,11 @@ public class RatingManagerTests
     }
 
     [Fact]
-    public async Task CanRateAsync_SoldItemButThreadWithOtherItem_ReturnsFalse()
+    public async Task CanRateAsync_OtherBuyersTransaction_ReturnsFalse()
     {
         await using var context = CreateContext();
-        // The thread exists and user 2 has a sold item — but the thread points at
-        // a different listing, so this sale does not justify the rating.
+        // User 2 sold an item, but never named user 1 as the buyer - a chat
+        // thread about a different listing does not justify the rating.
         var book = new Book
         {
             Id = 1, Title = "Test", Grades = new List<Grade>(),
@@ -646,7 +553,7 @@ public class RatingManagerTests
     public async Task AddRatingAsync_ReservedButNotSoldItemInThread_ReturnsError()
     {
         // Pins the new semantics on AddRatingAsync itself (not just CanRateAsync):
-        // a shared thread about an item that is only reserved — not sold — never
+        // a shared thread about an item that is only reserved - not sold - never
         // qualifies, under old or new rules alike.
         await using var context = CreateContext();
         SeedSoldTransaction(context, sellerId: 2, buyerId: 1, sold: false);
@@ -659,30 +566,31 @@ public class RatingManagerTests
     }
 
     [Fact]
-    public async Task CanRateAsync_ThreadWithoutItem_ReturnsFalse()
+    public async Task CanRateAsync_GateIsItemBased_NotThreadBased()
     {
-        // Legacy bare threads (no listing attached) never enable ratings, even
-        // between two users who already completed some other transaction.
+        // The gate is the confirmed sale (IsSold + SoldToUserId), not the chat
+        // thread: the buyer keeps the right to rate even if threads disappear
+        // or only legacy bare threads (no listing) remain.
         await using var context = CreateContext();
         SeedSoldTransaction(context, sellerId: 2, buyerId: 1);
         context.ChatThreads.Add(new ChatThread { Id = 2, ChannelId = "ch-2", UserAId = 1, UserBId = 2, ItemId = null });
         context.SaveChanges();
         var manager = new RatingManager(context);
 
-        var canRate = await manager.CanRateAsync(1, 2);
+        Assert.True(await manager.CanRateAsync(1, 2));
 
-        Assert.True(canRate); // via the sold item in thread ch-1
-        context.ChatThreads.Remove(context.ChatThreads.Find(1)!);
+        context.ChatThreads.RemoveRange(context.ChatThreads.Where(t => t.Id == 1 || t.Id == 2));
         context.SaveChanges();
 
-        Assert.False(await manager.CanRateAsync(1, 2)); // only the bare thread left
+        Assert.True(await manager.CanRateAsync(1, 2)); // the sale alone carries the right
     }
 
     [Fact]
-    public async Task AddRatingAsync_AfterAutoClose_EnablesRating()
+    public async Task AddRatingAsync_AfterAutoClose_ReturnsError()
     {
-        // End-to-end: reservation auto-closed after 30 days (no seller decision)
-        // still counts as a completed transaction for the rating gate.
+        // End-to-end: a 30-day-old reservation the seller never decided on is
+        // released by auto-close, not counted as a sale. Without the seller
+        // confirming the sale and naming the buyer, no rating right exists.
         await using var context = CreateContext(); // users 1 (buyer), 2 (seller) seeded
         var book = new Book { Id = 1, Title = "T", Grades = new List<Grade>(), Subject = new Subject { Id = 1, Name = "M" }, Level = new Level { Id = 1, Name = "B" } };
         context.Items.Add(new Item
@@ -700,6 +608,7 @@ public class RatingManagerTests
         var manager = new RatingManager(context);
         var result = await manager.AddRatingAsync(1, 2, 4, null);
 
-        Assert.True(result.Success);
+        Assert.False(result.Success);
+        Assert.Contains("zakończonej transakcji", result.Error);
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booker.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260903165813_AddTransactionLifecycle")]
+    [Migration("20260905122602_AddTransactionLifecycle")]
     partial class AddTransactionLifecycle
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace Booker.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.19")
+                .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -1648,6 +1648,9 @@ namespace Booker.Migrations
                     b.Property<DateTime?>("SoldAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("SoldToUserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1661,6 +1664,8 @@ namespace Booker.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
+
+                    b.HasIndex("SoldToUserId");
 
                     b.HasIndex("UserId");
 
@@ -1755,16 +1760,6 @@ namespace Booker.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Schools");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EmailDomain = "hogwart.edu.pl",
-                            IsActive = true,
-                            Name = "Hogwart"
-                        });
                 });
 
             modelBuilder.Entity("Booker.Data.Subject", b =>
@@ -1905,6 +1900,9 @@ namespace Booker.Migrations
                     b.Property<bool>("DisplayEmail")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("DisplayPhone")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("DisplayWhatsapp")
                         .HasColumnType("bit");
 
@@ -2003,7 +2001,8 @@ namespace Booker.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Reply")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("RevieweeId")
                         .HasColumnType("int");
@@ -2236,6 +2235,11 @@ namespace Booker.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Booker.Data.User", "SoldToUser")
+                        .WithMany()
+                        .HasForeignKey("SoldToUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Booker.Data.User", "User")
                         .WithMany("Items")
                         .HasForeignKey("UserId")
@@ -2243,6 +2247,8 @@ namespace Booker.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
+
+                    b.Navigation("SoldToUser");
 
                     b.Navigation("User");
                 });
