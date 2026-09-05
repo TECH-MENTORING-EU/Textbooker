@@ -91,15 +91,12 @@
                 <span asp-validation-for="Input.Description" id="Input_Description-error" role="alert"></span>
                 <span class="char-count">0 / 200</span>
             </small>
-            @if (Model.ShowSensitiveContentWarning)
-            {
-                <fieldset>
-                    <label for="confirmSensitiveDescriptionCheckbox" class="form-check-label">
-                        <input type="checkbox" id="confirmSensitiveDescriptionCheckbox" asp-for="Input.ConfirmSensitiveDescription">
-                        Rozumiem, że mój opis może zawierać dane kontaktowe, i mimo to chcę opublikować to ogłoszenie.
-                    </label>
-                </fieldset>
-            }
+            <fieldset id="sensitiveDescriptionConfirmation" hidden="@(!Model.ShowSensitiveContentWarning)">
+                <label for="confirmSensitiveDescriptionCheckbox" class="form-check-label">
+                    <input type="checkbox" id="confirmSensitiveDescriptionCheckbox" asp-for="Input.ConfirmSensitiveDescription">
+                    Rozumiem, że mój opis może zawierać dane kontaktowe, i mimo to chcę opublikować to ogłoszenie.
+                </label>
+            </fieldset>
 
             <label asp-for="Input.State">Stan książki:</label>
             <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…" aria-describedby="Input_State-error Input_State-counter"></textarea>

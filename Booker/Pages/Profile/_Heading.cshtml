@@ -62,7 +62,10 @@
         else
         {
             <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.IndexNavClass(ViewContext))" id="profile" asp-page="./Index" asp-route-id="@Model.RequestUser.Id">Ogłoszenia</a></li>
-            <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.FavoritesNavClass(ViewContext))" id="favorites" asp-page="./Favorites" asp-route-id="@Model.RequestUser.Id">Ulubione</a></li>
+            @if (Model.RequestUser.IsVisible && Model.RequestUser.AreFavoritesPublic)
+            {
+                <li><a aria-current="@AriaHelpers.CurrentOrNull(ManageNavPages.FavoritesNavClass(ViewContext))" id="favorites" asp-page="./Favorites" asp-route-id="@Model.RequestUser.Id">Ulubione</a></li>
+            }
         }
     </ul>
 </nav>

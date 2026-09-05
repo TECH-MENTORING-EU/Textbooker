@@ -96,17 +96,19 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             public bool DisplaySchool { get; set; }
         }
 
-        private async Task LoadAsync(User user)
+        private async Task LoadStaticDataAsync(User user)
         {
-            var userName = await _userManager.GetUserNameAsync(user);
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-
-
-            Username = userName;
+            Username = await _userManager.GetUserNameAsync(user);
 
             SchoolName = user.SchoolId.HasValue
                 ? (await _context.Schools.FindAsync(user.SchoolId.Value))?.Name
                 : null;
+        }
+
+        private async Task LoadAsync(User user)
+        {
+            await LoadStaticDataAsync(user);
+            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
 
             Input = new InputModel
             {
@@ -177,7 +179,16 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
             if (!ModelState.IsValid)
             {
-                await LoadAsync(user);
+                // Keep the posted Input so the re-rendered form matches what the user actually
+                // submitted: checkbox tag helpers render their state from the model, not from
+                // ModelState attempted values, so reloading Input from the database here would
+                // silently flip every switch back to the saved state while text fields and
+                // validation messages still describe the failed submission.
+                // StatusMessage may be stale TempData (e.g. the post-redirect success page was
+                // served from the browser back/forward cache, so the key was never consumed) -
+                // don't render it next to validation errors.
+                StatusMessage = null;
+                await LoadStaticDataAsync(user);
                 return Page();
             }
 

@@ -47,7 +47,7 @@ namespace Booker.Pages
                 Description = ItemToEdit.Description,
                 State = ItemToEdit.State,
                 Price = ItemToEdit.Price,
-                Images = new List<IFormFile>(), // multiple images handled
+                Images = null,
                 Reserved = ItemToEdit.Reserved
             };
 
