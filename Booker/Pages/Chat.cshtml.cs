@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Configuration;
 
 namespace Booker.Pages
 {
@@ -13,10 +14,17 @@ namespace Booker.Pages
     /// both participants see the same transcript, refreshed by HTMX polling.
     /// </summary>
     [Authorize]
-    public class ChatModel(UserManager<Data.User> userManager, IChatService chatService, IChatThreadService threadService, ILogger<ChatModel> logger) : PageModel
+    public class ChatModel(UserManager<Data.User> userManager, IChatService chatService, IChatThreadService threadService, ILogger<ChatModel> logger, IConfiguration configuration) : PageModel
     {
         [BindProperty(SupportsGet = true)]
         public string DealId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Messages can be dark-launched off: the flag hides the menu entry,
+        /// and every handler here answers 404 so the URLs are not usable
+        /// by hand-crafted requests either.
+        /// </summary>
+        private bool MessagesDisabled => !configuration.GetValue<bool>("Features:MessagesEnabled");
 
         public int CurrentUserId { get; private set; }
         public List<ChatMessageDto> Messages { get; private set; } = new();
@@ -29,6 +37,7 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
         {
+            if (MessagesDisabled) return NotFound();
             CurrentUserId = userManager.GetUserId(User).IntOrDefault();
             Threads = await threadService.GetInboxAsync(CurrentUserId, cancellationToken);
 
@@ -56,6 +65,7 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetThreadAsync(string dealId, CancellationToken ct)
         {
+            if (MessagesDisabled) return NotFound();
             // Sidebar navigation swaps only this pane; the full page reload is
             // the no-JavaScript fallback (the sidebar links keep their href).
             DealId = dealId ?? string.Empty;
@@ -76,6 +86,7 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnPostSendAsync(string dealId, string text, CancellationToken ct)
         {
+            if (MessagesDisabled) return NotFound();
             var userId = userManager.GetUserId(User).IntOrDefault();
             // IsParticipantAsync reads CurrentUserId; handlers other than OnGetAsync
             // must set it themselves or the participant check compares against 0.
@@ -101,6 +112,7 @@ namespace Booker.Pages
 
         public async Task<IActionResult> OnGetSinceAsync(string dealId, int afterMessageId, CancellationToken ct)
         {
+            if (MessagesDisabled) return NotFound();
             var userId = userManager.GetUserId(User).IntOrDefault();
             CurrentUserId = userId;
             if (string.IsNullOrWhiteSpace(dealId) || !await IsParticipantAsync(dealId, ct))
