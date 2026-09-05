@@ -1,5 +1,6 @@
 using System;
 using Booker.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -58,8 +59,8 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
     {
         // Race-safe strategy: instead of loading the full Favorites collection and
         // mutating it in memory (two concurrent requests both see the same snapshot
-        // → duplicate row or DbUpdateException), the change is a set-based SQL
-        // command — correct under any interleaving.
+        // and create a duplicate row or throw), the change is a set-based SQL
+        // command that is correct under any interleaving.
         var userExists = await context.Users.AnyAsync(u => u.Id == userId);
         if (!userExists)
         {
@@ -81,22 +82,28 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
                 return Status.NotFound;
             }
 
-            var alreadyFavorite = await context.Users
-                .Where(u => u.Id == userId)
-                .SelectMany(u => u.Favorites.Where(f => f.Id == itemId))
-                .AnyAsync();
+            // Idempotent insert in a single statement. A concurrent insert that
+            // slips past NOT EXISTS still cannot duplicate the row: the composite
+            // primary key rejects it, and the loser maps to NotModified below.
+            try
+            {
+                var inserted = await context.Database.ExecuteSqlAsync($"""
+                    INSERT INTO UserFavorites (UserId, ItemId)
+                    SELECT {userId}, {itemId}
+                    WHERE NOT EXISTS (SELECT 1 FROM UserFavorites WHERE UserId = {userId} AND ItemId = {itemId})
+                    """);
 
-            if (alreadyFavorite)
+                if (inserted == 0)
+                {
+                    return Status.NotModified;
+                }
+            }
+            // 2601/2627: unique index / primary key violation - a racing request
+            // inserted the same favorite first, so the outcome is "already added".
+            catch (SqlException ex) when (ex.Number is 2601 or 2627)
             {
                 return Status.NotModified;
             }
-
-            // Idempotent insert: a row added concurrently is a no-op, so two racing
-            // requests cannot create duplicates or throw.
-            await context.Database.ExecuteSqlAsync($"""
-                IF NOT EXISTS (SELECT 1 FROM UserFavorites WHERE UserId = {userId} AND ItemId = {itemId})
-                    INSERT INTO UserFavorites (UserId, ItemId) VALUES ({userId}, {itemId})
-                """);
         }
         else
         {
