@@ -51,6 +51,12 @@
         flex-direction: column;
         gap: 2px;
 
+        // Pico paints `ul li` with square markers directly on the li, which
+        // hang outside the container padding; reset the li itself.
+        li {
+            list-style: none;
+        }
+
         a {
             display: flex;
             align-items: center;
@@ -301,6 +307,11 @@
     flex-direction: column;
     gap: 0.5rem;
     max-width: 50rem;
+
+    // Same Pico square-marker reset as the sidebar list.
+    li {
+        list-style: none;
+    }
 
     a {
         display: flex;
