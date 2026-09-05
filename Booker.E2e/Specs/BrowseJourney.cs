@@ -60,9 +60,19 @@ public class BrowseJourney(E2eWebAppFixture fixture)
         // The price inputs live in the collapsed filter panel - open it first.
         await page.Locator("#filterSummary").ClickAsync();
         // k6 renders prices as real <input type=number>: a pl-PL user types the
-        // decimal comma key by key (Fill rejects commas in number inputs).
+        // decimal comma key by key (Fill rejects commas in number inputs), and
+        // every browser submits the field normalized to the dot form. Chromium
+        // builds that do not accept the decimal comma (CI runners default to
+        // en-US) drop the key and would turn the value into 1000, so settle the
+        // field on the dot form before asserting. The comma BINDING path is
+        // owned by PriceBindingTests, which posts raw minPrice=12,50 over HTTP.
         await page.Locator("input[name=minPrice]").PressSequentiallyAsync("10,00");
-        await page.WaitForURLAsync(u => u.Contains("minPrice="));
+        var typed = await page.Locator("input[name=minPrice]").InputValueAsync();
+        if (typed != "10.00")
+        {
+            await page.Locator("input[name=minPrice]").FillAsync("10.00");
+        }
+        await page.WaitForURLAsync(u => u.Contains("minPrice=10.00"));
 
         // The seeded 12,50 zł item survives the 10,00 zł lower bound.
         await Assertions.Expect(page.Locator(".book-tile").First).ToBeVisibleAsync();
