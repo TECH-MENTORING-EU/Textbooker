@@ -3,23 +3,25 @@
 @* The conversation pane of the chat page. Rendered by the page itself and
    swapped in by HTMX when the user picks a thread from the sidebar. /Chat
    without a thread renders the inbox instead of this pane. *@
-
+@{ var active = Model.ActiveThread; }
+@if (active != null)
+{
 <section id="conversation" class="chat-conversation" aria-label="Rozmowa">
     <header class="chat-header">
         <img class="thread-thumb"
-             src="@(string.IsNullOrEmpty(Model.ActiveThread.ItemPhoto) ? "/img/default-book.svg" : PhotosManager.GetPhotoUrl(Model.ActiveThread.ItemPhoto))"
+             src="@(string.IsNullOrEmpty(active.ItemPhoto) ? "/img/default-book.svg" : PhotosManager.GetPhotoUrl(active.ItemPhoto))"
              alt="" />
         <div class="chat-thread-subject">
-            @if (!string.IsNullOrEmpty(Model.ActiveThread.ItemTitle))
+            @if (!string.IsNullOrEmpty(active.ItemTitle))
             {
-                <h2><a href="/Book/@Model.ActiveThread.ItemId">@Model.ActiveThread.ItemTitle</a></h2>
+                <h2><a href="/Book/@active.ItemId">@active.ItemTitle</a></h2>
                 <small>
-                    z: <a asp-page="/Profile/Index" asp-route-id="@Model.ActiveThread.OtherUserId">@Model.ActiveThread.DisplayName</a>
+                    z: <a asp-page="/Profile/Index" asp-route-id="@active.OtherUserId">@active.DisplayName</a>
                 </small>
             }
             else
             {
-                <h2>Rozmowa z <a asp-page="/Profile/Index" asp-route-id="@Model.ActiveThread.OtherUserId">@Model.ActiveThread.DisplayName</a></h2>
+                <h2>Rozmowa z <a asp-page="/Profile/Index" asp-route-id="@active.OtherUserId">@active.DisplayName</a></h2>
             }
         </div>
         <a class="chat-back-link" href="/Chat">Wszystkie rozmowy</a>
@@ -59,3 +61,4 @@
           hx-vals="js:{ afterMessageId: chatLastMessageId() }"
           hx-on::after-request="chatScrollToNewest()"></span>
 </section>
+}

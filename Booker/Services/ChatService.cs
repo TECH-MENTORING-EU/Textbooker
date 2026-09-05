@@ -63,8 +63,9 @@ namespace Booker.Services
             _context.ChatMessages.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // update thread last message timestamp if thread exists
-            await _threadService.UpdateLastMessageUtcAsync(dealId, DateTime.UtcNow, cancellationToken);
+            // update thread last message timestamp if thread exists; the
+            // sender is stamped as read so own messages are never "unread"
+            await _threadService.UpdateLastMessageUtcAsync(dealId, userId, DateTime.UtcNow, cancellationToken);
 
             var dto = new ChatMessageDto(entity.Id, entity.DealId, entity.UserId, user.UserName ?? $"U{userId}", entity.Content, entity.CreatedUtc);
             return ChatMessageResult.Ok(dto);

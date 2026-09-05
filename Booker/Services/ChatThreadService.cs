@@ -123,11 +123,36 @@ namespace Booker.Services
                 .ToList();
         }
 
-        public async Task UpdateLastMessageUtcAsync(string channelId, DateTime utcNow, CancellationToken ct)
+        public async Task<int> GetUnreadCountAsync(int currentUserId, CancellationToken ct)
+        {
+            return await ctx.ChatThreads.AsNoTracking()
+                .Where(t => (t.UserAId == currentUserId || t.UserBId == currentUserId)
+                    && (t.UserAId == currentUserId
+                        ? t.LastMessageUtc > (t.UserAReadUtc ?? t.CreatedUtc)
+                        : t.LastMessageUtc > (t.UserBReadUtc ?? t.CreatedUtc)))
+                .CountAsync(ct);
+        }
+
+        public async Task MarkThreadReadAsync(string channelId, int userId, DateTime utcNow, CancellationToken ct)
         {
             var thread = await ctx.ChatThreads.FirstOrDefaultAsync(t => t.ChannelId == channelId, ct);
             if (thread == null) return;
+
+            if (thread.UserAId == userId) thread.UserAReadUtc = utcNow;
+            else if (thread.UserBId == userId) thread.UserBReadUtc = utcNow;
+            await ctx.SaveChangesAsync(ct);
+        }
+
+        public async Task UpdateLastMessageUtcAsync(string channelId, int senderId, DateTime utcNow, CancellationToken ct)
+        {
+            var thread = await ctx.ChatThreads.FirstOrDefaultAsync(t => t.ChannelId == channelId, ct);
+            if (thread == null) return;
+
             thread.LastMessageUtc = utcNow;
+            // The author has obviously seen their own message: without this a
+            // sent message would count as unread for the sender.
+            if (thread.UserAId == senderId) thread.UserAReadUtc = utcNow;
+            else if (thread.UserBId == senderId) thread.UserBReadUtc = utcNow;
             await ctx.SaveChangesAsync(ct);
         }
     }
