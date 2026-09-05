@@ -137,7 +137,6 @@ namespace Booker.Areas.Admin.Pages
                 lockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
             }
             
-            await _sessionCacheManager.InvalidateSessionAsync(id);
             var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
             if (!result.Succeeded)
             {
@@ -146,7 +145,11 @@ namespace Booker.Areas.Admin.Pages
                 Users = _userManager.Users.ToList();
                 return new StatusCodeResult(500);
             }
-            
+
+            // Only invalidate after the lockout succeeded - signing the user out
+            // for a lockout that never happened cannot be rolled back.
+            await _sessionCacheManager.InvalidateSessionAsync(id);
+
             user.IsVisible = false;
             await _userManager.UpdateAsync(user);
 
