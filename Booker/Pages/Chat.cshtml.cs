@@ -21,9 +21,18 @@ namespace Booker.Pages
         public int CurrentUserId { get; private set; }
         public List<ChatMessageDto> Messages { get; private set; } = new();
 
+        /// <summary>The sidebar: all of the user's conversations, newest first.</summary>
+        public IReadOnlyList<ChatInboxEntry> Threads { get; private set; } = Array.Empty<ChatInboxEntry>();
+
+        /// <summary>The active conversation's counterpart; null when no thread is open.</summary>
+        public ChatInboxEntry? ActiveThread { get; private set; }
+
         public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
         {
             CurrentUserId = userManager.GetUserId(User).IntOrDefault();
+
+            Threads = await threadService.GetInboxAsync(CurrentUserId, cancellationToken);
+            ActiveThread = Threads.FirstOrDefault(t => t.ChannelId == DealId);
 
             if (string.IsNullOrWhiteSpace(DealId))
             {
@@ -91,8 +100,7 @@ namespace Booker.Pages
             return Content(sb.ToString(), "text/html");
         }
 
-        public string FormatLocalTime(DateTime utc) =>
-            ConvertToLocal(utc).ToString("HH:mm");
+        public string FormatLocalTime(DateTime utc) => PolishTime.ToLocal(utc).ToString("HH:mm");
 
         private async Task<bool> IsParticipantAsync(string? dealId = null, CancellationToken ct = default)
         {
@@ -108,7 +116,7 @@ namespace Booker.Pages
             var escapedName = System.Net.WebUtility.HtmlEncode(m.UserDisplayName);
             var escapedContent = System.Net.WebUtility.HtmlEncode(m.Content);
             var utc = DateTime.SpecifyKind(m.CreatedUtc, DateTimeKind.Utc);
-            var localTime = TimeZoneInfo.ConvertTimeFromUtc(utc, PolishTimeZone);
+            var localTime = PolishTime.ToLocal(m.CreatedUtc);
             return $"<li class=\"msg {side}\" data-msg-id=\"{m.Id}\">" +
                    $"<div class=\"bubble\"><div class=\"meta\"><span class=\"user\">{escapedName}</span>" +
                    $"<time datetime=\"{utc:o}\">{localTime:HH:mm}</time></div>" +
@@ -118,26 +126,5 @@ namespace Booker.Pages
         private static string RenderNotice(string error) =>
             "<li class=\"msg other\" role=\"alert\"><div class=\"bubble\"><p class=\"content\">" +
             $"{System.Net.WebUtility.HtmlEncode(error)}</p></div></li>";
-
-        private static DateTime ConvertToLocal(DateTime utc) =>
-            // EF materializes DateTime with Kind=Unspecified; ConvertTime would
-            // then interpret it in the machine zone instead of UTC.
-            TimeZoneInfo.ConvertTimeFromUtc(
-                DateTime.SpecifyKind(utc, DateTimeKind.Utc), PolishTimeZone);
-
-        private static readonly TimeZoneInfo PolishTimeZone = CreatePolishTimeZone();
-
-        private static TimeZoneInfo CreatePolishTimeZone()
-        {
-            try
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
-            }
-            // Without ICU, Windows only knows its own zone id.
-            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
-            }
-        }
     }
 }

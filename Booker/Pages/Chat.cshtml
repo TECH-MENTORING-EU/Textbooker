@@ -4,49 +4,94 @@
     ViewData["Title"] = "Czat";
 }
 
-<article class="chat-island" aria-label="Rozmowa">
-    <h2>Czat</h2>
+<div class="chat-layout">
+    <aside class="chat-sidebar" aria-label="Twoje rozmowy">
+        <h2>Wiadomości</h2>
+        @if (Model.Threads.Count == 0)
+        {
+            <p class="chat-sidebar-empty">
+                Brak rozmów. Rozmowy zaczynasz z poziomu ogłoszenia - otwórz książkę i kliknij „Napisz do sprzedającego”.
+            </p>
+        }
+        else
+        {
+            <ul class="thread-list">
+                @foreach (var t in Model.Threads)
+                {
+                    <li>
+                        <a href="/Chat/@t.ChannelId" class="@(t.ChannelId == Model.DealId ? "active" : null)"
+                           aria-current="@(t.ChannelId == Model.DealId ? "page" : null)">
+                            <span class="name">@t.DisplayName</span>
+                            @if (!string.IsNullOrEmpty(t.ItemTitle))
+                            {
+                                <small class="about">@t.ItemTitle</small>
+                            }
+                            <small class="when">@PolishTime.ToLocal(t.LastMessageUtc).ToString("dd.MM HH:mm")</small>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </aside>
 
-    @if (string.IsNullOrWhiteSpace(Model.DealId))
-    {
-        <p>Brak identyfikatora rozmowy. Przejdź do <a asp-page="/Messages">listy wiadomości</a>, aby wybrać lub rozpocząć rozmowę.</p>
-    }
-    else
-    {
-        <ul class="chat-history" id="chat-history" role="log" aria-live="polite" aria-label="Historia rozmowy">
-            @if (Model.Messages.Count == 0)
-            {
-                <li class="chat-empty">Brak wiadomości. Napisz pierwszą!</li>
-            }
-            @foreach (var message in Model.Messages)
-            {
-                <li class="msg @(message.UserId == Model.CurrentUserId ? "self" : "other")" data-msg-id="@message.Id">
-                    <div class="bubble">
-                        <div class="meta">
-                            <span class="user">@message.UserDisplayName</span>
-                            <time datetime="@message.CreatedUtc.ToString("o")">@Model.FormatLocalTime(message.CreatedUtc)</time>
+    <section class="chat-conversation" aria-label="Rozmowa">
+        @if (Model.ActiveThread != null)
+        {
+            <header class="chat-header">
+                <h2>
+                    <a asp-page="/Profile/Index" asp-route-id="@Model.ActiveThread.OtherUserId">@Model.ActiveThread.DisplayName</a>
+                </h2>
+                @if (!string.IsNullOrEmpty(Model.ActiveThread.ItemTitle))
+                {
+                    <a class="chat-item-ref" href="/Book/@Model.ActiveThread.ItemId" title="@Model.ActiveThread.ItemTitle">
+                        @Model.ActiveThread.ItemTitle
+                    </a>
+                }
+                <a class="chat-back-link" href="/Messages">Wszystkie rozmowy</a>
+            </header>
+        }
+
+        @if (string.IsNullOrWhiteSpace(Model.DealId))
+        {
+            <p class="chat-placeholder">Wybierz rozmowę z listy.</p>
+        }
+        else
+        {
+            <ul class="chat-history" id="chat-history" role="log" aria-live="polite" aria-label="Historia rozmowy">
+                @if (Model.Messages.Count == 0)
+                {
+                    <li class="chat-empty">Brak wiadomości. Napisz pierwszą!</li>
+                }
+                @foreach (var message in Model.Messages)
+                {
+                    <li class="msg @(message.UserId == Model.CurrentUserId ? "self" : "other")" data-msg-id="@message.Id">
+                        <div class="bubble">
+                            <div class="meta">
+                                <span class="user">@message.UserDisplayName</span>
+                                <time datetime="@message.CreatedUtc.ToString("o")">@Model.FormatLocalTime(message.CreatedUtc)</time>
+                            </div>
+                            <p class="content">@message.Content</p>
                         </div>
-                        <p class="content">@message.Content</p>
-                    </div>
-                </li>
-            }
-        </ul>
+                    </li>
+                }
+            </ul>
 
-        <form class="chat-input" method="post" asp-page-handler="Send"
-              hx-post="?handler=Send" hx-target="#chat-history" hx-swap="beforeend"
-              hx-on::after-request="chatAfterSend(this)">
-            <input type="hidden" name="dealId" value="@Model.DealId" />
-            <label for="chat-text">Twoja wiadomość</label>
-            <textarea id="chat-text" name="text" rows="2" maxlength="500" required placeholder="Napisz wiadomość"></textarea>
-            <button type="submit">Wyślij</button>
-        </form>
+            <form class="chat-input" method="post" asp-page-handler="Send"
+                  hx-post="?handler=Send" hx-target="#chat-history" hx-swap="beforeend"
+                  hx-on::after-request="chatAfterSend(this)">
+                <input type="hidden" name="dealId" value="@Model.DealId" />
+                <label for="chat-text">Twoja wiadomość</label>
+                <textarea id="chat-text" name="text" rows="2" maxlength="500" required placeholder="Napisz wiadomość"></textarea>
+                <button type="submit">Wyślij</button>
+            </form>
 
-        <span class="chat-status"
-              hx-get="?handler=Since&dealId=@Model.DealId"
-              hx-trigger="every 3s" hx-target="#chat-history" hx-swap="beforeend"
-              hx-vals="js:{ afterMessageId: chatLastMessageId() }"
-              hx-on::after-request="chatScrollToNewest()"></span>
-    }
-</article>
+            <span class="chat-status"
+                  hx-get="?handler=Since&dealId=@Model.DealId"
+                  hx-trigger="every 3s" hx-target="#chat-history" hx-swap="beforeend"
+                  hx-vals="js:{ afterMessageId: chatLastMessageId() }"
+                  hx-on::after-request="chatScrollToNewest()"></span>
+        }
+    </section>
+</div>
 
 <script src="~/js/chat.js" asp-append-version="true" defer></script>

@@ -1,16 +1,129 @@
 @use "pico";
+@use "sass:map";
 
-// Chat conversation page (Chat.cshtml) and the thread list (Messages.cshtml).
+// Chat: a Messenger/OLX-style two-pane view. The sidebar lists all of the
+// user's conversations; the conversation pane fills the rest of the width.
 // Everything is token-based so both color schemes follow the Pico theme.
 
-.chat-island {
+.chat-layout {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+    width: 100%;
+}
+
+.chat-sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    overflow-y: auto;
+    max-height: calc(100dvh - 11rem);
+
+    h2 {
+        margin: 0.25rem 0.5rem 0.5rem;
+        font-size: 1rem;
+    }
+
+    .chat-sidebar-empty {
+        padding: 0 0.5rem;
+        color: var(--pico-muted-color);
+        font-size: 0.85rem;
+    }
+
+    .thread-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        a {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+            padding: 0.5rem 0.6rem;
+            border-radius: var(--pico-border-radius);
+            text-decoration: none;
+
+            &:hover {
+                background: color-mix(in srgb, var(--pico-primary) 10%, transparent);
+            }
+
+            &.active {
+                background: color-mix(in srgb, var(--pico-primary) 16%, transparent);
+
+                .name {
+                    font-weight: 700;
+                }
+            }
+
+            .name {
+                font-weight: 600;
+            }
+
+            .about {
+                color: var(--pico-muted-color);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .when {
+                color: var(--pico-muted-color);
+                font-size: 0.75rem;
+            }
+        }
+    }
+}
+
+.chat-conversation {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    max-width: 50rem;
+    min-height: 24rem;
+    height: calc(100dvh - 11rem);
 
-    > h2 {
-        margin-bottom: 0;
+    .chat-header {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+        border-bottom: 1px solid var(--pico-muted-border-color);
+        padding-bottom: 0.5rem;
+
+        h2 {
+            margin: 0;
+            font-size: 1.1rem;
+
+            a {
+                text-decoration: none;
+            }
+        }
+
+        .chat-item-ref {
+            margin-left: auto;
+            color: var(--pico-muted-color);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 50%;
+        }
+
+        .chat-back-link {
+            display: none;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+    }
+
+    .chat-placeholder {
+        margin: auto;
+        color: var(--pico-muted-color);
     }
 
     .chat-history {
@@ -20,7 +133,8 @@
         border: 1px solid var(--pico-muted-border-color);
         border-radius: var(--pico-border-radius);
         background: var(--pico-card-background-color);
-        height: 380px;
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -149,8 +263,8 @@
     }
 }
 
-// Conversations list (Messages.cshtml)
-.thread-list {
+// Standalone inbox page (Messages.cshtml)
+.thread-list.page-list {
     list-style: none;
     padding: 0;
     margin: 1rem 0 0;
@@ -178,5 +292,20 @@
             color: var(--pico-muted-color);
             white-space: nowrap;
         }
+    }
+}
+
+// Narrow screens: the sidebar folds away, the inbox page is the switcher.
+@media (max-width: map.get(map.get(pico.$breakpoints, "lg"), "breakpoint")) {
+    .chat-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .chat-sidebar {
+        display: none;
+    }
+
+    .chat-conversation .chat-back-link {
+        display: inline-block;
     }
 }
