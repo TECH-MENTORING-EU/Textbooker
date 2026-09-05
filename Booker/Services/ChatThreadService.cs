@@ -143,16 +143,20 @@ namespace Booker.Services
             await ctx.SaveChangesAsync(ct);
         }
 
-        public async Task UpdateLastMessageUtcAsync(string channelId, int senderId, DateTime utcNow, CancellationToken ct)
+        public async Task DeleteThreadsForUserAsync(int userId, CancellationToken ct)
         {
-            var thread = await ctx.ChatThreads.FirstOrDefaultAsync(t => t.ChannelId == channelId, ct);
-            if (thread == null) return;
+            var threads = await ctx.ChatThreads
+                .Where(t => t.UserAId == userId || t.UserBId == userId)
+                .ToListAsync(ct);
+            if (threads.Count == 0) return;
 
-            thread.LastMessageUtc = utcNow;
-            // The author has obviously seen their own message: without this a
-            // sent message would count as unread for the sender.
-            if (thread.UserAId == senderId) thread.UserAReadUtc = utcNow;
-            else if (thread.UserBId == senderId) thread.UserBReadUtc = utcNow;
+            // Messages carry no FK to the thread (only its channel id string),
+            // so they are removed by hand before the threads themselves.
+            var channels = threads.Select(t => t.ChannelId).ToList();
+            var messages = ctx.ChatMessages.Where(m => channels.Contains(m.DealId));
+            ctx.ChatMessages.RemoveRange(messages);
+            ctx.ChatThreads.RemoveRange(threads);
+
             await ctx.SaveChangesAsync(ct);
         }
     }

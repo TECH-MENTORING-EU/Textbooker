@@ -16,18 +16,18 @@ namespace Booker.Areas.Admin.Pages
         private readonly SessionCacheManager _sessionCacheManager;
         private readonly ItemManager _itemManager;
         private readonly UserPhotoManager _userPhotoManager;
-        private readonly FavoritesManager _favoritesManager;
+        private readonly IChatThreadService _chatThreadService;
         private readonly ILogger<UsersModel> _logger;
         private readonly DataContext _context;
         private readonly AdminLockoutOptions _adminLockoutOptions;
 
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, FavoritesManager favoritesManager, ILogger<UsersModel> logger, DataContext context, IOptions<AdminLockoutOptions> adminLockoutOptions)
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, IChatThreadService chatThreadService, ILogger<UsersModel> logger)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _itemManager = itemManager;
             _userPhotoManager = userPhotoManager;
-            _favoritesManager = favoritesManager;
+            _chatThreadService = chatThreadService;
             _logger = logger;
             _context = context;
             _adminLockoutOptions = adminLockoutOptions.Value;
@@ -77,12 +77,9 @@ namespace Booker.Areas.Admin.Pages
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
 
-            // RODO - task 09: account deletion and the admin action log entry in a single transaction.
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            // Favorites use DeleteBehavior.Restrict, so they must be removed before the user
-            // account is deleted or DeleteAsync fails with a foreign key constraint violation.
-            await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+            // Threads point at users through non-cascading foreign keys, so the
+            // conversations (with their messages) are removed explicitly here.
+            await _chatThreadService.DeleteThreadsForUserAsync(user.Id, CancellationToken.None);
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
