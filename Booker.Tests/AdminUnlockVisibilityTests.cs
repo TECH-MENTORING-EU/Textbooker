@@ -57,7 +57,7 @@ public class AdminUnlockVisibilityTests : IDisposable
         Assert.False(items[0].IsVisible);
         Assert.False(items[0].CanChangeVisibility); // marked: restore on unlock
         Assert.False(items[1].IsVisible);           // already hidden, stays hidden
-        Assert.True(items[1].CanChangeVisibility);  // NOT marked — user hid it
+        Assert.True(items[1].CanChangeVisibility);  // NOT marked - user hid it
     }
 
     [Fact]

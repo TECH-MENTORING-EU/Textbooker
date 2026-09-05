@@ -23,7 +23,7 @@ namespace Booker.Data
 
         /// <summary>
         /// False while the item's visibility is admin-controlled (user was blocked).
-        /// On unlock, only items with this flag are re-published — offers the user
+        /// On unlock, only items with this flag are re-published: offers the user
         /// had hidden themselves stay hidden.
         /// </summary>
         public bool CanChangeVisibility { get; set; } = true;
