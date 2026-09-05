@@ -41,7 +41,7 @@ namespace Booker.Pages
             public string? Subject { get; set; }
 
             // Prices bind as strings: Polish users type the decimal comma
-            // ("10,50"), but decimal model binding only accepts the dot — a
+            // ("10,50"), but decimal model binding only accepts the dot, so a
             // comma value would silently bind to null and drop the filter.
             public string? MinPrice { get; set; }
             public string? MaxPrice { get; set; }
@@ -52,10 +52,22 @@ namespace Booker.Pages
             private static decimal? ParseFlexibleDecimal(string? raw)
             {
                 if (string.IsNullOrWhiteSpace(raw)) return null;
+
                 var normalized = raw.Trim().Replace(',', '.');
-                return decimal.TryParse(normalized, System.Globalization.CultureInfo.InvariantCulture,
-                    out var value) ? value : null;
+                if (decimal.TryParse(normalized, System.Globalization.CultureInfo.InvariantCulture,
+                    out var dotDecimal))
+                {
+                    return dotDecimal;
+                }
+
+                // Values that keep the Polish thousands separator ("1.234,56")
+                // only parse with pl-PL number styles; anything else is dropped.
+                return decimal.TryParse(raw.Trim(), System.Globalization.NumberStyles.Number,
+                    _polish, out var polishNumber) ? polishNumber : null;
             }
+
+            private static readonly System.Globalization.CultureInfo _polish =
+                new("pl-PL");
 
             public string? Level { get; set; }
         }
