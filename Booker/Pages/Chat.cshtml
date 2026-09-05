@@ -21,10 +21,10 @@
                     <li>
                         <a href="/Chat/@t.ChannelId" class="@(t.ChannelId == Model.DealId ? "active" : null)"
                            aria-current="@(t.ChannelId == Model.DealId ? "page" : null)">
-                            <span class="name">@t.DisplayName</span>
-                            @if (!string.IsNullOrEmpty(t.ItemTitle))
+                            <span class="name">@(t.ItemTitle ?? t.DisplayName)</span>
+                            @if (t.ItemTitle != null)
                             {
-                                <small class="about">@t.ItemTitle</small>
+                                <small class="about">z: @t.DisplayName</small>
                             }
                             <small class="when">@PolishTime.ToLocal(t.LastMessageUtc).ToString("dd.MM HH:mm")</small>
                         </a>
@@ -38,15 +38,19 @@
         @if (Model.ActiveThread != null)
         {
             <header class="chat-header">
-                <h2>
-                    <a asp-page="/Profile/Index" asp-route-id="@Model.ActiveThread.OtherUserId">@Model.ActiveThread.DisplayName</a>
-                </h2>
-                @if (!string.IsNullOrEmpty(Model.ActiveThread.ItemTitle))
-                {
-                    <a class="chat-item-ref" href="/Book/@Model.ActiveThread.ItemId" title="@Model.ActiveThread.ItemTitle">
-                        @Model.ActiveThread.ItemTitle
-                    </a>
-                }
+                <div class="chat-thread-subject">
+                    @if (!string.IsNullOrEmpty(Model.ActiveThread.ItemTitle))
+                    {
+                        <h2><a href="/Book/@Model.ActiveThread.ItemId">@Model.ActiveThread.ItemTitle</a></h2>
+                        <small>
+                            z: <a asp-page="/Profile/Index" asp-route-id="@Model.ActiveThread.OtherUserId">@Model.ActiveThread.DisplayName</a>
+                        </small>
+                    }
+                    else
+                    {
+                        <h2>Rozmowa z <a asp-page="/Profile/Index" asp-route-id="@Model.ActiveThread.OtherUserId">@Model.ActiveThread.DisplayName</a></h2>
+                    }
+                </div>
                 <a class="chat-back-link" href="/Messages">Wszystkie rozmowy</a>
             </header>
         }
