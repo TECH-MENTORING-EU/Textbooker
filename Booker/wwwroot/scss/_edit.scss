@@ -51,8 +51,8 @@
                 padding: 2px 8px;
                 font-size: 12px;
                 border-radius: 4px;
-                background-color: rgba(15, 15, 15, 0.8);
-                color: white;
+                background-color: var(--pico-primary-background);
+                color: var(--pico-primary-inverse);
             }
 
             &:has(.keep-photo-checkbox:not(:checked)) {
