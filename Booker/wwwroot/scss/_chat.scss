@@ -1,41 +1,181 @@
+@use "pico";
+
+// Chat conversation page (Chat.cshtml) and the thread list (Messages.cshtml).
+// Everything is token-based so both color schemes follow the Pico theme.
+
 .chat-island {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 640px;
+
+    > h2 {
+        margin-bottom: 0;
+    }
+
+    .chat-history {
+        list-style: none;
+        margin: 0;
+        padding: 0.75rem;
+        border: 1px solid var(--pico-muted-border-color);
+        border-radius: var(--pico-border-radius);
+        background: var(--pico-card-background-color);
+        height: 380px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .chat-empty {
+            margin: auto;
+            color: var(--pico-muted-color);
+        }
+    }
+
+    .msg {
+        display: flex;
+
+        &.self {
+            justify-content: flex-end;
+
+            .bubble {
+                background: var(--pico-primary-background);
+                border-color: transparent;
+                color: var(--pico-primary-inverse);
+
+                // Pico paints <p> with --pico-color, which would fight the
+                // inverse palette inside the accent bubble.
+                .content {
+                    color: inherit;
+                }
+
+                .meta {
+                    color: color-mix(in srgb, var(--pico-primary-inverse) 75%, transparent);
+
+                    .user {
+                        display: none;
+                    }
+                }
+            }
+        }
+
+        &.other {
+            justify-content: flex-start;
+
+            .bubble {
+                background: var(--pico-card-background-color);
+                border-color: var(--pico-muted-border-color);
+            }
+        }
+
+        .bubble {
+            max-width: min(70%, 32rem);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--pico-border-radius);
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            box-shadow: var(--pico-box-shadow);
+        }
+
+        .meta {
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75em;
+            color: var(--pico-muted-color);
+
+            .user {
+                font-weight: 600;
+            }
+        }
+
+        .content {
+            margin: 0;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            font-size: 0.9rem;
+        }
+    }
+
+    .chat-input {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: flex-end;
+
+        label {
+            // The visible label is redundant next to the placeholder; keep it
+            // for screen readers and skip the visual row it would add.
+            @extend .chat-live-status;
+        }
+
+        textarea {
+            resize: vertical;
+            font-family: inherit;
+            flex: 1 1 16rem;
+            width: auto;
+            margin-bottom: 0;
+        }
+
+        button {
+            flex: 0 0 auto;
+            // Pico defaults buttons to width:100%; in the input row the
+            // textarea should take the space and the button stay compact.
+            width: auto;
+            margin: 0;
+            min-width: 6rem;
+        }
+    }
+
+    .chat-status {
+        font-size: 0.85rem;
+        color: var(--pico-muted-color);
+    }
+
+    // Screen-reader announcement for new messages; visible status is noise.
+    .chat-live-status {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
 }
-.chat-island .chat-status { font-size: 0.85rem; color: var(--pico-muted-color,#666); }
-.chat-island .chat-history {
-  list-style: none;
-  margin: 0;
-  padding: 0.5rem;
-  border: 1px solid var(--pico-border-color);
-  border-radius: 6px;
-  background: var(--pico-card-background-color);
-  height: 340px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+
+// Conversations list (Messages.cshtml)
+.thread-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 640px;
+
+    a {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--pico-muted-border-color);
+        border-radius: var(--pico-border-radius);
+        background: var(--pico-card-background-color);
+        text-decoration: none;
+
+        &:hover {
+            border-color: var(--pico-primary);
+        }
+
+        small {
+            color: var(--pico-muted-color);
+            white-space: nowrap;
+        }
+    }
 }
-.chat-island .msg { display: flex; }
-.chat-island .msg.self { justify-content: flex-end; }
-.chat-island .msg.other { justify-content: flex-start; }
-.chat-island .msg .bubble {
-  max-width: 70%;
-  padding: 0.5rem 0.65rem;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-  background: #fff;
-  border: 1px solid #e1e1e1;
-}
-.chat-island .msg.self .bubble { background: #d9f2ff; border-color: #b5e4fb; }
-.chat-island .msg .meta { font-size: 0.7rem; display:flex; justify-content: space-between; color:#555; }
-.chat-island .msg .meta .user { font-weight:600; }
-.chat-island .msg .content { margin:0; white-space:pre-wrap; word-wrap:break-word; font-size:0.9rem; }
-.chat-island .chat-input { display:flex; flex-direction:column; gap:0.4rem; }
-.chat-island .chat-input textarea { resize: vertical; font-family: inherit; }
-.chat-island .chat-input button[disabled] { opacity:0.5; cursor:not-allowed; }

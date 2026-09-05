@@ -16,6 +16,9 @@ function chatScrollToNewest() {
 }
 
 function chatAfterSend(form) {
+    // The first sent message clears the empty-state placeholder.
+    document.querySelector("#chat-history .chat-empty")?.remove();
+
     // The send form: clear the textarea for the next message.
     const textarea = form.querySelector("textarea");
     if (textarea) {
