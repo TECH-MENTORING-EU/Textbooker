@@ -228,7 +228,9 @@
         textarea {
             resize: vertical;
             font-family: inherit;
-            flex: 1 1 16rem;
+            // Small enough to share the row with the send button even on a
+            // 390px phone; it still grows to fill the desktop pane.
+            flex: 1 1 10rem;
             width: auto;
             margin-bottom: 0;
         }
@@ -304,7 +306,8 @@
         display: none;
     }
 
-    .chat-conversation .chat-back-link {
+    // Same specificity as the base display:none rule so it actually wins.
+    .chat-conversation .chat-header .chat-back-link {
         display: inline-block;
     }
 }
