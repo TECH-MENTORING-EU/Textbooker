@@ -90,7 +90,12 @@ jobs:
           echo "DB_PASS=$DB_PASS" >> $env:GITHUB_ENV
 
           # Construct the DB_CONNECTION_STRING
-          $env:DB_CONNECTION_STRING = "server=$DB_HOST,$DB_PORT;database=$DB_NAME;uid=$DB_USER;pwd=$DB_PASS;TrustServerCertificate=True;"
+          # Encrypt=True (the Microsoft.Data.SqlClient default) is kept explicit so the
+          # server certificate is validated; TrustServerCertificate must stay dev-only
+          # (appsettings.Development.json). If the production SQL instance presents a
+          # self-signed certificate, the first deploy after this change will fail to
+          # open connections - reverting this one flag is the rollback.
+          $env:DB_CONNECTION_STRING = "server=$DB_HOST,$DB_PORT;database=$DB_NAME;uid=$DB_USER;pwd=$DB_PASS;Encrypt=True;"
           # The string embeds DB_PASS, so mask the composite too - a stray dump
           # of DB_CONNECTION_STRING would otherwise print the password unredacted.
           Write-Host "::add-mask::$env:DB_CONNECTION_STRING"
