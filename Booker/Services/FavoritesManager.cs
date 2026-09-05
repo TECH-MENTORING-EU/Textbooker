@@ -61,8 +61,8 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
         // mutating it in memory (two concurrent requests both see the same snapshot
         // and create a duplicate row or throw), the change is a set-based SQL
         // command that is correct under any interleaving.
-        var userExists = await context.Users.AnyAsync(u => u.Id == userId);
-        if (!userExists)
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
         {
             return Status.Forbidden;
         }
@@ -74,7 +74,6 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
             // item visibility. One deliberate difference from the offer page: only the
             // owner may favorite a hidden item. Admins can view hidden offers, but a
             // favorite is a personal bookmark, not an admin capability.
-            var user = await context.Users.FirstAsync(u => u.Id == userId);
             var item = await itemManager.GetItemAsync(itemId, user);
 
             if (item == null || (!item.IsVisible && item.UserId != userId))
@@ -95,6 +94,10 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
 
                 if (inserted == 0)
                 {
+                    // The row appeared between NOT EXISTS and INSERT only if another
+                    // request (possibly on another instance) won the race; drop the
+                    // cached list so this instance cannot keep serving it stale.
+                    InvalidateCache(userId);
                     return Status.NotModified;
                 }
             }
@@ -102,34 +105,24 @@ public class FavoritesManager(DataContext context, ItemManager itemManager, IMem
             // inserted the same favorite first, so the outcome is "already added".
             catch (SqlException ex) when (ex.Number is 2601 or 2627)
             {
+                InvalidateCache(userId);
                 return Status.NotModified;
             }
         }
         else
         {
             // Removal stays unrestricted so favorites that no longer pass the checks
-            // above (hidden item, cross-school owner) can still be removed.
-            var itemExists = await context.Items.AnyAsync(i => i.Id == itemId);
+            // above (hidden item, cross-school owner, deleted item) can still be
+            // removed. The affected row count decides the outcome, so no pre-check
+            // queries are needed and concurrent removals stay idempotent.
+            var removed = await context.Database.ExecuteSqlAsync($"""
+                DELETE FROM UserFavorites WHERE UserId = {userId} AND ItemId = {itemId}
+                """);
 
-            if (!itemExists)
-            {
-                return Status.NotFound;
-            }
-
-            var isFavorite = await context.Users
-                .Where(u => u.Id == userId)
-                .SelectMany(u => u.Favorites.Where(f => f.Id == itemId))
-                .AnyAsync();
-
-            if (!isFavorite)
+            if (removed == 0)
             {
                 return Status.NotModified;
             }
-
-            // Set-based delete: idempotent under concurrent removals.
-            await context.Database.ExecuteSqlAsync($"""
-                DELETE FROM UserFavorites WHERE UserId = {userId} AND ItemId = {itemId}
-                """);
         }
 
         InvalidateCache(userId);
