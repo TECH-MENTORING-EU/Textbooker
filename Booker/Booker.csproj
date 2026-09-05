@@ -10,15 +10,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Compile Remove="Messenger\ChatRealtimeIsland.razor.cs" />
-      <Compile Remove="Pages\Chat.cshtml.cs" />
-      <Compile Remove="Pages\Messages.cshtml.cs" />
     </ItemGroup>
 
     <ItemGroup>
-      <Content Remove="Messenger\ChatRealtimeIsland.razor" />
-      <Content Remove="Pages\Chat.cshtml" />
-      <Content Remove="Pages\Messages.cshtml" />
     </ItemGroup>
 
     <ItemGroup>
@@ -29,7 +23,7 @@
     <PackageReference Include="AspNetCore.SassCompiler" Version="1.92.0">
         <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.20.3" />
     <PackageReference Include="Faker.Net" Version="2.0.163" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.30" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.30" />
@@ -70,7 +64,6 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.Linq.Async" Version="6.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.9" />
   </ItemGroup>
 
   <ItemGroup>

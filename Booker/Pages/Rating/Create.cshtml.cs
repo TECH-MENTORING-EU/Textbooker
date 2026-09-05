@@ -68,7 +68,7 @@ namespace Booker.Pages.Rating
                 return NotFound();
 
             RevieweeUserName = reviewee.UserName!;
-            CanRate = true;
+            CanRate = await _ratingManager.CanRateAsync(reviewerId, UserId);
 
             if (!ModelState.IsValid)
                 return Page();

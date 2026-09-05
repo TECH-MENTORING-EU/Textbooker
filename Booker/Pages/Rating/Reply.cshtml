@@ -3,7 +3,7 @@
 
 @if (Model.ErrorMessage != null)
 {
-    <p class="error">@Model.ErrorMessage</p>
+    <p class="error" role="alert">@Model.ErrorMessage</p>
 }
 
 @if (Model.Success)
@@ -14,9 +14,7 @@
 }
 else
 {
-    <form hx-post="@Url.Page("/Rating/Reply", new { ratingId = Model.RatingId })"
-          hx-swap="outerHTML"
-          hx-target="closest .rating-reply-form">
+    <form method="post">
         <input type="hidden" asp-for="RatingId" />
         <div class="form-group">
             <textarea asp-for="Reply" maxlength="500" rows="2" placeholder="Twoja odpowiedź..." required></textarea>

@@ -2,14 +2,9 @@ using System;
 
 namespace Booker.Services;
 
-public class MaintenanceService : BackgroundService
+public class MaintenanceService(IServiceProvider services) : BackgroundService
 {
-    public MaintenanceService(IServiceProvider services)
-    {
-        Services = services;
-    }
 
-    public IServiceProvider Services { get; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -17,37 +12,37 @@ public class MaintenanceService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
-            using var scope = Services.CreateScope();
+            using var scope = services.CreateScope();
             var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
 
             await sessionCacheManager.WritebackSessions();
             sessionCacheManager.CleanupSessions();
 
-            await AutoCloseStaleReservations(scope);
+            await ReleaseStaleReservations(scope);
         }
     }
 
     /// <summary>
-    /// Reservations with no seller decision for ~30 days count as sold so the
-    /// listing does not linger as reserved and both parties can rate.
+    /// Reservations the seller never decided on are released after
+    /// <see cref="ItemManager.AutoCloseDays"/>, so listings do not linger as
+    /// reserved forever.
     /// </summary>
-    private static async Task AutoCloseStaleReservations(IServiceScope scope)
+    private static async Task ReleaseStaleReservations(IServiceScope scope)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<MaintenanceService>>();
         var itemManager = scope.ServiceProvider.GetRequiredService<ItemManager>();
 
         try
         {
-            var closed = await itemManager.AutoCloseStaleReservationsAsync();
-            if (closed > 0)
+            var released = await itemManager.AutoCloseStaleReservationsAsync();
+            if (released > 0)
             {
-                logger.LogInformation("Auto-closed {Count} stale reservations as sold.", closed);
+                logger.LogInformation("Auto-close released {Count} stale reservations.", released);
             }
         }
         catch (Exception ex)
         {
-            // Never let the maintenance loop crash: a failed auto-close retries on the next tick.
-            logger.LogError(ex, "Auto-close of stale reservations failed; will retry next tick.");
+            logger.LogError(ex, "Auto-close of stale reservations failed; retrying on the next tick.");
         }
     }
 }

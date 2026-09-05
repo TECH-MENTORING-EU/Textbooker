@@ -1,130 +1,132 @@
+using System.Text;
 using Booker.Services;
+using Booker.Utilities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Text;
 
 namespace Booker.Pages
 {
+    /// <summary>
+    /// One conversation thread. Threads are reached from a listing or the inbox;
+    /// both participants see the same transcript, refreshed by HTMX polling.
+    /// </summary>
     [Authorize]
-    public class ChatModel : PageModel
+    public class ChatModel(UserManager<Data.User> userManager, IChatService chatService, IChatThreadService threadService, ILogger<ChatModel> logger) : PageModel
     {
-        private readonly IChatService _chatService;
-        private readonly InMemoryChatStore _inMemoryChatStore;
-        private readonly IChatThreadService _threadService;
-        private readonly ILogger<ChatModel> _logger;
+        [BindProperty(SupportsGet = true)]
+        public string DealId { get; set; } = string.Empty;
 
-        public ChatModel(IChatService chatService, InMemoryChatStore inMemoryChatStore, IChatThreadService threadService, ILogger<ChatModel> logger)
-        {
-            _chatService = chatService;
-            _inMemoryChatStore = inMemoryChatStore;
-            _threadService = threadService;
-            _logger = logger;
-        }
-
-        [BindProperty(SupportsGet = true)] public string DealId { get; set; } = string.Empty; // used as ChannelId now
         public int CurrentUserId { get; private set; }
         public List<ChatMessageDto> Messages { get; private set; } = new();
 
         public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
         {
-            CurrentUserId = GetCurrentUserId();
+            CurrentUserId = userManager.GetUserId(User).IntOrDefault();
+
             if (string.IsNullOrWhiteSpace(DealId))
             {
-                Messages = new List<ChatMessageDto>();
                 return Page();
             }
 
-            if (DealId == "test-deal")
+            if (!await IsParticipantAsync(ct: cancellationToken))
             {
-                _inMemoryChatStore.SeedIfEmpty(DealId, new[]
-                {
-                    new ChatMessageDto(1, DealId, 1, "Karol", "Cze??! To jest testowy czat ??", DateTime.UtcNow.AddMinutes(-5)),
-                    new ChatMessageDto(2, DealId, 2, "Ania", "Dzia?a � wiadomo?ci s? w pami?ci.", DateTime.UtcNow.AddMinutes(-4)),
-                    new ChatMessageDto(3, DealId, 1, "Karol", "Wy?lij co? z drugiego konta.", DateTime.UtcNow.AddMinutes(-3))
-                });
-                Messages = _inMemoryChatStore.GetMessages(DealId).ToList();
-                return Page();
-            }
-
-            var thread = await _threadService.GetByChannelIdAsync(DealId, cancellationToken);
-            if (thread == null || (thread.UserAId != CurrentUserId && thread.UserBId != CurrentUserId))
-            {
-                _logger.LogWarning("Unauthorized access attempt to channel {ChannelId} by user {UserId}", DealId, CurrentUserId);
+                logger.LogWarning("Unauthorized access attempt to channel {ChannelId} by user {UserId}", DealId, CurrentUserId);
                 return NotFound();
             }
 
-            var msgs = await _chatService.GetMessagesAsync(DealId, 200, cancellationToken);
-            Messages = msgs.ToList();
+            var messages = await chatService.GetMessagesAsync(DealId, 200, cancellationToken);
+            Messages = messages.ToList();
             return Page();
         }
 
         public async Task<IActionResult> OnPostSendAsync(string dealId, string text, CancellationToken ct)
         {
-            int userId = GetCurrentUserId();
-            if (string.IsNullOrWhiteSpace(dealId)) return BadRequest();
-            if (dealId != "test-deal")
+            var userId = userManager.GetUserId(User).IntOrDefault();
+            if (string.IsNullOrWhiteSpace(dealId))
             {
-                var thread = await _threadService.GetByChannelIdAsync(dealId, ct);
-                if (thread == null || (thread.UserAId != userId && thread.UserBId != userId)) return Unauthorized();
+                return BadRequest();
             }
 
-            ChatMessageDto dto;
-            if (dealId == "test-deal")
+            if (!await IsParticipantAsync(dealId, ct))
             {
-                dto = _inMemoryChatStore.AddMessage(dealId, userId, User.Identity!.Name ?? $"U{userId}", text);
-            }
-            else
-            {
-                var result = await _chatService.AddMessageAsync(dealId, userId, text, ct);
-                if (!result.Success) return Content($"<p class=\"error\">{System.Net.WebUtility.HtmlEncode(result.Error)}", "text/html");
-                dto = result.Message!;
+                return Unauthorized();
             }
 
-            string fragment = RenderMessage(dto, userId);
-            return Content(fragment, "text/html");
+            var result = await chatService.AddMessageAsync(dealId, userId, text ?? string.Empty, ct);
+            if (!result.Success)
+            {
+                return Content(RenderNotice(result.Error ?? "Nie udało się wysłać wiadomości."), "text/html");
+            }
+
+            return Content(RenderMessage(result.Message!, userId), "text/html");
         }
 
         public async Task<IActionResult> OnGetSinceAsync(string dealId, int afterMessageId, CancellationToken ct)
         {
-            int userId = GetCurrentUserId();
-            if (string.IsNullOrWhiteSpace(dealId)) return Content(string.Empty, "text/html");
-            if (dealId != "test-deal")
+            var userId = userManager.GetUserId(User).IntOrDefault();
+            if (string.IsNullOrWhiteSpace(dealId) || !await IsParticipantAsync(dealId, ct))
             {
-                var thread = await _threadService.GetByChannelIdAsync(dealId, ct);
-                if (thread == null || (thread.UserAId != userId && thread.UserBId != userId)) return Content(string.Empty, "text/html");
+                return Content(string.Empty, "text/html");
             }
 
-            List<ChatMessageDto> msgs;
-            if (dealId == "test-deal")
+            var all = await chatService.GetMessagesAsync(dealId, 200, ct);
+            var fresh = all.Where(m => m.Id > afterMessageId).OrderBy(m => m.Id).ToList();
+
+            if (fresh.Count == 0)
             {
-                msgs = _inMemoryChatStore.GetMessages(dealId).Where(m => m.Id > afterMessageId).OrderBy(m => m.Id).ToList();
-            }
-            else
-            {
-                var all = await _chatService.GetMessagesAsync(dealId, 200, ct);
-                msgs = all.Where(m => m.Id > afterMessageId).OrderBy(m => m.Id).ToList();
+                return Content(string.Empty, "text/html");
             }
 
-            if (msgs.Count == 0) return Content(string.Empty, "text/html");
             var sb = new StringBuilder();
-            foreach (var m in msgs)
+            foreach (var message in fresh)
             {
-                sb.Append(RenderMessage(m, userId));
+                sb.Append(RenderMessage(message, userId));
             }
             return Content(sb.ToString(), "text/html");
         }
 
-        private static string RenderMessage(ChatMessageDto m, int currentUserId)
+        public string FormatLocalTime(DateTime utc) =>
+            TimeZoneInfo.ConvertTime(utc, PolishTimeZone).ToString("HH:mm");
+
+        private async Task<bool> IsParticipantAsync(string? dealId = null, CancellationToken ct = default)
         {
-            string cls = m.UserId == currentUserId ? "self" : "other";
-            return $"<article class=\"msg {cls}\" data-msg-id=\"{m.Id}\"><header><strong>{System.Net.WebUtility.HtmlEncode(m.UserDisplayName)}</strong></header><p>{System.Net.WebUtility.HtmlEncode(m.Content)}</p><footer><time datetime=\"{m.CreatedUtc.ToString("O")}\">{m.CreatedUtc.ToLocalTime():HH:mm}</time></footer></article>";
+            var channelId = dealId ?? DealId;
+            var thread = await threadService.GetByChannelIdAsync(channelId, ct);
+            return thread != null
+                && (thread.UserAId == CurrentUserId || thread.UserBId == CurrentUserId);
         }
 
-        private int GetCurrentUserId()
+        private static string RenderMessage(ChatMessageDto m, int currentUserId)
         {
-            string? idStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(idStr, out int id) ? id : -1;
+            var side = m.UserId == currentUserId ? "self" : "other";
+            var escapedName = System.Net.WebUtility.HtmlEncode(m.UserDisplayName);
+            var escapedContent = System.Net.WebUtility.HtmlEncode(m.Content);
+            var localTime = TimeZoneInfo.ConvertTime(m.CreatedUtc, PolishTimeZone);
+            return $"<li class=\"msg {side}\" data-msg-id=\"{m.Id}\">" +
+                   $"<div class=\"bubble\"><div class=\"meta\"><span class=\"user\">{escapedName}</span>" +
+                   $"<time datetime=\"{m.CreatedUtc:o}\">{localTime:HH:mm}</time></div>" +
+                   $"<p class=\"content\">{escapedContent}</p></div></li>";
+        }
+
+        private static string RenderNotice(string error) =>
+            "<li class=\"msg other\" role=\"alert\"><div class=\"bubble\"><p class=\"content\">" +
+            $"{System.Net.WebUtility.HtmlEncode(error)}</p></div></li>";
+
+        private static readonly TimeZoneInfo PolishTimeZone = CreatePolishTimeZone();
+
+        private static TimeZoneInfo CreatePolishTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
+            }
+            // Without ICU, Windows only knows its own zone id.
+            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Booker.Services
     /// <summary>
     /// Anti-spam gate for chat messages: per-user sliding-window rate limit,
     /// duplicate-message suppression and link filtering. All checks are local
-    /// and in-memory — cheap and dependency-free.
+    /// and in-memory, so they are cheap and dependency-free.
     /// </summary>
     public class ChatModerationService
     {
@@ -24,6 +24,7 @@ namespace Booker.Services
         {
             public readonly Queue<DateTimeOffset> Timestamps = new();
             public string LastContent = string.Empty;
+            public DateTimeOffset LastContentAt;
         }
 
         private readonly ConcurrentDictionary<int, SenderState> _senders = new();
@@ -45,8 +46,12 @@ namespace Booker.Services
                     return ModerationVerdict.RateLimited;
                 }
 
-                if (content.Length > 0 &&
-                    string.Equals(content.Trim(), state.LastContent, StringComparison.OrdinalIgnoreCase))
+                // Duplicate suppression is bounded by the same window as the rate
+                // limit: a repeated "ok" an hour later is a normal chat message,
+                // a burst of identical messages is spam.
+                if (content.Length > 0
+                    && now - state.LastContentAt <= Window
+                    && string.Equals(content.Trim(), state.LastContent, StringComparison.OrdinalIgnoreCase))
                 {
                     return ModerationVerdict.Duplicate;
                 }
@@ -58,6 +63,7 @@ namespace Booker.Services
 
                 state.Timestamps.Enqueue(now);
                 state.LastContent = content.Trim();
+                state.LastContentAt = now;
             }
 
             return ModerationVerdict.Accepted;

@@ -127,11 +127,12 @@ public class TransactionLifecycleTests
         });
         var manager = new ItemManager(context, null!, null!, null!);
 
-        await manager.MarkItemSoldAsync(1);
+        await manager.MarkItemSoldAsync(1, soldToUserId: 2);
 
         var item = await context.Items.FindAsync(1);
         Assert.True(item!.IsSold);
         Assert.NotNull(item.SoldAt);
+        Assert.Equal(2, item.SoldToUserId);
         Assert.False(item.Reserved);
     }
 
@@ -155,10 +156,10 @@ public class TransactionLifecycleTests
     }
 
     [Fact]
-    public async Task AutoCloseStaleReservationsAsync_MarksOnly30DayOldAsSold()
+    public async Task AutoCloseStaleReservationsAsync_ReleasesOnly30DayOldReservations()
     {
         await using var context = CreateContext();
-        // 31 days stale → auto-close
+        // 31 days stale → auto-close releases it back to available
         NewItem(context, sellerId: 1, i =>
         {
             i.Reserved = true;
@@ -176,9 +177,11 @@ public class TransactionLifecycleTests
 
         Assert.Equal(1, closed);
         var stale = await context.Items.FindAsync(1);
-        Assert.True(stale!.IsSold);
+        Assert.False(stale!.Reserved);
+        Assert.Null(stale.ReservedAt);
+        Assert.False(stale.IsSold); // released, never fake-sold
         var young = await context.Items.FindAsync(2);
-        Assert.False(young!.IsSold);
+        Assert.True(young!.Reserved);
     }
 
     [Fact]
@@ -222,9 +225,9 @@ public class TransactionLifecycleTests
         // Before confirmation: no rating
         Assert.False(await ratings.CanRateAsync(2, 1));
 
-        await items.MarkItemSoldAsync(item.Id);
+        await items.MarkItemSoldAsync(item.Id, soldToUserId: 2);
 
-        // After confirmation: buyer can rate the seller
+        // After confirmation (with the buyer named): buyer can rate the seller
         Assert.True(await ratings.CanRateAsync(2, 1));
         var result = await ratings.AddRatingAsync(2, 1, 5, "Great");
         Assert.True(result.Success);

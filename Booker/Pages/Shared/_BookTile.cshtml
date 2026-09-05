@@ -21,7 +21,7 @@
     private int UserId {get => _userId ??= UserManager.GetUserId(User).IntOrDefault(); }
 }
 
-<article class="book-tile @(Model.Item.Reserved ? "reserved" : "")" aria-labelledby="tile-title-@Model.Item.Id">
+<article class="book-tile @(Model.Item.IsSold ? "sold" : Model.Item.Reserved ? "reserved" : "")" aria-labelledby="tile-title-@Model.Item.Id">
     <a class="cover" asp-page="/Book" asp-route-id="@Model.Item.Id" aria-labelledby="tile-title-@Model.Item.Id">
         <img src="@Model.FirstPhoto" alt="Okładka książki: @Model.Item.Book.Title" />
     </a>

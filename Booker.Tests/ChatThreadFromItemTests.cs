@@ -22,7 +22,10 @@ public class ChatThreadFromItemTests : IDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         _context = new DataContext(options);
-        _service = new ChatThreadService(_context, NullLogger<ChatThreadService>.Instance);
+        _service = new ChatThreadService(
+            _context,
+            new ItemManager(_context, null!, null!, null!),
+            NullLogger<ChatThreadService>.Instance);
     }
 
     public void Dispose() => _context.Database.EnsureDeleted();
@@ -86,6 +89,8 @@ public class ChatThreadFromItemTests : IDisposable
     public async Task GetOrCreateForItemAsync_DifferentBuyersGetDifferentThreads()
     {
         SeedItem(sellerId: 5, buyerId: 1);
+        _context.Users.Add(new User { Id = 7, UserName = "buyer7" });
+        await _context.SaveChangesAsync();
 
         var t1 = await _service.GetOrCreateForItemAsync(1, 10, CancellationToken.None);
         var t2 = await _service.GetOrCreateForItemAsync(7, 10, CancellationToken.None);

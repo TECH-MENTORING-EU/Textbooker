@@ -1,31 +1,50 @@
-﻿@* Chat page using Blazor static SSR + interactive server island for realtime chat *@
 @page "{DealId?}"
 @model Booker.Pages.ChatModel
-@using Booker.Pages.Shared.Components
 @{
-    ViewData["Title"] = "TextBooker Chat";
+    ViewData["Title"] = "Czat";
 }
 
-<main>
-    <h1>Chat</h1>
+<article class="chat-island" aria-label="Rozmowa">
+    <h2>Czat</h2>
 
-   <!-- @if (string.IsNullOrWhiteSpace(Model.DealId))
+    @if (string.IsNullOrWhiteSpace(Model.DealId))
     {
-        <p>Brak identyfikatora wątku. Przejdź do <a href="/Messages">listy wiadomości</a> aby wybrać lub rozpocząć rozmowę.</p>
+        <p>Brak identyfikatora rozmowy. Przejdź do <a asp-page="/Messages">listy wiadomości</a>, aby wybrać lub rozpocząć rozmowę.</p>
     }
     else
-    -->
-    
-        <component type="typeof(Booker.Pages.Shared.Components.Messenger)" 
-               render-mode="ServerPrerendered" />
-    
+    {
+        var lastMessageId = Model.Messages.Count > 0 ? Model.Messages[^1].Id : 0;
 
-        <section class="chat-wrapper" aria-label="Historia rozmowy">
-            <component type="typeof(Booker.Components.ChatRealtimeIsland)"
-                       render-mode="Server"
-                       param-DealId="Model.DealId"
-                       param-InitialMessages="Model.Messages"
-                       param-CurrentUserId="Model.CurrentUserId" />
-        </section>
-    
-</main>
+        <ul class="chat-history" id="chat-history" role="log" aria-live="polite" aria-label="Historia rozmowy">
+            @foreach (var message in Model.Messages)
+            {
+                <li class="msg @(message.UserId == Model.CurrentUserId ? "self" : "other")" data-msg-id="@message.Id">
+                    <div class="bubble">
+                        <div class="meta">
+                            <span class="user">@message.UserDisplayName</span>
+                            <time datetime="@message.CreatedUtc.ToString("o")">@Model.FormatLocalTime(message.CreatedUtc)</time>
+                        </div>
+                        <p class="content">@message.Content</p>
+                    </div>
+                </li>
+            }
+        </ul>
+
+        <form class="chat-input" method="post" asp-page-handler="Send"
+              hx-post="?handler=Send" hx-target="#chat-history" hx-swap="beforeend"
+              hx-on::after-request="chatAfterActivity(this)">
+            <input type="hidden" name="dealId" value="@Model.DealId" />
+            <label for="chat-text">Twoja wiadomość</label>
+            <textarea id="chat-text" name="text" rows="2" maxlength="500" required placeholder="Napisz wiadomość"></textarea>
+            <button type="submit">Wyślij</button>
+        </form>
+
+        <span class="chat-status"
+              hx-get="?handler=Since&dealId=@Model.DealId&afterMessageId=@lastMessageId"
+              hx-trigger="every 3s" hx-target="#chat-history" hx-swap="beforeend"
+              hx-on::after-request="chatAfterActivity(this)"></span>
+        <p class="chat-status">Wiadomości odświeżają się automatycznie co kilka sekund.</p>
+    }
+</article>
+
+<script src="~/js/chat.js" asp-append-version="true" defer></script>

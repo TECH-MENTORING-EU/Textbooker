@@ -28,6 +28,7 @@ namespace Booker.Data
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [MaxLength(500)]
         public string? Reply { get; set; }
 
         public DateTime? RepliedAt { get; set; }

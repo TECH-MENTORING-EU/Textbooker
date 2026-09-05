@@ -13,7 +13,7 @@
         <details>
             <summary>Reguły oceniania</summary>
             <ul>
-                <li>Możesz ocenić użytkownika, z którym miałeś interakcję dotyczącą zarezerwowanej książki.</li>
+                <li>Możesz ocenić sprzedającego, od którego kupiłeś książkę - po tym, jak potwierdzi on sprzedaż.</li>
                 <li>Każdego użytkownika możesz ocenić tylko raz.</li>
                 <li>Ocena jest w skali od 1 do 5 gwiazdek.</li>
                 <li>Możesz dodać krótki komentarz do oceny.</li>
@@ -25,7 +25,7 @@
     @if (!Model.CanRate)
     {
         <div class="rating-error">
-            <p>Nie możesz ocenić tego użytkownika. Upewnij się, że mieliście interakcję dotyczącą zarezerwowanej książki.</p>
+            <p>Nie możesz ocenić tego użytkownika. Oceny wystawia się tylko po zakupie książki - sprzedawca musi najpierw potwierdzić sprzedaż.</p>
             <a asp-page="/Profile/Index" asp-route-id="@Model.UserId" role="button" class="outline">Wróć do profilu</a>
         </div>
     }
@@ -49,6 +49,7 @@
                         <input type="radio" id="star@(i)" name="RatingValue" value="@i" required />
                         <label for="star@(i)" title="@i gwiazdek">
                             <svg icon="star" variant="outline" aria-hidden="true"></svg>
+                            <span class="visually-hidden">Ocena @i z 5</span>
                         </label>
                     }
                 </div>
