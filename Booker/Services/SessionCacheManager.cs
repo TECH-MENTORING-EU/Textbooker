@@ -30,11 +30,19 @@ public class SessionCacheManager(
                 return false;
             }
 
-            // Compare-and-swap refresh: when InvalidateSessionAsync replaces the
-            // entry concurrently, this write loses, TryUpdate returns false, and
-            // the caller signs this request out instead of letting the next one
-            // resurrect the invalidated session.
-            return store.Sessions.TryUpdate(userId, session with { LastActivity = DateTime.Now }, session);
+            // Compare-and-swap refresh. Losing the swap must be told apart:
+            // losing to a concurrent InvalidateSessionAsync (entry invalid or
+            // gone) signs this request out so the next one cannot resurrect
+            // the invalidated session, but losing to a concurrent refresh of
+            // the same still-valid session is benign and must not sign the
+            // legitimate user out.
+            var refreshed = session with { LastActivity = DateTime.Now };
+            if (store.Sessions.TryUpdate(userId, refreshed, session))
+            {
+                return true;
+            }
+
+            return store.Sessions.TryGetValue(userId, out var current) && current.Valid;
         }
 
         var user = await userManager.FindByIdAsync(userId.ToString());
@@ -43,19 +51,29 @@ public class SessionCacheManager(
             return false;
         }
 
-        store.Sessions.TryAdd(userId, new SessionCacheStore.SessionInfo(Valid: true, LastActivity: DateTime.Now));
+        // TryAdd loses when an invalidation landed while this request was
+        // querying the database; trust whichever entry is in the store rather
+        // than assuming the one we just built won.
+        if (!store.Sessions.TryAdd(userId, new SessionCacheStore.SessionInfo(Valid: true, LastActivity: DateTime.Now)))
+        {
+            return store.Sessions.TryGetValue(userId, out var added) && added.Valid;
+        }
+
         return true;
     }
 
     public async Task InvalidateSessionAsync(int userId)
     {
-        store.Sessions[userId] = new SessionCacheStore.SessionInfo(Valid: false, LastActivity: DateTime.Now);
+        // No LastActivity: an invalid entry is not user activity, and
+        // WritebackSessions would otherwise record the lockout/deletion
+        // moment as the user's last active time.
+        store.Sessions[userId] = new SessionCacheStore.SessionInfo(Valid: false, LastActivity: null);
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user != null)
         {
             await userManager.UpdateSecurityStampAsync(user);
         }
-        logger.LogInformation($"Sesja użytkownika o ID {userId} została unieważniona.");
+        logger.LogInformation("Sesja użytkownika o ID {UserId} została unieważniona.", userId);
     }
 
     // Drops the cached session entry so the next request validates the user
@@ -96,6 +114,6 @@ public class SessionCacheManager(
             }
         }
 
-        logger.LogInformation($"Wyczyszczono {removed} nieaktywnych sesji użytkownika.");
+        logger.LogInformation("Wyczyszczono {Removed} nieaktywnych sesji użytkownika.", removed);
     }
 }

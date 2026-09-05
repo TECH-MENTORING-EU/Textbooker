@@ -83,7 +83,8 @@ namespace Booker.Areas.Admin.Pages
             {
                 ModelState.AddModelError(string.Empty, "Niepoprawne hasło.");
                 _logger.LogWarning(
-                    $"Użytkownik {currentUser.UserName} próbował usunąć konto użytkownika {user.UserName}, ale wpisał błędne hasło.");
+                    "Użytkownik {AdminUserName} próbował usunąć konto użytkownika {TargetUserName}, ale wpisał błędne hasło.",
+                    currentUser.UserName, user.UserName);
                 return new BadRequestResult();
             }
 
@@ -103,7 +104,8 @@ namespace Booker.Areas.Admin.Pages
             await _sessionCacheManager.InvalidateSessionAsync(id);
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
-            _logger.LogInformation($"Użytkownik {currentUser.UserName} usunął konto użytkownika {user.UserName}.");
+            _logger.LogInformation("Użytkownik {AdminUserName} usunął konto użytkownika {TargetUserName}.",
+                currentUser.UserName, user.UserName);
             return Content("User deleted successfully.");
         }
 
@@ -150,7 +152,8 @@ namespace Booker.Areas.Admin.Pages
 
             await _itemManager.SetItemsVisibilityByUserAsync(id, false);
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} zablokował konto użytkownika {user.UserName} na okres {days} dni.");
+            _logger.LogInformation("Użytkownik {AdminUserName} zablokował konto użytkownika {TargetUserName} na okres {Days} dni.",
+                currentUser?.UserName, user.UserName, days);
             return Partial("_UserRows", new List<User> { user });
         }
 
@@ -181,7 +184,8 @@ namespace Booker.Areas.Admin.Pages
             await _userManager.UpdateAsync(user);
             await _itemManager.SetItemsVisibilityByUserAsync(id, true);
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} odblokował konto użytkownika {user.UserName}.");
+            _logger.LogInformation("Użytkownik {AdminUserName} odblokował konto użytkownika {TargetUserName}.",
+                currentUser?.UserName, user.UserName);
             return Partial("_UserRows", new List<User> { user });
         }
     }
