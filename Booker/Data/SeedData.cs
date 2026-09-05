@@ -261,6 +261,10 @@
                         var userName = userPrefix + suffix;
                         return new User
                         {
+                            // Users inserted through the context bypass UserManager, which
+                            // normally generates the stamp; any later Identity update on a
+                            // stampless row throws and the maintenance job then kills the host.
+                            SecurityStamp = Guid.NewGuid().ToString(),
                             UserName = userName,
                             Email = userName + "@seed.local",
                             SchoolId = schoolId,
