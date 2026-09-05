@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Booker.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,7 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
+    [Authorize]
     [EnableRateLimiting("IpRateLimit")]
     public class EmailModel : PageModel
     {

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Booker.Pages.Shared;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -9,6 +10,7 @@ using Booker.Services;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
+    [Authorize]
     public class ProfilePictureUploadModel : PageModel
     {
         private readonly UserManager<User> _userManager;
