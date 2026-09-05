@@ -6,7 +6,7 @@ namespace Booker.Data
 {
     public class User : IdentityUser<int>
     {
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastActiveAt { get; set; }
         public bool IsVisible { get; set; } = true;
         

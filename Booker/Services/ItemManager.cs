@@ -263,7 +263,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             Description = model.Description,
             State = model.State,
             Price = model.Price,
-            CreatedAt = DateTime.Now,
+            CreatedAt = DateTime.UtcNow,
             Photo = allPhotos
         };
 
@@ -319,7 +319,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             item.State = model.State;
             item.Price = model.Price;
             item.Photo = allPhotos;
-            item.UpdatedAt = DateTime.Now;
+            item.UpdatedAt = DateTime.UtcNow;
 
             await UpdateItemNVAsync(item);
             await transaction.CommitAsync();

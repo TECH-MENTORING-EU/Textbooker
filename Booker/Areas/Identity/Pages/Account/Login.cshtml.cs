@@ -139,7 +139,7 @@ namespace Booker.Areas.Identity.Pages.Account
                     var user = await _userManager.FindByNameAsync(userName);
                     if (user != null)
                     {
-                        user.LastActiveAt = DateTime.Now;
+                        user.LastActiveAt = DateTime.UtcNow;
                         await _userManager.UpdateAsync(user);
                     }
                     return LocalRedirect(returnUrl);
