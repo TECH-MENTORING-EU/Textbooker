@@ -23,11 +23,14 @@ namespace Booker.Pages
             Threads = (await threadService.GetInboxAsync(currentUserId, ct))
                 .Select(t => new ThreadVm(
                     t.ChannelId,
+                    t.ItemTitle ?? t.DisplayName,
+                    t.ItemTitle != null,
+                    t.ItemPhoto,
                     t.DisplayName,
                     PolishTime.ToLocal(t.LastMessageUtc).ToString("yyyy-MM-dd HH:mm")))
                 .ToList();
         }
 
-        public record ThreadVm(string ChannelId, string DisplayName, string LastMessageLocal);
+        public record ThreadVm(string ChannelId, string Title, bool IsItemThread, string? ItemPhoto, string DisplayName, string LastMessageLocal);
     }
 }

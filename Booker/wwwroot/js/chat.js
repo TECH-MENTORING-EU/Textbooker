@@ -15,6 +15,17 @@ function chatScrollToNewest() {
     }
 }
 
+function chatSelectThread(link) {
+    // Sidebar HTMX swap: keep the highlight on the thread just opened.
+    document.querySelectorAll(".chat-sidebar .thread-list a.active").forEach((active) => {
+        active.classList.remove("active");
+        active.removeAttribute("aria-current");
+    });
+    link.classList.add("active");
+    link.setAttribute("aria-current", "page");
+    chatScrollToNewest();
+}
+
 function chatAfterSend(form) {
     // The first sent message clears the empty-state placeholder.
     document.querySelector("#chat-history .chat-empty")?.remove();
