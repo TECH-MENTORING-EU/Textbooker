@@ -108,10 +108,10 @@ namespace Booker.Pages
         public static string FormatDateWithSpecialCases(DateTime? dateTime) =>
             FormatDateWithSpecialCases(dateTime, DateTime.UtcNow, PolishTimeZone);
 
-            // Storage keeps UTC; "dzisiaj"/"wczoraj" must be judged in Polish local time.
-            // EF materializes DateTimes with Kind=Unspecified, and ConvertTime would
-            // then read them as server-local; force UTC and convert from UTC.
-            public static string FormatDateWithSpecialCases(DateTime? dateTime, DateTime nowUtc, TimeZoneInfo timeZone)
+        // Storage keeps UTC; "dzisiaj"/"wczoraj" must be judged in Polish local time.
+        // EF materializes DateTimes with Kind=Unspecified, and ConvertTime would
+        // then read them as server-local; force UTC and convert from UTC.
+        public static string FormatDateWithSpecialCases(DateTime? dateTime, DateTime nowUtc, TimeZoneInfo timeZone)
         {
             if (!dateTime.HasValue)
                 return "Brak daty";
