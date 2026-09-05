@@ -13,7 +13,8 @@
             <article class="rating-item">
                 <div class="rating-header">
                     <div class="rating-user">
-                        <img src="@rating.Reviewer.Photo" alt="Zdjęcie @rating.Reviewer.UserName" class="rating-avatar" />
+                        <img src="@(string.IsNullOrWhiteSpace(rating.Reviewer.Photo) ? "/img/default-profile-picture.jpg" : rating.Reviewer.Photo)"
+                             alt="Zdjęcie @rating.Reviewer.UserName" class="rating-avatar" />
                         <div>
                             <strong>
                                 <a asp-page="/Profile/Index" asp-route-id="@rating.ReviewerId">@rating.Reviewer.UserName</a>
@@ -43,12 +44,14 @@
                 @if (!string.IsNullOrEmpty(rating.Reply))
                 {
                     <div class="rating-reply">
-                        <strong>Odpowiedź:</strong>
+                        <div class="rating-reply-header">
+                            <span class="rating-reply-label">Odpowiedź sprzedającego</span>
+                            @if (rating.RepliedAt.HasValue)
+                            {
+                                <small>@rating.RepliedAt.Value.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("pl-PL"))</small>
+                            }
+                        </div>
                         <p>@rating.Reply</p>
-                        @if (rating.RepliedAt.HasValue)
-                        {
-                            <small>@rating.RepliedAt.Value.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("pl-PL"))</small>
-                        }
                     </div>
                 }
                 else if (rating.RevieweeId == currentUserId)

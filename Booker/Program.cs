@@ -182,5 +182,4 @@ if (app.Environment.IsDevelopment())
 
 
 await app.InitializeRolesAsync();
-app.UseStaticFiles();
 app.Run();

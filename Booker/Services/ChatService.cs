@@ -34,10 +34,10 @@ namespace Booker.Services
 
         public async Task<ChatMessageResult> AddMessageAsync(string dealId, int userId, string content, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(dealId)) return ChatMessageResult.Failure("DealId required");
-            if (string.IsNullOrWhiteSpace(content)) return ChatMessageResult.Failure("Content required");
+            if (string.IsNullOrWhiteSpace(dealId)) return ChatMessageResult.Failure("Brak identyfikatora rozmowy.");
+            if (string.IsNullOrWhiteSpace(content)) return ChatMessageResult.Failure("Wiadomość nie może być pusta.");
             content = Sanitize(content);
-            if (content.Length > 500) return ChatMessageResult.Failure("Too long");
+            if (content.Length > 500) return ChatMessageResult.Failure("Wiadomość nie może przekraczać 500 znaków.");
 
             // Anti-spam: rate limit, duplicate suppression, link filtering.
             var verdict = _moderation.Check(userId, content, DateTimeOffset.UtcNow);
@@ -49,7 +49,7 @@ namespace Booker.Services
                 return ChatMessageResult.Failure("Wiadomości nie mogą zawierać linków.");
 
             var user = await _context.Users.FindAsync([userId], cancellationToken);
-            if (user == null) return ChatMessageResult.Failure("User not found");
+            if (user == null) return ChatMessageResult.Failure("Nie znaleziono użytkownika.");
 
             var entity = new ChatMessage
             {
