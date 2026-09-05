@@ -69,6 +69,8 @@ namespace Booker.Areas.Admin.Pages
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
 
+            await _itemManager.DeleteViewsByUserAsync(user.Id);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {

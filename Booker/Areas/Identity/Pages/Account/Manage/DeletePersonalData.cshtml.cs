@@ -21,19 +21,22 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly ILogger<DeletePersonalDataModel> _logger;
         private readonly FavoritesManager _favoritesManager;
         private readonly UserPhotoManager _userPhotoManager;
+        private readonly ItemManager _itemManager;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ILogger<DeletePersonalDataModel> logger,
             FavoritesManager favoritesManager,
-            UserPhotoManager userPhotoManager)
+            UserPhotoManager userPhotoManager,
+            ItemManager itemManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _favoritesManager = favoritesManager;
             _userPhotoManager = userPhotoManager;
+            _itemManager = itemManager;
         }
 
         /// <summary>
@@ -96,6 +99,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
             var userId = await _userManager.GetUserIdAsync(user);
             await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+            await _itemManager.DeleteViewsByUserAsync(user.Id);
 
             // The keys must be collected before the account is deleted - the item rows
             // cascade away with the account and the keys cannot be read afterwards.
