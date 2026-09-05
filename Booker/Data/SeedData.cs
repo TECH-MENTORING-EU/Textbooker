@@ -303,7 +303,9 @@
                         CreatedAt = DateTime.Now.AddDays(-(Random.Shared.Next(7 * 24 * 60) / (24 * 60.0))),
                         Description = "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.",
                         State = "bardzo dobry",
-                        Photo = "https://images.unsplash.com/photo-1517770413964-df8ca61194a6?q=80&w=1770&auto=format&fit=crop&ixlib=rb-.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fA%3D%3D"
+                        // A root-relative asset passes GetPhotoUrl trust checks; a foreign absolute
+                        // URL (the previous Unsplash link) would render as the default placeholder.
+                        Photo = "/img/default-book.svg"
                     };
                 })
                 .OrderBy(i => i.CreatedAt)
