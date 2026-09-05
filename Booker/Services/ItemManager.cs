@@ -27,6 +27,8 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
     };
     
     public record Parameters(string? Search, List<Grade> Grades, Subject? Subject, Level? Level, decimal? MinPrice, decimal? MaxPrice);
+
+    public record PagedItems(List<Item> Items, bool HasMorePages);
     public record ItemModel(
         User User,
         StaticDataManager.Parameters Parameters,
@@ -95,11 +97,13 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
     public IAsyncEnumerable<Item> GetAllItemsAsync(User? currentUser = null)
     {
-        var query = GetAllItemsQueryable();
+        var query = GetAllItemsQueryable()
+            .AsNoTracking();
         query = FilterByUserSchool(query, currentUser);
         
         return query
             .OrderByDescending(i => i.CreatedAt)
+            .ThenBy(i => i.Id)
             .AsAsyncEnumerable();
     }
 
@@ -111,48 +115,80 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         return query.CountAsync();
     }
 
-    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids, User? currentUser = null)
+    /// <summary>
+    /// Pages the filtered listing entirely in SQL: filters, visibility, school isolation
+    /// and newest-first ordering all run as a single query with OFFSET/FETCH paging.
+    /// One extra row is fetched so a next page can be detected without a COUNT query.
+    /// </summary>
+    public Task<PagedItems> GetPagedItemsByParamsAsync(
+        Parameters input,
+        int pageNumber,
+        int pageSize,
+        User? currentUser = null,
+        bool includeHidden = false)
+        => GetPagedItemsCoreAsync(input, ids: null, pageNumber, pageSize, currentUser, includeHidden);
+
+    public Task<PagedItems> GetPagedItemsByIdsAsync(
+        IEnumerable<int> ids,
+        int pageNumber,
+        int pageSize,
+        User? currentUser = null,
+        bool includeHidden = false)
+        => GetPagedItemsCoreAsync(input: null, ids, pageNumber, pageSize, currentUser, includeHidden);
+
+    /// <summary>
+    /// Returns the newest visible items for the landing page, honoring school isolation.
+    /// </summary>
+    public Task<List<Item>> GetRecentItemsAsync(int count, User? currentUser = null)
     {
-        var query = GetAllItemsQueryable();
+        var query = GetAllItemsQueryable()
+            .AsNoTracking();
         query = FilterByUserSchool(query, currentUser);
-        
+
         return query
-            .Where(i => ids.Contains(i.Id))
+            .Where(i => i.IsVisible)
             .OrderByDescending(i => i.CreatedAt)
-            .AsAsyncEnumerable();
+            .ThenBy(i => i.Id)
+            .Take(count)
+            .ToListAsync();
     }
 
-    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize, User? currentUser = null)
+    private async Task<PagedItems> GetPagedItemsCoreAsync(
+        Parameters? input,
+        IEnumerable<int>? ids,
+        int pageNumber,
+        int pageSize,
+        User? currentUser,
+        bool includeHidden)
     {
-        var query = GetAllItemsQueryable();
+        var query = GetAllItemsQueryable()
+            .AsNoTracking();
         query = FilterByUserSchool(query, currentUser);
-        
-        return query
-            .Where(i => ids.Contains(i.Id))
+        if (ids is not null)
+        {
+            query = query.Where(i => ids.Contains(i.Id));
+        }
+        if (input is not null)
+        {
+            query = ApplyFilters(query, input);
+        }
+        if (!includeHidden)
+        {
+            // Visibility must filter before paging, otherwise a page can end up
+            // shorter than pageSize whenever hidden rows land inside it.
+            query = query.Where(i => i.IsVisible);
+        }
+
+        var items = await query
+            // Id breaks ties on CreatedAt; without it OFFSET/FETCH ordering is
+            // non-deterministic and rows can repeat or vanish between pages.
             .OrderByDescending(i => i.CreatedAt)
+            .ThenBy(i => i.Id)
             .Skip(pageNumber * pageSize)
-            .Take(pageSize)
-            .AsAsyncEnumerable();
-    }
+            .Take(pageSize + 1)
+            .ToListAsync();
 
-    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input, User? currentUser = null)
-    {
-        var query = GetAllItemsQueryable();
-        query = FilterByUserSchool(query, currentUser);
-        query = ApplyFilters(query, input);
-
-        return query
-            .Select(i => i.Id)
-            .AsAsyncEnumerable();
-    }
-
-    public Task<int> GetItemsCountByParamsAsync(Parameters input, User? currentUser = null)
-    {
-        var query = GetAllItemsQueryable();
-        query = FilterByUserSchool(query, currentUser);
-        query = ApplyFilters(query, input);
-
-        return query.CountAsync();
+        return new PagedItems(items.Take(pageSize).ToList(), items.Count > pageSize);
     }
 
     public IAsyncEnumerable<int> GetUserItemIdsAsync(int userId)

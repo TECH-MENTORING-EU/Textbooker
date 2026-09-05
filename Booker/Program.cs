@@ -72,6 +72,9 @@ builder.Services.AddRateLimitPolicies();
 builder.Services.AddDbContext<DataContext>(options =>
 {
     //options.UseInMemoryDatabase("InMemoryDatabaseName");
+    // Production runs SQL Server 2012 (Webio), which has no OPENJSON (SQL 2016+).
+    // The compat-level pin makes EF Core inline list parameters (ids, grades) as
+    // literals instead of translating them to OPENJSON, which would fail at runtime.
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), o => o.UseCompatibilityLevel(110));
 });
 
