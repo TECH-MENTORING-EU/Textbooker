@@ -45,9 +45,10 @@ namespace Booker.Services
         Task MarkThreadReadAsync(string channelId, int userId, DateTime utcNow, CancellationToken ct);
 
         /// <summary>
-        /// Moves the thread's last-message stamp and marks the SENDER as
-        /// caught up, so own messages never count as unread for their author.
+        /// Deletes every thread the user took part in, together with its
+        /// messages. Threads have no cascading link to Users, so account
+        /// deletion has to remove them explicitly before the user row goes.
         /// </summary>
-        Task UpdateLastMessageUtcAsync(string channelId, int senderId, DateTime utcNow, CancellationToken ct);
+        Task DeleteThreadsForUserAsync(int userId, CancellationToken ct);
     }
 }

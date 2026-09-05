@@ -1,6 +1,7 @@
 using Booker.Data;
 using Booker.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Booker.Tests;
@@ -39,6 +40,21 @@ public class ChatThreadUnreadTests
     private static ChatThreadService NewService(DataContext context) =>
         new(context, null!, null!);
 
+    private static ChatService NewChatService(DataContext context) =>
+        new(context, NullLogger<ChatService>.Instance,
+            new ChatModerationService(Array.Empty<string>()));
+
+    // Simulates an incoming message from user B straight on the thread row,
+    // including the sender stamp the real send path applies; the send path
+    // itself is covered by SendingCountsAsReadingForTheSender.
+    private static void ReceiveMessage(DataContext context, DateTime at)
+    {
+        var thread = context.ChatThreads.Single(t => t.ChannelId == "c1");
+        thread.LastMessageUtc = at;
+        thread.UserBReadUtc = at; // the sender has seen their own message
+        context.SaveChanges();
+    }
+
     [Fact]
     public async Task ThreadStartedByUserIsNotUnreadForThem()
     {
@@ -56,7 +72,7 @@ public class ChatThreadUnreadTests
         var svc = NewService(context);
 
         // B writes one minute after creation; A never opened the thread.
-        await svc.UpdateLastMessageUtcAsync("c1", senderId: 2, T0.AddMinutes(1), default);
+        ReceiveMessage(context, T0.AddMinutes(1));
 
         Assert.Equal(1, await svc.GetUnreadCountAsync(1, default));
         Assert.Equal(0, await svc.GetUnreadCountAsync(2, default));
@@ -67,7 +83,7 @@ public class ChatThreadUnreadTests
     {
         await using var context = CreateContext();
         var svc = NewService(context);
-        await svc.UpdateLastMessageUtcAsync("c1", senderId: 2, T0.AddMinutes(1), default);
+        ReceiveMessage(context, T0.AddMinutes(1));
 
         await svc.MarkThreadReadAsync("c1", userId: 1, T0.AddMinutes(2), default);
 
@@ -78,13 +94,31 @@ public class ChatThreadUnreadTests
     public async Task SendingCountsAsReadingForTheSender()
     {
         await using var context = CreateContext();
+        var chat = NewChatService(context);
+
+        var result = await chat.AddMessageAsync("c1", userId: 1, "hello", default);
+
+        Assert.True(result.Success);
         var svc = NewService(context);
-
-        await svc.UpdateLastMessageUtcAsync("c1", senderId: 1, T0.AddMinutes(1), default);
-
+        // The sender has obviously seen their own message...
         Assert.Equal(0, await svc.GetUnreadCountAsync(1, default));
-        // but the other participant sees it as unread
+        // ...but the other participant sees it as unread.
         Assert.Equal(1, await svc.GetUnreadCountAsync(2, default));
+    }
+
+    [Fact]
+    public async Task SendingUpdatesTheThreadStampInTheSameSave()
+    {
+        await using var context = CreateContext();
+        var chat = NewChatService(context);
+
+        var result = await chat.AddMessageAsync("c1", userId: 1, "hello", default);
+
+        Assert.True(result.Success);
+        var thread = await context.ChatThreads.SingleAsync(t => t.ChannelId == "c1");
+        var message = await context.ChatMessages.SingleAsync(m => m.DealId == "c1");
+        // One SaveChanges commits both: message and thread stamp agree.
+        Assert.Equal(message.CreatedUtc, thread.LastMessageUtc);
     }
 
     [Fact]
@@ -92,7 +126,7 @@ public class ChatThreadUnreadTests
     {
         await using var context = CreateContext();
         var svc = NewService(context);
-        await svc.UpdateLastMessageUtcAsync("c1", senderId: 2, T0.AddMinutes(1), default);
+        ReceiveMessage(context, T0.AddMinutes(1));
 
         Assert.Equal(0, await svc.GetUnreadCountAsync(3, default));
     }

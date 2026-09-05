@@ -27,8 +27,19 @@ function chatSelectThread(link) {
 }
 
 function chatAfterSend(form) {
+    const history = document.querySelector("#chat-history");
+
+    // A rejected message arrives as a System note instead of a chat bubble.
+    // Keep the typed text (and the empty-state placeholder) so the message
+    // can be corrected and sent again instead of retyping it.
+    const last = history?.lastElementChild;
+    if (last?.classList.contains("system")) {
+        chatScrollToNewest();
+        return;
+    }
+
     // The first sent message clears the empty-state placeholder.
-    document.querySelector("#chat-history .chat-empty")?.remove();
+    history?.querySelector(".chat-empty")?.remove();
 
     // The send form: clear the textarea for the next message.
     const textarea = form.querySelector("textarea");

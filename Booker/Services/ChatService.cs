@@ -8,13 +8,11 @@ namespace Booker.Services
     {
         private readonly DataContext _context;
         private readonly ILogger<ChatService> _logger;
-        private readonly IChatThreadService _threadService; // added
         private readonly ChatModerationService _moderation;
-        public ChatService(DataContext context, ILogger<ChatService> logger, IChatThreadService threadService, ChatModerationService moderation)
+        public ChatService(DataContext context, ILogger<ChatService> logger, ChatModerationService moderation)
         {
             _context = context;
             _logger = logger;
-            _threadService = threadService; // added
             _moderation = moderation;
         }
 
@@ -61,11 +59,25 @@ namespace Booker.Services
                 CreatedUtc = DateTime.UtcNow
             };
             _context.ChatMessages.Add(entity);
-            await _context.SaveChangesAsync(cancellationToken);
 
-            // update thread last message timestamp if thread exists; the
-            // sender is stamped as read so own messages are never "unread"
-            await _threadService.UpdateLastMessageUtcAsync(dealId, userId, DateTime.UtcNow, cancellationToken);
+            // Stamp the thread in the same SaveChanges: the message and the
+            // unread bookkeeping commit together, so a failure cannot leave
+            // one behind. The sender counts as having read their own message.
+            var thread = await _context.ChatThreads.FirstOrDefaultAsync(
+                t => t.ChannelId == dealId, cancellationToken);
+            if (thread != null)
+            {
+                thread.LastMessageUtc = entity.CreatedUtc;
+                if (thread.UserAId == userId) thread.UserAReadUtc = entity.CreatedUtc;
+                else if (thread.UserBId == userId) thread.UserBReadUtc = entity.CreatedUtc;
+            }
+            else
+            {
+                _logger.LogWarning("Message {MessageId} saved for unknown channel {DealId}; unread tracking skipped",
+                    entity.Id, dealId);
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
 
             var dto = new ChatMessageDto(entity.Id, entity.DealId, entity.UserId, user.UserName ?? $"U{userId}", entity.Content, entity.CreatedUtc);
             return ChatMessageResult.Ok(dto);
