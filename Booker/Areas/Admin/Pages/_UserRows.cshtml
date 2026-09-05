@@ -61,16 +61,17 @@
                         </p>
                         <label for="lockout-days-@user.Id">Liczba dni</label>
                         <input type="number" id="lockout-days-@user.Id" name="days" value="7" step="1" />
+                        <small id="lockout-error-@user.Id" role="alert" class="text-danger"></small>
                         <footer>
-                            <button type="button" class="secondary" onclick="document.getElementById('lockout-days-@user.Id').value='7'; this.closest('dialog').close()">Anuluj</button>
-                            <button type="button"
+                            <button type="button" class="secondary" onclick="document.getElementById('lockout-days-@user.Id').value='7'; document.getElementById('lockout-error-@user.Id').textContent=''; this.closest('dialog').close()">Anuluj</button>
+                            <button type="button" id="confirmLockout"
                                     hx-post="?handler=Lockout"
                                     hx-vals='{"id": @user.Id}'
                                     hx-include="#lockout-days-@user.Id"
                                     hx-target="closest tr"
                                     hx-swap="outerHTML"
-                                    antiforgery
-                                    onclick="this.closest('dialog').close()">Zablokuj</button>
+                                    data-error-target="lockout-error-@user.Id"
+                                    antiforgery>Zablokuj</button>
                         </footer>
                     </article>
                 </dialog>

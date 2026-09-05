@@ -4,12 +4,14 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Booker.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
@@ -18,15 +20,18 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly DataContext _context;
+        private readonly ILogger<IndexModel> _logger;
 
         public IndexModel(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            DataContext context)
+            DataContext context,
+            ILogger<IndexModel> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
+            _logger = logger;
         }
 
         // RODO - task 06: the school can't be changed from this form - deliberately not part
@@ -198,7 +203,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
                 if (!setPhoneResult.Succeeded)
                 {
-                    StatusMessage = "Wystąpił nieznany błąd podczas próby zmiany numeru telefonu.";
+                    _logger.LogWarning("Zmiana numeru telefonu użytkownika {UserId} nie powiodła się: {Errors}.",
+                        _userManager.GetUserId(User), DescribeErrors(setPhoneResult));
+                    StatusMessage = $"Nie udało się zmienić numeru telefonu: {DescribeErrors(setPhoneResult)}";
                     return RedirectToPage();
                 }
             }
@@ -214,11 +221,25 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             user.DisplayInstagram = Input.DisplayInstagram;
             user.DisplaySchool = Input.DisplaySchool;
 
-            await _userManager.UpdateAsync(user);
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                _logger.LogWarning("Aktualizacja profilu użytkownika {UserId} nie powiodła się: {Errors}.",
+                    _userManager.GetUserId(User), DescribeErrors(updateResult));
+                StatusMessage = $"Nie udało się zapisać profilu: {DescribeErrors(updateResult)}";
+                return RedirectToPage();
+            }
 
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Twój profil został zaktualizowany.";
             return RedirectToPage();
         }
+
+        // A failed IdentityResult always carries its reasons - surface them (already translated
+        // by ErrorDescriber) instead of claiming the cause is unknown.
+        private static string DescribeErrors(IdentityResult result)
+            => result.Errors.Any()
+                ? string.Join(" ", result.Errors.Select(e => e.Description))
+                : "spróbuj ponownie za chwilę.";
     }
 }

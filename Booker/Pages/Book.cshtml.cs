@@ -97,9 +97,12 @@ namespace Booker.Pages
             // in process memory (see ContactRevealLimiter).
             if (!contactRevealLimiter.TryRegisterReveal(currentUser.Id))
             {
-                logger.LogWarning(
-                    "Użytkownik {UserName} przekroczył limit ujawnień danych kontaktowych.",
-                    User.Identity?.Name);
+                if (contactRevealLimiter.ShouldLogRejection(currentUser.Id))
+                {
+                    logger.LogWarning(
+                        "Użytkownik {UserName} przekroczył limit ujawnień danych kontaktowych.",
+                        User.Identity?.Name);
+                }
 
                 return Content(
                     "<p role=\"alert\">Zbyt wiele wyświetlonych kontaktów w krótkim czasie. " +

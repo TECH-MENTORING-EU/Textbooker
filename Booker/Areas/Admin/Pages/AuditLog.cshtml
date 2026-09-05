@@ -68,3 +68,32 @@
     </tbody>
 </table>
 </div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Stronicowanie dziennika działań">
+        <ul class="pagination">
+            @if (Model.PageNumber > 0)
+            {
+                <li>
+                    <a role="button" class="outline" asp-page="./AuditLog"
+                       asp-route-AdminUserName="@Model.AdminUserName"
+                       asp-route-From="@(Model.From?.ToString("yyyy-MM-dd"))"
+                       asp-route-To="@(Model.To?.ToString("yyyy-MM-dd"))"
+                       asp-route-PageNumber="@(Model.PageNumber - 1)">Poprzednia</a>
+                </li>
+            }
+            <li>Strona @(Model.PageNumber + 1) z @Model.TotalPages</li>
+            @if (Model.PageNumber + 1 < Model.TotalPages)
+            {
+                <li>
+                    <a role="button" class="outline" asp-page="./AuditLog"
+                       asp-route-AdminUserName="@Model.AdminUserName"
+                       asp-route-From="@(Model.From?.ToString("yyyy-MM-dd"))"
+                       asp-route-To="@(Model.To?.ToString("yyyy-MM-dd"))"
+                       asp-route-PageNumber="@(Model.PageNumber + 1)">Następna</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

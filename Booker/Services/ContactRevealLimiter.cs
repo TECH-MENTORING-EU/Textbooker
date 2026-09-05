@@ -10,6 +10,7 @@ namespace Booker.Services;
 public class ContactRevealLimiter(IMemoryCache cache, IOptions<ContactRevealLimitOptions> options)
 {
     private static string CacheKey(int userId) => $"contact-reveal-times:{userId}";
+    private static string RejectionWarnedCacheKey(int userId) => $"contact-reveal-warned:{userId}";
 
     // Per-user locks guard cache initialization: IMemoryCache.GetOrCreate does not serialize
     // concurrent factories, so two first-requests for the same user could otherwise each create
@@ -40,6 +41,26 @@ public class ContactRevealLimiter(IMemoryCache cache, IOptions<ContactRevealLimi
             }
 
             reveals.Add(now);
+            return true;
+        }
+    }
+
+    // An authenticated client can hit the reveal endpoint an unbounded number of times after
+    // the limit is reached; without this, every single rejected request would write a warning
+    // log line. Only the first rejection in a rolling window is logged per user.
+    public bool ShouldLogRejection(int userId)
+    {
+        var key = RejectionWarnedCacheKey(userId);
+        var userLock = _userLocks.GetOrAdd(userId, static _ => new object());
+
+        lock (userLock)
+        {
+            if (cache.TryGetValue(key, out _))
+            {
+                return false;
+            }
+
+            cache.Set(key, true, TimeSpan.FromHours(1));
             return true;
         }
     }

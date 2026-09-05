@@ -104,6 +104,35 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             .AsAsyncEnumerable();
     }
 
+    public record AdminItemSummary(int Id, string BookTitle, string? SellerUserName, DateTime CreatedAt, bool FlaggedForReview, string Description);
+
+    // RODO - task 08 admin review: projects only the fields the moderation table displays
+    // (instead of materializing the full book/grades/subject/level/user/school graph via
+    // GetAllItemsAsync) and paginates server-side, since this listing spans every school
+    // and grows without bound as more listings are created.
+    public async Task<List<AdminItemSummary>> GetAdminItemsPageAsync(int pageNumber, int pageSize, bool onlyFlagged = false)
+    {
+        var query = onlyFlagged
+            ? context.Items.AsNoTracking().Where(i => i.FlaggedForReview)
+            : context.Items.AsNoTracking();
+
+        return await query
+            .OrderByDescending(i => i.CreatedAt)
+            .Skip(pageNumber * pageSize)
+            .Take(pageSize)
+            .Select(i => new AdminItemSummary(i.Id, i.Book.Title, i.User.UserName, i.CreatedAt, i.FlaggedForReview, i.Description))
+            .ToListAsync();
+    }
+
+    public Task<int> GetAdminItemsCountAsync(bool onlyFlagged = false)
+    {
+        var query = onlyFlagged
+            ? context.Items.AsNoTracking().Where(i => i.FlaggedForReview)
+            : context.Items.AsNoTracking();
+
+        return query.CountAsync();
+    }
+
     public Task<int> GetAllItemsCountAsync(User? currentUser = null)
     {
         var query = GetAllItemsQueryable();

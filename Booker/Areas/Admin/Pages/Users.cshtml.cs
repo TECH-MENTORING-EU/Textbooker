@@ -110,9 +110,18 @@ namespace Booker.Areas.Admin.Pages
             // lockout that still hides the user), and unbounded values could overflow AddDays.
             if (days != -1 && (days < 1 || days > _adminLockoutOptions.MaxDurationDays))
             {
-                ModelState.AddModelError(string.Empty, "Nieprawidłowa liczba dni blokady.");
-                Users = _userManager.Users.ToList();
-                return new StatusCodeResult(400);
+                var message = $"Nieprawidłowa liczba dni blokady. Podaj -1 (bezterminowo) lub liczbę od 1 do {_adminLockoutOptions.MaxDurationDays}.";
+                ModelState.AddModelError(string.Empty, message);
+
+                // The lockout dialog's submit button targets its own error box directly
+                // (see _UserRows.cshtml), so the message is actually displayed to the admin
+                // and the dialog is left open instead of silently closing on failure.
+                return new ContentResult
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Content = message,
+                    ContentType = "text/plain"
+                };
             }
 
             var user = await _userManager.FindByIdAsync(id.ToString());
