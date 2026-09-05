@@ -105,7 +105,9 @@ namespace Booker.Services
         /// <summary>
         /// Matches every configured word even when non-letter characters are
         /// scattered between its letters, so asterisk-style masking of single
-        /// characters does not sneak a word past the filter.
+        /// characters does not sneak a word past the filter. Separators are
+        /// any non-letters, so Cyrillic entries are matched the same way as
+        /// Latin ones (the marketplace also serves Ukrainian users).
         /// </summary>
         private static Regex BuildBannedPattern(IEnumerable<string> words)
         {
@@ -116,8 +118,7 @@ namespace Booker.Services
                 return new Regex("(?!x)x", RegexOptions.Compiled);
             }
 
-            // \b relies on word characters, so keep the separators to letters only.
-            var separator = @"[^a-ząćęłńóśźż]*";
+            var separator = @"[^\p{L}]*";
             var alternation = string.Join("|",
                 list.Select(w => string.Join(separator, w.Trim().Select(c => c.ToString()))));
             return new Regex($@"(?i)\b(?:{alternation})\b", RegexOptions.Compiled);

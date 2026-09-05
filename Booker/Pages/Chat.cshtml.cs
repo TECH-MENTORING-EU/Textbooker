@@ -145,7 +145,10 @@ namespace Booker.Pages
         }
 
         private static string RenderNotice(string error) =>
-            "<li class=\"msg other\" role=\"alert\"><div class=\"bubble\"><p class=\"content\">" +
-            $"{System.Net.WebUtility.HtmlEncode(error)}</p></div></li>";
+            // Signed as System so moderation feedback is not mistaken for a
+            // reply from the other conversation participant.
+            "<li class=\"msg system\" role=\"alert\">" +
+            "<div class=\"system-note\"><span class=\"system-name\">System</span>" +
+            $"<p class=\"content\">{System.Net.WebUtility.HtmlEncode(error)}</p></div></li>";
     }
 }

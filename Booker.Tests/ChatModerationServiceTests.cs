@@ -9,7 +9,7 @@ namespace Booker.Tests;
 /// </summary>
 public class ChatModerationServiceTests
 {
-    private static readonly string[] TestBannedWords = ["kurwa", "nigga"];
+    private static readonly string[] TestBannedWords = ["kurwa", "nigga", "хуй"];
 
     private static (ChatModerationService Svc, DateTimeOffset T0) New() =>
         (new ChatModerationService(TestBannedWords), new DateTimeOffset(2026, 9, 3, 12, 0, 0, TimeSpan.Zero));
@@ -122,6 +122,17 @@ public class ChatModerationServiceTests
         Assert.Equal(ChatModerationService.ModerationVerdict.ProfanityBlocked, svc.Check(1, content, t0));
     }
 
+    [Theory]
+    [InlineData("хуй тебе")]
+    [InlineData("Х У Й")]
+    [InlineData("ти хуй, а не продавець")]
+    public void BlocksCyrillicBannedWords(string content)
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.ProfanityBlocked, svc.Check(1, content, t0));
+    }
+
     [Fact]
     public void AcceptsWordsThatMerelyLookSimilar()
     {
@@ -129,6 +140,31 @@ public class ChatModerationServiceTests
 
         Assert.Equal(ChatModerationService.ModerationVerdict.Accepted,
             svc.Check(1, "napisze ci wieczorem", t0));
+    }
+
+    [Theory]
+    [InlineData("Привіт! Книга ще доступна?")]
+    [InlineData("Доброго дня, скільки коштує доставка?")]
+    [InlineData("Дякую, забираю завтра о 15:00")]
+    [InlineData("Mogę zapłacić BLIK-iem jutko rano")]
+    [InlineData("Pierogi i kurczak to moje ulubione dania")]
+    public void AcceptsUkrainianAndSimilarLookingMessages(string content)
+    {
+        var (svc, t0) = New();
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted, svc.Check(1, content, t0));
+    }
+
+    [Fact]
+    public void CyrillicWordBoundaryKeepsSimilarWordsAllowed()
+    {
+        // "бля" is banned, but "бляха" (a real word) must not be caught by
+        // the same rule - the boundary check works for Cyrillic too.
+        var svc = new ChatModerationService(["бля"]);
+        var t0 = DateTimeOffset.UtcNow;
+
+        Assert.Equal(ChatModerationService.ModerationVerdict.ProfanityBlocked, svc.Check(1, "бля ти", t0));
+        Assert.Equal(ChatModerationService.ModerationVerdict.Accepted, svc.Check(1, "бляха м'яка", t0));
     }
 
     [Fact]
