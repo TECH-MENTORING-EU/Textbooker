@@ -90,28 +90,27 @@
 
     .chat-header {
         display: flex;
-        align-items: baseline;
+        align-items: center;
+        justify-content: space-between;
         gap: 0.75rem;
         border-bottom: 1px solid var(--pico-muted-border-color);
         padding-bottom: 0.5rem;
 
-        h2 {
-            margin: 0;
-            font-size: 1.1rem;
+        .chat-thread-subject {
+            min-width: 0;
 
-            a {
-                text-decoration: none;
+            h2 {
+                margin: 0;
+                font-size: 1.1rem;
+
+                a {
+                    text-decoration: none;
+                }
             }
-        }
 
-        .chat-item-ref {
-            margin-left: auto;
-            color: var(--pico-muted-color);
-            font-size: 0.85rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 50%;
+            small {
+                color: var(--pico-muted-color);
+            }
         }
 
         .chat-back-link {
