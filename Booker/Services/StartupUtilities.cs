@@ -72,6 +72,7 @@ namespace Booker.Services
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, AdminHiddenAuthorizationHandler>();
 
             services.AddScoped<SessionCacheManager>();
             services.AddHostedService<MaintenanceService>();
