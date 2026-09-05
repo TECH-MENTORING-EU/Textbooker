@@ -15,18 +15,18 @@
         border-radius: 100%;
     }
 
-    hgroup {
+    // Everything next to the avatar stacks vertically, so the name, the school
+    // note and the settings button never compete for the same row.
+    .profile-heading-body {
         flex: 1;
         min-width: 0;
+    }
 
-        h1 {
-            overflow-wrap: anywhere;
-        }
+    hgroup h1 {
+        overflow-wrap: anywhere;
     }
 
     a[role=button] {
-        align-self: start;
-
         @media (max-width: map.get(map.get(pico.$breakpoints, "sm"), "viewport")) {
             display: none;
         }

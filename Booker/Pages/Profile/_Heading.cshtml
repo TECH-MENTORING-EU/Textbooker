@@ -13,27 +13,29 @@
 <section class="profile-heading" aria-label="Nagłówek profilu użytkownika">
     <img src="@profilePhotoUrl"
          alt="Zdjęcie profilowe użytkownika: @Model.RequestUser.UserName" />
-    <hgroup>
-        <h1>@Model.RequestUser.UserName</h1>
-        <p> @{ /* TODO: Add user profile description */ } </p>
-    </hgroup>
-    @if (Model.IsCurrentUser)
-    {
-        @if (!string.IsNullOrEmpty(Model.SchoolName))
+    <div class="profile-heading-body">
+        <hgroup>
+            <h1>@Model.RequestUser.UserName</h1>
+            <p> @{ /* TODO: Add user profile description */ } </p>
+        </hgroup>
+        @if (Model.IsCurrentUser)
         {
-            <p>
-                <small>
-                    Twoja szkoła: <strong>@Model.SchoolName</strong> (nie można jej zmienić — zmiana
-                    wymaga założenia nowego konta)
-                </small>
-            </p>
+            @if (!string.IsNullOrEmpty(Model.SchoolName))
+            {
+                <p>
+                    <small>
+                        Twoja szkoła: <strong>@Model.SchoolName</strong> (nie można jej zmienić — zmiana
+                        wymaga założenia nowego konta)
+                    </small>
+                </p>
+            }
+            <a role="button" class="outline" href="/Identity/Account/Manage">Ustawienia konta</a>
         }
-        <a role="button" class="outline" href="/Identity/Account/Manage">Ustawienia konta</a>
-    }
-    else if (User.Identity?.IsAuthenticated == true && Model.RequestUser.DisplaySchool && !string.IsNullOrEmpty(Model.SchoolName))
-    {
-        <p><small>Szkoła: @Model.SchoolName</small></p>
-    }
+        else if (User.Identity?.IsAuthenticated == true && Model.RequestUser.DisplaySchool && !string.IsNullOrEmpty(Model.SchoolName))
+        {
+            <p><small>Szkoła: @Model.SchoolName</small></p>
+        }
+    </div>
 </section>
 
 <h2>Kontakt</h2>
