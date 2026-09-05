@@ -15,25 +15,25 @@
     var isMessagesEnabled = Configuration.GetValue<bool>("Features:MessagesEnabled");
     <li>
         <details class="dropdown">
-                <summary class="outline" style="border-color: transparent;" aria-expanded="false" aria-controls="account-actions" aria-label="Menu konta użytkownika @userName">Witaj @userName!</summary>
-                <ul id="account-actions" aria-label="Akcje konta @userName">
-                    <li><a asp-area="" asp-page="/Profile/Index">Profil</a></li>
-                    <li><a asp-area="" asp-page="/Profile/Favorites">Ulubione</a></li>
-                    @if (isMessagesEnabled)
-                    {
-                        <li><a href="/Chat">Wiadomości</a></li>
-                    }
-                    <li><a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index">Ustawienia</a></li>
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <li><a asp-area="Admin" asp-page="/Index">Panel administracyjny</a></li>
-                    }
-                    <li>
-                        <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
-                            <button id="logout" type="submit">Wyloguj</button>
-                        </form>
-                    </li>
-                </ul>
+            <summary aria-expanded="false" aria-controls="account-actions" aria-label="Menu konta użytkownika @userName">Witaj @userName!</summary>
+            <ul id="account-actions" aria-label="Akcje konta @userName">
+                <li><a asp-area="" asp-page="/Profile/Index">Profil</a></li>
+                <li><a asp-area="" asp-page="/Profile/Favorites">Ulubione</a></li>
+                @if (isMessagesEnabled)
+                {
+                    <li><a href="/Chat">Wiadomości</a></li>
+                }
+                <li><a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index">Ustawienia</a></li>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li><a asp-area="Admin" asp-page="/Index">Panel administracyjny</a></li>
+                }
+                <li>
+                    <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
+                        <button id="logout" type="submit">Wyloguj</button>
+                    </form>
+                </li>
+            </ul>
         </details>
     </li>
     <li>

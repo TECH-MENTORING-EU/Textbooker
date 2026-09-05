@@ -276,12 +276,15 @@ document.addEventListener("DOMContentLoaded", () => {
         setOpen(!nav.classList.contains("hamburger-open"));
     });
 
-    document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && nav.classList.contains("hamburger-open")) {
-            setOpen(false);
-            hamburgerTrigger.focus();
+    // Wired into the shared document-level Escape handler above; Escape is
+    // its only trigger, so no separate keydown listener is needed here.
+    closeHamburgerMenu = () => {
+        if (!nav.classList.contains("hamburger-open")) {
+            return;
         }
-    });
+        setOpen(false);
+        hamburgerTrigger.focus();
+    };
 
     hamburgerMenu.querySelectorAll("a, button").forEach(item => {
         item.addEventListener("click", () => setOpen(false));
@@ -366,13 +369,23 @@ document.addEventListener("close", function (event) {
     }
 }, true);
 
-// Close any open dialog on Escape (works in addition to native <dialog>).
+// Set by the hamburger initializer; lets the shared Escape handler close the
+// mobile menu without knowing the nav internals. No-op while it is unset or
+// the menu is closed.
+let closeHamburgerMenu = () => {};
+
+// One delegated Escape handler for every dismissible overlay. It stays at
+// document level on purpose: focus can leave an open menu (e.g. tabbing past
+// its last item), so an element-scoped listener would stop firing while the
+// menu is still open. Native <dialog> handles Escape itself; this is a safety
+// net for dialogs and the only Escape handling dropdowns have.
 document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
-    const openDialogs = document.querySelectorAll("dialog[open]");
-    openDialogs.forEach(d => {
+    document.querySelectorAll("dialog[open]").forEach(d => {
         if (typeof d.close === "function") d.close();
     });
+    closeOpenDropdowns({ returnFocus: true });
+    closeHamburgerMenu();
 });
 
 function focusFirstFocusable(container) {
@@ -386,27 +399,48 @@ function focusFirstFocusable(container) {
     }
 }
 
-// Keep aria-expanded in sync with <details class="dropdown"> used by the account menu.
-function syncDropdownAria() {
+// Initialize the account-menu dropdown: keep aria-expanded in sync, close it
+// on item activation and outside click; Escape comes from the shared
+// document-level handler above.
+function initDropdownBehavior() {
     document.querySelectorAll("details.dropdown").forEach(details => {
         const summary = details.querySelector("summary");
         if (!summary) return;
         const update = () => summary.setAttribute("aria-expanded", details.hasAttribute("open") ? "true" : "false");
         update();
         details.addEventListener("toggle", update);
-        // Close the menu when a menu item is activated or on outside click.
+        // Close the menu when a menu item is activated.
         details.querySelectorAll("a, button").forEach(item => {
             item.addEventListener("click", () => details.removeAttribute("open"));
         });
     });
 
     document.addEventListener("click", function (event) {
-        document.querySelectorAll("details.dropdown[open]").forEach(details => {
-            if (!details.contains(event.target)) {
-                details.removeAttribute("open");
-            }
-        });
+        // Synthetic clicks dispatched on document/window have a non-Element
+        // target without closest(); bail out instead of throwing.
+        if (!(event.target instanceof Element)) return;
+        // The hamburger trigger toggles the account details itself; treating
+        // its click as "outside" would immediately undo the open state.
+        if (event.target.closest("#hamburger-toggle")) return;
+        // Clicks inside the dropdown (summary toggle, menu items) have their
+        // own close handling.
+        if (event.target.closest("details.dropdown")) return;
+
+        closeOpenDropdowns();
     });
 }
 
-document.addEventListener("DOMContentLoaded", syncDropdownAria);
+// Close every open dropdown. Returns focus to the summary only when asked
+// (Escape): the keyboard flow starts from the summary, while outside clicks
+// should leave focus where the user clicked.
+function closeOpenDropdowns({ returnFocus = false } = {}) {
+    document.querySelectorAll("details.dropdown[open]").forEach(details => {
+        const summary = details.querySelector("summary");
+        if (returnFocus && summary && details.contains(document.activeElement)) {
+            summary.focus();
+        }
+        details.removeAttribute("open");
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initDropdownBehavior);

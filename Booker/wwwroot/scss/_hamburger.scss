@@ -146,6 +146,22 @@
     }
 }
 
+/* Account dropdown summary must look like a nav link: Pico's
+   details.dropdown > summary:not([role]) fills it like a form control
+   (form-element background + placeholder color), which visually merges
+   the summary with the dropdown panel into one static-looking block. */
+#{$parent-selector} nav details.dropdown > summary:not([role]) {
+    border-color: transparent;
+    background-color: transparent;
+    color: inherit;
+
+    &:active,
+    &:focus {
+        border-color: transparent;
+        background-color: transparent;
+    }
+}
+
 .hamburger-trigger {
     display: none;
     min-width: 44px;
