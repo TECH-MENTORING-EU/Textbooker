@@ -19,7 +19,9 @@ stack of branches and PRs. They stay in the repo while the stack is in
 flight because each open PR's review context (regression history, STOP
 conditions, known-bug notes like the price-binding one below) lives here,
 not in the tests it produced. The plans are one-time executor artifacts:
-plans 002-004 already rode the stack into this branch (#88, #89, #90).
+plan 002's output already rode the stack into this branch (PR #88);
+003 and 004 were executed on other stack branches and reach main
+through the chain PR #86 merges on top of, not through this PR.
 PR #86 (plan 005) merges last, so that PR deletes this directory - the
 tests and workflows are the durable output.
 
@@ -28,9 +30,9 @@ tests and workflows are the durable output.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001  | Test foundation - xUnit project, WAF host, CI gate | P1 | M | - | DONE (this PR, #87) |
-| 002  | ItemManager characterization tests | P1 | M | 001 | DONE (PR #88) |
-| 003  | Page-handler integration regression tests | P1 | L | 001 | DONE (PR #89) |
-| 004  | Photo pipeline tests | P2 | M | 001 | DONE (PR #90) |
+| 002  | ItemManager characterization tests | P1 | M | 001 | DONE (PR #88, in this branch) |
+| 003  | Page-handler integration regression tests | P1 | L | 001 | DONE (other stack branch, not in this PR) |
+| 004  | Photo pipeline tests | P2 | M | 001 | DONE (other stack branch, not in this PR) |
 | 005  | Playwright E2E suite (in-process host) | P2 | L | 001 | IN PROGRESS (PR #86) |
 
 002, 003 and 004 are mutually independent after 001 and can run in parallel
@@ -53,8 +55,9 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **Live bug, deliberately not fixed by these plans**: decimal price binding
   is culture-dependent (query `12,50` → 1250; form `12.50` → error). The fix
   exists on local unmerged branch `fix/k6-invariant-price-binding`
-  (commit `e009560`). Plans 003 and 005 carry Skip-marked tests that turn on
-  when that branch merges - un-skip them in the merge PR.
+  (commit `e009560`; since merged to main as PR #83). Plans 003 and 005 carry
+  Skip-marked tests that turn on when that branch merges - un-skip them in the
+  merge PR.
 - The operator's working tree had an uncommitted one-line Serilog log-level
   diff in `Booker/Program.cs` (k6 leftover). Executors: see plan 001's
   "Known local-state warning".
