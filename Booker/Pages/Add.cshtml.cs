@@ -40,6 +40,7 @@ namespace Booker.Pages
             if (validatedImages == null)
             {
                 Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
                 return Page();
             }
 
