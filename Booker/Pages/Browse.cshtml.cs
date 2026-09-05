@@ -53,21 +53,41 @@ namespace Booker.Pages
             {
                 if (string.IsNullOrWhiteSpace(raw)) return null;
 
-                var normalized = raw.Trim().Replace(',', '.');
-                if (decimal.TryParse(normalized, System.Globalization.CultureInfo.InvariantCulture,
-                    out var dotDecimal))
+                // Polish notation: decimal comma ("10,50"), thousands dot or
+                // space ("1.234", "1 234"), sometimes both ("1.234,56").
+                var s = raw.Trim().Replace(" ", "");
+
+                string normalized;
+                if (s.Contains(','))
                 {
-                    return dotDecimal;
+                    // A comma is always the decimal separator, so any dot can
+                    // only group thousands ("1.234,56" -> "1234.56").
+                    normalized = s.Replace(".", "").Replace(',', '.');
+                }
+                else if (LooksLikeDotGrouping(s))
+                {
+                    // Dot-only with full 3-digit groups is grouping ("1.234" is
+                    // 1234, not 1.234); anything else keeps the dot as decimal.
+                    normalized = s.Replace(".", "");
+                }
+                else
+                {
+                    normalized = s;
                 }
 
-                // Values that keep the Polish thousands separator ("1.234,56")
-                // only parse with pl-PL number styles; anything else is dropped.
-                return decimal.TryParse(raw.Trim(), System.Globalization.NumberStyles.Number,
-                    _polish, out var polishNumber) ? polishNumber : null;
+                return decimal.TryParse(normalized, System.Globalization.CultureInfo.InvariantCulture,
+                    out var value) ? value : null;
             }
 
-            private static readonly System.Globalization.CultureInfo _polish =
-                new("pl-PL");
+            private static bool LooksLikeDotGrouping(string s)
+            {
+                // "1.234" or "12.345.678": the first group has 1-3 digits and
+                // every following group has exactly three.
+                var groups = s.Split('.');
+                return groups.Length > 1
+                    && groups[0].Length is > 0 and <= 3
+                    && groups.Skip(1).All(g => g.Length == 3);
+            }
 
             public string? Level { get; set; }
         }
