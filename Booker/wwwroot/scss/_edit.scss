@@ -16,10 +16,60 @@
             border-radius: 6px;
             border: 1px solid var(--pico-muted-border-color);
             aspect-ratio: 3 / 4;
+        }
+
+        // The label is the grid item (the invisible checkbox fills it), so the
+        // spanning classes live here, not on the image.
+        .book-image-item {
+            position: relative;
+            display: block;
+            cursor: pointer;
 
             &.main {
                 grid-column: span 2;
                 grid-row: span 2;
+            }
+
+            .keep-photo-checkbox {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                opacity: 0;
+                cursor: pointer;
+            }
+
+            // Selection state is pure CSS driven by the checkbox; the badge
+            // mirrors the .image-label--dynamic look.
+            &::after {
+                content: "Zachowane";
+                position: absolute;
+                top: 6px;
+                left: 6px;
+                z-index: 10;
+                padding: 2px 8px;
+                font-size: 12px;
+                border-radius: 4px;
+                background-color: rgba(15, 15, 15, 0.8);
+                color: white;
+            }
+
+            &:has(.keep-photo-checkbox:not(:checked)) {
+                .book-image-preview {
+                    opacity: 0.45;
+                    filter: grayscale(0.8);
+                }
+
+                &::after {
+                    content: "Do usunięcia";
+                }
+            }
+
+            &:has(.keep-photo-checkbox:focus-visible) {
+                outline: 2px solid var(--pico-primary);
+                outline-offset: 2px;
+                border-radius: 6px;
             }
         }
 

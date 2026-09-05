@@ -33,13 +33,13 @@
                        .Split(';', StringSplitOptions.RemoveEmptyEntries)
                        .Select((val, i) => (val, i)))
                         {
-                            <label class="book-image-item" style="position: relative; display: inline-block;">
+                            <label class="book-image-item @(index == 0 ? "main" : "")">
                                 <input type="checkbox" name="keptPhotos" value="@img.Trim()" checked
-                                       class="keep-photo-checkbox" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;"
+                                       class="keep-photo-checkbox"
                                        aria-label="Zachowaj zdjęcie @(index + 1)" />
                                 <img src="@PhotosManager.GetPhotoUrl(img.Trim())"
                                      alt="Zdjęcie książki @(index + 1)"
-                                     class="book-image-preview @(index == 0 ? "main" : "")" />
+                                     class="book-image-preview" />
                             </label>
                         }
                     </div>
