@@ -13,8 +13,6 @@
     }
     else
     {
-        var lastMessageId = Model.Messages.Count > 0 ? Model.Messages[^1].Id : 0;
-
         <ul class="chat-history" id="chat-history" role="log" aria-live="polite" aria-label="Historia rozmowy">
             @foreach (var message in Model.Messages)
             {
@@ -32,7 +30,7 @@
 
         <form class="chat-input" method="post" asp-page-handler="Send"
               hx-post="?handler=Send" hx-target="#chat-history" hx-swap="beforeend"
-              hx-on::after-request="chatAfterActivity(this)">
+              hx-on::after-request="chatAfterSend(this)">
             <input type="hidden" name="dealId" value="@Model.DealId" />
             <label for="chat-text">Twoja wiadomość</label>
             <textarea id="chat-text" name="text" rows="2" maxlength="500" required placeholder="Napisz wiadomość"></textarea>
@@ -40,9 +38,10 @@
         </form>
 
         <span class="chat-status"
-              hx-get="?handler=Since&dealId=@Model.DealId&afterMessageId=@lastMessageId"
+              hx-get="?handler=Since&dealId=@Model.DealId"
               hx-trigger="every 3s" hx-target="#chat-history" hx-swap="beforeend"
-              hx-on::after-request="chatAfterActivity(this)"></span>
+              hx-vals="js:{ afterMessageId: chatLastMessageId() }"
+              hx-on::after-request="chatScrollToNewest()"></span>
         <p class="chat-status">Wiadomości odświeżają się automatycznie co kilka sekund.</p>
     }
 </article>

@@ -38,7 +38,9 @@ namespace Booker.Pages
                     return new ThreadVm(
                         t.ChannelId,
                         displayNames.GetValueOrDefault(otherId, "Konto usunięte"),
-                        TimeZoneInfo.ConvertTime(t.LastMessageUtc, PolishTimeZone).ToString("yyyy-MM-dd HH:mm"));
+                        TimeZoneInfo.ConvertTimeFromUtc(
+                            DateTime.SpecifyKind(t.LastMessageUtc, DateTimeKind.Utc),
+                            PolishTimeZone).ToString("yyyy-MM-dd HH:mm"));
                 })
                 .ToList();
         }
