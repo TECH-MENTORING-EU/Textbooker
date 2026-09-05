@@ -37,6 +37,7 @@ namespace Booker.Pages
             if (validatedImages == null)
             {
                 Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
                 return Page();
             }
 
@@ -50,7 +51,7 @@ namespace Booker.Pages
                 result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
                     (await _userManager.GetUserAsync(User))!,
                     parameters,
-                    Input.Description,
+                    Input.Description ?? string.Empty,
                     Input.State,
                     Input.Price,
                     validatedImages.Streams,

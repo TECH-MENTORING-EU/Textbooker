@@ -54,14 +54,17 @@
             <small><span asp-validation-for="Input.Level" id="Input_Level-error" role="alert"></span></small>
 
             <label asp-for="Input.Description">Opis ogłoszenia:</label>
-            <textarea asp-for="Input.Description" rows="4" maxlength="200" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." aria-describedby="Input_Description-counter"></textarea>
-            <small id="Input_Description-counter"><span class="char-count">0 / 200</span></small>
+            <textarea asp-for="Input.Description" rows="4" maxlength="@(Shared.ItemInputModel.MaxDescriptionLength)" placeholder="Tutaj przekaż ważne informacje dla kupującego np. potencjalne miejsce spotkania..." aria-describedby="Input_Description-error Input_Description-counter"></textarea>
+            <small>
+                <span asp-validation-for="Input.Description" id="Input_Description-error" role="alert"></span>
+                <span class="char-count" id="Input_Description-counter">0 / @(Shared.ItemInputModel.MaxDescriptionLength)</span>
+            </small>
 
             <label asp-for="Input.State">Stan książki:</label>
-            <textarea asp-for="Input.State" rows="3" maxlength="40" placeholder="Opisz stan książki…" aria-describedby="Input_State-error Input_State-counter"></textarea>
+            <textarea asp-for="Input.State" rows="3" maxlength="@(Shared.ItemInputModel.MaxStateLength)" placeholder="Opisz stan książki…" aria-describedby="Input_State-error Input_State-counter"></textarea>
             <small>
                 <span asp-validation-for="Input.State" id="Input_State-error" role="alert"></span>
-                <span class="char-count" id="Input_State-counter" style="text-align: right;">0 / 40</span>
+                <span class="char-count" id="Input_State-counter" style="text-align: right;">0 / @(Shared.ItemInputModel.MaxStateLength)</span>
             </small>
 
             <label asp-for="Input.Price">Cena:</label>
