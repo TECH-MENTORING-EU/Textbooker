@@ -250,8 +250,6 @@
         gap: 0.5rem;
         // The button stretches to the textarea's height on the shared row.
         align-items: stretch;
-        // Keep the corner clear for the fixed help button.
-        padding-right: 4.5rem;
 
         label {
             // The visible label is redundant next to the placeholder; keep it
