@@ -39,56 +39,8 @@ namespace Booker.Pages
             public string? Search { get; set; }
             public string? Grade { get; set; }
             public string? Subject { get; set; }
-
-            // Prices bind as strings: Polish users type the decimal comma
-            // ("10,50"), but decimal model binding only accepts the dot, so a
-            // comma value would silently bind to null and drop the filter.
-            public string? MinPrice { get; set; }
-            public string? MaxPrice { get; set; }
-
-            public decimal? MinPriceValue => ParseFlexibleDecimal(MinPrice);
-            public decimal? MaxPriceValue => ParseFlexibleDecimal(MaxPrice);
-
-            private static decimal? ParseFlexibleDecimal(string? raw)
-            {
-                if (string.IsNullOrWhiteSpace(raw)) return null;
-
-                // Polish notation: decimal comma ("10,50"), thousands dot or
-                // space ("1.234", "1 234"), sometimes both ("1.234,56").
-                var s = raw.Trim().Replace(" ", "");
-
-                string normalized;
-                if (s.Contains(','))
-                {
-                    // A comma is always the decimal separator, so any dot can
-                    // only group thousands ("1.234,56" -> "1234.56").
-                    normalized = s.Replace(".", "").Replace(',', '.');
-                }
-                else if (LooksLikeDotGrouping(s))
-                {
-                    // Dot-only with full 3-digit groups is grouping ("1.234" is
-                    // 1234, not 1.234); anything else keeps the dot as decimal.
-                    normalized = s.Replace(".", "");
-                }
-                else
-                {
-                    normalized = s;
-                }
-
-                return decimal.TryParse(normalized, System.Globalization.CultureInfo.InvariantCulture,
-                    out var value) ? value : null;
-            }
-
-            private static bool LooksLikeDotGrouping(string s)
-            {
-                // "1.234" or "12.345.678": the first group has 1-3 digits and
-                // every following group has exactly three.
-                var groups = s.Split('.');
-                return groups.Length > 1
-                    && groups[0].Length is > 0 and <= 3
-                    && groups.Skip(1).All(g => g.Length == 3);
-            }
-
+            public decimal? MinPrice { get; set; }
+            public decimal? MaxPrice { get; set; }
             public string? Level { get; set; }
         }
 
@@ -108,8 +60,8 @@ namespace Booker.Pages
                 Params.Grades,
                 Params.Subject,
                 Params.Level,
-                Input?.MinPriceValue,
-                Input?.MaxPriceValue
+                Input?.MinPrice,
+                Input?.MaxPrice
             );
 
             var currentUser = User.Identity?.IsAuthenticated == true
