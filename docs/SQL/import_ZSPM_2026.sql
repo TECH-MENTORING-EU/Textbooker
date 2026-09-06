@@ -26,17 +26,17 @@ BEGIN TRANSACTION;
 DECLARE @SchoolName nvarchar(200) = N'Zespół Szkół Poligraficzno-Mechanicznych w Katowicach';
 DECLARE @SchoolDomain nvarchar(500) = N'zspm.pl';
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Schools WHERE LOWER(LTRIM(RTRIM(EmailDomain))) = @SchoolDomain)
+IF NOT EXISTS (SELECT 1 FROM Schools WHERE LOWER(LTRIM(RTRIM(EmailDomain))) = @SchoolDomain)
 BEGIN
-    INSERT INTO dbo.Schools (Name, EmailDomain, IsActive, CreatedAt)
+    INSERT INTO Schools (Name, EmailDomain, IsActive, CreatedAt)
     VALUES (@SchoolName, @SchoolDomain, 1, SYSUTCDATETIME());
 END;
 
 /* ---------------------------------------------------------------------------
    2. Słowniki
    --------------------------------------------------------------------------- */
-SET IDENTITY_INSERT dbo.Subjects ON;
-INSERT INTO dbo.Subjects (Id, Name)
+SET IDENTITY_INSERT Subjects ON;
+INSERT INTO Subjects (Id, Name)
 SELECT v.Id, v.Name
 FROM (VALUES
     (-1, N'Brak'), (1, N'Język polski'), (2, N'Język angielski'),
@@ -47,25 +47,25 @@ FROM (VALUES
     (14, N'Biznes i zarządzanie'), (15, N'Plastyka'), (16, N'WOS'),
     (17, N'Język angielski zawodowy'), (18, N'Edukacja obywatelska')
 ) AS v(Id, Name)
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Subjects t WHERE t.Id = v.Id);
-SET IDENTITY_INSERT dbo.Subjects OFF;
+WHERE NOT EXISTS (SELECT 1 FROM Subjects t WHERE t.Id = v.Id);
+SET IDENTITY_INSERT Subjects OFF;
 
-SET IDENTITY_INSERT dbo.Levels ON;
-INSERT INTO dbo.Levels (Id, Name)
+SET IDENTITY_INSERT Levels ON;
+INSERT INTO Levels (Id, Name)
 SELECT v.Id, v.Name
 FROM (VALUES
     (-1, N'Brak'), (1, N'Podstawa'), (2, N'Rozszerzenie'),
     (3, N'Podstawa+Rozszerzenie'), (4, N'Dwujęzyczny')
 ) AS v(Id, Name)
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Levels t WHERE t.Id = v.Id);
-SET IDENTITY_INSERT dbo.Levels OFF;
+WHERE NOT EXISTS (SELECT 1 FROM Levels t WHERE t.Id = v.Id);
+SET IDENTITY_INSERT Levels OFF;
 
-SET IDENTITY_INSERT dbo.Grades ON;
-INSERT INTO dbo.Grades (Id, GradeNumber)
+SET IDENTITY_INSERT Grades ON;
+INSERT INTO Grades (Id, GradeNumber)
 SELECT v.Id, v.GradeNumber
 FROM (VALUES (1, N'1'), (2, N'2'), (3, N'3'), (4, N'4'), (5, N'5')) AS v(Id, GradeNumber)
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Grades t WHERE t.Id = v.Id);
-SET IDENTITY_INSERT dbo.Grades OFF;
+WHERE NOT EXISTS (SELECT 1 FROM Grades t WHERE t.Id = v.Id);
+SET IDENTITY_INSERT Grades OFF;
 
 /* ---------------------------------------------------------------------------
    3. Książki - lista docelowa (50 pozycji)
@@ -125,15 +125,15 @@ INSERT INTO @Books (Id, Title, SubjectId, LevelId) VALUES
     (49, N'Bezpieczeństwo i higiena pracy [wsip]', -1, -1);
 
 UPDATE b SET b.Title = s.Title, b.SubjectId = s.SubjectId, b.LevelId = s.LevelId
-FROM dbo.Books b INNER JOIN @Books s ON s.Id = b.Id
+FROM Books b INNER JOIN @Books s ON s.Id = b.Id
 WHERE b.Title <> s.Title OR b.SubjectId <> s.SubjectId OR b.LevelId <> s.LevelId;
 
-SET IDENTITY_INSERT dbo.Books ON;
-INSERT INTO dbo.Books (Id, Title, SubjectId, LevelId)
+SET IDENTITY_INSERT Books ON;
+INSERT INTO Books (Id, Title, SubjectId, LevelId)
 SELECT s.Id, s.Title, s.SubjectId, s.LevelId
 FROM @Books s
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Books b WHERE b.Id = s.Id);
-SET IDENTITY_INSERT dbo.Books OFF;
+WHERE NOT EXISTS (SELECT 1 FROM Books b WHERE b.Id = s.Id);
+SET IDENTITY_INSERT Books OFF;
 
 /* ---------------------------------------------------------------------------
    4. Przypisanie książek do klas - stan docelowy (68 powiązań)
@@ -150,25 +150,25 @@ INSERT INTO @BookGrades (BookId, GradeId) VALUES
     (42,1),(43,2),(44,1),(45,2),(46,2),(47,2),(48,3),(49,1);
 
 DELETE bg
-FROM dbo.BookGrades bg
+FROM BookGrades bg
 WHERE EXISTS (SELECT 1 FROM @Books b WHERE b.Id = bg.BookId)
   AND NOT EXISTS (SELECT 1 FROM @BookGrades s WHERE s.BookId = bg.BookId AND s.GradeId = bg.GradeId);
 
-INSERT INTO dbo.BookGrades (BookId, GradeId)
+INSERT INTO BookGrades (BookId, GradeId)
 SELECT s.BookId, s.GradeId
 FROM @BookGrades s
-WHERE NOT EXISTS (SELECT 1 FROM dbo.BookGrades bg WHERE bg.BookId = s.BookId AND bg.GradeId = s.GradeId);
+WHERE NOT EXISTS (SELECT 1 FROM BookGrades bg WHERE bg.BookId = s.BookId AND bg.GradeId = s.GradeId);
 
 COMMIT TRANSACTION;
 
 /* DBCC CHECKIDENT nie jest operacją transakcyjną, więc wykonuje się po COMMIT. */
 DECLARE @table sysname, @maxId int, @sql nvarchar(max);
 DECLARE reseed CURSOR LOCAL FAST_FORWARD FOR
-   SELECT N'dbo.Subjects' UNION ALL
-   SELECT N'dbo.Levels' UNION ALL
-   SELECT N'dbo.Grades' UNION ALL
-   SELECT N'dbo.Books' UNION ALL
-   SELECT N'dbo.Schools';
+   SELECT N'Subjects' UNION ALL
+   SELECT N'Levels' UNION ALL
+   SELECT N'Grades' UNION ALL
+   SELECT N'Books' UNION ALL
+   SELECT N'Schools';
 
 OPEN reseed;
 FETCH NEXT FROM reseed INTO @table;
@@ -190,7 +190,7 @@ CLOSE reseed;
 DEALLOCATE reseed;
 
 /* Książki spoza listy nie są usuwane - mogą mieć powiązane ogłoszenia. */
-SELECT b.Id, b.Title, [Ogłoszenia] = (SELECT COUNT(*) FROM dbo.Items i WHERE i.BookId = b.Id)
-FROM dbo.Books b
+SELECT b.Id, b.Title, [Ogłoszenia] = (SELECT COUNT(*) FROM Items i WHERE i.BookId = b.Id)
+FROM Books b
 WHERE NOT EXISTS (SELECT 1 FROM @Books s WHERE s.Id = b.Id)
 ORDER BY b.Id;

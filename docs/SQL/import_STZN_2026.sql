@@ -35,9 +35,9 @@ BEGIN TRANSACTION;
 DECLARE @SchoolName   nvarchar(200) = N'Śląskie Techniczne Zakłady Naukowe';
 DECLARE @SchoolDomain nvarchar(500) = N'sltzn.katowice.pl';
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Schools WHERE LOWER(LTRIM(RTRIM(EmailDomain))) = @SchoolDomain)
+IF NOT EXISTS (SELECT 1 FROM Schools WHERE LOWER(LTRIM(RTRIM(EmailDomain))) = @SchoolDomain)
 BEGIN
-    INSERT INTO dbo.Schools (Name, EmailDomain, IsActive, CreatedAt)
+    INSERT INTO Schools (Name, EmailDomain, IsActive, CreatedAt)
     VALUES (@SchoolName, @SchoolDomain, 1, SYSUTCDATETIME());
 END
 ELSE
@@ -46,9 +46,9 @@ ELSE
 /* ---------------------------------------------------------------------------
    2. Przedmioty
    --------------------------------------------------------------------------- */
-SET IDENTITY_INSERT dbo.Subjects ON;
+SET IDENTITY_INSERT Subjects ON;
 
-INSERT INTO dbo.Subjects (Id, Name)
+INSERT INTO Subjects (Id, Name)
 SELECT v.Id, v.Name
 FROM (VALUES
     (-1, N'Brak'),
@@ -71,16 +71,16 @@ FROM (VALUES
     (17, N'Język angielski zawodowy'),
     (18, N'Edukacja obywatelska')
 ) AS v(Id, Name)
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Subjects t WHERE t.Id = v.Id);
+WHERE NOT EXISTS (SELECT 1 FROM Subjects t WHERE t.Id = v.Id);
 
-SET IDENTITY_INSERT dbo.Subjects OFF;
+SET IDENTITY_INSERT Subjects OFF;
 
 /* ---------------------------------------------------------------------------
    3. Poziomy nauczania
    --------------------------------------------------------------------------- */
-SET IDENTITY_INSERT dbo.Levels ON;
+SET IDENTITY_INSERT Levels ON;
 
-INSERT INTO dbo.Levels (Id, Name)
+INSERT INTO Levels (Id, Name)
 SELECT v.Id, v.Name
 FROM (VALUES
     (-1, N'Brak'),
@@ -89,16 +89,16 @@ FROM (VALUES
     (3, N'Podstawa+Rozszerzenie'),
     (4, N'Dwujęzyczny')
 ) AS v(Id, Name)
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Levels t WHERE t.Id = v.Id);
+WHERE NOT EXISTS (SELECT 1 FROM Levels t WHERE t.Id = v.Id);
 
-SET IDENTITY_INSERT dbo.Levels OFF;
+SET IDENTITY_INSERT Levels OFF;
 
 /* ---------------------------------------------------------------------------
    4. Klasy
    --------------------------------------------------------------------------- */
-SET IDENTITY_INSERT dbo.Grades ON;
+SET IDENTITY_INSERT Grades ON;
 
-INSERT INTO dbo.Grades (Id, GradeNumber)
+INSERT INTO Grades (Id, GradeNumber)
 SELECT v.Id, v.GradeNumber
 FROM (VALUES
     (1, N'1'),
@@ -107,9 +107,9 @@ FROM (VALUES
     (4, N'4'),
     (5, N'5')
 ) AS v(Id, GradeNumber)
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Grades t WHERE t.Id = v.Id);
+WHERE NOT EXISTS (SELECT 1 FROM Grades t WHERE t.Id = v.Id);
 
-SET IDENTITY_INSERT dbo.Grades OFF;
+SET IDENTITY_INSERT Grades OFF;
 
 /* ---------------------------------------------------------------------------
    5. Książki - lista docelowa (93 pozycji)
@@ -214,23 +214,23 @@ INSERT INTO @Books (Id, Title, SubjectId, LevelId) VALUES
 -- 5a. Aktualizacja pozycji, które już są w bazie (np. seed z migracji EF)
 UPDATE b
 SET b.Title = s.Title, b.SubjectId = s.SubjectId, b.LevelId = s.LevelId
-FROM dbo.Books b
+FROM Books b
 INNER JOIN @Books s ON s.Id = b.Id
 WHERE b.Title <> s.Title OR b.SubjectId <> s.SubjectId OR b.LevelId <> s.LevelId;
 
 PRINT CONCAT(N'Zaktualizowane książki: ', @@ROWCOUNT);
 
 -- 5b. Wstawienie brakujących pozycji
-SET IDENTITY_INSERT dbo.Books ON;
+SET IDENTITY_INSERT Books ON;
 
-INSERT INTO dbo.Books (Id, Title, SubjectId, LevelId)
+INSERT INTO Books (Id, Title, SubjectId, LevelId)
 SELECT s.Id, s.Title, s.SubjectId, s.LevelId
 FROM @Books s
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Books b WHERE b.Id = s.Id);
+WHERE NOT EXISTS (SELECT 1 FROM Books b WHERE b.Id = s.Id);
 
 PRINT CONCAT(N'Dodane książki: ', @@ROWCOUNT);
 
-SET IDENTITY_INSERT dbo.Books OFF;
+SET IDENTITY_INSERT Books OFF;
 
 /* ---------------------------------------------------------------------------
    6. Przypisanie książek do klas - stan docelowy (160 powiązań)
@@ -402,17 +402,17 @@ INSERT INTO @BookGrades (BookId, GradeId) VALUES
 -- 6a. Usunięcie przypisań, których nie ma na liście 2026
 --     (tylko dla książek z listy - reszty tabeli nie ruszamy)
 DELETE bg
-FROM dbo.BookGrades bg
+FROM BookGrades bg
 WHERE EXISTS (SELECT 1 FROM @Books b WHERE b.Id = bg.BookId)
   AND NOT EXISTS (SELECT 1 FROM @BookGrades s WHERE s.BookId = bg.BookId AND s.GradeId = bg.GradeId);
 
 PRINT CONCAT(N'Usunięte przypisania do klas: ', @@ROWCOUNT);
 
 -- 6b. Dodanie brakujących przypisań
-INSERT INTO dbo.BookGrades (BookId, GradeId)
+INSERT INTO BookGrades (BookId, GradeId)
 SELECT s.BookId, s.GradeId
 FROM @BookGrades s
-WHERE NOT EXISTS (SELECT 1 FROM dbo.BookGrades bg WHERE bg.BookId = s.BookId AND bg.GradeId = s.GradeId);
+WHERE NOT EXISTS (SELECT 1 FROM BookGrades bg WHERE bg.BookId = s.BookId AND bg.GradeId = s.GradeId);
 
 PRINT CONCAT(N'Dodane przypisania do klas: ', @@ROWCOUNT);
 
@@ -426,11 +426,11 @@ COMMIT TRANSACTION;
    --------------------------------------------------------------------------- */
 DECLARE @table sysname, @maxId int, @sql nvarchar(max);
 DECLARE reseed CURSOR LOCAL FAST_FORWARD FOR
-    SELECT N'dbo.Subjects' UNION ALL
-    SELECT N'dbo.Levels'   UNION ALL
-    SELECT N'dbo.Grades'   UNION ALL
-    SELECT N'dbo.Books'    UNION ALL
-    SELECT N'dbo.Schools';
+    SELECT N'Subjects' UNION ALL
+    SELECT N'Levels'   UNION ALL
+    SELECT N'Grades'   UNION ALL
+    SELECT N'Books'    UNION ALL
+    SELECT N'Schools';
 
 OPEN reseed;
 FETCH NEXT FROM reseed INTO @table;
@@ -454,15 +454,15 @@ DEALLOCATE reseed;
 /* ---------------------------------------------------------------------------
    8. Podsumowanie
    --------------------------------------------------------------------------- */
-SELECT 'Schools' AS TableName, COUNT(*) AS [Rows] FROM dbo.Schools
-UNION ALL SELECT 'Subjects',   COUNT(*) FROM dbo.Subjects
-UNION ALL SELECT 'Levels',     COUNT(*) FROM dbo.Levels
-UNION ALL SELECT 'Grades',     COUNT(*) FROM dbo.Grades
-UNION ALL SELECT 'Books',      COUNT(*) FROM dbo.Books
-UNION ALL SELECT 'BookGrades', COUNT(*) FROM dbo.BookGrades;
+SELECT 'Schools' AS TableName, COUNT(*) AS [Rows] FROM Schools
+UNION ALL SELECT 'Subjects',   COUNT(*) FROM Subjects
+UNION ALL SELECT 'Levels',     COUNT(*) FROM Levels
+UNION ALL SELECT 'Grades',     COUNT(*) FROM Grades
+UNION ALL SELECT 'Books',      COUNT(*) FROM Books
+UNION ALL SELECT 'BookGrades', COUNT(*) FROM BookGrades;
 
 -- Książki w bazie spoza listy 2026 (nie są usuwane - mogą mieć ogłoszenia)
-SELECT b.Id, b.Title, [Ogłoszenia] = (SELECT COUNT(*) FROM dbo.Items i WHERE i.BookId = b.Id)
-FROM dbo.Books b
+SELECT b.Id, b.Title, [Ogłoszenia] = (SELECT COUNT(*) FROM Items i WHERE i.BookId = b.Id)
+FROM Books b
 WHERE NOT EXISTS (SELECT 1 FROM @Books s WHERE s.Id = b.Id)
 ORDER BY b.Id;
