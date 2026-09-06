@@ -51,6 +51,12 @@
         <section>
             <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete" aria-hidden="true"></span>
 
+            <label asp-for='Input.Subject'>Przedmiot:</label>
+            <select asp-for='Input.Subject' asp-items="Model.Subjects" aria-describedby="Input_Subject-error">
+                <option value="">Wybierz przedmiot</option>
+            </select>
+            <small><span asp-validation-for="Input.Subject" id="Input_Subject-error" role="alert"></span></small>
+
             <label asp-for="Input.Title">Tytuł książki:</label>
             <select asp-for="Input.Title" asp-items="Model.Books" aria-describedby="Input_Title-help">
                 <option value="">Wybierz książkę</option>
@@ -59,12 +65,6 @@
                 <span asp-validation-for="Input.Title" role="alert"></span><br>
                 Nie widzisz swojej książki? Wybierz opcję "inna" i opisz ją poniżej.
             </small>
-
-            <label asp-for='Input.Subject'>Przedmiot:</label>
-            <select asp-for='Input.Subject' asp-items="Model.Subjects" aria-describedby="Input_Subject-error">
-                <option value="">Wybierz przedmiot</option>
-            </select>
-            <small><span asp-validation-for="Input.Subject" id="Input_Subject-error" role="alert"></span></small>
 
             <label asp-for='Input.Grade'>Klasa:</label>
             <select asp-for='Input.Grade' asp-items="Model.Grades" aria-describedby="Input_Grade-error">
@@ -124,8 +124,8 @@
         <div>
             <img id="summaryImage" src="" alt="">
         </div>
-        <p><strong>Tytuł książki:</strong> <span id="summaryTitle"></span></p>
         <p><strong>Przedmiot:</strong> <span id="summarySubject"></span></p>
+        <p><strong>Tytuł książki:</strong> <span id="summaryTitle"></span></p>
         <p><strong>Klasa:</strong> <span id="summaryGrade"></span></p>
         <p><strong>Poziom:</strong> <span id="summaryLevel"></span></p>
         <p><strong>Opis:</strong> <span id="summaryDescription"></span></p>
