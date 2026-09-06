@@ -20,6 +20,7 @@ jobs:
       CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
       CLOUDFLARE_R2_BUCKET_NAME: ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}
       MAINTENANCE: ${{ secrets.MAINTENANCE }}
+      TESTING_PHASE: ${{ secrets.TESTING_PHASE }}
       SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       MSDEPLOY_SERVICE_URL: ${{ secrets.MSDEPLOY_SERVICE_URL }}
@@ -59,6 +60,7 @@ jobs:
             -replace '\{#cloudflare-r2-secret-access-key#\}', "$env:CLOUDFLARE_R2_SECRET_ACCESS_KEY" `
             -replace '\{#cloudflare-r2-bucket-name#\}', "$env:CLOUDFLARE_R2_BUCKET_NAME" `
             -replace '\{#maintenance#\}', "$env:MAINTENANCE" `
+            -replace '\{#testing-phase#\}', "$env:TESTING_PHASE" `
             -replace '\{smtp-username\}', "$env:SMTP_USERNAME" `
             -replace '#\{smtp-password\}#', "$env:SMTP_PASSWORD" |
             Set-Content $filePath
