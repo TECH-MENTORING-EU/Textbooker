@@ -7,26 +7,32 @@
 
 <h3>Administratorzy</h3>
 
+<p class="table-scroll-hint" id="admins-table-hint">Przewiń tabelę poziomo, aby zobaczyć wszystkie kolumny.</p>
+<div class="table-scroll" role="region" aria-label="Tabela administratorów" aria-describedby="admins-table-hint" tabindex="0">
 <table id="admins-table">
+    <caption class="visually-hidden">Lista administratorów systemu</caption>
     <thead>
         <tr>
-            <th>Id</th>
-            <th>Nazwa użytkownika</th>
-            <th>Email</th>
-            <th>Akcje</th>
+            <th scope="col">Id</th>
+            <th scope="col">Nazwa użytkownika</th>
+            <th scope="col">Email</th>
+            <th scope="col">Akcje</th>
         </tr>
     </thead>
     <tbody>
         <partial name="_AdminRows" model="Model.Admins" />
     </tbody>
 </table>
+</div>
 
-<form asp-page-handler="Add" method="post" class="login-form">
-    <h4>Dodaj nowego administratora</h4>
-    <input name="username" placeholder="Nazwa użytkownika" aria-label="Nazwa użytkownika" />
-    <input type="password" name="password" placeholder="Potwierdź swoje hasło" aria-label="Hasło" />
+<form asp-page-handler="Add" method="post" class="login-form" aria-labelledby="add-admin-heading">
+    <h4 id="add-admin-heading">Dodaj nowego administratora</h4>
+    <label for="admin-username" class="visually-hidden">Nazwa użytkownika</label>
+    <input name="username" id="admin-username" placeholder="Nazwa użytkownika" aria-label="Nazwa użytkownika" />
+    <label for="admin-password" class="visually-hidden">Potwierdź własnym hasłem</label>
+    <input type="password" name="password" id="admin-password" placeholder="Potwierdź swoje hasło" aria-label="Hasło potwierdzające" autocomplete="current-password" />
     <button type="submit">Dodaj</button>
-    <div asp-validation-summary="All"></div>
+    <div asp-validation-summary="All" role="alert" aria-live="assertive"></div>
 </form>
 
 

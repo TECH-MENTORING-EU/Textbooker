@@ -22,6 +22,9 @@ namespace Booker.Pages
 
         public Item? ItemToEdit { get; set; }
 
+        // RODO - task 08: the description looks like it contains contact details - awaiting confirmation.
+        public bool ShowSensitiveContentWarning { get; set; }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
             ItemToEdit = await _itemManager.GetItemAsync(id);
@@ -44,7 +47,7 @@ namespace Booker.Pages
                 Description = ItemToEdit.Description,
                 State = ItemToEdit.State,
                 Price = ItemToEdit.Price,
-                Images = new List<IFormFile>(), // multiple images handled
+                Images = null,
                 Reserved = ItemToEdit.Reserved
             };
 
@@ -86,24 +89,57 @@ namespace Booker.Pages
                 Input.Level
             );
 
-            if(Input.Reserved != ItemToEdit.Reserved)
+            var validatedImages = await Shared.ImageUploadValidation.ValidateAndReadAsync(
+                Input.Images,
+                requireAtLeastOne: false,
+                ModelState);
+
+            if (validatedImages == null)
             {
-                await _itemManager.MarkItemReservedAsync(id, Input.Reserved);
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
+                return Page();
             }
 
-            var imageStreams = Input.Images?.Select(f => f.OpenReadStream()).ToList();
-            var imageExtensions = Input.Images?.Select(f => Path.GetExtension(f.FileName)).ToList();
+            var looksSensitive = Shared.ContentModerationHelper.LooksLikeContactInfo(Input.Description);
+            // Set unconditionally (not just on the early-return path below) so the confirmation
+            // checkbox stays visible/checked if the page has to re-render later for an unrelated
+            // reason (photo storage failure, book validation error via ValidateAndReturn).
+            ShowSensitiveContentWarning = looksSensitive;
+            if (looksSensitive && !Input.ConfirmSensitiveDescription)
+            {
+                ModelState.AddModelError("Input.Description",
+                    "Opis wygląda na zawierający adres e-mail lub numer telefonu. Zaznacz potwierdzenie poniżej, jeśli mimo to chcesz opublikować ogłoszenie z taką treścią.");
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
-            var result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
-                ItemToEdit.User,
-                parameters,
-                Input.Description,
-                Input.State,
-                Input.Price,
-                imageStreams,
-                imageExtensions,
-                ItemToEdit.Photo
-            ));
+            ItemManager.Status result;
+            try
+            {
+                // Keep reservation update in the same persistence operation as other edits.
+                ItemToEdit.Reserved = Input.Reserved;
+
+                result = await _itemManager.UpdateItemAsync(ItemToEdit, new ItemManager.ItemModel(
+                    ItemToEdit.User,
+                    parameters,
+                    Input.Description,
+                    Input.State,
+                    Input.Price,
+                    validatedImages.Streams,
+                    validatedImages.Extensions,
+                    ItemToEdit.Photo,
+                    FlaggedForReview: looksSensitive
+                ));
+            }
+            catch (PhotoStorageException ex)
+            {
+                ModelState.AddModelError("Input.Images", ex.Message);
+                Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
             return ValidateAndReturn(ItemToEdit.Id, result);
         }
@@ -121,7 +157,7 @@ namespace Booker.Pages
             }
 
             await _itemManager.DeleteItemAsync(itemId);
-            return RedirectToPage("/Index");
+            return RedirectToPage("/Browse");
         }
     }
 }

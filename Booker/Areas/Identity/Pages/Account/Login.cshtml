@@ -7,24 +7,23 @@
 
 <h1>@ViewData["Title"]</h1>
 
-<section class="login-form">
+<section class="login-form" aria-labelledby="login-heading">
+    <h2 id="login-heading" class="visually-hidden">Formularz logowania</h2>
     <form id="account" method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert" aria-live="assertive"></div>
         <div>
             <label asp-for="Input.Email">Nazwa użytkownika / e-mail:</label>
-            <input asp-for="Input.Email" autocomplete="username" required placeholder="Nazwa użytkownika / e-mail" />
-            <small><span asp-validation-for="Input.Email"></span></small>
+            <input asp-for="Input.Email" autocomplete="username" required placeholder="Nazwa użytkownika / e-mail" aria-describedby="Input_Email-error" />
+            <small id="Input_Email-help"><span asp-validation-for="Input.Email" id="Input_Email-error"></span></small>
         </div>
         <div>
             <label asp-for="Input.Password">Hasło:</label>
-            <input asp-for="Input.Password" autocomplete="current-password" required placeholder="Hasło" />
-            <small><span asp-validation-for="Input.Password"></span></small>
+            <input asp-for="Input.Password" autocomplete="current-password" required placeholder="Hasło" aria-describedby="Input_Password-error" />
+            <small id="Input_Password-help"><span asp-validation-for="Input.Password" id="Input_Password-error"></span></small>
         </div>
-        <div>
-            <label asp-for="Input.RememberMe">
-                <input asp-for="Input.RememberMe" />
-                Zapamiętaj mnie
-            </label>
+        <div class="form-check">
+            <input asp-for="Input.RememberMe" />
+            <label asp-for="Input.RememberMe" class="form-check-label">Zapamiętaj mnie</label>
         </div>
         <div>
             <button id="login-submit" type="submit">Zaloguj się</button>
@@ -33,9 +32,6 @@
             <p>
                 <a id="forgot-password" asp-page="./ForgotPassword">Zapomniałeś hasła?</a>
             </p>
-            @* <p> *@
-            @*     <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Zarejestruj jako nowy użytkownik</a> *@
-            @* </p> *@
             <p>
                 <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Wyślij ponownie e-mail potwierdzający</a>
             </p>

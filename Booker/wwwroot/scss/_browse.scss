@@ -1,0 +1,9 @@
+@use "pico";
+
+// Action buttons at the bottom of the Browse filter panel.
+.filter-actions {
+    button {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+}

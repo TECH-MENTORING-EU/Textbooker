@@ -1,7 +1,10 @@
 ﻿@model Shared.IBookForm
 
 @{
-    const string include = ":is(#add-form,#edit-form) :not([name = '__RequestVerificationToken'])";
+    // RODO: only the fields that actually influence the select options may ride along in this
+    // GET's query string - Description/State/Price carry user-entered text and must never appear
+    // in a URL (browser history, server access logs, proxies).
+    const string include = "#Input_Title, #Input_Subject, #Input_Grade, #Input_Level";
     string onLoad = Model.IsFirstLoad ? string.Empty : "v.isFieldValid(this)";
 }
 

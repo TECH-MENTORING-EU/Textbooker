@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-labelledby="title description">
+  <title id="title">Brak zdjęcia okładki</title>
+  <desc id="description">Neutralna ilustracja zamkniętej książki</desc>
+  <rect width="600" height="800" rx="32" fill="#e8edf2"/>
+  <path d="M146 142h292c22 0 40 18 40 40v436c0 22-18 40-40 40H146c-13 0-24-11-24-24V166c0-13 11-24 24-24Z" fill="#ffffff" stroke="#526272" stroke-width="18"/>
+  <path d="M168 142v516" fill="none" stroke="#526272" stroke-width="18"/>
+  <path d="M230 270h168M230 338h128" fill="none" stroke="#1976a8" stroke-linecap="round" stroke-width="22"/>
+</svg>

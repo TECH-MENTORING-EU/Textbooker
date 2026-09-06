@@ -5,7 +5,8 @@
     @await Html.PartialAsync("_BookTile", new ItemGalleryViewComponent.ItemModel(
                 item.Item,       
                 item.FirstPhoto, 
-                item.Params      
+                item.Params,
+                item.LinkFilters
             ))
 }
 

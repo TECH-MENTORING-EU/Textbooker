@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Taste Frontend"
+  short_description: "Design distinctive landing pages and frontend redesigns"
+  default_prompt: "Audit and improve this frontend using the design-taste workflow while preserving its product intent and accessibility."

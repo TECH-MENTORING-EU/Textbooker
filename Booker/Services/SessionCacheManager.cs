@@ -56,7 +56,6 @@ public class SessionCacheManager
     {
         var session = _sessions.GetValueOrDefault(userId, new SessionInfo());
         session.Valid = false;
-        session.LastActivity = DateTime.Now;
         _sessions[userId] = session;
         _cache.Set("Sessions", _sessions);
         _logger.LogInformation($"Sesja użytkownika o ID {userId} została unieważniona.");

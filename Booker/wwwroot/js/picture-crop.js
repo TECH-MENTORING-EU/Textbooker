@@ -39,6 +39,18 @@ class CustomCropper {
         this._onMouseUp = () => this.endDrag();
         this._onMouseLeave = () => this.endDrag();
         this._onWheel = (e) => this.zoom(e);
+        this._onKeyDown = (e) => {
+            const movements = {
+                ArrowLeft: [-10, 0],
+                ArrowRight: [10, 0],
+                ArrowUp: [0, -10],
+                ArrowDown: [0, 10]
+            };
+            const movement = movements[e.key];
+            if (!movement) return;
+            e.preventDefault();
+            this.moveBy(...movement);
+        };
         this._onTouchStart = (e) => {
             e.preventDefault();
             if (e.touches.length === 1) {
@@ -85,6 +97,7 @@ class CustomCropper {
         this.canvas.removeEventListener('mouseup', this._onMouseUp);
         this.canvas.removeEventListener('mouseleave', this._onMouseLeave);
         this.canvas.removeEventListener('wheel', this._onWheel);
+        this.canvas.removeEventListener('keydown', this._onKeyDown);
         this.canvas.removeEventListener('touchstart', this._onTouchStart);
         this.canvas.removeEventListener('touchmove', this._onTouchMove);
         this.canvas.removeEventListener('touchend', this._onTouchEnd);
@@ -188,6 +201,7 @@ class CustomCropper {
         this.canvas.addEventListener('wheel', this._onWheel, {
             passive: false
         });
+        this.canvas.addEventListener('keydown', this._onKeyDown);
         this.canvas.addEventListener('touchstart', this._onTouchStart, {
             passive: false
         });
@@ -305,6 +319,14 @@ class CustomCropper {
         this.offsetX *= actualFactor;
         this.offsetY *= actualFactor;
         this.scale = newScale;
+        this.clampOffsets();
+        this.requestDraw();
+        this.notifyChange();
+    }
+    moveBy(deltaX, deltaY) {
+        if (!this.image) return;
+        this.offsetX += deltaX;
+        this.offsetY += deltaY;
         this.clampOffsets();
         this.requestDraw();
         this.notifyChange();
@@ -483,6 +505,12 @@ function setupCropperControls() {
     const zoomInButton = document.getElementById('zoomInButton');
     const zoomOutButton = document.getElementById('zoomOutButton');
     const resetButton = document.getElementById('resetButton');
+    const moveButtons = [
+        ['moveUpButton', 0, -10],
+        ['moveLeftButton', -10, 0],
+        ['moveDownButton', 0, 10],
+        ['moveRightButton', 10, 0]
+    ];
     if (zoomInButton) {
         zoomInButton.addEventListener('click', () => {
             if (customCropper) customCropper.setZoom(1.1);
@@ -498,6 +526,11 @@ function setupCropperControls() {
             if (customCropper) customCropper.resetTransform();
         });
     }
+    moveButtons.forEach(([id, deltaX, deltaY]) => {
+        document.getElementById(id)?.addEventListener('click', () => {
+            customCropper?.moveBy(deltaX, deltaY);
+        });
+    });
 }
 
 if (imageInput) {

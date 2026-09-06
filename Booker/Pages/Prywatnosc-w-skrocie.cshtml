@@ -1,0 +1,78 @@
+@page
+@model PrywatnoscWSkrocieModel
+@{
+    ViewData["Title"] = "Polityka prywatności w skrócie - TextBooker";
+}
+
+<article class="privacy-policy">
+    <h1>Polityka prywatności w skrócie</h1>
+    <p>
+        <small>
+            To skrót najważniejszych informacji. Pełną treść znajdziesz w
+            <a asp-page="/Privacy">polityce prywatności</a>.
+        </small>
+    </p>
+
+    <h2>Kto prowadzi Serwis i jak się z nim skontaktować</h2>
+    <p>
+        TextBooker prowadzi Tomasz Osmanowski. Napisz do nas na adres
+        <a href="mailto:support@textbooker.pl">support@textbooker.pl</a> — odpowiemy najszybciej, jak się da.
+    </p>
+
+    <h2>Jakie dane zbieramy</h2>
+    <p>
+        Zakładając konto, podajesz adres e-mail, nazwę użytkownika i hasło. Wybierasz też swoją szkołę —
+        raz, bo później nie da się jej zmienić (zmiana wymaga założenia nowego konta). Dodając ogłoszenie,
+        wstawiasz zdjęcia i opis podręcznika. Możesz też opcjonalnie dodać numer telefonu i inne kanały
+        kontaktu: WhatsApp, Messenger, Instagram.
+    </p>
+
+    <h2>Co widzą inni użytkownicy</h2>
+    <p>
+        Twój adres e-mail domyślnie zobaczy zalogowany użytkownik po kliknięciu przycisku kontaktu
+        przy Twoim ogłoszeniu. Te same dane kontaktowe są też widoczne zalogowanym użytkownikom
+        na Twoim profilu, jeśli masz aktywne ogłoszenie. Widoczność e-maila możesz wyłączyć
+        w ustawieniach profilu, o ile udostępnisz inny kanał kontaktu.
+        Nazwę Twojej szkoły inni zobaczą tylko wtedy, gdy sam włączysz tę opcję w ustawieniach profilu —
+        domyślnie jest wyłączona, a Ty zawsze widzisz swoją szkołę we własnym profilu. Numer telefonu i
+        pozostałe kanały kontaktu pokazujemy innym tylko, jeśli sam je uzupełnisz i włączysz ich widoczność
+        — to Twoja decyzja, którą możesz wycofać w każdej chwili.
+    </p>
+
+    <h2>Czego inni nie widzą</h2>
+    <p>
+        Zdjęcia profilowego nikt nie zobaczy — ta funkcja jest obecnie wyłączona. Strony ogłoszeń i profili
+        nie pojawiają się w wynikach wyszukiwarek takich jak Google. Osoby niezalogowane nie zobaczą
+        żadnych Twoich danych kontaktowych.
+    </p>
+
+    <h2>Komu przekazujemy dane</h2>
+    <p>
+        Korzystamy z zewnętrznych dostawców: serwera, na którym działa Serwis, Cloudflare (przechowuje
+        zdjęcia ogłoszeń), serwera pocztowego (wysyła e-maile) oraz Formularzy Google (formularz opinii).
+        Prowadzimy też profile na Facebooku i Instagramie.
+    </p>
+
+    <h2>Jak długo trzymamy dane</h2>
+    <p>
+        Dane konta i ogłoszeń przechowujemy, dopóki masz konto w Serwisie. Po usunięciu konta usuwamy też
+        dane — z zastrzeżeniem kopii zapasowych (do 30 dni) i sytuacji, w których przepisy prawa każą nam
+        coś zachować dłużej.
+    </p>
+
+    <h2>Co możesz zrobić ze swoimi danymi</h2>
+    <p>
+        Możesz pobrać kopię swoich danych, poprawić je lub usunąć konto w ustawieniach:
+        <a asp-area="Identity" asp-page="/Account/Manage/PersonalData">Dane osobowe</a>. Możesz też po
+        prostu napisać do nas na <a href="mailto:support@textbooker.pl">support@textbooker.pl</a>.
+    </p>
+
+    <h2>Gdzie się poskarżyć</h2>
+    <p>
+        Jeśli uważasz, że przetwarzamy Twoje dane niezgodnie z prawem, możesz złożyć skargę do Prezesa
+        Urzędu Ochrony Danych Osobowych (ul. Stawki 2, 00-193 Warszawa).
+    </p>
+
+    <hr>
+    <p><a asp-page="/Privacy">Pełna treść polityki prywatności</a></p>
+</article>

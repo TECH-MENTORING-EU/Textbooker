@@ -11,12 +11,18 @@ namespace Booker.Pages.Profile
 {
     public class FavoritesModel : PageModel
     {
+        private readonly ILogger<FavoritesModel> _logger;
         private readonly UserManager<User> _userManager;
         private readonly FavoritesManager _favoritesManager;
-        public FavoritesModel(UserManager<User> userManager, FavoritesManager favoritesManager)
+        private readonly DataContext _context;
+        private readonly ItemManager _itemManager;
+        public FavoritesModel(ILogger<FavoritesModel> logger, UserManager<User> userManager, FavoritesManager favoritesManager, DataContext context, ItemManager itemManager)
         {
+            _logger = logger;
             _userManager = userManager;
             _favoritesManager = favoritesManager;
+            _context = context;
+            _itemManager = itemManager;
         }
 
         public record ButtonState(int Id, bool IsFavorite, bool FullSize);
@@ -31,7 +37,7 @@ namespace Booker.Pages.Profile
 
             if (!Id.HasValue)
             {
-                if (currentUserId == 0)
+                if (currentUserId == -1)
                 {
                     return Redirect("/Identity/Account/Login");
                 }
@@ -46,11 +52,27 @@ namespace Booker.Pages.Profile
                 return NotFound();
             }
 
+            // Other users' favorites are served only when they are public; the 404 matches
+            // the unknown-user case so the response does not reveal whether the account exists.
+            if (user.Id != currentUserId && !(user.IsVisible && user.AreFavoritesPublic))
+            {
+                _logger.LogWarning(
+                    "Request for non-public favorites denied (target user {TargetId}, requester {RequesterId})",
+                    user.Id, currentUserId);
+                return NotFound();
+            }
+
             Params = new StaticDataManager.Parameters(null, [], null, null);
 
             ItemIds = await _favoritesManager.GetFavoriteIdsAsync(Id.Value);
 
-            UserInfo = new UserModel(user, user.Id == currentUserId);
+            var schoolName = user.SchoolId.HasValue
+                ? (await _context.Schools.FindAsync(user.SchoolId.Value))?.Name
+                : null;
+            var requestingUser = await _userManager.GetUserAsync(User);
+            var hasActiveListing = await _itemManager.HasVisibleListingAsync(Id.Value, requestingUser);
+
+            UserInfo = new UserModel(user, user.Id == currentUserId, schoolName, hasActiveListing);
 
             if (Request.Headers.ContainsKey("HX-Request"))
             {

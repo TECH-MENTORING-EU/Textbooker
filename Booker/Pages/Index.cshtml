@@ -1,76 +1,115 @@
-﻿@page
+@page
 @model IndexModel
 @{
     ViewData["Title"] = "TextBooker";
+    ViewData["MainClass"] = "landing-page";
+    var popularSubjects = Model.Subjects.Where(s => !string.IsNullOrWhiteSpace(s.Name) && !s.Name.Equals("Brak", StringComparison.OrdinalIgnoreCase)).ToList();
+    var hasMoreSubjects = popularSubjects.Count > 6;
+    const int visibleSubjectCount = 6;
+    const int heroItemsPerRow = 4;
+    const int heroRowCount = 3;
+    const int heroSequenceCopies = 4;
+    var emptyParams = new Booker.Services.StaticDataManager.Parameters(null, new List<Booker.Data.Grade>(), null, null);
 }
 
-<section class="filter">
-    <form novalidate
-          hx-get="/"
-          hx-trigger="submit, input changed delay:500ms, change"
-          hx-target=".grid-gallery"
-          hx-push-url="true">
-        <input type="search" name="search" asp-for="Input.Search" placeholder="Wyszukaj..." data-val="false" hx-on:focus="this.nextElementSibling.style.display = 'block';" hx-on:keydown="this.nextElementSibling.style.display = 'none';" />
-        <small style="display: none;">Szukasz książki do przedmiotu zawodowego lub innej rzadko występującej? Wpisz "inna".</small>
+<section class="landing-hero">
+    <div class="hero-content">
+        <h1 style="text-wrap: balance;">Kupuj i sprzedawaj<br />podręczniki na Śląsku.</h1>
+        <p style="color: var(--pico-muted-color); max-width: 42ch; text-wrap: pretty;">
+            Znajdź tanie książki od uczniów z Twojej okolicy. Wystaw swoje i odzyskaj gotówkę w kilku prostych krokach.
+        </p>
+        <div class="hero-actions">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-page="/Add" role="button">Dodaj ogłoszenie</a>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Register" role="button">Załóż konto</a>
+            }
+            <a asp-page="/Browse" role="button" class="outline">Przeglądaj oferty</a>
+        </div>
+    </div>
 
-        <details id="filterDetails">
-            <summary id="filterSummary">
-                <svg icon="adjustments-horizontal" aria-hidden="true" style="vertical-align: -0.15em;"></svg>
-                Filtry
-            </summary>
+    @if (Model.HeroItems.Count > 0)
+    {
+        <div class="hero-preview" aria-hidden="true">
+            <div class="hero-wall">
+                <div class="hero-wall-rotated">
+                    @for (var row = 0; row < heroRowCount; row++)
+                    {
+                        var rowItems = Model.HeroItems
+                            .Skip(row * heroItemsPerRow)
+                            .Concat(Model.HeroItems.Take(row * heroItemsPerRow))
+                            .Take(heroItemsPerRow)
+                            .ToList();
 
-            <div class="grid">
-                <select name="grade" asp-for="Input.Grade" asp-items="Model?.Grades" data-val="false">
-                    <option value="">Wszystkie klasy</option>
-                </select>
-
-                <select name="subject" asp-for="Input.Subject" asp-items="Model?.Subjects" data-val="false">
-                    <option value="">Wszystkie przedmioty</option>
-                </select>
-
-                <select name="level" asp-for="Input.Level" asp-items="Model?.Levels">
-                    <option value="">Wszystkie poziomy</option>
-                </select>
-
-                <input type="number" name="minPrice" asp-for="Input.MinPrice" placeholder="Cena min." data-val="false" />
-                <input type="number" name="maxPrice" asp-for="Input.MaxPrice" placeholder="Cena max." data-val="false" />
+                        <div class="hero-wall-row">
+                            <div class="hero-wall-track">
+                                @for (var copy = 0; copy < heroSequenceCopies; copy++)
+                                {
+                                    <div class="hero-wall-sequence">
+                                        @foreach (var item in rowItems)
+                                        {
+                                            <div class="hero-book-tile">
+                                                <div class="hero-book-cover">
+                                                    @if (!string.IsNullOrEmpty(item.Photo))
+                                                    {
+                                                        <img src="@item.Photo" alt="" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <svg icon="book" aria-hidden="true" style="width: 2rem; height: auto; opacity: 0.3;"></svg>
+                                                    }
+                                                </div>
+                                                <div class="hero-book-info">
+                                                    <span class="hero-book-title">@item.Title</span>
+                                                    <span class="hero-book-price">@item.Price</span>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
-
-            <button type="reset" class="secondary" hx-on:click="this.form.reset(); this.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));" style="width:100%; margin-top:0.5rem;">Wyczyść filtry</button>
-            <button type="button" id="mobileFilterSubmit" style="width:100%; margin-top:0.5rem;">Zatwierdź filtry</button>
-        </details>
-    </form>
-</section>
-
-<section class="grid-gallery">
-    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
-</section>
-
-<section>
-    <div aria-busy="true" class="htmx-indicator" id="ind"></div>
-</section>
-
-<script>
-    function setFilter(name, value, enable) {
-        const elem = document.querySelector(`[name="${name}"]`);
-        if (elem) {
-            elem.value = enable ? value : "";
-            elem.form.requestSubmit();
-        }
+        </div>
     }
+</section>
 
-    htmx.onLoad(function(content) {
-        content.querySelectorAll('button.subject, button.grade, button.level').forEach(button => {
-            button.addEventListener('click', function() {
-                const name = this.classList.contains('subject') ? 'subject' : this.classList.contains('grade') ? 'grade' : 'level';
-                const value = name === 'grade' ? this.textContent.trim().slice(6,7) : this.textContent.trim();
-                this.classList.toggle('outline');
-                setFilter(name, value, !this.classList.contains('outline'));
-            });
-        });
-    });
+<section class="landing-section" aria-label="Popularne przedmioty">
+    <h2 style="text-wrap: balance;">Popularne przedmioty</h2>
+    <ul class="category-badges">
+        @for (var i = 0; i < Math.Min(popularSubjects.Count, visibleSubjectCount); i++)
+        {
+            var subject = popularSubjects[i];
+            <li class="category-tile" style="--i: @i;">
+                <a asp-page="/Browse" asp-route-subject="@subject.Name" role="button" class="outline">
+                    <svg icon="book" aria-hidden="true"></svg>
+                    <span>@subject.Name</span>
+                </a>
+            </li>
+        }
+    </ul>
+    @if (hasMoreSubjects)
+    {
+        <div class="see-all-categories">
+            <a asp-page="/Browse">
+                Zobacz wszystkie przedmioty
+                <svg icon="arrow-right" aria-hidden="true" style="width: 1em; vertical-align: -0.15em;"></svg>
+            </a>
+        </div>
+    }
+</section>
 
-    document.getElementById('mobileFilterSubmit').addEventListener('click', function() {
-        document.getElementById('filterDetails').removeAttribute("open");
-    });
-</script>
+@if (Model.RecentItemIds.Count > 0)
+{
+    <section class="landing-section" aria-label="Ostatnio dodane">
+        <h2 style="text-wrap: balance;">Ostatnio dodane</h2>
+        <div class="grid-gallery grid-gallery-single-row">
+            <vc:item-gallery item-ids="@Model.RecentItemIds" parameters="@emptyParams" link-filters="true" />
+        </div>
+    </section>
+}

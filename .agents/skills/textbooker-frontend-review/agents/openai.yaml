@@ -1,0 +1,4 @@
+interface:
+  display_name: "Textbooker Frontend Review"
+  short_description: "Audit Razor and Pico UI from mobile through 4K"
+  default_prompt: "Audit this Textbooker frontend change for Razor and Pico correctness, accessibility, responsive behavior, and interface polish."

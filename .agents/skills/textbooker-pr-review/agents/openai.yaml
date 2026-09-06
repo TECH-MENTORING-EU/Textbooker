@@ -1,0 +1,4 @@
+interface:
+  display_name: "Textbooker PR Review"
+  short_description: "Address feedback across stacked Textbooker PRs"
+  default_prompt: "Inspect Textbooker PR feedback, implement actionable fixes safely across stacked branches, verify checks, and report merge readiness."

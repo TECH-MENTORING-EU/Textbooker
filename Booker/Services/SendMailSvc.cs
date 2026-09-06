@@ -23,9 +23,9 @@ namespace Booker.Services
 
             smtpClient.Host = _smtpSettings.Server;
             smtpClient.Port = _smtpSettings.Port;
+            smtpClient.EnableSsl = _smtpSettings.EnableSsl;
             smtpClient.UseDefaultCredentials = false;
-            smtpClient.Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password); 
-
+            smtpClient.Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password);
 
             try
             {
@@ -54,6 +54,13 @@ namespace Booker.Services
             public required int Port { get; set; }
             public required string Username { get; set; }
             public required string Password { get; set; }
+
+            /// <summary>
+            /// STARTTLS on the standard submission port. Defaults to true so a
+            /// missing config entry cannot silently downgrade mail to plaintext;
+            /// set to false only for local relays without TLS.
+            /// </summary>
+            public bool EnableSsl { get; set; } = true;
         }
     }
 }

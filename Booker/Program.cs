@@ -1,5 +1,6 @@
-using Booker.Areas.Identity.Utilities;
+﻿using Booker.Areas.Identity.Utilities;
 using Booker.Data;
+using Booker.ModelBinding;
 using Booker.Services;
 using Booker.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -27,6 +28,11 @@ IConfiguration configuration = new ConfigurationBuilder()
     .AddUserSecrets<Program>() // Replace `Program` with your project's main class
     .AddEnvironmentVariables().Build();
 
+if (await StartupUtilities.RunMaintenanceMode(configuration, args))
+{
+    return;
+}
+
 
 // Register IMemoryCache in DI container
 builder.Services.AddMemoryCache();
@@ -41,6 +47,7 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(
         path: Path.Combine(logsPath, "log-.txt"),
         rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 365,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
     .CreateLogger();
 
@@ -51,14 +58,26 @@ builder.Host.UseSerilog();
 builder.Services.AddRazorPages()
     .AddViewOptions(options =>
 {
-    options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.AlwaysUseCurrentCulture;
+    // <input type="number"> must render with the invariant culture (HTML spec: "." decimal separator),
+    // otherwise browsers drop values like "12,50". Text inputs stay with the current culture.
+    options.HtmlHelperOptions.FormInputRenderMode = Microsoft.AspNetCore.Mvc.Rendering.FormInputRenderMode.DetectCultureFromInputType;
 })
+    .AddMvcOptions(options => options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider()))
     .AddCustomRoutes()
     .AddAuthorizationPolicies();
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
 builder.Services.AddRateLimitPolicies();
+
+// RODO - task 07: thresholds for the contact-reveal limit, configurable via appsettings.
+// The counter itself (ContactRevealLimiter) keeps state only in IMemoryCache, no DB writes.
+builder.Services.Configure<Booker.Services.ContactRevealLimitOptions>(
+    configuration.GetSection("ContactRevealLimits"));
+builder.Services.AddSingleton<Booker.Services.ContactRevealLimiter>();
+
+builder.Services.Configure<Booker.Services.AdminLockoutOptions>(
+    configuration.GetSection("AdminLockout"));
 
 builder.Services.AddDbContext<DataContext>(options =>
 {
@@ -76,9 +95,10 @@ builder.Services.AddDefaultIdentity<User>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
+    // RODO - task 07: ~10 failed login attempts -> 2-hour lockout.
     options.Lockout.AllowedForNewUsers = true;
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 10;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(2);
 })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<DataContext>()
@@ -126,6 +146,9 @@ else
     app.UseStaticFiles();
 }
 
+
+
+
 app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
@@ -146,16 +169,12 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapRazorPages();
+await app.MigrateDatabaseAsync(configuration);
 
 if (app.Environment.IsDevelopment())
 {
     app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
-}
-await app.MigrateDatabaseAsync(configuration);
-
-if (app.Environment.IsDevelopment())
-{
     await app.InitializeDatabaseAsync();
 }
 
