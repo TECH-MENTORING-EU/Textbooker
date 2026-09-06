@@ -65,6 +65,31 @@ jobs:
           
       - name: Build and Deploy
         shell: pwsh
-        run: |   
-          dotnet build .\Booker\Booker.sln /p:Configuration=Release /p:DeployOnBuild=True /p:WebPublishMethod=MSDeploy /p:MSDeployPublishMethod=WMSVC /p:MSDeployServiceUrl=$env:MSDEPLOY_SERVICE_URL /p:UserName=$env:MSDEPLOY_USERNAME /p:Password=$env:MSDEPLOY_PASSWORD /p:DeployIISAppPath=$env:MSDEPLOY_IIS_APP_PATH /p:SkipExtraFilesOnServer=False /p:OutputPath=".\Booker\build_artifacts"
+        run: |
+          $publishProfilePath = ".\Booker\Properties\PublishProfiles\GitHubActions.pubxml"
+          New-Item -ItemType Directory -Force (Split-Path $publishProfilePath) | Out-Null
+
+          @"
+          <Project>
+            <PropertyGroup>
+              <WebPublishMethod>MSDeploy</WebPublishMethod>
+              <MSDeployPublishMethod>WMSVC</MSDeployPublishMethod>
+              <MSDeployServiceUrl>$([System.Security.SecurityElement]::Escape($env:MSDEPLOY_SERVICE_URL))</MSDeployServiceUrl>
+              <UserName>$([System.Security.SecurityElement]::Escape($env:MSDEPLOY_USERNAME))</UserName>
+              <Password>$([System.Security.SecurityElement]::Escape($env:MSDEPLOY_PASSWORD))</Password>
+              <DeployIISAppPath>$([System.Security.SecurityElement]::Escape($env:MSDEPLOY_IIS_APP_PATH))</DeployIISAppPath>
+              <SkipExtraFilesOnServer>False</SkipExtraFilesOnServer>
+            </PropertyGroup>
+          </Project>
+          "@ | Set-Content $publishProfilePath
+
+          try {
+            dotnet build .\Booker\Booker.sln /p:Configuration=Release /p:DeployOnBuild=True /p:PublishProfile=GitHubActions /p:OutputPath=".\Booker\build_artifacts"
+            if ($LASTEXITCODE -ne 0) {
+              exit $LASTEXITCODE
+            }
+          }
+          finally {
+            Remove-Item $publishProfilePath -Force -ErrorAction SilentlyContinue
+          }
         
