@@ -1,4 +1,4 @@
-@page "{id:int}"
+﻿@page "{id:int}"
 @model Booker.Pages.EditModel
 @inject Booker.Services.PhotosManager PhotosManager
 @{
@@ -53,16 +53,16 @@
                 <section>
                     <span hx-get="?handler=Params&firstLoad=true" hx-trigger="load" hx-include="@include" hx-swap="delete" aria-hidden="true"></span>
 
+                    <label asp-for='Input.Subject'>Przedmiot:</label>
+                    <select asp-for='Input.Subject' asp-items="Model.Subjects" aria-describedby="Input_Subject-error"></select>
+                    <small><span asp-validation-for="Input.Subject" id="Input_Subject-error" role="alert"></span></small>
+
                     <label asp-for="Input.Title">Tytuł książki:</label>
                     <select asp-for="Input.Title" asp-items="Model.Books" aria-describedby="Input_Title-help"></select>
                     <small id="Input_Title-help">
                         <span asp-validation-for="Input.Title" role="alert"></span><br>
                         Nie widzisz swojej książki? Wybierz opcję "inna" i opisz ją poniżej.
                     </small>
-
-                    <label asp-for='Input.Subject'>Przedmiot:</label>
-                    <select asp-for='Input.Subject' asp-items="Model.Subjects" aria-describedby="Input_Subject-error"></select>
-                    <small><span asp-validation-for="Input.Subject" id="Input_Subject-error" role="alert"></span></small>
 
                     <label asp-for='Input.Grade'>Klasa:</label>
                     <select asp-for='Input.Grade' asp-items="Model.Grades" aria-describedby="Input_Grade-error"></select>
