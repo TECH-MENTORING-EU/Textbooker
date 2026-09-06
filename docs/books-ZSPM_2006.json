@@ -1,0 +1,65 @@
+[
+  { "id": -1, "title": "Inna", "subject": { "id": -1, "name": "Brak" }, "level": { "id": -1, "name": "Brak" }, "grades": [1, 2, 3, 4, 5] },
+
+  { "id": 1, "title": "Oblicza epok 1 cz. 1", "subject": { "id": 1, "name": "Język polski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [1] },
+  { "id": 2, "title": "Oblicza epok 1 cz. 2", "subject": { "id": 1, "name": "Język polski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [1, 2] },
+  { "id": 3, "title": "Oblicza epok 2 cz. 1", "subject": { "id": 1, "name": "Język polski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [2] },
+  { "id": 4, "title": "Oblicza epok 2 cz. 2", "subject": { "id": 1, "name": "Język polski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [2, 3] },
+  { "id": 5, "title": "Oblicza epok 3 cz. 1", "subject": { "id": 1, "name": "Język polski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [3] },
+  { "id": 6, "title": "Oblicza epok 3 cz. 2", "subject": { "id": 1, "name": "Język polski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [3, 4, 5] },
+  { "id": 7, "title": "Oblicza epok 4", "subject": { "id": 1, "name": "Język polski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [4, 5] },
+
+  { "id": 8, "title": "Impulse 1 Student's Book", "subject": { "id": 2, "name": "Język angielski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [1] },
+  { "id": 9, "title": "Impulse 1 Workbook", "subject": { "id": 2, "name": "Język angielski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [1] },
+  { "id": 10, "title": "Impulse 2 Student's Book", "subject": { "id": 2, "name": "Język angielski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [2] },
+  { "id": 11, "title": "Impulse 2 Workbook", "subject": { "id": 2, "name": "Język angielski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [2] },
+  { "id": 12, "title": "Impulse 3 Student's Book", "subject": { "id": 2, "name": "Język angielski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [3, 4] },
+  { "id": 13, "title": "Repetytorium [Macmillan]", "subject": { "id": 2, "name": "Język angielski" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [4, 5] },
+  { "id": 14, "title": "Repetytorium [Macmillan] poziom rozszerzony", "subject": { "id": 2, "name": "Język angielski" }, "level": { "id": 2, "name": "Rozszerzenie" }, "grades": [5] },
+
+  { "id": 15, "title": "Ein tolles Team 1", "subject": { "id": 3, "name": "Język niemiecki" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [1] },
+  { "id": 16, "title": "Ein tolles Team 2", "subject": { "id": 3, "name": "Język niemiecki" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [2] },
+  { "id": 17, "title": "Ein tolles Team 3", "subject": { "id": 3, "name": "Język niemiecki" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [3] },
+  { "id": 18, "title": "Podręcznik z repetytorium [Nowa Era]", "subject": { "id": 3, "name": "Język niemiecki" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [4, 5] },
+
+  { "id": 19, "title": "Biologia na czasie 2", "subject": { "id": 4, "name": "Biologia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+  { "id": 20, "title": "Biologia na czasie 3", "subject": { "id": 4, "name": "Biologia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [3, 4] },
+  { "id": 21, "title": "Biologia na czasie 3", "subject": { "id": 4, "name": "Biologia" }, "level": { "id": 2, "name": "Rozszerzenie" }, "grades": [3] },
+
+  { "id": 22, "title": "Żyję i działam bezpiecznie", "subject": { "id": 6, "name": "EDB" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [1] },
+
+  { "id": 23, "title": "Odkryć fizykę 2", "subject": { "id": 7, "name": "Fizyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+  { "id": 24, "title": "Odkryć fizykę 3", "subject": { "id": 7, "name": "Fizyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [3] },
+
+  { "id": 25, "title": "NOWE Oblicza geografii 1", "subject": { "id": 8, "name": "Geografia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [1] },
+  { "id": 26, "title": "NOWE Oblicza geografii 2", "subject": { "id": 8, "name": "Geografia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2, 3] },
+  { "id": 27, "title": "Oblicza geografii 3", "subject": { "id": 8, "name": "Geografia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [4] },
+  { "id": 28, "title": "Geografia 2 [Operon, branżowa]", "subject": { "id": 8, "name": "Geografia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+
+  { "id": 29, "title": "Historia 1 [wsip]", "subject": { "id": 9, "name": "Historia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [1] },
+  { "id": 30, "title": "Historia 2 [wsip]", "subject": { "id": 9, "name": "Historia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+  { "id": 31, "title": "Historia 3 [wsip]", "subject": { "id": 9, "name": "Historia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [3, 4] },
+  { "id": 32, "title": "Historia 4 [wsip]", "subject": { "id": 9, "name": "Historia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [4, 5] },
+  { "id": 33, "title": "Historia 2 [Operon, branżowa]", "subject": { "id": 9, "name": "Historia" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+
+  { "id": 34, "title": "Informatyka 3 [wsip]", "subject": { "id": 11, "name": "Informatyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2, 3] },
+
+  { "id": 35, "title": "Prosto do matury 1", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [1] },
+  { "id": 36, "title": "Prosto do matury 2", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+  { "id": 37, "title": "Prosto do matury 3", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [3] },
+  { "id": 38, "title": "Prosto do matury 4", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [4, 5] },
+  { "id": 39, "title": "Prosto do matury 1", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [1] },
+  { "id": 40, "title": "Prosto do matury 2", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [2] },
+  { "id": 41, "title": "Prosto do matury 4", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [4] },
+  { "id": 42, "title": "NOWA MATeMAtyka 1", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 3, "name": "Podstawa+Rozszerzenie" }, "grades": [1] },
+  { "id": 43, "title": "To się liczy! 2 [branżowa]", "subject": { "id": 12, "name": "Matematyka" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+
+  { "id": 44, "title": "Krok w biznes i zarządzanie 1", "subject": { "id": 14, "name": "Biznes i zarządzanie" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [1] },
+  { "id": 45, "title": "Krok w biznes i zarządzanie 2", "subject": { "id": 14, "name": "Biznes i zarządzanie" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+  { "id": 46, "title": "Krok w biznes i zarządzanie 1 [branżowa]", "subject": { "id": 14, "name": "Biznes i zarządzanie" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+
+  { "id": 47, "title": "Masz wpływ 1", "subject": { "id": 18, "name": "Edukacja obywatelska" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [2] },
+  { "id": 48, "title": "Masz wpływ 2", "subject": { "id": 18, "name": "Edukacja obywatelska" }, "level": { "id": 1, "name": "Podstawa" }, "grades": [3] },
+
+  { "id": 49, "title": "Bezpieczeństwo i higiena pracy [wsip]", "subject": { "id": -1, "name": "Brak" }, "level": { "id": -1, "name": "Brak" }, "grades": [1] }
+]
