@@ -91,6 +91,7 @@ namespace Booker.Areas.Identity.Pages.Account
             [Compare("Password", ErrorMessage = "Hasła się nie zgadzają.")]
             public string ConfirmPassword { get; set; }
             
+            [Required(ErrorMessage = "Musisz wybrać szkołę.")]
             [Display(Name = "Szkoła")]
             public int? SchoolId { get; set; }
 
@@ -182,7 +183,7 @@ namespace Booker.Areas.Identity.Pages.Account
                             Input.SchoolId.Value
                         );
                         ModelState.AddModelError(
-                            nameof(Input.SchoolId),
+                            "Input.SchoolId",
                             "Wybrana szkoła nie jest dostępna. Wybierz inną szkołę."
                         );
                         return Page();
@@ -197,7 +198,7 @@ namespace Booker.Areas.Identity.Pages.Account
                 else
                 {
                     ModelState.AddModelError(
-                        nameof(Input.SchoolId),
+                        "Input.SchoolId",
                         "Nie znaleziono szkoły dla podanego adresu e-mail. Wybierz szkołę ręcznie."
                     );
                     return Page();
