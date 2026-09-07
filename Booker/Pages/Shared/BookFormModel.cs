@@ -89,6 +89,18 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             Input!.Level = "";
         }
 
+        if (trigger == "Input.Subject")
+        {
+            // A new subject starts a fresh selection. Grade and level left over
+            // from the previously added book silently filtered the new subject's
+            // titles down to "Brak dostępnych książek" (e.g. picking German after
+            // a rozszerzenie math book hid every Welttour Deutsch title).
+            ModelState.Remove("Input.Grade");
+            Input!.Grade = "";
+            ModelState.Remove("Input.Level");
+            Input!.Level = "";
+        }
+
         await LoadBooksSelect();
         await LoadGradesSelect();
         await LoadSubjectsSelect();
@@ -128,6 +140,19 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
                 Value = "null",
                 Text = "Brak dostępnych książek",
                 Disabled = true
+            });
+        }
+
+        // "Inna" is the escape hatch for books missing from the catalog (the form
+        // hint points at it). Its subject is the "Brak" pseudo-subject, so the
+        // subject filter always hides it - re-add it so it stays reachable for
+        // every subject selection.
+        if (Books.All(b => b.Value != "Inna"))
+        {
+            Books.Add(new SelectListItem
+            {
+                Value = "Inna",
+                Text = "Inna"
             });
         }
     }
