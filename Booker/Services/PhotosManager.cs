@@ -165,7 +165,6 @@ public class PhotosManager(ILogger<PhotosManager> logger, Lazy<IAmazonS3> s3Clie
         return $"{publicUrl}/{photoUri}";
     }
 
-<<<<<<< HEAD
     /// <summary>
     /// Determines the content type from the stream's magic bytes when the stream
     /// is seekable, so content that does not match its extension (e.g. PNG data
