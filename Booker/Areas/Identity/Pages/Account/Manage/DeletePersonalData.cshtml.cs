@@ -41,7 +41,6 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             _userPhotoManager = userPhotoManager;
             _context = context;
             _itemManager = itemManager;
-            _dataContext = dataContext;
         }
 
         /// <summary>
