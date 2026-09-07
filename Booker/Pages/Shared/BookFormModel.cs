@@ -250,17 +250,19 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         }
     }
 
-    private static SelectToSwap GetSelectsToSwap(string triggerName, bool firstLoad) =>
-        firstLoad
-            ? SelectToSwap.Title | SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level
-            : triggerName switch
-            {
-                "Input.Subject" => SelectToSwap.Title | SelectToSwap.Grade | SelectToSwap.Level,
-                "Input.Title" => SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level,
-                "Input.Grade" => SelectToSwap.Title,
-                "Input.Level" => SelectToSwap.Title,
-                _ => SelectToSwap.Title
-            };
+    private static SelectToSwap GetSelectsToSwap(string triggerName, bool firstLoad)
+    {
+        if (firstLoad)
+            return SelectToSwap.Title | SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level;
+
+        return triggerName switch
+        {
+            "Input.Subject" => SelectToSwap.Title | SelectToSwap.Grade | SelectToSwap.Level,
+            "Input.Title" => SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level,
+            "Input.Grade" or "Input.Level" => SelectToSwap.Title,
+            _ => SelectToSwap.None
+        };
+    }
 }
 
 public interface IBookForm
