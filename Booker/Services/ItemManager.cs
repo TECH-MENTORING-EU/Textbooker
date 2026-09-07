@@ -1,4 +1,4 @@
-using Booker.Data;
+﻿using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
@@ -157,6 +157,17 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         User? currentUser = null,
         bool includeHidden = false)
         => GetPagedItemsCoreAsync(input, ids: null, pageNumber, pageSize, currentUser, includeHidden);
+
+    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids, User? currentUser = null)
+    {
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query
+            .Where(i => ids.Contains(i.Id))
+            .OrderByDescending(i => i.CreatedAt)
+            .AsAsyncEnumerable();
+    }
 
     public Task<PagedItems> GetPagedItemsByIdsAsync(
         IEnumerable<int> ids,
