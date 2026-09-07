@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -251,15 +251,11 @@ namespace Booker.Areas.Admin.Pages
 
             await _itemManager.SetItemsVisibilityByUserAsync(id, true);
 
-<<<<<<< HEAD
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserUnlock, user.Id, user.UserName ?? id.ToString(), "User");
             await transaction.CommitAsync();
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} odblokował konto użytkownika {user.UserName}.");
-=======
             _logger.LogInformation("Użytkownik {AdminUserName} odblokował konto użytkownika {TargetUserName}.",
                 currentUser?.UserName, user.UserName);
->>>>>>> 33579ed (Fix session CAS false sign-outs and structured logging)
             return Partial("_UserRows", new List<User> { user });
         }
     }
