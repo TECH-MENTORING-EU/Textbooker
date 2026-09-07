@@ -17,6 +17,10 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
     protected readonly ItemManager _itemManager;
     public bool IsFirstLoad { get; set; } = false;
 
+    // Name attribute of the select that fired the current Params request
+    // (from the HX-Trigger-Name header); empty on the initial firstLoad call.
+    public string TriggerName { get; private set; } = string.Empty;
+
     [BindProperty]
     public T? Input { get; set; }
     ItemInputModel? IBookForm.Input => Input;
@@ -39,7 +43,10 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         Input = input;
 
         IsFirstLoad = firstLoad;
-        await LoadSelects(Request.Headers.ContainsKey("HX-Trigger-Name") ? Request.Headers["HX-Trigger-Name"].ToString() : string.Empty);
+        TriggerName = Request.Headers.TryGetValue("HX-Trigger-Name", out var triggerName)
+            ? triggerName.ToString()
+            : string.Empty;
+        await LoadSelects(TriggerName);
         return Partial("_FormSelects", this);
     }
 
@@ -240,4 +247,5 @@ public interface IBookForm
     List<SelectListItem> Grades { get; }
     List<SelectListItem> Levels { get; }
     bool IsFirstLoad { get; }
+    string TriggerName { get; }
 }

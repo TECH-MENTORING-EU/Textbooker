@@ -6,13 +6,29 @@
     // in a URL (browser history, server access logs, proxies).
     const string include = "#Input_Title, #Input_Subject, #Input_Grade, #Input_Level";
     string onLoad = Model.IsFirstLoad ? string.Empty : "v.isFieldValid(this)";
+
+    // Swap only the DEPENDENT selects. Re-rendering the select the user just
+    // changed replaces the DOM node while the mobile native picker is still
+    // closing over it, which makes the select visibly jump back in ("appears
+    // a second time"). Every select carries hx-swap="none" so the non-OOB
+    // remainder of the response (the triggering select itself) is discarded.
+    bool swapTitle = Model.IsFirstLoad || Model.TriggerName != "Input.Title";
+    bool swapSubject = Model.IsFirstLoad || Model.TriggerName == "Input.Title";
+    bool swapGradeOrLevel = Model.IsFirstLoad
+        || Model.TriggerName == "Input.Title"
+        || Model.TriggerName == "Input.Subject";
+    string? titleOob = swapTitle ? "true" : null;
+    string? subjectOob = swapSubject ? "true" : null;
+    string? gradeOob = swapGradeOrLevel ? "true" : null;
+    string? levelOob = swapGradeOrLevel ? "true" : null;
 }
 
 <select asp-for="Input.Title" asp-items="Model.Books" hx-on::load="@onLoad"
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@titleOob"
 >
     <option value="">Wybierz książkę</option>
 </select>
@@ -21,7 +37,8 @@
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@subjectOob"
 >
     <option value="" disabled="@(Model.Subjects?.Count == 1)">Wybierz przedmiot</option>
 </select>
@@ -30,7 +47,8 @@
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@gradeOob"
 >
     <option value="" disabled="@(Model.Grades?.Count == 1)">Wybierz klasę</option>
 </select>
@@ -39,7 +57,8 @@
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@levelOob"
 >
     <option value="" disabled="@(Model.Levels?.Count == 1)">Wybierz poziom</option>
 </select>
