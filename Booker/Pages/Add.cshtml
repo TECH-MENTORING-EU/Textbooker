@@ -1,5 +1,7 @@
 ﻿@page
 @model Booker.Pages.BookAddingModel
+@inject Microsoft.AspNetCore.Identity.UserManager<Booker.Data.User> UserManager
+
 @{
     ViewData["Title"] = "Dodaj ogłoszenie";
     // RODO: scoped to the fields that affect the select options - Description/State/Price hold

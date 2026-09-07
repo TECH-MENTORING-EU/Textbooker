@@ -16,6 +16,7 @@ namespace Booker.Data
         /// <summary>
         /// Foreign key to the School table. Nullable - users without assigned school have null.
         /// </summary>
+        [PersonalData]
         public int? SchoolId { get; set; }
 
         /// <summary>
@@ -23,10 +24,19 @@ namespace Booker.Data
         /// </summary>
         public School? School { get; set; }
 
+        [PersonalData]
         public string? Photo { get; set; }
         public ICollection<Item> Items { get; } = new HashSet<Item>();
         public ICollection<Item> Favorites { get; } = new HashSet<Item>();
         public ICollection<ItemView> ItemViews { get; } = new HashSet<ItemView>();
+
+        /// <summary>Ratings this user gave to others; the buyer rates the seller per sold listing.</summary>
+        public ICollection<UserRating> RatingsGiven { get; } = new HashSet<UserRating>();
+
+        /// <summary>Ratings this user received from buyers.</summary>
+        public ICollection<UserRating> RatingsReceived { get; } = new HashSet<UserRating>();
+
+        [PersonalData]
         public bool AreFavoritesPublic { get; set; } = false;
 
         // RODO - task 05: default values for contact-visibility flags.
@@ -50,5 +60,22 @@ namespace Booker.Data
 
         [PersonalData]
         public string? Instagram { get; set; }
+
+        [PersonalData]
+        public bool DisplayInstagram { get; set; } = false;
+
+        // RODO - task 06
+        [PersonalData]
+        public bool DisplaySchool { get; set; } = false;
+
+        // RODO - task 04
+        [PersonalData]
+        public DateTime? TermsAcceptedAt { get; set; }
+
+        [PersonalData]
+        public string? TermsAcceptedVersion { get; set; }
+
+        [PersonalData]
+        public DateTime? AgeConfirmationAcceptedAt { get; set; }
     }
 }

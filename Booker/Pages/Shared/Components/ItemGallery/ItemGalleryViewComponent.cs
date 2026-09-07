@@ -3,12 +3,15 @@ using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Identity;
 
 namespace Booker.Pages.Shared.Components.ItemGallery;
 
 public class ItemGalleryViewComponent : ViewComponent
 {
     private readonly ItemManager _itemManager;
+    private readonly PhotosManager _photosManager;
+    private readonly UserManager<User> _userManager;
     const int PageSize = 25;
 
     public record ItemsListModel(
@@ -25,9 +28,11 @@ public class ItemGalleryViewComponent : ViewComponent
         bool LinkFilters
     );
 
-    public ItemGalleryViewComponent(ItemManager itemManager)
+    public ItemGalleryViewComponent(ItemManager itemManager, UserManager<User> userManager, PhotosManager photosManager)
     {
         _itemManager = itemManager;
+        _userManager = userManager;
+        _photosManager = photosManager;
     }
 
     public async Task<IViewComponentResult> InvokeAsync(
@@ -67,9 +72,10 @@ public class ItemGalleryViewComponent : ViewComponent
         var itemsWithPhotos = itemsFromDb.Select(item => new ItemModel(
             Item: item,
             FirstPhoto: string.IsNullOrEmpty(item.Photo)
-                ? "/images/default-book.png" // fallback
-                : item.Photo.Split(';')[0].Trim(),
-            Params: parameters
+                ? "/img/default-book.svg"
+                : _photosManager.GetPhotoUrl(item.Photo.Split(';')[0].Trim()),
+            Params: parameters,
+            LinkFilters: linkFilters
         ));
 
         return View(

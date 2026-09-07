@@ -1,4 +1,4 @@
-using Booker.Areas.Identity.Utilities;
+﻿using Booker.Areas.Identity.Utilities;
 using Booker.Data;
 using Booker.ModelBinding;
 using Booker.Services;
@@ -28,6 +28,11 @@ IConfiguration configuration = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
     .AddUserSecrets<Program>() // Replace `Program` with your project's main class
     .AddEnvironmentVariables().Build();
+
+if (await StartupUtilities.RunMaintenanceMode(configuration, args))
+{
+    return;
+}
 
 // Register IMemoryCache in DI container
 builder.Services.AddMemoryCache();

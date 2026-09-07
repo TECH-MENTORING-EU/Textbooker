@@ -1530,6 +1530,50 @@ namespace Booker.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Booker.Data.Grade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("GradeNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Grades");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            GradeNumber = "1"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            GradeNumber = "2"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            GradeNumber = "3"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            GradeNumber = "4"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            GradeNumber = "5"
+                        });
+                });
+
             modelBuilder.Entity("Booker.Data.ChatMessage", b =>
                 {
                     b.Property<int>("Id")
@@ -1610,7 +1654,7 @@ namespace Booker.Migrations
                     b.ToTable("ChatThreads");
                 });
 
-            modelBuilder.Entity("Booker.Data.Grade", b =>
+            modelBuilder.Entity("Booker.Data.UserRating", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1618,40 +1662,37 @@ namespace Booker.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("GradeNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RatingValue")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reply")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("RevieweeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Grades");
+                    b.HasIndex("RevieweeId");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            GradeNumber = "1"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            GradeNumber = "2"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            GradeNumber = "3"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            GradeNumber = "4"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            GradeNumber = "5"
-                        });
+                    b.HasIndex("ReviewerId", "RevieweeId")
+                        .IsUnique();
+
+                    b.ToTable("UserRatings");
                 });
 
             modelBuilder.Entity("Booker.Data.Item", b =>
@@ -1675,7 +1716,7 @@ namespace Booker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsSold")
+                    b.Property<bool>("FlaggedForReview")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsVisible")
@@ -1689,11 +1730,14 @@ namespace Booker.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<bool>("Reserved")
+                    b.Property<bool>("IsSold")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("ReservedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("Reserved")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("SoldAt")
                         .HasColumnType("datetime2");
@@ -1715,9 +1759,9 @@ namespace Booker.Migrations
 
                     b.HasIndex("BookId");
 
-                    b.HasIndex("SoldToUserId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("SoldToUserId");
 
                     b.ToTable("Items");
                 });
@@ -2047,47 +2091,6 @@ namespace Booker.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Booker.Data.UserRating", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RatingValue")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("RepliedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Reply")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("RevieweeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReviewerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RevieweeId");
-
-                    b.HasIndex("ReviewerId", "RevieweeId")
-                        .IsUnique();
-
-                    b.ToTable("UserRatings");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -2307,6 +2310,25 @@ namespace Booker.Migrations
                     b.Navigation("Item");
                 });
 
+            modelBuilder.Entity("Booker.Data.UserRating", b =>
+                {
+                    b.HasOne("Booker.Data.User", "Reviewee")
+                        .WithMany()
+                        .HasForeignKey("RevieweeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Booker.Data.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Reviewee");
+
+                    b.Navigation("Reviewer");
+                });
+
             modelBuilder.Entity("Booker.Data.Item", b =>
                 {
                     b.HasOne("Booker.Data.Book", "Book")
@@ -2315,11 +2337,6 @@ namespace Booker.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Booker.Data.User", "SoldToUser")
-                        .WithMany()
-                        .HasForeignKey("SoldToUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Booker.Data.User", "User")
                         .WithMany("Items")
                         .HasForeignKey("UserId")
@@ -2327,8 +2344,6 @@ namespace Booker.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
-
-                    b.Navigation("SoldToUser");
 
                     b.Navigation("User");
                 });
@@ -2360,25 +2375,6 @@ namespace Booker.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("School");
-                });
-
-            modelBuilder.Entity("Booker.Data.UserRating", b =>
-                {
-                    b.HasOne("Booker.Data.User", "Reviewee")
-                        .WithMany()
-                        .HasForeignKey("RevieweeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Booker.Data.User", "Reviewer")
-                        .WithMany()
-                        .HasForeignKey("ReviewerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Reviewee");
-
-                    b.Navigation("Reviewer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>

@@ -13,14 +13,16 @@ namespace Booker.Pages.Profile
         private readonly ILogger<IndexModel> _logger;
         private readonly UserManager<User> _userManager;
         private readonly ItemManager _itemManager;
+        private readonly DataContext _context;
         private readonly IRatingManager _ratingManager;
         const int PageSize = 25;
 
-        public IndexModel(ILogger<IndexModel> logger, UserManager<User> userManager, ItemManager itemManager, IRatingManager ratingManager)
+        public IndexModel(ILogger<IndexModel> logger, UserManager<User> userManager, ItemManager itemManager, DataContext context, IRatingManager ratingManager)
         {
             _logger = logger;
             _userManager = userManager;
             _itemManager = itemManager;
+            _context = context;
             _ratingManager = ratingManager;
         }
         [FromRoute]
@@ -29,14 +31,15 @@ namespace Booker.Pages.Profile
         public List<int>? ItemIds { get; set; }
         public StaticDataManager.Parameters Params { get; set; } = null!;
 
+        // RODO - task 06: school name fetched separately, because UserManager doesn't load
+        // the User.School navigation.
+        public record UserModel(User RequestUser, bool IsCurrentUser, string? SchoolName, bool HasActiveListing);
+        public UserModel UserInfo { get; set; } = null!;
         public double AverageRating { get; set; }
         public int RatingCount { get; set; }
         public List<UserRating> Ratings { get; set; } = new();
         public bool CanRate { get; set; }
         public bool HasExistingRating { get; set; }
-
-        public record UserModel(User RequestUser, bool IsCurrentUser);
-        public UserModel UserInfo { get; set; } = null!;
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
             var currentUserId = _userManager.GetUserId(User).IntOrDefault();

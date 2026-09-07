@@ -14,6 +14,7 @@ namespace Booker.Data
         public DbSet<Level> Levels { get; set; }
         public DbSet<School> Schools { get; set; }
         public DbSet<ItemView> ItemViews { get; set; }
+        public DbSet<AdminActionLog> AdminActionLogs { get; set; }
         public DbSet<UserRating> UserRatings { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatThread> ChatThreads { get; set; }
@@ -39,8 +40,6 @@ namespace Booker.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<School>().HasData(SeedData.Schools);
 
             modelBuilder.Entity<Subject>().HasData(SeedData.Subjects);
 
@@ -76,6 +75,20 @@ namespace Booker.Data
                     });
             });
 
+            modelBuilder.Entity<ItemView>(iv =>
+            {
+                iv.HasKey(v => new { v.ItemId, v.UserId });
+                iv.HasOne(v => v.Item).WithMany(i => i.Views).HasForeignKey(v => v.ItemId).OnDelete(DeleteBehavior.Cascade);
+                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // RODO - task 09: no FK to User by design - the entry must survive account deletion.
+            modelBuilder.Entity<AdminActionLog>(al =>
+            {
+                al.HasIndex(a => a.CreatedAt);
+                al.HasIndex(a => a.AdminUserName);
+            });
+
             modelBuilder.Entity<Item>(i =>
             {
                 // The buyer recorded at sale confirmation. Restrict avoids a second
@@ -84,13 +97,6 @@ namespace Booker.Data
                     .HasForeignKey(i => i.SoldToUserId)
                     .OnDelete(DeleteBehavior.Restrict)
                     .IsRequired(false);
-            });
-
-            modelBuilder.Entity<ItemView>(iv =>
-            {
-                iv.HasKey(v => new { v.ItemId, v.UserId });
-                iv.HasOne(v => v.Item).WithMany(i => i.Views).HasForeignKey(v => v.ItemId).OnDelete(DeleteBehavior.Cascade);
-                iv.HasOne(v => v.User).WithMany(u => u.ItemViews).HasForeignKey(v => v.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<UserRating>(ur =>
@@ -109,16 +115,8 @@ namespace Booker.Data
             modelBuilder.Entity<ChatThread>(ct =>
             {
                 ct.HasIndex(t => t.ChannelId).IsUnique();
-                ct.HasIndex(t => new { t.UserAId, t.UserBId });
-                ct.HasOne(t => t.Item).WithMany().HasForeignKey(t => t.ItemId).OnDelete(DeleteBehavior.SetNull).IsRequired(false);
-                // NO ACTION rather than cascade: two cascade paths from User
-                // (plus the Item path) would make SQL Server reject the model,
-                // so account deletion cleans threads up explicitly instead.
-                ct.HasOne<User>().WithMany().HasForeignKey(t => t.UserAId).OnDelete(DeleteBehavior.NoAction);
-                ct.HasOne<User>().WithMany().HasForeignKey(t => t.UserBId).OnDelete(DeleteBehavior.NoAction);
             });
         }
-
 
         public static IEnumerable<int> GenerateAscendingIntegers(int start = 1, int end = 1000)
         {

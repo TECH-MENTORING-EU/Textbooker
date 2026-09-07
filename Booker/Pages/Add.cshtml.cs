@@ -3,8 +3,6 @@ using Booker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
-using System.IO;
 
 namespace Booker.Pages
 {
@@ -16,10 +14,12 @@ namespace Booker.Pages
         {
         }
 
+        // RODO - task 08: the description looks like it contains contact details - awaiting confirmation.
+        public bool ShowSensitiveContentWarning { get; set; }
+
         public async Task<IActionResult> OnGetAsync()
         {
             await LoadSelects(string.Empty);
-
             return Page();
         }
 
@@ -37,7 +37,18 @@ namespace Booker.Pages
                 requireAtLeastOne: true,
                 ModelState);
 
-            if (!ModelState.IsValid)
+            if (validatedImages == null)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return Page();
+            }
+
+            var looksSensitive = Shared.ContentModerationHelper.LooksLikeContactInfo(Input.Description);
+            // Set unconditionally (not just on the early-return path below) so the confirmation
+            // checkbox stays visible/checked if the page has to re-render later for an unrelated
+            // reason (photo storage failure, book validation error via ValidateAndReturn).
+            ShowSensitiveContentWarning = looksSensitive;
+            if (looksSensitive && !Input.ConfirmSensitiveDescription)
             {
                 ModelState.AddModelError("Input.Description",
                     "Opis wygląda na zawierający adres e-mail lub numer telefonu. Zaznacz potwierdzenie poniżej, jeśli mimo to chcesz opublikować ogłoszenie z taką treścią.");
@@ -50,33 +61,29 @@ namespace Booker.Pages
                 Input.Title, Input.Grade, Input.Subject, Input.Level
             );
 
-            var imageStreams = new List<Stream>();
-            var imageExtensions = new List<string>();
-
-            foreach (var img in Input.Images!)
+            ItemManager.Result result;
+            try
             {
-
-                var memoryStream = new MemoryStream();
-                await img.OpenReadStream().CopyToAsync(memoryStream);
-                memoryStream.Position = 0;
-                imageStreams.Add(memoryStream);
-
-                imageExtensions.Add(Path.GetExtension(img.FileName));
+                result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
+                    (await _userManager.GetUserAsync(User))!,
+                    parameters,
+                    Input.Description,
+                    Input.State,
+                    Input.Price,
+                    validatedImages.Streams,
+                    validatedImages.Extensions,
+                    FlaggedForReview: looksSensitive
+                ));
             }
-
-
-            var result = await _itemManager.AddItemAsync(new ItemManager.ItemModel(
-                (await _userManager.GetUserAsync(User))!,
-                parameters,
-                Input.Description,
-                Input.State,
-                Input.Price,
-                imageStreams,
-                imageExtensions
-            ));
+            catch (PhotoStorageException ex)
+            {
+                ModelState.AddModelError("Input.Images", ex.Message);
+                Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                await LoadSelects(string.Empty);
+                return Page();
+            }
 
             return ValidateAndReturn(result.Id, result.Status);
         }
-
     }
 }

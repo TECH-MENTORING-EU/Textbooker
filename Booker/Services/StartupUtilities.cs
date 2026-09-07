@@ -14,15 +14,48 @@ using Amazon.S3;
 
 
 
-
-
 namespace Booker.Services
 {
     public static partial class StartupUtilities
     {
         public static IServiceCollection AddBookerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton(x => new BlobServiceClient(configuration["AzureStorage:ConnectionString"]));
+            services.AddSingleton(serviceProvider =>
+            {
+                var accessKey = configuration["S3:AccessKeyId"];
+                var secretKey = configuration["S3:SecretAccessKey"];
+                var serviceUrl = configuration["CF:ServiceUrl"];
+                var region = configuration["S3:Region"];
+                var logger = serviceProvider.GetRequiredService<ILogger<PhotosManager>>();
+
+                if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey))
+                {
+                    logger.LogWarning("Photo uploads are disabled because S3 credentials are not configured.");
+                }
+
+                if (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region))
+                {
+                    logger.LogWarning("Photo uploads are disabled because neither CF:ServiceUrl nor S3:Region is configured.");
+                }
+
+                return new Lazy<IAmazonS3>(() =>
+                {
+                    if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey) ||
+                        (string.IsNullOrWhiteSpace(serviceUrl) && string.IsNullOrWhiteSpace(region)))
+                    {
+                        throw new InvalidOperationException("Photo storage is not configured.");
+                    }
+
+                    var clientConfiguration = new AmazonS3Config { ForcePathStyle = true };
+
+                    if (!string.IsNullOrWhiteSpace(serviceUrl))
+                        clientConfiguration.ServiceURL = serviceUrl;
+                    else
+                        clientConfiguration.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region);
+
+                    return new AmazonS3Client(accessKey, secretKey, clientConfiguration);
+                });
+            });
 
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddTransient<SendMailSvc>();
@@ -31,6 +64,7 @@ namespace Booker.Services
 
             services.AddScoped<ItemManager>();
             services.AddScoped<FavoritesManager>();
+            services.AddScoped<IRatingManager, RatingManager>();
             services.AddScoped<StaticDataManager>();
             services.AddScoped<PhotosManager>();
             services.AddScoped<UserPhotoManager>();
@@ -40,9 +74,8 @@ namespace Booker.Services
             services.Configure<ChatModerationOptions>(configuration.GetSection("ChatModeration"));
             services.AddSingleton<ChatModerationService>();
             services.AddScoped<IChatThreadService, ChatThreadService>();
-            services.AddScoped<SchoolService>();
             services.AddScoped<SchoolMappingService>();
-            services.AddScoped<IRatingManager, RatingManager>();
+            services.AddScoped<SchoolService>();
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
@@ -215,8 +248,46 @@ namespace Booker.Services
             return services;
         }
 
+        public static async Task<bool> RunMaintenanceMode(IConfiguration configuration, string[] args)
+        {
+            if (!configuration.GetValue<bool>("Maintenance"))
+            {
+                return false;
+            }
+
+            var builder = WebApplication.CreateBuilder(args);
+            var app = builder.Build();
+
+            var maintenancePagePath = Path.Combine(
+                app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"),
+                "_MaintenancePage.html");
+
+            app.Run(async context =>
+            {
+                if (!File.Exists(maintenancePagePath))
+                {
+                    context.Response.StatusCode = StatusCodes.Status200OK;
+                    context.Response.ContentType = "text/plain; charset=utf-8";
+                    await context.Response.WriteAsync("Maintenance. Please visit us later");
+                    return;
+                }
+
+                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.ContentType = "text/html; charset=utf-8";
+                await context.Response.SendFileAsync(maintenancePagePath);
+            });
+
+            await app.RunAsync();
+            return true;
+        }
+
         public static async Task<WebApplication> MigrateDatabaseAsync(this WebApplication app, IConfiguration configuration)
         {
+            if (configuration.GetValue<bool>("Maintenance"))
+            {
+                return app;
+            }
+
             using var scope = app.Services.CreateScope();
 
             bool clearDatabase = configuration.GetValue<bool>("DatabaseSettings:ClearDatabaseOnStartup");
@@ -299,7 +370,6 @@ namespace Booker.Services
 
             return app;
         }
-
 
     }
 }

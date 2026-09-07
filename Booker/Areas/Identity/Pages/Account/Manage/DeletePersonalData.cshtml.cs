@@ -21,6 +21,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly ILogger<DeletePersonalDataModel> _logger;
         private readonly FavoritesManager _favoritesManager;
         private readonly UserPhotoManager _userPhotoManager;
+        private readonly DataContext _context;
         private readonly IChatThreadService _chatThreadService;
 
         public DeletePersonalDataModel(
@@ -29,6 +30,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             ILogger<DeletePersonalDataModel> logger,
             FavoritesManager favoritesManager,
             UserPhotoManager userPhotoManager,
+            DataContext context,
             IChatThreadService chatThreadService)
         {
             _userManager = userManager;
@@ -36,6 +38,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             _logger = logger;
             _favoritesManager = favoritesManager;
             _userPhotoManager = userPhotoManager;
+            _context = context;
             _chatThreadService = chatThreadService;
         }
 
@@ -99,13 +102,6 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
 
             var userId = await _userManager.GetUserIdAsync(user);
 
-            // Threads point at users through non-cascading foreign keys, so the
-            // conversations (with their messages) are removed explicitly here.
-            // CancellationToken.None: the deletion must run to the end even if
-            // the browser walks away mid-request, or the account is stuck in a
-            // partially deleted state.
-            await _chatThreadService.DeleteThreadsForUserAsync(user.Id, CancellationToken.None);
-
             // The keys must be collected before the account is deleted - the item rows
             // cascade away with the account and the keys cannot be read afterwards.
             var photoKeys = await _userPhotoManager.CollectPhotoKeysAsync(user);
@@ -116,6 +112,13 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             await using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+
+                // Threads point at users through non-cascading foreign keys, so the
+                // conversations (with their messages) are removed explicitly here.
+                // CancellationToken.None: the deletion must run to the end even if
+                // the browser walks away mid-request, or the account is stuck in a
+                // partially deleted state.
+                await _chatThreadService.DeleteThreadsForUserAsync(user.Id, CancellationToken.None);
 
                 var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded)

@@ -23,6 +23,10 @@ namespace Booker.Data
         public bool CanChangeVisibility { get; set; } = true;
         public bool Reserved {  get; set; }
 
+        // RODO - task 08: description looks like it contains contact details (email/phone) -
+        // flagged for admin review. Does not block the listing from being displayed.
+        public bool FlaggedForReview { get; set; } = false;
+
         /// <summary>
         /// UTC timestamp of the moment the seller marked the item as reserved.
         /// Starts the transaction lifecycle: after 7 days the seller is asked

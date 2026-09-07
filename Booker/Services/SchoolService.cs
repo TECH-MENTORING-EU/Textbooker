@@ -119,13 +119,12 @@ public class SchoolService(DataContext context, ILogger<SchoolService> logger)
             return false;
         }
 
-        school.IsActive = false;
         school.DeactivatedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
 
         logger.LogInformation(
-            "Soft deleted school: {SchoolName} (ID: {SchoolId}).",
+            "Soft deleted school: {SchoolName} (ID: {SchoolId}). Data preserved.",
             school.Name,
             school.Id
         );
@@ -182,14 +181,9 @@ public class SchoolService(DataContext context, ILogger<SchoolService> logger)
             var normalizedDomain = emailDomain.Trim().ToLower();
             var domainInUse = await context.Schools
                 .Where(s => s.Id != id && s.IsActive && s.EmailDomain != null)
-                .ToListAsync();
+                .AnyAsync(s => s.EmailDomain!.ToLower().Contains(normalizedDomain));
 
-            var hasConflict = domainInUse.Any(s => s.EmailDomain!
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(d => d.Trim().ToLower())
-                .Contains(normalizedDomain));
-
-            if (hasConflict)
+            if (domainInUse)
             {
                 logger.LogWarning(
                     "Cannot update school {SchoolId}: email domain '{Domain}' is already in use by another active school",

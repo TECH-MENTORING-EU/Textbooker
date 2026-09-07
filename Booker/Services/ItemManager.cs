@@ -1,16 +1,12 @@
-using Booker.Data;
+﻿using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Booker.Services;
 
-public class ItemManager
+public class ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager, ILogger<ItemManager> logger)
 {
-    private readonly DataContext _context;
-    private readonly StaticDataManager _staticDataManager;
-    private readonly PhotosManager _photosManager;
-    private readonly ILogger<ItemManager> _logger;
 
     [Flags]
     public enum Status
@@ -39,50 +35,129 @@ public class ItemManager
         decimal Price,
         List<Stream>? ImageStreams = null,
         List<string>? ImageFileExtensions = null,
-        string? ExistingImageBlobNames = null
+        string? ExistingImageFileNames = null,
+        bool FlaggedForReview = false
     );
 
-    public ItemManager(DataContext context, StaticDataManager staticDataManager, PhotosManager photosManager, ILogger<ItemManager> logger)
-    {
-        _context = context;
-        _staticDataManager = staticDataManager;
-        _photosManager = photosManager;
-        _logger = logger;
-    }
 
     
+    /// <summary>
+    /// Gets an item by ID without school filtering. Use for admin scenarios only.
+    /// </summary>
     public Task<Item?> GetItemAsync(int id) =>
-        _context.Items
+        context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
-            .Include(i => i.User)
+            .Include(i => i.User).ThenInclude(u => u.School)
             .FirstOrDefaultAsync(i => i.Id == id);
 
-    public IAsyncEnumerable<Item> GetAllItemsAsync()
+    /// <summary>
+    /// Gets an item by ID with school isolation filtering.
+    /// Returns null if item doesn't exist or user doesn't have access to it (wrong school).
+    /// </summary>
+    public async Task<Item?> GetItemAsync(int id, User? currentUser)
     {
-        return GetAllItemsQueryable()
+        var item = await context.Items
+            .Include(i => i.Book).ThenInclude(b => b.Grades)
+            .Include(i => i.Book).ThenInclude(b => b.Subject)
+            .Include(i => i.Book).ThenInclude(b => b.Level)
+            .Include(i => i.User).ThenInclude(u => u.School)
+            .FirstOrDefaultAsync(i => i.Id == id);
+        
+        if (item == null) return null;
+        
+        // Apply school isolation
+        if (currentUser == null)
+        {
+            // Anonymous users can see items from all active schools
+            return item;
+        }
+        
+        if (currentUser.SchoolId.HasValue)
+        {
+            // User with school can only see items from their own school
+            if (item.User.SchoolId != currentUser.SchoolId.Value)
+            {
+                return null;
+            }
+        }
+        else
+        {
+            // User without school can only see items from users without a school
+            if (item.User.SchoolId != null)
+            {
+                return null;
+            }
+        }
+        
+        return item;
+    }
+
+    public IAsyncEnumerable<Item> GetAllItemsAsync(User? currentUser = null)
+    {
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query
             .OrderByDescending(i => i.CreatedAt)
             .AsAsyncEnumerable();
     }
 
-    public Task<int> GetAllItemsCountAsync()
+    public record AdminItemSummary(int Id, string BookTitle, string? SellerUserName, DateTime CreatedAt, bool FlaggedForReview, string Description);
+
+    // RODO - task 08 admin review: projects only the fields the moderation table displays
+    // (instead of materializing the full book/grades/subject/level/user/school graph via
+    // GetAllItemsAsync) and paginates server-side, since this listing spans every school
+    // and grows without bound as more listings are created.
+    public async Task<List<AdminItemSummary>> GetAdminItemsPageAsync(int pageNumber, int pageSize, bool onlyFlagged = false)
     {
-        return GetAllItemsQueryable()
-            .CountAsync();
+        var query = onlyFlagged
+            ? context.Items.AsNoTracking().Where(i => i.FlaggedForReview)
+            : context.Items.AsNoTracking();
+
+        return await query
+            .OrderByDescending(i => i.CreatedAt)
+            .Skip(pageNumber * pageSize)
+            .Take(pageSize)
+            .Select(i => new AdminItemSummary(i.Id, i.Book.Title, i.User.UserName, i.CreatedAt, i.FlaggedForReview, i.Description))
+            .ToListAsync();
     }
 
-    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids)
+    public Task<int> GetAdminItemsCountAsync(bool onlyFlagged = false)
     {
-        return GetAllItemsQueryable()
+        var query = onlyFlagged
+            ? context.Items.AsNoTracking().Where(i => i.FlaggedForReview)
+            : context.Items.AsNoTracking();
+
+        return query.CountAsync();
+    }
+
+    public Task<int> GetAllItemsCountAsync(User? currentUser = null)
+    {
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query.CountAsync();
+    }
+
+    public IAsyncEnumerable<Item> GetItemsByIdsAsync(IEnumerable<int> ids, User? currentUser = null)
+    {
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query
             .Where(i => ids.Contains(i.Id))
             .OrderByDescending(i => i.CreatedAt)
             .AsAsyncEnumerable();
     }
 
-    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize)
+    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize, User? currentUser = null)
     {
-        return GetAllItemsQueryable()
+        var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
+        
+        return query
             .Where(i => ids.Contains(i.Id))
             .OrderByDescending(i => i.CreatedAt)
             .Skip(pageNumber * pageSize)
@@ -90,9 +165,10 @@ public class ItemManager
             .AsAsyncEnumerable();
     }
 
-    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input)
+    public IAsyncEnumerable<int> GetItemIdsByParamsAsync(Parameters input, User? currentUser = null)
     {
         var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
         query = ApplyFilters(query, input);
 
         return query
@@ -100,9 +176,10 @@ public class ItemManager
             .AsAsyncEnumerable();
     }
 
-    public Task<int> GetItemsCountByParamsAsync(Parameters input)
+    public Task<int> GetItemsCountByParamsAsync(Parameters input, User? currentUser = null)
     {
         var query = GetAllItemsQueryable();
+        query = FilterByUserSchool(query, currentUser);
         query = ApplyFilters(query, input);
 
         return query.CountAsync();
@@ -137,33 +214,34 @@ public class ItemManager
     public async Task MarkItemReservedAsync(int itemId, bool reserved)
     {
         var item = await GetItemAsync(itemId);
-        if (item == null)
-        {
-            return;
-        }
+        item!.Reserved = reserved;
 
-        // A confirmed sale closes the listing's lifecycle: it cannot be reserved again.
-        if (item.IsSold)
-        {
-            return;
-        }
-
-        item.Reserved = reserved;
-        item.ReservedAt = reserved ? DateTime.UtcNow : null;
-
-        await UpdateItemNVAsync(item);
+        await UpdateItemNVAsync(item!);
     }
 
+    public async Task TrackViewAsync(int itemId, int userId)
+    {
+        var alreadyViewed = await context.ItemViews
+            .AnyAsync(v => v.ItemId == itemId && v.UserId == userId);
+
+        if (alreadyViewed) return;
+
+        context.ItemViews.Add(new ItemView { ItemId = itemId, UserId = userId });
+        await context.SaveChangesAsync();
+    }
+
+    public Task<int> GetViewCountAsync(int itemId) =>
+        context.ItemViews.CountAsync(v => v.ItemId == itemId);
+
     /// <summary>
-    /// Number of items the seller should be asked about: reserved at least
-    /// <see cref="SaleConfirmationDays"/> ago, not yet marked sold and not declined.
+    /// Number of days after reserving before the seller is asked whether the sale
+    /// happened (<see cref="GetItemsAwaitingSaleConfirmationAsync"/>).
     /// </summary>
     public static readonly int SaleConfirmationDays = 7;
 
     /// <summary>
-    /// Items reserved longer than <see cref="SaleConfirmationDays"/> days with no
-    /// seller decision yet ("IsSold" still false) — candidates for the UI prompt
-    /// and for the 30-day auto-close.
+    /// Items of the given seller reserved at least <see cref="SaleConfirmationDays"/>
+    /// ago with no decision yet: candidates for the sale-confirmation prompt.
     /// </summary>
     public Task<List<Item>> GetItemsAwaitingSaleConfirmationAsync(int sellerId) =>
         GetAllItemsQueryable()
@@ -175,10 +253,13 @@ public class ItemManager
     public record SalePendingItem(int Id, string Title, DateTime ReservedAt, decimal Price);
 
     /// <summary>Projection for the seller's sale-confirmation prompt.</summary>
-    public async Task<List<SalePendingItem>> GetSalePendingItemsAsync(int sellerId) =>
-        (await GetItemsAwaitingSaleConfirmationAsync(sellerId))
+    public Task<List<SalePendingItem>> GetSalePendingItemsAsync(int sellerId) =>
+        GetAllItemsQueryable()
+            .Where(i => i.UserId == sellerId)
+            .Where(i => i.ReservedAt != null && !i.IsSold)
+            .Where(i => i.ReservedAt <= DateTime.UtcNow.AddDays(-SaleConfirmationDays))
             .Select(i => new SalePendingItem(i.Id, i.Book.Title, i.ReservedAt!.Value, i.Price))
-            .ToList();
+            .ToListAsync();
 
     /// <summary>
     /// Seller confirms the sale happened and names the buyer. Only that buyer
@@ -187,7 +268,12 @@ public class ItemManager
     public async Task MarkItemSoldAsync(int itemId, int? soldToUserId)
     {
         var item = await GetItemAsync(itemId);
-        item!.IsSold = true;
+        if (item == null)
+        {
+            return;
+        }
+
+        item.IsSold = true;
         item.SoldAt = DateTime.UtcNow;
         item.SoldToUserId = soldToUserId;
         item.Reserved = false;
@@ -200,20 +286,27 @@ public class ItemManager
     public async Task MarkItemNotSoldAsync(int itemId)
     {
         var item = await GetItemAsync(itemId);
-        item!.Reserved = false;
+        if (item == null)
+        {
+            return;
+        }
+
+        item.Reserved = false;
         item.ReservedAt = null;
 
         await UpdateItemNVAsync(item);
     }
 
     /// <summary>
-    /// Auto-close: items reserved at least 30 days with no seller decision count as
-    /// sold, so buyers and sellers can rate and the listing does not linger as reserved.
-    /// Returns the number of items closed.
+    /// Auto-close: reservations older than <see cref="AutoCloseDays"/> that the seller
+    /// never decided on are released, so listings do not linger as reserved forever.
+    /// Returns the number of released items.
     /// </summary>
+    public static readonly int AutoCloseDays = 30;
+
     public async Task<int> AutoCloseStaleReservationsAsync()
     {
-        var cutoff = DateTime.UtcNow.AddDays(-SaleConfirmationDays * 4 - 2); // ~30 days
+        var cutoff = DateTime.UtcNow.AddDays(-AutoCloseDays);
         var stale = await GetAllItemsQueryable()
             .Where(i => i.Reserved && i.ReservedAt != null && !i.IsSold)
             .Where(i => i.ReservedAt <= cutoff)
@@ -221,18 +314,18 @@ public class ItemManager
 
         foreach (var item in stale)
         {
-            item.IsSold = true;
-            item.SoldAt = DateTime.UtcNow;
             item.Reserved = false;
+            item.ReservedAt = null;
         }
 
         if (stale.Count > 0)
         {
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         return stale.Count;
     }
+
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {
         if (model.Parameters.Title == null
@@ -243,21 +336,21 @@ public class ItemManager
 
         var title = model.Parameters.Title;
 
-        var books = await _staticDataManager.GetBooksByTitleAsync(title);
+        var books = await staticDataManager.GetBooksByTitleAsync(title);
         if (books.Count == 0) return Status.InvalidTitle;
 
         Status status = 0;
 
-        var subjects = await _staticDataManager.GetSubjectsByBookTitleAsync(title);
+        var subjects = await staticDataManager.GetSubjectsByBookTitleAsync(title);
         if (!subjects.Contains(model.Parameters.Subject)) status |= Status.InvalidSubject | Status.Error;
 
-        var grades = await _staticDataManager.GetGradesByBookTitleAsync(title);
+        var grades = await staticDataManager.GetGradesByBookTitleAsync(title);
         if (!grades.SequenceEqual(model.Parameters.Grades)) status |= Status.InvalidGrades | Status.Error;
 
-        var levels = await _staticDataManager.GetLevelsByBookTitleAsync(title);
+        var levels = await staticDataManager.GetLevelsByBookTitleAsync(title);
         if (!levels.Contains(model.Parameters.Level)) status |= Status.InvalidLevel | Status.Error;
 
-        var book = (await _staticDataManager.GetBooksByParamsAsync(model.Parameters)).FirstOrDefault();
+        var book = (await staticDataManager.GetBooksByParamsAsync(model.Parameters)).FirstOrDefault();
         if (book == null) status |= Status.NotFound | Status.Error;
 
         if (status.HasFlag(Status.Error)) return status;
@@ -272,23 +365,29 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult;
 
-        var book = await _context.Books.FindAsync(validationResult.Id);
+        var book = await context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
         string allPhotos = "";
         if (model.ImageStreams != null && model.ImageStreams.Count > 0)
         {
-            var photoUris = new List<string>();
+            if (!IsValidImagePayload(model.ImageStreams, model.ImageFileExtensions))
+            {
+                logger.LogWarning("Nieprawidłowy payload obrazów podczas dodawania ogłoszenia.");
+                return Status.Error;
+            }
+
+            var photoFileNames = new List<string>();
             for (int i = 0; i < model.ImageStreams.Count; i++)
             {
-                var uri = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
-                photoUris.Add(uri.ToString());
+                var fileName = await photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
+                photoFileNames.Add(fileName.ToString());
             }
-            allPhotos = string.Join(";", photoUris);
+            allPhotos = string.Join(";", photoFileNames);
         }
-        else if (!string.IsNullOrEmpty(model.ExistingImageBlobNames))
+        else if (!string.IsNullOrEmpty(model.ExistingImageFileNames))
         {
-            allPhotos = model.ExistingImageBlobNames;
+            allPhotos = model.ExistingImageFileNames;
         }
 
         var item = new Item
@@ -309,8 +408,8 @@ public class ItemManager
     private async Task<int> AddItemNVAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
-        _context.Items.Add(item);
-        await _context.SaveChangesAsync();
+        context.Items.Add(item);
+        await context.SaveChangesAsync();
         return item.Id;
     }
 
@@ -322,24 +421,25 @@ public class ItemManager
         var validationResult = await ValidateItemModelAsync(model);
         if (validationResult.Status.HasFlag(Status.Error)) return validationResult.Status;
 
-        var book = await _context.Books.FindAsync(validationResult.Id);
+        var book = await context.Books.FindAsync(validationResult.Id);
         if (book == null) return Status.Error | Status.NotFound;
 
-        string allPhotos = model.ExistingImageBlobNames ?? "";
+        string allPhotos = model.ExistingImageFileNames ?? "";
+        var uploadedPhotoUris = new List<string>();
+        var shouldReplacePhotos = model.ImageStreams != null && model.ImageStreams.Count > 0;
 
         if (shouldReplacePhotos)
         {
-            if (!string.IsNullOrEmpty(model.ExistingImageBlobNames))
+            if (!IsValidImagePayload(model.ImageStreams, model.ImageFileExtensions))
             {
-                var oldPhotos = model.ExistingImageBlobNames.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var photo in oldPhotos)
-                    await _photosManager.DeletePhotoAsync(photo);
+                logger.LogWarning("Nieprawidłowy payload obrazów podczas edycji ogłoszenia o ID {ItemId}.", item.Id);
+                return Status.Error;
             }
 
             for (int i = 0; i < model.ImageStreams!.Count; i++)
             {
-                var uri = await _photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
-                photoUris.Add(uri.ToString());
+                var uri = await photosManager.AddPhotoAsync(model.ImageStreams[i], model.ImageFileExtensions![i]);
+                uploadedPhotoUris.Add(uri.ToString());
             }
 
             allPhotos = string.Join(";", uploadedPhotoUris);
@@ -368,7 +468,8 @@ public class ItemManager
 
         if (oldPrice != item.Price)
         {
-            _logger.LogInformation($"Cena ogłoszenia o ID {item.Id} użytkownika {item.User.UserName} została zmieniona z {oldPrice} zł na {item.Price} zł.");
+            logger.LogInformation("Cena ogłoszenia o ID {ItemId} użytkownika {UserName} została zmieniona z {OldPrice} zł na {NewPrice} zł.",
+                item.Id, item.User.UserName, oldPrice, item.Price);
         }
 
         return Status.Success;
@@ -376,8 +477,8 @@ public class ItemManager
     private async Task UpdateItemNVAsync(Item item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
-        _context.Items.Update(item);
-        await _context.SaveChangesAsync();
+        context.Items.Update(item);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteItemAsync(int id)
@@ -385,20 +486,25 @@ public class ItemManager
         var item = await GetItemAsync(id);
         if (item == null) return;
 
-        if (!string.IsNullOrEmpty(item.Photo))
-        {
-            var oldPhotos = item.Photo.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var photo in oldPhotos)
-                await _photosManager.DeletePhotoAsync(photo);
-        }
+        // Only bare storage keys are deleted; seed and legacy items can also reference
+        // root-relative assets or absolute URLs, which are not storage objects.
+        var photoKeys = PhotosManager.StorageKeys(item.Photo).ToList();
+        context.Items.Remove(item);
+        await context.SaveChangesAsync();
 
-        _context.Items.Remove(item);
-        await _context.SaveChangesAsync();
+        // Storage is cleaned up after the row is gone: a storage outage must not keep
+        // the item alive, it only leaves orphaned objects that are logged for a purge.
+        var orphanedKeys = await photosManager.DeletePhotosAsync(photoKeys);
+        if (orphanedKeys.Count > 0)
+        {
+            logger.LogError("Item {ItemId} was deleted but its photo objects remain in storage. Orphaned keys: {OrphanedKeys}",
+                item.Id, string.Join(", ", orphanedKeys));
+        }
     }
 
     public async Task SetItemsVisibilityByUserAsync(int userId, bool isVisible)
     {
-        var items = await _context.Items
+        var items = await context.Items
             .Where(i => i.UserId == userId && i.IsVisible != isVisible)
             .ToListAsync();
 
@@ -409,26 +515,42 @@ public class ItemManager
 
         if (items.Count > 0)
         {
-            _context.Items.UpdateRange(items);
-            await _context.SaveChangesAsync();
+            context.Items.UpdateRange(items);
+            await context.SaveChangesAsync();
         }
     }
 
     private IQueryable<Item> GetAllItemsQueryable()
     {
-        return _context.Items
+        return context.Items
             .Include(i => i.Book).ThenInclude(b => b.Grades)
             .Include(i => i.Book).ThenInclude(b => b.Subject)
             .Include(i => i.Book).ThenInclude(b => b.Level)
-            .Include(i => i.User)
+            .Include(i => i.User).ThenInclude(u => u.School)
             .AsQueryable();
+    }
+    
+    /// <summary>
+    /// Filters items to only show those from users in the same school as the given user.
+    /// If the user has no school assigned, returns all items from users without a school.
+    /// </summary>
+    private static IQueryable<Item> FilterByUserSchool(IQueryable<Item> query, User? currentUser)
+    {
+        if (currentUser == null)
+        {
+            // Anonymous users see items from all schools
+            return query;
+        }
+
+        return currentUser.SchoolId.HasValue
+            // Show only items from users in the same school
+            ? query.Where(i => i.User.SchoolId == currentUser.SchoolId.Value)
+            // User has no school - show items from users without a school
+            : query.Where(i => i.User.SchoolId == null);
     }
     
     private static IQueryable<Item> ApplyFilters(IQueryable<Item> query, Parameters input)
     {
-        // Sold books are completed listings: excluded from browse results,
-        // but still reachable by direct link for the buyer and seller.
-        query = query.Where(i => !i.IsSold);
         query = ApplySearchFilter(query, input.Search);
         query = ApplyGradesFilter(query, input.Grades);
         query = ApplySubjectFilter(query, input.Subject);
@@ -470,5 +592,41 @@ public class ItemManager
         return level == null
             ? query
             : query.Where(i => i.Book.Level.Id == level.Id);
+    }
+
+	public List<string> GetPhotosUrl(Item item)
+	{
+		return (item.Photo ?? "")
+			.Split(';', StringSplitOptions.RemoveEmptyEntries)
+			.Select(f => photosManager.GetPhotoUrl(f.Trim()))
+			.ToList();
+	}
+
+    private static bool IsValidImagePayload(List<Stream>? imageStreams, List<string>? imageFileExtensions)
+    {
+        if (imageStreams == null || imageFileExtensions == null)
+        {
+            return false;
+        }
+
+        if (imageStreams.Count == 0 || imageStreams.Count != imageFileExtensions.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < imageStreams.Count; i++)
+        {
+            if (imageStreams[i] == null || !imageStreams[i].CanRead)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(imageFileExtensions[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
