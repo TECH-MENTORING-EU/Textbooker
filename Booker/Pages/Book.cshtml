@@ -21,7 +21,7 @@
     <section class="image" aria-label="Zdjęcia książki">
         @if (images.Any())
         {
-            <img src="@mainImage" alt="Główne zdjęcie książki: @Model.BookItem.Book.Title" class="main-book-photo" />
+            <img src="@mainImage" alt="Główne zdjęcie książki: @Model.BookItem.Book.Title" class="main-book-photo" fetchpriority="high" decoding="async" />
 
             <div class="thumbnail-images" aria-label="Wybierz zdjęcie do podglądu">
                 @foreach (var (img, idx) in images.Select((value, i) => (value, i)))
@@ -34,7 +34,9 @@
                             data-index="@idx">
                         <img src="@img"
                              alt="Zdjęcie książki @(idx + 1) z @images.Count()"
-                             class="thumbnail-book-photo" />
+                             class="thumbnail-book-photo"
+                             loading="lazy"
+                             decoding="async" />
                     </button>
                 }
             </div>
@@ -100,7 +102,9 @@
         <h2>Sprzedaje</h2>
         <div>
             <img src="@sellerPhotoUrl"
-                 alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName" />
+                 alt="Zdjęcie profilowe sprzedającego: @Model.BookItem.User.UserName"
+                 loading="lazy"
+                 decoding="async" />
             <div>
                 @Model.BookItem.User.UserName<br />
                 @if (User.Identity?.IsAuthenticated == true && Model.BookItem.User.DisplaySchool && Model.BookItem.User.School != null)
