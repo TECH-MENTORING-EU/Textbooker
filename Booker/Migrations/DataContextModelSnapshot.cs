@@ -1530,6 +1530,86 @@ namespace Booker.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Booker.Data.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DealId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("DealId", "CreatedUtc");
+
+                    b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("Booker.Data.ChatThread", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChannelId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastMessageUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserAId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UserAReadUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserBId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UserBReadUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChannelId")
+                        .IsUnique();
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("UserBId");
+
+                    b.HasIndex("UserAId", "UserBId");
+
+                    b.ToTable("ChatThreads");
+                });
+
             modelBuilder.Entity("Booker.Data.Grade", b =>
                 {
                     b.Property<int>("Id")
@@ -1598,6 +1678,9 @@ namespace Booker.Migrations
                     b.Property<bool>("FlaggedForReview")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsSold")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
@@ -1612,6 +1695,15 @@ namespace Booker.Migrations
                     b.Property<bool>("Reserved")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("ReservedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SoldAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("SoldToUserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1625,6 +1717,8 @@ namespace Booker.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
+
+                    b.HasIndex("SoldToUserId");
 
                     b.HasIndex("UserId");
 
@@ -1956,6 +2050,47 @@ namespace Booker.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Booker.Data.UserRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RatingValue")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reply")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("RevieweeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RevieweeId");
+
+                    b.HasIndex("ReviewerId", "RevieweeId")
+                        .IsUnique();
+
+                    b.ToTable("UserRatings");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -2142,6 +2277,39 @@ namespace Booker.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Booker.Data.ChatMessage", b =>
+                {
+                    b.HasOne("Booker.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Booker.Data.ChatThread", b =>
+                {
+                    b.HasOne("Booker.Data.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Booker.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserAId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Booker.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserBId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("Booker.Data.Item", b =>
                 {
                     b.HasOne("Booker.Data.Book", "Book")
@@ -2150,6 +2318,11 @@ namespace Booker.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Booker.Data.User", "SoldToUser")
+                        .WithMany()
+                        .HasForeignKey("SoldToUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Booker.Data.User", "User")
                         .WithMany("Items")
                         .HasForeignKey("UserId")
@@ -2157,6 +2330,8 @@ namespace Booker.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
+
+                    b.Navigation("SoldToUser");
 
                     b.Navigation("User");
                 });
@@ -2188,6 +2363,25 @@ namespace Booker.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("School");
+                });
+
+            modelBuilder.Entity("Booker.Data.UserRating", b =>
+                {
+                    b.HasOne("Booker.Data.User", "Reviewee")
+                        .WithMany("RatingsReceived")
+                        .HasForeignKey("RevieweeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Booker.Data.User", "Reviewer")
+                        .WithMany("RatingsGiven")
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Reviewee");
+
+                    b.Navigation("Reviewer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -2276,6 +2470,10 @@ namespace Booker.Migrations
                     b.Navigation("ItemViews");
 
                     b.Navigation("Items");
+
+                    b.Navigation("RatingsGiven");
+
+                    b.Navigation("RatingsReceived");
                 });
 #pragma warning restore 612, 618
         }

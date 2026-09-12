@@ -82,9 +82,30 @@
         margin-top: 1rem;
     }
 
-    .actions button {
-        margin: 0.5em;
+    // Stacked action buttons share one width so labels of different lengths
+    // do not produce a ragged column; the reserve toggle sits on its own row.
+    .actions {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        max-width: 22rem;
+
+        button,
+        [role="button"] {
+            width: 100%;
+            margin: 0;
+        }
+
+        input[type="checkbox"][name="reserve"] {
+            margin-top: 0.75rem;
+        }
+
+        label[for="reserve-cb"] {
+            margin-left: 0.5em;
+        }
     }
+
     .seller > div {
         display: flex;
 

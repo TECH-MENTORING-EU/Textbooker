@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,6 +13,7 @@ public static class AdminNavPages
     public static string Schools => "Schools";
     public static string Items => "Items";
     public static string AuditLog => "AuditLog";
+    public static string Ratings => "Ratings";
 
     public static string IndexNavClass(ViewContext viewContext) => PageNavClass(viewContext, Index);
     public static string UsersNavClass(ViewContext viewContext) => PageNavClass(viewContext, Users);
@@ -20,6 +21,7 @@ public static class AdminNavPages
     public static string SchoolsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Schools);
     public static string ItemsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Items);
     public static string AuditLogNavClass(ViewContext viewContext) => PageNavClass(viewContext, AuditLog);
+    public static string RatingsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Ratings);
 
     public static string PageNavClass(ViewContext viewContext, string page)
     {

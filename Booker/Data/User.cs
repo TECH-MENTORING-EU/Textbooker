@@ -30,6 +30,12 @@ namespace Booker.Data
         public ICollection<Item> Favorites { get; } = new HashSet<Item>();
         public ICollection<ItemView> ItemViews { get; } = new HashSet<ItemView>();
 
+        /// <summary>Ratings this user gave to others; the buyer rates the seller per sold listing.</summary>
+        public ICollection<UserRating> RatingsGiven { get; } = new HashSet<UserRating>();
+
+        /// <summary>Ratings this user received from buyers.</summary>
+        public ICollection<UserRating> RatingsReceived { get; } = new HashSet<UserRating>();
+
         [PersonalData]
         public bool AreFavoritesPublic { get; set; } = false;
 

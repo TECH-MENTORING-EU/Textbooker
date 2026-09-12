@@ -1,0 +1,72 @@
+@page
+@model Booker.Areas.Admin.Pages.RatingsModel
+@{
+    ViewData["Title"] = "Zarządzanie ocenami";
+    ViewData["ActivePage"] = AdminNavPages.Ratings;
+}
+
+<article>
+    <header>
+        <h3>Oceny użytkowników</h3>
+    </header>
+    <p>Ogółem: @Model.TotalRatingCount | Średnia: @Model.GlobalAverage.ToString("0.0")</p>
+</article>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Oceniający</th>
+            <th>Oceniany</th>
+            <th>Ocena</th>
+            <th>Komentarz</th>
+            <th>Odpowiedź</th>
+            <th>Data</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var rating in Model.Ratings)
+        {
+            <tr>
+                <td>@rating.Id</td>
+                <td>
+                    <a href="/Profile/@rating.ReviewerId">@rating.Reviewer.UserName</a>
+                </td>
+                <td>
+                    <a href="/Profile/@rating.RevieweeId">@rating.Reviewee.UserName</a>
+                </td>
+                <td>
+                    @for (int i = 0; i < rating.RatingValue; i++)
+                    {
+                        <svg icon="star" variant="filled" aria-hidden="true" style="color: gold;"></svg>
+                    }
+                    @for (int i = rating.RatingValue; i < 5; i++)
+                    {
+                        <svg icon="star" variant="outline" aria-hidden="true"></svg>
+                    }
+                </td>
+                <td>@(rating.Comment ?? "-")</td>
+                <td>@(rating.Reply ?? "-")</td>
+                <td>@rating.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <form method="post" asp-page-handler="Delete" asp-route-ratingId="@rating.Id" style="display:inline;">
+                        <button type="submit" class="outline small" onclick="return confirm('Czy na pewno chcesz usunąć tę ocenę?')">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li><a asp-page="./Ratings" asp-route-pageNumber="@i" class="@(i == Model.CurrentPage ? "secondary" : "outline")">@i</a></li>
+            }
+        </ul>
+    </nav>
+}

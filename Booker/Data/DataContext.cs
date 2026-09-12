@@ -15,6 +15,9 @@ namespace Booker.Data
         public DbSet<School> Schools { get; set; }
         public DbSet<ItemView> ItemViews { get; set; }
         public DbSet<AdminActionLog> AdminActionLogs { get; set; }
+        public DbSet<UserRating> UserRatings { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatThread> ChatThreads { get; set; }
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -84,6 +87,43 @@ namespace Booker.Data
             {
                 al.HasIndex(a => a.CreatedAt);
                 al.HasIndex(a => a.AdminUserName);
+            });
+
+            modelBuilder.Entity<Item>(i =>
+            {
+                // The buyer recorded at sale confirmation. Restrict avoids a second
+                // cascade path to Users (the seller FK already cascades) on SQL Server.
+                i.HasOne(i => i.SoldToUser).WithMany()
+                    .HasForeignKey(i => i.SoldToUserId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired(false);
+            });
+
+            modelBuilder.Entity<UserRating>(ur =>
+            {
+                // Pair User.RatingsGiven/RatingsReceived with their FKs explicitly,
+                // otherwise convention invents extra shadow-key relationships.
+                ur.HasOne(ur => ur.Reviewer).WithMany(u => u.RatingsGiven).HasForeignKey(ur => ur.ReviewerId).OnDelete(DeleteBehavior.Restrict);
+                ur.HasOne(ur => ur.Reviewee).WithMany(u => u.RatingsReceived).HasForeignKey(ur => ur.RevieweeId).OnDelete(DeleteBehavior.Restrict);
+                ur.HasIndex(ur => new { ur.ReviewerId, ur.RevieweeId }).IsUnique();
+            });
+
+            modelBuilder.Entity<ChatMessage>(cm =>
+            {
+                cm.HasIndex(c => new { c.DealId, c.CreatedUtc });
+                cm.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ChatThread>(ct =>
+            {
+                ct.HasIndex(t => t.ChannelId).IsUnique();
+                ct.HasIndex(t => new { t.UserAId, t.UserBId });
+                ct.HasOne(t => t.Item).WithMany().HasForeignKey(t => t.ItemId).OnDelete(DeleteBehavior.SetNull).IsRequired(false);
+                // NO ACTION rather than cascade: two cascade paths from User
+                // (plus the Item path) would make SQL Server reject the model,
+                // so account deletion cleans threads up explicitly instead.
+                ct.HasOne<User>().WithMany().HasForeignKey(t => t.UserAId).OnDelete(DeleteBehavior.NoAction);
+                ct.HasOne<User>().WithMany().HasForeignKey(t => t.UserBId).OnDelete(DeleteBehavior.NoAction);
             });
         }
 

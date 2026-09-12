@@ -16,6 +16,7 @@ using System.Net;
 using System.Threading.RateLimiting;
 using System.Security.Claims;
 using Serilog.Events;
+using Microsoft.AspNetCore.Components;
 
 ResourceManagerHack.OverrideComponentModelAnnotationsResourceManager();
 
@@ -32,7 +33,6 @@ if (await StartupUtilities.RunMaintenanceMode(configuration, args))
 {
     return;
 }
-
 
 // Register IMemoryCache in DI container
 builder.Services.AddMemoryCache();
@@ -51,7 +51,6 @@ Log.Logger = new LoggerConfiguration()
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
     .CreateLogger();
 
-
 builder.Host.UseSerilog();
 
 // Add services to the container.
@@ -65,6 +64,7 @@ builder.Services.AddRazorPages()
     .AddMvcOptions(options => options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider()))
     .AddCustomRoutes()
     .AddAuthorizationPolicies();
+
 
 // Add booker services to the container
 builder.Services.AddBookerServices(configuration);
@@ -153,6 +153,7 @@ app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
+
 app.Use(async (context, next) =>
 {
     using var scope = app.Services.CreateScope();
@@ -165,19 +166,25 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+
 app.UseAuthorization();
 app.UseRateLimiter();
+app.UseAntiforgery();
 
 app.MapRazorPages();
-await app.MigrateDatabaseAsync(configuration);
 
 if (app.Environment.IsDevelopment())
 {
     app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         string.Join("\n", endpointSources.SelectMany(source => source.Endpoints)));
+}
+await app.MigrateDatabaseAsync(configuration);
+
+if (app.Environment.IsDevelopment())
+{
     await app.InitializeDatabaseAsync();
 }
 
-await app.InitializeRolesAsync();
 
+await app.InitializeRolesAsync();
 app.Run();

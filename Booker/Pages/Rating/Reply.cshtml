@@ -1,0 +1,25 @@
+@page "{ratingId:int}"
+@model Booker.Pages.Rating.ReplyModel
+
+@if (Model.ErrorMessage != null)
+{
+    <p class="error" role="alert">@Model.ErrorMessage</p>
+}
+
+@if (Model.Success)
+{
+    <div class="rating-reply-sent">
+        <p>Odpowiedź została dodana.</p>
+    </div>
+}
+else
+{
+    <form method="post">
+        <input type="hidden" asp-for="RatingId" />
+        <div class="form-group">
+            <textarea asp-for="Reply" maxlength="500" rows="2" placeholder="Twoja odpowiedź..." required></textarea>
+            <small><span class="char-count">0 / 500</span></small>
+        </div>
+        <button type="submit" class="secondary">Wyślij odpowiedź</button>
+    </form>
+}

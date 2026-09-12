@@ -1,9 +1,12 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using Booker.Data
+@using Booker.Services
+@using Booker.Utilities
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject IChatThreadService ChatThreadService
 
 <button type="button" id="hamburger-toggle" class="hamburger-trigger" aria-label="Otwórz menu konta" aria-controls="hamburger" aria-expanded="false">
     <svg icon="menu-2" aria-hidden="true"></svg>
@@ -13,6 +16,12 @@
 {
     var userName = UserManager.GetUserName(User);
     var isMessagesEnabled = Configuration.GetValue<bool>("Features:MessagesEnabled");
+    var unreadMessages = 0;
+    if (isMessagesEnabled)
+    {
+        var currentUserId = UserManager.GetUserId(User).IntOrDefault();
+        unreadMessages = await ChatThreadService.GetUnreadCountAsync(currentUserId, Context.RequestAborted);
+    }
     <li>
         <details class="dropdown">
                 <summary class="outline" style="border-color: transparent;" aria-expanded="false" aria-controls="account-actions" aria-label="Menu konta użytkownika @userName">Witaj @userName!</summary>
@@ -21,7 +30,17 @@
                     <li><a asp-area="" asp-page="/Profile/Favorites">Ulubione</a></li>
                     @if (isMessagesEnabled)
                     {
-                        <li><a href="/Chat">Wiadomości</a></li>
+                        // Plain href: asp-page would inherit the current DealId
+                        // route value and point the menu at the open thread.
+                        <li>
+                            <a href="/Chat" class="messages-link">
+                                <span>Wiadomości</span>
+                                @if (unreadMessages > 0)
+                                {
+                                    <span class="menu-badge" aria-label="@unreadMessages nieprzeczytanych">@unreadMessages</span>
+                                }
+                            </a>
+                        </li>
                     }
                     <li><a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index">Ustawienia</a></li>
                     @if (User.IsInRole("Admin"))

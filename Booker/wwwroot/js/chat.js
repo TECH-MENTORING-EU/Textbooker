@@ -1,0 +1,63 @@
+'use strict';
+
+// Chat page helpers: keep the transcript pinned to the newest message and
+// feed the polling cursor (hx-vals evaluates chatLastMessageId per request).
+
+function chatLastMessageId() {
+    const items = document.querySelectorAll("#chat-history [data-msg-id]");
+    return items.length ? items[items.length - 1].dataset.msgId : "0";
+}
+
+function chatScrollToNewest() {
+    const history = document.getElementById("chat-history");
+    if (history) {
+        history.scrollTop = history.scrollHeight;
+    }
+}
+
+function chatSelectThread(link) {
+    // Sidebar HTMX swap: keep the highlight on the thread just opened.
+    document.querySelectorAll(".chat-sidebar .thread-list a.active").forEach((active) => {
+        active.classList.remove("active");
+        active.removeAttribute("aria-current");
+    });
+    link.classList.add("active");
+    link.setAttribute("aria-current", "page");
+    chatScrollToNewest();
+}
+
+function chatAfterSend(form) {
+    const history = document.querySelector("#chat-history");
+
+    // A rejected message arrives as a System note instead of a chat bubble.
+    // Keep the typed text (and the empty-state placeholder) so the message
+    // can be corrected and sent again instead of retyping it.
+    const last = history?.lastElementChild;
+    if (last?.classList.contains("system")) {
+        chatScrollToNewest();
+        return;
+    }
+
+    // The first sent message clears the empty-state placeholder.
+    history?.querySelector(".chat-empty")?.remove();
+
+    // The send form: clear the textarea for the next message.
+    const textarea = form.querySelector("textarea");
+    if (textarea) {
+        textarea.value = "";
+    }
+
+    chatScrollToNewest();
+}
+
+// Enter sends the message, Shift+Enter inserts a newline (standard chat UX).
+// Delegated on document so it keeps working after HTMX swaps the pane.
+document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || e.shiftKey) return;
+    const target = e.target;
+    if (!(target instanceof HTMLTextAreaElement) || target.id !== "chat-text") return;
+    e.preventDefault();
+    target.form?.requestSubmit();
+});
+
+document.addEventListener("DOMContentLoaded", chatScrollToNewest);

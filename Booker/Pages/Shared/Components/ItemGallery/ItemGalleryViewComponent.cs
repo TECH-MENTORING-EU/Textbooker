@@ -41,7 +41,8 @@ public class ItemGalleryViewComponent : ViewComponent
         int pageNumber = 0,
         int pageSize = PageSize,
         bool showHidden = false,
-        bool linkFilters = false
+        bool linkFilters = false,
+        bool showSold = false
     )
     {
         if (!itemIds.Any())
@@ -51,11 +52,11 @@ public class ItemGalleryViewComponent : ViewComponent
             );
         }
 
-        var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true 
-            ? await _userManager.GetUserAsync(UserClaimsPrincipal) 
+        var currentUser = UserClaimsPrincipal.Identity?.IsAuthenticated == true
+            ? await _userManager.GetUserAsync(UserClaimsPrincipal)
             : null;
 
-        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize, currentUser);
+        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize, currentUser, showSold);
         if (!showHidden)
         {
             query = query.Where(i => i.IsVisible);

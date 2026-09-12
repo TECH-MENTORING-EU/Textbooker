@@ -1,4 +1,4 @@
-using Booker.Data;
+﻿using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +6,7 @@ using System.Globalization;
 using Booker.Services;
 using Booker.Utilities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Configuration;
 using Booker.Authorization;
 
 namespace Booker.Pages
@@ -15,8 +16,11 @@ namespace Booker.Pages
         ItemManager itemManager,
         FavoritesManager favoritesManager,
         IAuthorizationService authService,
+        IChatThreadService chatThreadService,
+        IRatingManager ratingManager,
         ILogger<BookModel> logger,
-        ContactRevealLimiter contactRevealLimiter) : PageModel
+        ContactRevealLimiter contactRevealLimiter,
+        IConfiguration configuration) : PageModel
     {
         public List<string> Photos { get; set; } = new();
 
@@ -24,6 +28,7 @@ namespace Booker.Pages
         public bool IsCurrentUserOwner { get; set; }
         public bool IsFavorite { get; set; } = false;
         public int ViewCount { get; set; }
+        public bool CanRateSeller { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -57,6 +62,10 @@ namespace Booker.Pages
             if (IsCurrentUserOwner)
             {
                 ViewCount = await itemManager.GetViewCountAsync(id);
+            }
+            else if (currentUser != null)
+            {
+                CanRateSeller = await ratingManager.CanRateAsync(currentUser.Id, BookItem.UserId);
             }
 
             return Page();
@@ -135,6 +144,42 @@ namespace Booker.Pages
 
             Response.Headers["HX-Refresh"] = "true";
             return new NoContentResult();
+        }
+
+        /// <summary>
+        /// Messages can be dark-launched off: the flag hides the chat button,
+        /// and this handler answers 404 so the URL is not usable by
+        /// hand-crafted requests either (mirrors ChatModel.MessagesDisabled).
+        /// </summary>
+        private bool MessagesDisabled => !configuration.GetValue<bool>("Features:MessagesEnabled");
+
+        /// <summary>
+        /// Starts (or reopens) the conversation about this listing with its seller.
+        /// Threads about offers can only be created from here, never user-to-user "cold".
+        /// </summary>
+        public async Task<IActionResult> OnPostChatAsync(int id, CancellationToken ct)
+        {
+            if (MessagesDisabled)
+            {
+                return NotFound();
+            }
+
+            var userId = userManager.GetUserId(User).IntOrDefault();
+            if (userId == -1)
+            {
+                return Challenge();
+            }
+
+            try
+            {
+                var thread = await chatThreadService.GetOrCreateForItemAsync(userId, id, ct);
+                return RedirectToPage("/Chat", new { DealId = thread.ChannelId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogWarning("Chat start for item {ItemId} by user {UserId} rejected: {Reason}", id, userId, ex.Message);
+                return BadRequest();
+            }
         }
 
         public static string FormatDateWithSpecialCases(DateTime? dateTime)

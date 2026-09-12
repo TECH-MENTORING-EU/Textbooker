@@ -1,4 +1,4 @@
-using Booker.Data;
+﻿using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
@@ -152,13 +152,16 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             .AsAsyncEnumerable();
     }
 
-    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize, User? currentUser = null)
+    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize, User? currentUser = null, bool showSold = false)
     {
         var query = GetAllItemsQueryable();
         query = FilterByUserSchool(query, currentUser);
-        
+
         return query
             .Where(i => ids.Contains(i.Id))
+            // The sold filter must run before Skip/Take, otherwise sold items
+            // on earlier pages make later pages under-fill.
+            .Where(i => showSold || !i.IsSold)
             .OrderByDescending(i => i.CreatedAt)
             .Skip(pageNumber * pageSize)
             .Take(pageSize)
@@ -215,6 +218,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
     {
         var item = await GetItemAsync(itemId);
         item!.Reserved = reserved;
+        item.ReservedAt = reserved ? DateTime.UtcNow : null;
 
         await UpdateItemNVAsync(item!);
     }
@@ -232,6 +236,99 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 
     public Task<int> GetViewCountAsync(int itemId) =>
         context.ItemViews.CountAsync(v => v.ItemId == itemId);
+
+    /// <summary>
+    /// Number of days after reserving before the seller is asked whether the sale
+    /// happened (<see cref="GetItemsAwaitingSaleConfirmationAsync"/>).
+    /// </summary>
+    public static readonly int SaleConfirmationDays = 7;
+
+    /// <summary>
+    /// Items of the given seller reserved at least <see cref="SaleConfirmationDays"/>
+    /// ago with no decision yet: candidates for the sale-confirmation prompt.
+    /// </summary>
+    public Task<List<Item>> GetItemsAwaitingSaleConfirmationAsync(int sellerId) =>
+        GetAllItemsQueryable()
+            .Where(i => i.UserId == sellerId)
+            .Where(i => i.ReservedAt != null && !i.IsSold)
+            .Where(i => i.ReservedAt <= DateTime.UtcNow.AddDays(-SaleConfirmationDays))
+            .ToListAsync();
+
+    public record SalePendingItem(int Id, string Title, DateTime ReservedAt, decimal Price);
+
+    /// <summary>Projection for the seller's sale-confirmation prompt.</summary>
+    public Task<List<SalePendingItem>> GetSalePendingItemsAsync(int sellerId) =>
+        GetAllItemsQueryable()
+            .Where(i => i.UserId == sellerId)
+            .Where(i => i.ReservedAt != null && !i.IsSold)
+            .Where(i => i.ReservedAt <= DateTime.UtcNow.AddDays(-SaleConfirmationDays))
+            .Select(i => new SalePendingItem(i.Id, i.Book.Title, i.ReservedAt!.Value, i.Price))
+            .ToListAsync();
+
+    /// <summary>
+    /// Seller confirms the sale happened and names the buyer. Only that buyer
+    /// earns the right to rate the seller for this listing.
+    /// </summary>
+    public async Task MarkItemSoldAsync(int itemId, int? soldToUserId)
+    {
+        var item = await GetItemAsync(itemId);
+        if (item == null)
+        {
+            return;
+        }
+
+        item.IsSold = true;
+        item.SoldAt = DateTime.UtcNow;
+        item.SoldToUserId = soldToUserId;
+        item.Reserved = false;
+        item.ReservedAt = null;
+
+        await UpdateItemNVAsync(item);
+    }
+
+    /// <summary>Seller says the sale did not happen. Closes the reservation cycle without a rating.</summary>
+    public async Task MarkItemNotSoldAsync(int itemId)
+    {
+        var item = await GetItemAsync(itemId);
+        if (item == null)
+        {
+            return;
+        }
+
+        item.Reserved = false;
+        item.ReservedAt = null;
+
+        await UpdateItemNVAsync(item);
+    }
+
+    /// <summary>
+    /// Auto-close: reservations older than <see cref="AutoCloseDays"/> that the seller
+    /// never decided on are released, so listings do not linger as reserved forever.
+    /// Returns the number of released items.
+    /// </summary>
+    public static readonly int AutoCloseDays = 30;
+
+    public async Task<int> AutoCloseStaleReservationsAsync()
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-AutoCloseDays);
+        var stale = await GetAllItemsQueryable()
+            .Where(i => i.Reserved && i.ReservedAt != null && !i.IsSold)
+            .Where(i => i.ReservedAt <= cutoff)
+            .ToListAsync();
+
+        foreach (var item in stale)
+        {
+            item.Reserved = false;
+            item.ReservedAt = null;
+        }
+
+        if (stale.Count > 0)
+        {
+            await context.SaveChangesAsync();
+        }
+
+        return stale.Count;
+    }
 
     private async Task<Result> ValidateItemModelAsync(ItemModel model)
     {

@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -17,17 +17,19 @@ namespace Booker.Areas.Admin.Pages
         private readonly ItemManager _itemManager;
         private readonly UserPhotoManager _userPhotoManager;
         private readonly FavoritesManager _favoritesManager;
+        private readonly IChatThreadService _chatThreadService;
         private readonly ILogger<UsersModel> _logger;
         private readonly DataContext _context;
         private readonly AdminLockoutOptions _adminLockoutOptions;
 
-        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, FavoritesManager favoritesManager, ILogger<UsersModel> logger, DataContext context, IOptions<AdminLockoutOptions> adminLockoutOptions)
+        public UsersModel(UserManager<User> userManager, SessionCacheManager sessionCacheManager, ItemManager itemManager, UserPhotoManager userPhotoManager, FavoritesManager favoritesManager, IChatThreadService chatThreadService, ILogger<UsersModel> logger, DataContext context, IOptions<AdminLockoutOptions> adminLockoutOptions)
         {
             _userManager = userManager;
             _sessionCacheManager = sessionCacheManager;
             _itemManager = itemManager;
             _userPhotoManager = userPhotoManager;
             _favoritesManager = favoritesManager;
+            _chatThreadService = chatThreadService;
             _logger = logger;
             _context = context;
             _adminLockoutOptions = adminLockoutOptions.Value;
@@ -83,6 +85,27 @@ namespace Booker.Areas.Admin.Pages
             // Favorites use DeleteBehavior.Restrict, so they must be removed before the user
             // account is deleted or DeleteAsync fails with a foreign key constraint violation.
             await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+
+            // Threads point at users through non-cascading foreign keys, so the
+            // conversations (with their messages) are removed explicitly here.
+            // CancellationToken.None: the deletion must run to the end even if
+            // the browser walks away mid-request, or the account is stuck in a
+            // partially deleted state.
+            await _chatThreadService.DeleteThreadsForUserAsync(user.Id, CancellationToken.None);
+
+            // Ratings point at the account through non-cascading foreign keys in
+            // both directions (ReviewerId/RevieweeId), and items the user bought
+            // keep a Restrict reference (SoldToUserId) - they must be cleared
+            // before DeleteAsync or it fails with a constraint violation.
+            _context.UserRatings.RemoveRange(_context.UserRatings
+                .Where(ur => ur.ReviewerId == user.Id || ur.RevieweeId == user.Id));
+            var boughtItems = await _context.Items
+                .Where(i => i.SoldToUserId == user.Id)
+                .ToListAsync();
+            foreach (var item in boughtItems)
+            {
+                item.SoldToUserId = null;
+            }
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
