@@ -40,7 +40,7 @@ namespace Booker.Pages.Profile
             // The named buyer must really have chatted about this listing; anything
             // else means "sold outside TextBooker" and earns nobody rating rights.
             var allowed = await LoadBuyerOptionsAsync(sellerId, [itemId]);
-            if (soldToUserId.HasValue && !allowed[itemId].Any(b => b.UserId == soldToUserId.Value))
+            if (soldToUserId.HasValue && !allowed.GetValueOrDefault(itemId, []).Any(b => b.UserId == soldToUserId.Value))
             {
                 ModelState.AddModelError(string.Empty, "Wybrany kupujący nie prowadził rozmowy o tym ogłoszeniu.");
                 PendingItems = await itemManager.GetSalePendingItemsAsync(sellerId);

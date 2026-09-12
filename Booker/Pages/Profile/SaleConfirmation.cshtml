@@ -28,7 +28,7 @@
             <header>
                 <strong>@item.Title</strong> - @item.Price.ToString("0.00") zł
                 <br />
-                <small>Zarezerwowano: @TimeZoneInfo.ConvertTimeFromUtc(item.ReservedAt, TimeZoneInfo.Local).ToString("d", pl)</small>
+                <small>Zarezerwowano: @PolishTime.ToLocal(item.ReservedAt).ToString("d", pl)</small>
             </header>
             <form method="post" class="sale-confirm-actions">
                 <input type="hidden" name="itemId" value="@item.Id" />
