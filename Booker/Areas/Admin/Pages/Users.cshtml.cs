@@ -93,6 +93,20 @@ namespace Booker.Areas.Admin.Pages
             // partially deleted state.
             await _chatThreadService.DeleteThreadsForUserAsync(user.Id, CancellationToken.None);
 
+            // Ratings point at the account through non-cascading foreign keys in
+            // both directions (ReviewerId/RevieweeId), and items the user bought
+            // keep a Restrict reference (SoldToUserId) - they must be cleared
+            // before DeleteAsync or it fails with a constraint violation.
+            _context.UserRatings.RemoveRange(_context.UserRatings
+                .Where(ur => ur.ReviewerId == user.Id || ur.RevieweeId == user.Id));
+            var boughtItems = await _context.Items
+                .Where(i => i.SoldToUserId == user.Id)
+                .ToListAsync();
+            foreach (var item in boughtItems)
+            {
+                item.SoldToUserId = null;
+            }
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
