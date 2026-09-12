@@ -215,6 +215,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
     {
         var item = await GetItemAsync(itemId);
         item!.Reserved = reserved;
+        item.ReservedAt = reserved ? DateTime.UtcNow : null;
 
         await UpdateItemNVAsync(item!);
     }
