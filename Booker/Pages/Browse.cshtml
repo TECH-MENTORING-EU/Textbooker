@@ -58,7 +58,14 @@
 </section>
 
 <section class="grid-gallery">
-    <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
+    @if (Model.PriceFilterError is not null)
+    {
+        <p>@Model.PriceFilterError</p>
+    }
+    else
+    {
+        <vc:item-gallery item-ids="@Model.ItemIds" parameters="@Model.Params" />
+    }
 </section>
 
 <section>
