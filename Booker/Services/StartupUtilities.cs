@@ -241,10 +241,13 @@ namespace Booker.Services
         }
 
         // The CDN origin allowed by CSP img-src comes from CF:PublicUrl; when the
-        // setting is missing or malformed, img-src stays at 'self'.
+        // setting is missing or malformed, img-src stays at 'self' data: blob:.
+        // data: and blob: are required by the client-side photo pickers in
+        // site.js and picture-crop.js, which load previews from FileReader and
+        // URL.createObjectURL results instead of server URLs.
         private static string ResolveImgSrc(IConfiguration configuration, ILogger logger)
         {
-            var imgSrc = "'self'";
+            var imgSrc = "'self' data: blob:";
             var publicUrlSetting = configuration["CF:PublicUrl"];
             if (string.IsNullOrWhiteSpace(publicUrlSetting))
             {
