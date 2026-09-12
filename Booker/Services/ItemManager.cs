@@ -190,6 +190,9 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             .Where(i => i.IsVisible)
             .OrderByDescending(i => i.CreatedAt)
             .ThenBy(i => i.Id)
+            // Same reason as GetPagedItemsCoreAsync: Take over the Grades join
+            // would spend row slots on duplicate grades and shrink the landing page.
+            .AsSplitQuery()
             .Take(count)
             .ToListAsync();
     }
@@ -225,6 +228,12 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             // non-deterministic and rows can repeat or vanish between pages.
             .OrderByDescending(i => i.CreatedAt)
             .ThenBy(i => i.Id)
+            // The base query Includes Book.Grades, so a single-query LEFT JOIN would
+            // duplicate each multi-grade book per grade and OFFSET/FETCH would page
+            // those duplicates: pages come back short and HasMorePages flips false
+            // too early. Split querying pages the root rows first, then loads
+            // collections per page, so Skip/Take counts items, not join rows.
+            .AsSplitQuery()
             .Skip(pageNumber * pageSize)
             .Take(pageSize + 1)
             .ToListAsync();
