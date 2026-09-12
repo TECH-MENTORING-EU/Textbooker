@@ -857,6 +857,51 @@ namespace Booker.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Booker.Data.AdminActionLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("AdminUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdminUserName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Parameters")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminUserName");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("AdminActionLogs");
+                });
+
             modelBuilder.Entity("Booker.Data.Book", b =>
                 {
                     b.Property<int>("Id")
@@ -1553,6 +1598,9 @@ namespace Booker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("FlaggedForReview")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
@@ -1801,6 +1849,9 @@ namespace Booker.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("AgeConfirmationAcceptedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("AreFavoritesPublic")
                         .HasColumnType("bit");
 
@@ -1814,7 +1865,16 @@ namespace Booker.Migrations
                     b.Property<bool>("DisplayEmail")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("DisplayInstagram")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("DisplayMessenger")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("DisplayPhone")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("DisplaySchool")
                         .HasColumnType("bit");
 
                     b.Property<bool>("DisplayWhatsapp")
@@ -1869,6 +1929,12 @@ namespace Booker.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("TermsAcceptedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TermsAcceptedVersion")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")
