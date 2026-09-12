@@ -33,8 +33,12 @@
 <form method="post" enctype="multipart/form-data" id="add-form" aria-labelledby="add-heading" hx-on:submit="if (!this.dataset.inSummary) showSummary(event)" hx-on:image-upload-state="toggleFormSubmitState(this, event.detail.busy)">
     <div class="grid">
         <section>
-            <label asp-for="Input.Images">Prześlij zdjęcia swojej książki:</label>
-            <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)">
+            <p role="note">
+                <strong>Nie wysyłaj zdjęć, na których widać osoby, twarze, adresy, plan lekcji,
+                legitymację ani inne dane osobowe.</strong> Sfotografuj sam podręcznik.
+            </p>
+            <label for="add-image">Prześlij zdjęcia swojej książki:</label>
+            <input type="file" asp-for="Input.Images" accept="image/*" multiple hx-on:change="handleImageUpload(this)" id="add-image" aria-describedby="Input_Images-error imageErrorMsg">
             <small>
                 <span asp-validation-for="Input.Images" id="Input_Images-error" role="alert"></span>
                 <span id="imageErrorMsg" role="alert"></span>
