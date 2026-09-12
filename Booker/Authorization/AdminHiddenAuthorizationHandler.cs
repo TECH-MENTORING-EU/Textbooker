@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace Booker.Authorization;
 
 // ASP.NET Core only invokes authorization handlers resolved from DI, so the
-// handler lives in its own typed class - a requirement implementing
-// IAuthorizationHandler is never discovered and the policy could never pass.
+// handler lives in its own typed class. A requirement implementing
+// IAuthorizationHandler is only called by PassThroughAuthorizationHandler, which
+// makes the policy pass depend on that handler's registration and ordering side
+// effects - an explicit handler avoids that dependency.
 public class AdminHiddenAuthorizationHandler : AuthorizationHandler<AdminHiddenAuthorizationRequirement>
 {
     protected override Task HandleRequirementAsync(
