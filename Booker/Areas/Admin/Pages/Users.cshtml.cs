@@ -188,10 +188,6 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
-            // Only invalidate after the lockout succeeded - signing the user out
-            // for a lockout that never happened cannot be rolled back.
-            await _sessionCacheManager.InvalidateSessionAsync(id);
-
             user.IsVisible = false;
             var visibilityResult = await _userManager.UpdateAsync(user);
             if (!visibilityResult.Succeeded)
@@ -206,6 +202,10 @@ namespace Booker.Areas.Admin.Pages
 
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserLockout, user.Id, user.UserName ?? id.ToString(), "User", $"days={days}");
             await transaction.CommitAsync();
+
+            // Only invalidate after the transaction committed - a rollback would
+            // otherwise leave the user signed out despite no lockout taking effect.
+            await _sessionCacheManager.InvalidateSessionAsync(id);
 
             _logger.LogInformation("Użytkownik {AdminUserName} zablokował konto użytkownika {TargetUserName} na okres {Days} dni.",
                 currentUser?.UserName, user.UserName, days);
