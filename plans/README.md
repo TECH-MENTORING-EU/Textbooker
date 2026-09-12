@@ -52,12 +52,13 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 ## Known state at planning time (2026-08-26)
 
-- **Live bug, deliberately not fixed by these plans**: decimal price binding
-  is culture-dependent (query `12,50` → 1250; form `12.50` → error). The fix
-  exists on local unmerged branch `fix/k6-invariant-price-binding`
-  (commit `e009560`; since merged to main as PR #83). Plans 003 and 005 carry
-  Skip-marked tests that turn on when that branch merges - un-skip them in the
-  merge PR.
+- **Fixed bug - do not Skip-mark tests for it**: decimal price binding used to
+  be culture-dependent (query `12,50` → 1250; form `12.50` → error). The fix
+  (`fix/k6-invariant-price-binding`, commit `e009560`) is already merged to
+  main as PR #83, so the bug no longer exists on main. Plans 003 and 005
+  predate that merge and instruct executors to add Skip-marked tests for it -
+  ignore those Skip instructions and add the tests un-skipped; they must pass
+  against main.
 - The operator's working tree had an uncommitted one-line Serilog log-level
   diff in `Booker/Program.cs` (k6 leftover). Executors: see plan 001's
   "Known local-state warning".
