@@ -6,8 +6,8 @@
 @{
     var profilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
     var defaultAvatarPath = Configuration.GetValue<string>("Features:DefaultProfilePicturePath") ?? "/img/default-profile-picture.jpg";
-    var profilePhotoUrl = profilePhotosEnabled && !string.IsNullOrWhiteSpace(Model.RequestUser.Photo)
-        ? PhotosManager.GetPhotoUrl(Model.RequestUser.Photo)
+    var profilePhotoUrl = profilePhotosEnabled
+        ? PhotosManager.GetPhotoUrl(Model.RequestUser.Photo, defaultAvatarPath)
         : defaultAvatarPath;
 }
 

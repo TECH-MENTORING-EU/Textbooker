@@ -66,7 +66,7 @@ public class ItemGalleryViewComponent : ViewComponent
             Item: item,
             FirstPhoto: string.IsNullOrEmpty(item.Photo)
                 ? "/img/default-book.svg"
-                : _photosManager.GetPhotoUrl(item.Photo.Split(';')[0].Trim()),
+                : _photosManager.GetPhotoUrl(item.Photo.Split(';')[0].Trim(), "/img/default-book.svg"),
             Params: parameters,
             LinkFilters: linkFilters
         ));
