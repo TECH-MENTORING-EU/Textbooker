@@ -300,7 +300,7 @@
                         Book = book,
                         User = user,
                         Price = Random.Shared.Next(140, 600) / 7M,
-                        CreatedAt = DateTime.Now.AddDays(-(Random.Shared.Next(7 * 24 * 60) / (24 * 60.0))),
+                        CreatedAt = DateTime.UtcNow.AddDays(-(Random.Shared.Next(7 * 24 * 60) / (24 * 60.0))),
                         Description = "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.",
                         State = "bardzo dobry",
                         Photo = "/img/default-book.svg"

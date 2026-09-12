@@ -26,9 +26,29 @@ namespace Booker.Areas.Identity.Pages.Account
         public void OnGet(long? lockoutEnd)
         {
             HasDateTime = lockoutEnd.HasValue;
-            LockoutEnd = DateTimeOffset.FromUnixTimeSeconds(lockoutEnd ?? 0).LocalDateTime;
-            IsLongLockout = LockoutEnd.Value > DateTime.Now.AddMinutes(5);
-            IsForever = LockoutEnd.Value > DateTime.Now.AddYears(100);
+            var end = DateTimeOffset.FromUnixTimeSeconds(lockoutEnd ?? 0);
+            // Render in Polish time like every other page; the comparisons below
+            // stay on the instant, independent of any time zone.
+            LockoutEnd = TimeZoneInfo.ConvertTimeFromUtc(end.UtcDateTime, PolishTimeZone);
+            // Judge the branches on the instant: comparing the machine-local
+            // DateTime against UtcNow misclassifies lockouts on non-UTC hosts.
+            IsLongLockout = end > DateTimeOffset.UtcNow.AddMinutes(5);
+            IsForever = end > DateTimeOffset.UtcNow.AddYears(100);
+        }
+
+        private static readonly TimeZoneInfo PolishTimeZone = CreatePolishTimeZone();
+
+        private static TimeZoneInfo CreatePolishTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
+            }
+            // Without ICU, Windows only knows its own zone id.
+            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+            }
         }
     }
 }

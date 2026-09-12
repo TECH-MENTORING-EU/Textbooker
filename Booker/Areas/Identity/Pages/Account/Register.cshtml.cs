@@ -206,7 +206,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
                 user.Photo = "/img/default-profile-picture.jpg";
 
-                var now = DateTime.Now;
+                var now = DateTime.UtcNow;
                 user.TermsAcceptedAt = now;
                 user.TermsAcceptedVersion = RegulaminInfo.CurrentVersion;
                 user.AgeConfirmationAcceptedAt = now;

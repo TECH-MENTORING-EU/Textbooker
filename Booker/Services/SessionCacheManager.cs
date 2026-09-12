@@ -46,7 +46,7 @@ public class SessionCacheManager
             session.Valid = true;
         }
 
-        session.LastActivity = DateTime.Now;
+        session.LastActivity = DateTime.UtcNow;
         _sessions[userId] = session;
         _cache.Set("Sessions", _sessions);
         return session.Valid;
@@ -80,7 +80,7 @@ public class SessionCacheManager
 
     public void CleanupSessions()
     {
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
         var toRemove = _sessions
             .Where(kv => !kv.Value.Valid || kv.Value.LastActivity.HasValue && (now - kv.Value.LastActivity.Value).TotalMinutes > 5)
             .Select(kv => kv.Key)

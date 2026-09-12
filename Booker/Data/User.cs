@@ -7,7 +7,7 @@ namespace Booker.Data
     public class User : IdentityUser<int>
     {
         [PersonalData]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [PersonalData]
         public DateTime? LastActiveAt { get; set; }
