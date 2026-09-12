@@ -116,6 +116,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseSecurityHeaders();
+
 app.Use(async (context, next) =>
 {
     context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
@@ -153,18 +155,7 @@ app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Status/{0}");
 
 app.UseAuthentication();
-app.Use(async (context, next) =>
-{
-    using var scope = app.Services.CreateScope();
-    var sessionCacheManager = scope.ServiceProvider.GetRequiredService<SessionCacheManager>();
-    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<User>>();
-    if (!await sessionCacheManager.CheckSession(context))
-    {
-        await signInManager.SignOutAsync();
-        context.User = new ClaimsPrincipal();
-    }
-    await next();
-});
+app.UseSessionValidation();
 app.UseAuthorization();
 app.UseRateLimiter();
 

@@ -42,7 +42,8 @@ namespace Booker.Areas.Identity.Pages.Account
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return NotFound($"Nie znaleziono użytkownika o ID '{userId}'.");
+                _logger.LogWarning("Email confirmation requested for unknown user id {UserId}.", userId);
+                return NotFound();
             }
 
             if (user.EmailConfirmed)

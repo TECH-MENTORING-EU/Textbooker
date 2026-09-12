@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -71,6 +71,37 @@ namespace Booker.Areas.Admin.Pages
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            if (user.Id == currentUser.Id)
+            {
+                return new ContentResult
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Content = "Nie możesz usunąć własnego konta z panelu administratora.",
+                    ContentType = "text/plain"
+                };
+            }
+
+            // The confirming admin re-enters their password in the delete dialog;
+            // deleting an account must not be weaker than granting a role.
+            var password = Request.Form["adminPassword"].ToString();
+            if (string.IsNullOrWhiteSpace(password) || !await _userManager.CheckPasswordAsync(currentUser, password))
+            {
+                _logger.LogWarning(
+                    "Użytkownik {AdminUserName} próbował usunąć konto użytkownika {TargetUserName}, ale wpisał błędne hasło.",
+                    currentUser.UserName, user.UserName);
+                return new ContentResult
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Content = "Niepoprawne hasło.",
+                    ContentType = "text/plain"
+                };
+            }
+
             var deletedUserName = user.UserName ?? id.ToString();
 
             // The keys must be collected before the account is deleted - the item rows
@@ -97,10 +128,11 @@ namespace Booker.Areas.Admin.Pages
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserDelete, id, deletedUserName, "User");
             await transaction.CommitAsync();
 
-            _sessionCacheManager.InvalidateSession(id);
+            await _sessionCacheManager.InvalidateSessionAsync(id);
             await _userPhotoManager.DeleteFromStorageAsync(user.Id, photoKeys);
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął konto użytkownika {deletedUserName}.");
+            _logger.LogInformation("Użytkownik {AdminUserName} usunął konto użytkownika {TargetUserName}.",
+                currentUser.UserName, user.UserName);
             return Content("User deleted successfully.");
         }
 
@@ -143,8 +175,6 @@ namespace Booker.Areas.Admin.Pages
                 lockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
             }
             
-            _sessionCacheManager.InvalidateSession(id);
-
             // RODO - task 09: account lockout and the admin action log entry in a single transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -173,7 +203,12 @@ namespace Booker.Areas.Admin.Pages
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserLockout, user.Id, user.UserName ?? id.ToString(), "User", $"days={days}");
             await transaction.CommitAsync();
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} zablokował konto użytkownika {user.UserName} na okres {days} dni.");
+            // Only invalidate after the transaction committed - a rollback would
+            // otherwise leave the user signed out despite no lockout taking effect.
+            await _sessionCacheManager.InvalidateSessionAsync(id);
+
+            _logger.LogInformation("Użytkownik {AdminUserName} zablokował konto użytkownika {TargetUserName} na okres {Days} dni.",
+                currentUser?.UserName, user.UserName, days);
             return Partial("_UserRows", new List<User> { user });
         }
 
@@ -200,6 +235,10 @@ namespace Booker.Areas.Admin.Pages
                 return new StatusCodeResult(500);
             }
 
+            // Drop the invalid entry left by the lockout so the user can sign in
+            // again immediately instead of waiting for the next cleanup pass.
+            _sessionCacheManager.RemoveCachedSession(id);
+
             user.IsVisible = true;
             var visibilityResult = await _userManager.UpdateAsync(user);
             if (!visibilityResult.Succeeded)
@@ -215,7 +254,8 @@ namespace Booker.Areas.Admin.Pages
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.UserUnlock, user.Id, user.UserName ?? id.ToString(), "User");
             await transaction.CommitAsync();
 
-            _logger.LogInformation($"Użytkownik {currentUser?.UserName} odblokował konto użytkownika {user.UserName}.");
+            _logger.LogInformation("Użytkownik {AdminUserName} odblokował konto użytkownika {TargetUserName}.",
+                currentUser?.UserName, user.UserName);
             return Partial("_UserRows", new List<User> { user });
         }
     }

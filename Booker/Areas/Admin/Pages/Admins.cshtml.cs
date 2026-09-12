@@ -115,7 +115,13 @@ namespace Booker.Areas.Admin.Pages
             await _context.LogAdminActionAsync(currentUser, AdminActionTypes.AdminRoleRemoved, user.Id, user.UserName ?? user.Id.ToString(), "User");
             await transaction.CommitAsync();
 
-            _sessionCacheManager.InvalidateSession(id);
+            await _sessionCacheManager.InvalidateSessionAsync(id);
+
+            // Drop the invalid entry left by the invalidation so the demoted
+            // admin's next sign-in is not bounced until the next cleanup pass;
+            // the rotated security stamp still ends the current session.
+            _sessionCacheManager.RemoveCachedSession(id);
+
             _logger.LogInformation($"Użytkownik {currentUser?.UserName} usunął uprawnienia administratora użytkownika {user.UserName}.");
             return Content("Administrator usunięty pomyślnie.");
         }
