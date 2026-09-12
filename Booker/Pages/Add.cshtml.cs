@@ -83,7 +83,7 @@ namespace Booker.Pages
                 return Page();
             }
 
-            return ValidateAndReturn(result.Id, result.Status);
+            return await ValidateAndReturn(result.Id, result.Status);
         }
     }
 }

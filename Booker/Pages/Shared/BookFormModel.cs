@@ -43,7 +43,7 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         return Partial("_FormSelects", this);
     }
 
-    public IActionResult ValidateAndReturn(int itemId, ItemManager.Status result)
+    public async Task<IActionResult> ValidateAndReturn(int itemId, ItemManager.Status result)
     {
         if (result.HasFlag(ItemManager.Status.Error))
         {
@@ -67,8 +67,15 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             {
                 ModelState.AddModelError(string.Empty, "Nie znaleziono pasującej książki. Proszę sprawdzić wprowadzone dane.");
             }
+            if (result.HasFlag(ItemManager.Status.NoPhotos))
+            {
+                ModelState.AddModelError("Input.Images", "Ogłoszenie musi mieć co najmniej jedno zdjęcie. Zostaw zaznaczone jakieś zdjęcie albo dodaj nowe.");
+            }
 
             Response.StatusCode = StatusCodes.Status400BadRequest;
+            // Re-render with populated dropdowns, mirroring the other error paths
+            // (e.g. the PhotoStorageException handler) that return Page().
+            await LoadSelects(string.Empty);
             return Page();
         }
 

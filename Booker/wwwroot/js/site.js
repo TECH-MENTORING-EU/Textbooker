@@ -64,7 +64,13 @@ function toggleFormSubmitState(form, isBusy) {
 }
 
 function renderImagePreview(preview, files) {
-    preview.innerHTML = "";
+    // Clear only the previews this function generated (bare images plus the
+    // dynamic label). The container can also hold server-rendered markup, e.g.
+    // the kept-photo checkboxes on the Edit page, which must survive file
+    // selection so the user's deselections still get posted.
+    Array.from(preview.children)
+        .filter(element => element.matches("img.book-image-preview, .image-label--dynamic"))
+        .forEach(element => element.remove());
     files.forEach((file, index) => {
         const imageElement = document.createElement("img");
         imageElement.src = URL.createObjectURL(file);
