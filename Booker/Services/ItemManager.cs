@@ -408,8 +408,18 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
         // Photos detached by this edit are removed from storage AFTER the DB commit:
         // a storage outage then only leaves orphans (logged), never a listing with
         // missing images.
-        var finalPhotos = allPhotos.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim());
-        var removedPhotos = currentPhotos.Except(finalPhotos);
+        // The deletion set is computed against a fresh read of the committed row, not
+        // the pre-transaction snapshot: a concurrent edit may have changed the photo
+        // list in between, and photos still referenced by the committed row must
+        // never be hard-deleted from storage.
+        var committedPhotos = ((await context.Items
+            .AsNoTracking()
+            .Where(i => i.Id == item.Id)
+            .Select(i => i.Photo)
+            .SingleAsync()) ?? "")
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Trim());
+        var removedPhotos = currentPhotos.Except(committedPhotos);
         var removedKeys = PhotosManager.StorageKeys(string.Join(";", removedPhotos)).ToList();
 
         if (removedKeys.Count > 0)

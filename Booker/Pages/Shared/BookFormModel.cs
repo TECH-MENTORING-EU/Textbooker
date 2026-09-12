@@ -43,7 +43,7 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         return Partial("_FormSelects", this);
     }
 
-    public IActionResult ValidateAndReturn(int itemId, ItemManager.Status result)
+    public async Task<IActionResult> ValidateAndReturn(int itemId, ItemManager.Status result)
     {
         if (result.HasFlag(ItemManager.Status.Error))
         {
@@ -73,6 +73,9 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             }
 
             Response.StatusCode = StatusCodes.Status400BadRequest;
+            // Re-render with populated dropdowns, mirroring the other error paths
+            // (e.g. the PhotoStorageException handler) that return Page().
+            await LoadSelects(string.Empty);
             return Page();
         }
 

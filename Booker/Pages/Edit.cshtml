@@ -35,6 +35,10 @@
                         <span id="imageProcessingMsg" role="status" aria-live="polite"></span>
                     </small>
 
+                    @* Sentinel: with every checkbox unchecked no keptPhotos field would
+                       post, KeptPhotos would bind null and every photo would re-check.
+                       The blank entry marks the selection as explicitly empty. *@
+                    <input type="hidden" name="keptPhotos" value="" />
                     <div class="image-preview-container" role="group" aria-label="Podgląd zapisanych zdjęć książki">
                         @foreach (var (img, index) in (Model.ItemToEdit.Photo ?? "")
                        .Split(';', StringSplitOptions.RemoveEmptyEntries)

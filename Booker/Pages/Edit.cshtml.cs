@@ -151,7 +151,7 @@ namespace Booker.Pages
                 return Page();
             }
 
-            return ValidateAndReturn(ItemToEdit.Id, result);
+            return await ValidateAndReturn(ItemToEdit.Id, result);
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int itemId)
