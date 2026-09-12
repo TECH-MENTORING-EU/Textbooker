@@ -72,6 +72,7 @@ namespace Booker.Services
 
             services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, ItemIsOwnerAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, AdminHiddenAuthorizationHandler>();
 
             services.AddScoped<SessionCacheManager>();
             services.AddHostedService<MaintenanceService>();
@@ -215,7 +216,7 @@ namespace Booker.Services
                 var redirectToAccessDenied = options.Events.OnRedirectToAccessDenied;
                 options.Events.OnRedirectToAccessDenied = context =>
                 {
-                    if (context.HttpContext.Items.TryGetValue("HideUnauthorized", out var hide)
+                    if (context.HttpContext.Items.TryGetValue(AdminHiddenAuthorizationRequirement.HideUnauthorizedItemKey, out var hide)
                         && hide is true)
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -227,7 +228,7 @@ namespace Booker.Services
                 var redirectToLogin = options.Events.OnRedirectToLogin;
                 options.Events.OnRedirectToLogin = context =>
                 {
-                    if (context.HttpContext.Items.TryGetValue("HideUnauthorized", out var hide)
+                    if (context.HttpContext.Items.TryGetValue(AdminHiddenAuthorizationRequirement.HideUnauthorizedItemKey, out var hide)
                         && hide is true)
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.NotFound;
