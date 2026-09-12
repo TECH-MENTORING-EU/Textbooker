@@ -6,6 +6,7 @@ using System.Globalization;
 using Booker.Services;
 using Booker.Utilities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Configuration;
 using Booker.Authorization;
 
 namespace Booker.Pages
@@ -18,7 +19,8 @@ namespace Booker.Pages
         IChatThreadService chatThreadService,
         IRatingManager ratingManager,
         ILogger<BookModel> logger,
-        ContactRevealLimiter contactRevealLimiter) : PageModel
+        ContactRevealLimiter contactRevealLimiter,
+        IConfiguration configuration) : PageModel
     {
         public List<string> Photos { get; set; } = new();
 
@@ -145,11 +147,23 @@ namespace Booker.Pages
         }
 
         /// <summary>
+        /// Messages can be dark-launched off: the flag hides the chat button,
+        /// and this handler answers 404 so the URL is not usable by
+        /// hand-crafted requests either (mirrors ChatModel.MessagesDisabled).
+        /// </summary>
+        private bool MessagesDisabled => !configuration.GetValue<bool>("Features:MessagesEnabled");
+
+        /// <summary>
         /// Starts (or reopens) the conversation about this listing with its seller.
         /// Threads about offers can only be created from here, never user-to-user "cold".
         /// </summary>
         public async Task<IActionResult> OnPostChatAsync(int id, CancellationToken ct)
         {
+            if (MessagesDisabled)
+            {
+                return NotFound();
+            }
+
             var userId = userManager.GetUserId(User).IntOrDefault();
             if (userId == -1)
             {
