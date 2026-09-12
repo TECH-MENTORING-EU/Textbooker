@@ -12,7 +12,7 @@ public class AdminActionLog
     public required string TargetName { get; set; }
     public required string TargetType { get; set; }
     public string? Parameters { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public static class AdminActionTypes
