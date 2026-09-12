@@ -91,6 +91,7 @@ namespace Booker.Pages.Profile
                     parameters = Params,
                     pageNumber = pageNumber,
                     showHidden = UserInfo.IsCurrentUser,
+                    showSold = true,
                 });
             }
             return Page();

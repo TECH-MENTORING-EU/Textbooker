@@ -56,16 +56,10 @@ public class ItemGalleryViewComponent : ViewComponent
             ? await _userManager.GetUserAsync(UserClaimsPrincipal)
             : null;
 
-        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize, currentUser);
+        var query = _itemManager.GetPagedItemsByIdsAsync(itemIds, pageNumber, pageSize, currentUser, showSold);
         if (!showHidden)
         {
             query = query.Where(i => i.IsVisible);
-        }
-        if (!showSold)
-        {
-            // Sold books are completed listings: hidden from browsing galleries,
-            // but profiles and favorites keep them (rendered with a "Sprzedane" badge).
-            query = query.Where(i => !i.IsSold);
         }
         var itemsFromDb = await query.ToListAsync();
 

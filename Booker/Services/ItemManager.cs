@@ -152,13 +152,16 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
             .AsAsyncEnumerable();
     }
 
-    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize, User? currentUser = null)
+    public IAsyncEnumerable<Item> GetPagedItemsByIdsAsync(IEnumerable<int> ids, int pageNumber, int pageSize, User? currentUser = null, bool showSold = false)
     {
         var query = GetAllItemsQueryable();
         query = FilterByUserSchool(query, currentUser);
-        
+
         return query
             .Where(i => ids.Contains(i.Id))
+            // The sold filter must run before Skip/Take, otherwise sold items
+            // on earlier pages make later pages under-fill.
+            .Where(i => showSold || !i.IsSold)
             .OrderByDescending(i => i.CreatedAt)
             .Skip(pageNumber * pageSize)
             .Take(pageSize)

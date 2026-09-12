@@ -80,7 +80,8 @@ namespace Booker.Pages.Profile
                 {
                     itemIds = ItemIds,
                     parameters = Params,
-                    pageNumber = pageNumber
+                    pageNumber = pageNumber,
+                    showSold = true
                 });
             }
             return Page();
