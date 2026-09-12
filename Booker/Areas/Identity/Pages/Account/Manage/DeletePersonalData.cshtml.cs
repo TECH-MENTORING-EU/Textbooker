@@ -23,7 +23,6 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly UserPhotoManager _userPhotoManager;
         private readonly DataContext _context;
         private readonly ItemManager _itemManager;
-        private readonly DataContext _dataContext;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
