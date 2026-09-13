@@ -162,7 +162,7 @@ public class GuardianConsentService
                 {
                     _logger.LogWarning("Confirmation attempted with expired token for user {UserId}. Expired at {ExpiresAtUtc}.",
                         userId, consent.ExpiresAtUtc);
-                    return (false, "Ten link potwierdzający wygasł. Poproś o nowy link.");
+                    return (false, "Ten link potwierdzający wygasł. Po usunięciu oczekującego konta zarejestruj się ponownie.");
                 }
 
                 // Token is valid (verified above using a constant-time comparison);
