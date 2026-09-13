@@ -114,11 +114,7 @@ Poniższe dane testowe obowiązują w scenariuszach R5-R13, które wymagają log
 
 Dane przygotowanego konta testowego:
 
-- uczeń: `fitting_defer.43@icloud.com`
-- login ucznia: `lolipop`
-- szkoła ucznia: `Hogwort`
-- rodzic/opiekun: `unmoved_newt1j@icloud.com`
-- hasło testowe obu kont: `TestPass123!`
+Dane przygotowanego konta testowego pobieraj z bezpiecznego sekretu/fixture'u środowiska testowego; nie przechowuj adresów e-mail ani haseł w repozytorium.
 
 Po rejestracji ucznia niepełnoletniego uczeń dostaje **dwa** osobne e-maile: własne potwierdzenie adresu e-mail (temat `Potwierdź swój adres e-mail`) oraz e-mail do opiekuna z prośbą o zgodę. Sprawdź oba, a także stronę potwierdzenia rejestracji i ponownego wysłania linku.
 
