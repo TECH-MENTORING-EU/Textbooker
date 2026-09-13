@@ -6,6 +6,7 @@ Uzupełnienie dokumentu `scenariusze-testowe-claude-for-chrome.md`. Ten plik pok
 
 Poniższe scenariusze zostały uzupełnione po poprawkach z code review PR #117. Najważniejsze zmiany w rzeczywistym działaniu aplikacji:
 
+- **Formularz rejestracji nie zbiera już roku urodzenia.** Zamiast pola liczbowego jest checkbox `Mam co najmniej 16 lat`. Odznaczony (stan domyślny) traktuje użytkownika jako niepełnoletniego i pokazuje pole e-maila opiekuna; zaznaczenie ukrywa to pole. Serwer nie przechowuje już dokładnego wieku ani roku urodzenia - tylko fakt i datę samodzielnego potwierdzenia ("Mam co najmniej 16 lat").
 - **Potwierdzenie zgody opiekuna wymaga teraz dwóch kroków.** Samo otwarcie linku (GET) tylko pokazuje stronę z podsumowaniem i przyciskiem `Potwierdzam zgodę` - nie aktywuje niczego. Zgoda zostaje zapisana dopiero po kliknięciu przycisku (POST). Ma to chronić przed przypadkową aktywacją, gdy link otworzy skaner poczty albo podgląd linku, zanim zrobi to opiekun.
 - **Uczeń niepełnoletni dostaje teraz własny e-mail z potwierdzeniem adresu**, niezależnie od e-maila do opiekuna z prośbą o zgodę. Aktywacja konta (`IsVisible = true`) następuje dopiero, gdy **oba** warunki są spełnione: uczeń potwierdził własny e-mail ORAZ opiekun potwierdził zgodę - w dowolnej kolejności.
 - **Strona "Wyślij ponownie e-mail z linkiem aktywacyjnym" pokazuje teraz zawsze ten sam, ogólny komunikat**, niezależnie od tego, czy podany adres istnieje, czy jest kontem niepełnoletnim oczekującym na zgodę opiekuna, czy adresem nieznanym. Ma to uniemożliwić odgadnięcie, czy dany e-mail jest zarejestrowany (ochrona przed enumeracją kont).
@@ -33,35 +34,35 @@ Poniższe scenariusze zostały uzupełnione po poprawkach z code review PR #117.
 - Nie zakładaj, że data wygaśnięcia tokenu oznacza wygaśnięcie potwierdzonej zgody.
 - Jeśli dane logowania nie są dostępne, zatrzymaj się przed logowaniem i poproś o nie zgodnie z zasadą ostatniej linii `polecenie:`.
 
-## R1. Rejestracja - walidacja roku urodzenia
+## R1. Rejestracja - checkbox potwierdzenia wieku
 
-Otwórz formularz rejestracji i sprawdź następujące przypadki bez wysyłania formularza:
+Otwórz formularz rejestracji. Zamiast pola roku urodzenia jest checkbox `Mam co najmniej 16 lat`, domyślnie odznaczony.
 
-1. Pozostaw rok urodzenia pusty.
-2. Wpisz rok przyszły.
-3. Wpisz rok wcześniejszy niż 1910.
-4. Wpisz prawidłowy rok osoby mającej co najmniej 16 lat.
+Sprawdź bez wysyłania formularza:
+
+1. Stan początkowy formularza (checkbox odznaczony).
+2. Zaznaczenie checkboxa.
+3. Odznaczenie checkboxa z powrotem.
 
 Oczekiwane:
 
-- formularz pozwala przejść przez poprawne dane bez błędów walidacji;
-- rok przyszły i zbyt stary są odrzucane;
-- komunikaty walidacyjne są po polsku;
-- zmiana roku nie powoduje błędu 500 ani utraty pozostałych danych formularza.
+- przy odznaczonym checkboxie pole e-maila opiekuna jest widoczne (patrz R2);
+- zaznaczenie/odznaczenie nie przeładowuje całej strony ani nie gubi wpisanych wcześniej danych (nazwa użytkownika, e-mail, hasło, szkoła);
+- etykieta checkboxa jest po polsku;
+- przełączanie checkboxa nie powoduje błędu 500.
 
 ## R2. Pole e-maila opiekuna dla ucznia niepełnoletniego
 
-W formularzu rejestracji wpisz rok oznaczający wiek poniżej 16 lat. Sprawdź pole e-maila opiekuna.
-Następnie zmień rok na taki, który oznacza co najmniej 16 lat, i sprawdź pole ponownie.
+W formularzu rejestracji sprawdź pole e-maila opiekuna przy odznaczonym checkboxie `Mam co najmniej 16 lat`.
+Następnie zaznacz checkbox i sprawdź pole ponownie.
 
-Oczekiwane dla wieku poniżej 16 lat:
+Oczekiwane, gdy checkbox jest odznaczony (niepełnoletni):
 
-- pole e-maila opiekuna pojawia się po zmianie roku;
-- pole jest wymagane;
-- zmiana roku nie przeładowuje całej strony;
-- wpisana wartość e-maila opiekuna zostaje zachowana po wymianie fragmentu formularza.
+- pole e-maila opiekuna jest widoczne od razu po załadowaniu formularza;
+- pole jest wymagane przy wysłaniu formularza;
+- wpisana wartość e-maila opiekuna zostaje zachowana po zmianie stanu checkboxa (wymiana fragmentu formularza).
 
-Oczekiwane dla wieku co najmniej 16 lat:
+Oczekiwane, gdy checkbox jest zaznaczony (co najmniej 16 lat):
 
 - pole e-maila opiekuna znika;
 - nie jest wymagane przy wysłaniu formularza;
@@ -69,8 +70,9 @@ Oczekiwane dla wieku co najmniej 16 lat:
 
 Jeśli interfejs pokazuje błąd albo pole nie reaguje, zapisz URL i kroki odtworzenia.
 
-Dodatkowo sprawdź zachowanie po pełnym przeładowaniu strony (nie tylko po wymianie fragmentu przez htmx): wpisz rok oznaczający wiek poniżej 16 lat, wpisz niepoprawny e-mail opiekuna i wywołaj taki błąd walidacji serwerowej, który powoduje pełne przeładowanie strony (np. brak wybranej szkoły). Oczekiwane:
+Dodatkowo sprawdź zachowanie po pełnym przeładowaniu strony (nie tylko po wymianie fragmentu przez htmx): zostaw checkbox odznaczony, wpisz niepoprawny e-mail opiekuna i wywołaj taki błąd walidacji serwerowej, który powoduje pełne przeładowanie strony (np. brak wybranej szkoły). Oczekiwane:
 
+- checkbox pozostaje w tym samym stanie po przeładowaniu (nie resetuje się);
 - pole e-maila opiekuna pozostaje widoczne po przeładowaniu strony (nie chowa się z powrotem);
 - błąd walidacji dla e-maila opiekuna jest pokazany przy tym polu, po polsku.
 

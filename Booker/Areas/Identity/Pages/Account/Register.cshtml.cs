@@ -99,10 +99,8 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Szkoła")]
             public int? SchoolId { get; set; }
 
-            [Required(ErrorMessage = "Rok urodzenia jest wymagany.")]
-            [Range(typeof(int), "1910", "9999", ErrorMessage = "Rok urodzenia musi być pomiędzy 1910 a bieżącym rokiem.")]
-            [Display(Name = "Rok urodzenia")]
-            public int? BirthYear { get; set; }
+            [Display(Name = "Mam co najmniej 16 lat")]
+            public bool IsAtLeast16 { get; set; }
 
             [EmailAddress(ErrorMessage = "E-mail opiekuna musi być prawidłowym adresem e-mail.")]
             [Display(Name = "E-mail opiekuna")]
@@ -115,16 +113,11 @@ namespace Booker.Areas.Identity.Pages.Account
 
         public record GuardianEmailFieldModel(bool IsVisible, string GuardianEmail);
 
-        public int CurrentYear => DateTime.UtcNow.Year;
-
-        // Derived from the posted (or bound) birth year so the guardian email field
+        // Derived from the posted (or bound) checkbox so the guardian email field
         // stays visible - and its validation error visible - after any server-side
         // failure on a full-page re-render (e.g. failed POST), not just via the
         // htmx partial swap.
-        public bool ShowGuardianEmailField =>
-            Input?.BirthYear.HasValue == true
-            && _consentService.IsValidBirthYear(Input.BirthYear)
-            && _consentService.CalculateAge(Input.BirthYear.Value) < 16;
+        public bool ShowGuardianEmailField => Input is { IsAtLeast16: false };
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -173,14 +166,10 @@ namespace Booker.Areas.Identity.Pages.Account
         }
 
         public IActionResult OnGetGuardianField(
-            [FromQuery(Name = "Input.BirthYear")] int? birthYear,
-            [FromQuery(Name = "Input.GuardianEmail")] string guardianEmail)
+            [FromQuery(Name = "Input.IsAtLeast16")] bool isAtLeast16 = false,
+            [FromQuery(Name = "Input.GuardianEmail")] string guardianEmail = null)
         {
-            var isVisible = !birthYear.HasValue
-                || !_consentService.IsValidBirthYear(birthYear)
-                || _consentService.CalculateAge(birthYear.Value) < 16;
-
-            return Partial("_GuardianEmailField", new GuardianEmailFieldModel(isVisible, guardianEmail));
+            return Partial("_GuardianEmailField", new GuardianEmailFieldModel(!isAtLeast16, guardianEmail));
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -196,19 +185,20 @@ namespace Booker.Areas.Identity.Pages.Account
                 return Page();
             }
 
-            if (!TryValidateRegistration(out var age))
+            if (!TryValidateRegistration())
             {
                 return Page();
             }
 
+            var isAtLeast16 = Input.IsAtLeast16;
             var user = CreateUser();
             if (!await TryAssignSchoolAsync(user))
             {
                 return Page();
             }
 
-            InitializeUser(user, age);
-            var registration = await CreateAccountAsync(user, age);
+            InitializeUser(user, isAtLeast16);
+            var registration = await CreateAccountAsync(user, isAtLeast16);
 
             if (!registration.Result.Succeeded)
             {
@@ -216,22 +206,13 @@ namespace Booker.Areas.Identity.Pages.Account
                 return Page();
             }
 
-            await SendConfirmationAsync(user, age, registration, returnUrl);
-            return RedirectToPage("RegisterConfirmation", new { email = Input.Email, isMinor = age < 16, returnUrl });
+            await SendConfirmationAsync(user, isAtLeast16, registration, returnUrl);
+            return RedirectToPage("RegisterConfirmation", new { email = Input.Email, isMinor = !isAtLeast16, returnUrl });
         }
 
-        private bool TryValidateRegistration(out int age)
+        private bool TryValidateRegistration()
         {
-            age = 0;
-
-            if (!_consentService.IsValidBirthYear(Input.BirthYear))
-            {
-                ModelState.AddModelError("Input.BirthYear", "Podaj prawidłowy rok urodzenia.");
-                return false;
-            }
-
-            age = _consentService.CalculateAge(Input.BirthYear.Value);
-            var guardianEmailError = _consentService.ValidateGuardianEmail(Input.Email, Input.GuardianEmail, age);
+            var guardianEmailError = _consentService.ValidateGuardianEmail(Input.Email, Input.GuardianEmail, Input.IsAtLeast16);
             if (guardianEmailError is null)
             {
                 return true;
@@ -281,15 +262,15 @@ namespace Booker.Areas.Identity.Pages.Account
             return true;
         }
 
-        private void InitializeUser(User user, int age)
+        private void InitializeUser(User user, bool isAtLeast16)
         {
             user.Photo = "/img/default-profile-picture.jpg";
             user.TermsAcceptedAt = DateTime.Now;
             user.TermsAcceptedVersion = RegulaminInfo.CurrentVersion;
-            user.BirthYear = Input.BirthYear.Value;
 
-            if (age >= 16)
+            if (isAtLeast16)
             {
+                user.AgeConfirmationAcceptedAt = DateTime.UtcNow;
                 return;
             }
 
@@ -297,12 +278,12 @@ namespace Booker.Areas.Identity.Pages.Account
             user.IsVisible = false;
         }
 
-        private async Task<RegistrationResult> CreateAccountAsync(User user, int age)
+        private async Task<RegistrationResult> CreateAccountAsync(User user, bool isAtLeast16)
         {
             await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
             await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
-            if (age >= 16)
+            if (isAtLeast16)
             {
                 return new RegistrationResult(
                     await _userManager.CreateAsync(user, Input.Password),
@@ -345,11 +326,11 @@ namespace Booker.Areas.Identity.Pages.Account
 
         private async Task SendConfirmationAsync(
             User user,
-            int age,
+            bool isAtLeast16,
             RegistrationResult registration,
             string returnUrl)
         {
-            if (age < 16)
+            if (!isAtLeast16)
             {
                 // RODO - Phase 3: Minors must independently confirm they own their own
                 // email address, in addition to the guardian confirming consent.

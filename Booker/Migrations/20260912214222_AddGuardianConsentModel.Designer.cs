@@ -1899,9 +1899,6 @@ namespace Booker.Migrations
                     b.Property<bool>("AreFavoritesPublic")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("BirthYear")
-                        .HasColumnType("int");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");

@@ -11,12 +11,6 @@ namespace Booker.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "BirthYear",
-                table: "AspNetUsers",
-                type: "int",
-                nullable: true);
-
             migrationBuilder.CreateTable(
                 name: "GuardianConsents",
                 columns: table => new
@@ -59,10 +53,6 @@ namespace Booker.Migrations
         {
             migrationBuilder.DropTable(
                 name: "GuardianConsents");
-
-            migrationBuilder.DropColumn(
-                name: "BirthYear",
-                table: "AspNetUsers");
         }
     }
 }

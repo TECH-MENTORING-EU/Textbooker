@@ -10,7 +10,7 @@ namespace Booker.Services;
 
 /// <summary>
 /// RODO - Phase 1: Service for managing guardian consent for minors (<16 years).
-/// Handles age validation, token generation (hashed), and atomic confirmation workflow.
+/// Handles guardian-email validation, token generation (hashed), and atomic confirmation workflow.
 /// </summary>
 public class GuardianConsentService
 {
@@ -19,8 +19,6 @@ public class GuardianConsentService
     private readonly GuardianConsentOptions _options;
     private readonly ILogger<GuardianConsentService> _logger;
 
-    private const int MinBirthYear = 1910;
-    private const int AgeThreshold = 16;
     private const int TokenLength = 32; // 32 bytes = 256 bits for SHA-256
 
     public GuardianConsentService(
@@ -36,49 +34,15 @@ public class GuardianConsentService
     }
 
     /// <summary>
-    /// Calculates a conservative (minimum possible) age based on birth year only and the
-    /// current UTC year. Since we only collect the birth year (not the full birth date),
-    /// we cannot know whether the person's birthday has already occurred this year.
-    /// To avoid ever treating a possibly-under-16 user as 16+ (which would incorrectly skip
-    /// the guardian-consent flow), we assume the birthday has NOT happened yet this year,
-    /// i.e. age = (currentYear - birthYear - 1). This never overstates age.
-    /// Returns -1 for invalid years (future or extremely old).
-    /// </summary>
-    public int CalculateAge(int birthYear)
-    {
-        int currentYear = DateTime.UtcNow.Year;
-        return birthYear > currentYear ? -1 : currentYear - birthYear - 1;
-    }
-
-    /// <summary>
-    /// Validates birth year: not null, not in future, within reasonable range.
-    /// Returns true if valid, false otherwise.
-    /// </summary>
-    public bool IsValidBirthYear(int? birthYear)
-    {
-        if (!birthYear.HasValue)
-            return false;
-
-        int year = birthYear.Value;
-        int currentYear = DateTime.UtcNow.Year;
-
-        // Year must not be in the future or extremely old
-        if (year > currentYear || year < MinBirthYear)
-            return false;
-
-        return true;
-    }
-
-    /// <summary>
-    /// Validates guardian email for minors (<16 years).
-    /// - For age < 16: guardianEmail must be non-null, valid, and different from childEmail (case-insensitive).
-    /// - For age >= 16: guardianEmail is ignored and validation passes.
+    /// Validates guardian email for users who did not self-declare as being at least 16.
+    /// - When not confirmed as 16+: guardianEmail must be non-null, valid, and different from childEmail (case-insensitive).
+    /// - When confirmed as 16+: guardianEmail is ignored and validation passes.
     /// Returns error message if invalid, null if valid.
     /// </summary>
-    public string? ValidateGuardianEmail(string? childEmail, string? guardianEmail, int age)
+    public string? ValidateGuardianEmail(string? childEmail, string? guardianEmail, bool isAtLeast16)
     {
-        // Adults (>=16) don't need guardian email
-        if (age >= AgeThreshold)
+        // Self-declared adults don't need guardian email
+        if (isAtLeast16)
             return null;
 
         // Minors must have guardian email
