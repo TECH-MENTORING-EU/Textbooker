@@ -7,34 +7,21 @@
 
 <h1>@ViewData["Title"]</h1>
 
-@if (Model.IsConfirmed)
-{
-    if (Model.IsSuccess)
-    {
-        <div class="alert alert-success" role="alert">
-            <strong>✅ Sukces!</strong>
-            <p>@Model.Message</p>
-            <p>Uczeń może się zalogować, gdy tylko potwierdzi swój adres e-mail (jeśli jeszcze tego nie zrobił).</p>
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-danger" role="alert">
-            <strong>❌ Błąd potwierdzenia</strong>
-            <p>@Model.Message</p>
-            <p>Jeśli potrzebujesz nowego linku, skontaktuj się z supportem: <a href="mailto:@ContactInfo.SupportEmail">@ContactInfo.SupportEmail</a></p>
-        </div>
-    }
-}
-else if (Model.CanConfirm)
+@if (Model.CanConfirm)
 {
     <div class="alert alert-info" role="alert">
         <p>@Model.Message</p>
     </div>
+    <dl>
+        <dt>Nazwa użytkownika ucznia</dt>
+        <dd>@Model.ChildUserName</dd>
+        <dt>E-mail ucznia</dt>
+        <dd>@Model.ChildEmail</dd>
+    </dl>
     <form method="post">
         <input type="hidden" asp-for="UserId" />
         <input type="hidden" asp-for="Token" />
-        <p>Klikając przycisk poniżej, potwierdzasz jako opiekun zgodę na założenie i aktywację konta ucznia na platformie TextBooker.</p>
+        <p>Klikając przycisk poniżej, potwierdzasz jako opiekun zgodę na założenie i aktywację konta powyższego ucznia na platformie TextBooker.</p>
         <button type="submit">Potwierdzam zgodę</button>
     </form>
 }

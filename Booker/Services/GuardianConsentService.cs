@@ -217,32 +217,32 @@ public class GuardianConsentService
     /// (e.g. to render a confirmation page) so that automated link-crawlers/scanners
     /// cannot trigger the irreversible consent side effects.
     /// </summary>
-    public async Task<(bool Valid, string Message)> ValidateConsentTokenAsync(int userId, string token)
+    public async Task<(bool Valid, string Message, string? ChildUserName, string? ChildEmail)> ValidateConsentTokenAsync(int userId, string token)
     {
         if (string.IsNullOrWhiteSpace(token))
-            return (false, "Link potwierdzający jest nieprawidłowy.");
+            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
 
         string tokenHash = ComputeTokenHash(token);
         var now = DateTime.UtcNow;
 
         var user = await _context.Users.FindAsync(userId);
         if (user == null)
-            return (false, "Link potwierdzający jest nieprawidłowy.");
+            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
 
         var consent = await _context.GuardianConsents.FirstOrDefaultAsync(gc => gc.UserId == userId);
         if (consent == null)
-            return (false, "Link potwierdzający jest nieprawidłowy.");
+            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
 
         if (consent.ConfirmedAtUtc.HasValue)
-            return (false, "Ten link potwierdzający został już wykorzystany.");
+            return (false, "Ten link potwierdzający został już wykorzystany.", null, null);
 
         if (now > consent.ExpiresAtUtc)
-            return (false, "Ten link potwierdzający wygasł. Poproś o nowy link.");
+            return (false, "Ten link potwierdzający wygasł. Poproś o nowy link.", null, null);
 
         if (consent.TokenHash != tokenHash)
-            return (false, "Link potwierdzający jest nieprawidłowy.");
+            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
 
-        return (true, "Link potwierdzający jest prawidłowy.");
+        return (true, "Link potwierdzający jest prawidłowy.", user.UserName, user.Email);
     }
 
     /// <summary>

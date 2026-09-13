@@ -28,20 +28,15 @@ namespace Booker.Areas.Identity.Pages.Account
         }
 
         public string? Message { get; set; }
-        public bool IsSuccess { get; set; }
-
-        /// <summary>
-        /// True once the user has actually confirmed (POSTed) their consent and the
-        /// account has been activated/updated. False on the initial GET, where we only
-        /// show a confirmation prompt without performing any mutation.
-        /// </summary>
-        public bool IsConfirmed { get; set; }
 
         /// <summary>
         /// True when the GET-supplied link is valid and safe to present a confirmation
         /// form for. False for invalid/expired/used links.
         /// </summary>
         public bool CanConfirm { get; set; }
+
+        public string? ChildUserName { get; set; }
+        public string? ChildEmail { get; set; }
 
         public int TokenExpirationDays => _consentOptions.TokenExpirationDays;
 
@@ -66,14 +61,14 @@ namespace Booker.Areas.Identity.Pages.Account
             if (UserId <= 0 || string.IsNullOrWhiteSpace(Token))
             {
                 Message = "Nieprawidłowy link potwierdzający.";
-                IsSuccess = false;
                 CanConfirm = false;
                 return Page();
             }
 
-            var (valid, message) = await _consentService.ValidateConsentTokenAsync(UserId, Token);
+            var (valid, message, childUserName, childEmail) = await _consentService.ValidateConsentTokenAsync(UserId, Token);
             CanConfirm = valid;
-            IsSuccess = false;
+            ChildUserName = childUserName;
+            ChildEmail = childEmail;
             Message = valid
                 ? "Sprawdź poniższe informacje i potwierdź zgodę, klikając przycisk."
                 : message;
@@ -94,10 +89,7 @@ namespace Booker.Areas.Identity.Pages.Account
         {
             if (UserId <= 0 || string.IsNullOrWhiteSpace(Token))
             {
-                Message = "Nieprawidłowy link potwierdzający.";
-                IsSuccess = false;
-                CanConfirm = false;
-                return Page();
+                return RedirectToResult(false, "Nieprawidłowy link potwierdzający.");
             }
 
             // Get IP address from HttpContext
@@ -117,10 +109,14 @@ namespace Booker.Areas.Identity.Pages.Account
                 Message = message;
             }
 
-            IsSuccess = success;
-            IsConfirmed = true;
-            CanConfirm = false;
-            return Page();
+            return RedirectToResult(success, message);
+        }
+
+        private IActionResult RedirectToResult(bool success, string message)
+        {
+            TempData["GuardianConsentSuccess"] = success;
+            TempData["GuardianConsentMessage"] = message;
+            return RedirectToPage("ConfirmGuardianConsentResult");
         }
     }
 }

@@ -40,6 +40,7 @@ namespace Booker.Areas.Identity.Pages.Account
         public string StatusMessage { get; set; }
 
         public string DisplayMessage { get; set; }
+        public bool CanManageProfile { get; private set; }
 
         public async Task<IActionResult> OnGetAsync(string userId, string code)
         {
@@ -57,6 +58,7 @@ namespace Booker.Areas.Identity.Pages.Account
             if (user.EmailConfirmed)
             {
                 StatusMessage = "Email jest już potwierdzony. Możesz się zalogować.";
+                CanManageProfile = user.IsVisible;
                 return Page();
             }
 
@@ -85,6 +87,8 @@ namespace Booker.Areas.Identity.Pages.Account
                 return Page();
             }
 
+            CanManageProfile = user.IsVisible;
+
             // RODO - Phase 3: For minors, activation requires BOTH the child's own email
             // confirmation (verified here) AND the guardian's consent confirmation.
             // Marking the child's email as confirmed does not, by itself, use the guardian's
@@ -100,6 +104,7 @@ namespace Booker.Areas.Identity.Pages.Account
             {
                 user.IsVisible = true;
                 await _userManager.UpdateAsync(user);
+                CanManageProfile = true;
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
             }
             else

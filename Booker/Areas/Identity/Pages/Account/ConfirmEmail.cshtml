@@ -14,5 +14,8 @@
 else
 {
     <p>@Model.StatusMessage</p>
-    <a asp-area="Identity" asp-page="/Account/Manage/Index" role="button">Zaloguj się i uzupełnij swój profil</a>
+    @if (Model.CanManageProfile)
+    {
+        <a asp-area="Identity" asp-page="/Account/Manage/Index" role="button">Zaloguj się i uzupełnij swój profil</a>
+    }
 }
