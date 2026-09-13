@@ -15,18 +15,18 @@ namespace Booker.Areas.Identity.Pages.Account
     public class ConfirmGuardianConsentModel : PageModel
     {
         private readonly GuardianConsentService _consentService;
-        private readonly SendMailSvc _mailSvc;
+        private readonly IWelcomeEmailQueue _welcomeEmailQueue;
         private readonly ILogger<ConfirmGuardianConsentModel> _logger;
         private readonly GuardianConsentOptions _consentOptions;
 
         public ConfirmGuardianConsentModel(
             GuardianConsentService consentService,
-            SendMailSvc mailSvc,
+            IWelcomeEmailQueue welcomeEmailQueue,
             ILogger<ConfirmGuardianConsentModel> logger,
             IOptions<GuardianConsentOptions> consentOptions)
         {
             _consentService = consentService;
-            _mailSvc = mailSvc;
+            _welcomeEmailQueue = welcomeEmailQueue;
             _logger = logger;
             _consentOptions = consentOptions.Value;
         }
@@ -113,7 +113,7 @@ namespace Booker.Areas.Identity.Pages.Account
                     // path races with the student's own email-confirmation path.
                     if (await _consentService.TryClaimWelcomeEmailAsync(UserId))
                     {
-                        await WelcomeEmailSender.SendWithRetryAsync(_mailSvc, _logger, consentResult.StudentEmail);
+                        _welcomeEmailQueue.QueueWelcomeEmail(consentResult.StudentEmail);
                     }
                 }
             }

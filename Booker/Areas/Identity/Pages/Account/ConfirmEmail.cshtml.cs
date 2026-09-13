@@ -21,18 +21,18 @@ namespace Booker.Areas.Identity.Pages.Account
     {
         private readonly UserManager<User> _userManager;
         private readonly GuardianConsentService _consentService;
-        private readonly SendMailSvc _mailSvc;
+        private readonly IWelcomeEmailQueue _welcomeEmailQueue;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
         public ConfirmEmailModel(
             UserManager<User> userManager,
             GuardianConsentService consentService,
-            SendMailSvc mailSvc,
+            IWelcomeEmailQueue welcomeEmailQueue,
             ILogger<ConfirmEmailModel> logger)
         {
             _userManager = userManager;
             _consentService = consentService;
-            _mailSvc = mailSvc;
+            _welcomeEmailQueue = welcomeEmailQueue;
             _logger = logger;
         }
 
@@ -114,7 +114,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
                 if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
                 {
-                    await WelcomeEmailSender.SendWithRetryAsync(_mailSvc, _logger, user.Email);
+                    _welcomeEmailQueue.QueueWelcomeEmail(user.Email);
                 }
 
                 return Page();
@@ -131,7 +131,7 @@ namespace Booker.Areas.Identity.Pages.Account
                 // path races with the guardian-consent confirmation path.
                 if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
                 {
-                    await WelcomeEmailSender.SendWithRetryAsync(_mailSvc, _logger, user.Email);
+                    _welcomeEmailQueue.QueueWelcomeEmail(user.Email);
                 }
             }
             else
