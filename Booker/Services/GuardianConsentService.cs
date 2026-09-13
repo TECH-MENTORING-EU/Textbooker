@@ -169,26 +169,26 @@ public class GuardianConsentService
                     return (false, "Link potwierdzający jest nieprawidłowy.");
                 }
 
-                // Check if already confirmed
+                // Authenticate the token before revealing consent state.
+                if (!CryptographicOperations.FixedTimeEquals(
+                        Convert.FromBase64String(consent.TokenHash),
+                        Convert.FromBase64String(tokenHash)))
+                {
+                    _logger.LogWarning("Confirmation attempted with invalid token hash for user {UserId}.", userId);
+                    return (false, "Link potwierdzający jest nieprawidłowy.");
+                }
+
                 if (consent.ConfirmedAtUtc.HasValue)
                 {
                     _logger.LogWarning("Confirmation attempted for already-confirmed consent {ConsentId}.", consent.Id);
                     return (false, "Ten link potwierdzający został już wykorzystany.");
                 }
 
-                // Check if token is expired
                 if (now > consent.ExpiresAtUtc)
                 {
                     _logger.LogWarning("Confirmation attempted with expired token for user {UserId}. Expired at {ExpiresAtUtc}.",
                         userId, consent.ExpiresAtUtc);
                     return (false, "Ten link potwierdzający wygasł. Poproś o nowy link.");
-                }
-
-                // Verify token hash
-                if (consent.TokenHash != tokenHash)
-                {
-                    _logger.LogWarning("Confirmation attempted with invalid token hash for user {UserId}.", userId);
-                    return (false, "Link potwierdzający jest nieprawidłowy.");
                 }
 
                 // Token is valid; confirm consent and activate user
