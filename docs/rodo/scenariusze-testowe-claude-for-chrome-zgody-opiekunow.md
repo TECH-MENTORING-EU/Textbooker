@@ -273,11 +273,7 @@ Oczekiwane w obu kolejnościach:
 
 Używaj poniższych danych wyłącznie w bezpiecznym środowisku testowym i tylko w scenariuszach, które wymagają logowania:
 
-- konto ucznia: `fitting_defer.43@icloud.com`
-- login ucznia: `lolipop`
-- szkoła ucznia: `Hogwort`
-- konto rodzica/opiekuna: `unmoved_newt1j@icloud.com`
-- hasło testowe: `TestPass123!`
+Dane logowania pobieraj z bezpiecznego sekretu/fixture'u środowiska testowego; nie przechowuj adresów e-mail ani haseł w repozytorium.
 
 Nie wyświetlaj hasła w raporcie końcowym.
 
