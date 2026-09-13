@@ -11,6 +11,7 @@ using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
@@ -19,17 +20,20 @@ namespace Booker.Areas.Identity.Pages.Account
 {
     public class ConfirmEmailModel : PageModel
     {
+        private readonly DataContext _context;
         private readonly UserManager<User> _userManager;
         private readonly GuardianConsentService _consentService;
         private readonly IWelcomeEmailQueue _welcomeEmailQueue;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
         public ConfirmEmailModel(
+            DataContext context,
             UserManager<User> userManager,
             GuardianConsentService consentService,
             IWelcomeEmailQueue welcomeEmailQueue,
             ILogger<ConfirmEmailModel> logger)
         {
+            _context = context;
             _userManager = userManager;
             _consentService = consentService;
             _welcomeEmailQueue = welcomeEmailQueue;
@@ -122,8 +126,9 @@ namespace Booker.Areas.Identity.Pages.Account
 
             if (consent.ConfirmedAtUtc.HasValue)
             {
-                user.IsVisible = true;
-                await _userManager.UpdateAsync(user);
+                await _context.Users
+                    .Where(u => u.Id == user.Id)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.IsVisible, true));
                 CanManageProfile = true;
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
 
