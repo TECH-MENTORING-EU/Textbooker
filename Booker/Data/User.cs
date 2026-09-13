@@ -78,5 +78,13 @@ namespace Booker.Data
 
         // RODO - Phase 1: Guardian consent for minors (<16 years).
         public GuardianConsent? GuardianConsent { get; set; }
+
+        /// <summary>
+        /// Idempotency marker for the one-time "account activated" welcome email.
+        /// Set atomically (see GuardianConsentService.TryClaimWelcomeEmailAsync) the first
+        /// time either activation path (student email confirmation or guardian consent
+        /// confirmation) claims the send, so a race between the two can never send it twice.
+        /// </summary>
+        public DateTime? WelcomeEmailSentAtUtc { get; set; }
     }
 }

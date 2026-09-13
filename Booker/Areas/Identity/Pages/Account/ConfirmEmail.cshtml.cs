@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
@@ -18,17 +20,23 @@ namespace Booker.Areas.Identity.Pages.Account
 {
     public class ConfirmEmailModel : PageModel
     {
+        private readonly DataContext _context;
         private readonly UserManager<User> _userManager;
         private readonly GuardianConsentService _consentService;
+        private readonly IWelcomeEmailQueue _welcomeEmailQueue;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
         public ConfirmEmailModel(
+            DataContext context,
             UserManager<User> userManager,
             GuardianConsentService consentService,
+            IWelcomeEmailQueue welcomeEmailQueue,
             ILogger<ConfirmEmailModel> logger)
         {
+            _context = context;
             _userManager = userManager;
             _consentService = consentService;
+            _welcomeEmailQueue = welcomeEmailQueue;
             _logger = logger;
         }
 
@@ -104,16 +112,32 @@ namespace Booker.Areas.Identity.Pages.Account
             var consent = await _consentService.GetConsentAsync(user.Id);
             if (consent == null)
             {
+                // Adult (no guardian-consent record): email confirmation alone activates the
+                // account, so send the same one-time welcome email as the minor path below.
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+
+                if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
+                {
+                    _welcomeEmailQueue.QueueWelcomeEmail(user.Email);
+                }
+
                 return Page();
             }
 
             if (consent.ConfirmedAtUtc.HasValue)
             {
-                user.IsVisible = true;
-                await _userManager.UpdateAsync(user);
+                await _context.Users
+                    .Where(u => u.Id == user.Id)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.IsVisible, true));
                 CanManageProfile = true;
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+
+                // Claiming the send atomically prevents a double welcome email when this
+                // path races with the guardian-consent confirmation path.
+                if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
+                {
+                    _welcomeEmailQueue.QueueWelcomeEmail(user.Email);
+                }
             }
             else
             {

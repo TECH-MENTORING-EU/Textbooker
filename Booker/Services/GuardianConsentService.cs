@@ -21,6 +21,17 @@ public sealed record GuardianConsentTokenValidationResult(
         => new(true, "Link potwierdzający jest prawidłowy.", studentUserName, studentEmail);
 }
 
+public sealed record GuardianConsentConfirmationResult(
+    bool Success,
+    string Message,
+    bool AccountActivated = false,
+    string? StudentEmail = null,
+    string? StudentUserName = null)
+{
+    public static GuardianConsentConfirmationResult Failure(string message)
+        => new(false, message);
+}
+
 /// <summary>
 /// RODO - Phase 1: Service for managing guardian consent for minors (<16 years).
 /// Handles guardian-email validation, token generation (hashed), and atomic confirmation workflow.
@@ -113,12 +124,12 @@ public class GuardianConsentService
     /// <summary>
     /// Confirms guardian consent if the token is valid, not expired, and not already confirmed.
     /// Atomically records audit data and sets User.IsVisible only when the child's email is already confirmed.
-    /// Returns (Success=true, message) if confirmed, (Success=false, message) if failed.
+    /// Returns confirmation result indicating success, message, whether account was activated, and student details.
     /// </summary>
-    public async Task<(bool Success, string Message)> ConfirmConsentAsync(int userId, string token, string? ipAddress)
+    public async Task<GuardianConsentConfirmationResult> ConfirmConsentAsync(int userId, string token, string? ipAddress)
     {
         if (string.IsNullOrWhiteSpace(token))
-            return (false, "Link potwierdzający jest nieprawidłowy.");
+            return GuardianConsentConfirmationResult.Failure("Link potwierdzający jest nieprawidłowy.");
 
         string tokenHash = ComputeTokenHash(token);
         var now = DateTime.UtcNow;
@@ -133,14 +144,14 @@ public class GuardianConsentService
                 if (user == null)
                 {
                     _logger.LogWarning("Confirmation attempted for non-existent user {UserId}.", userId);
-                    return (false, "Link potwierdzający jest nieprawidłowy.");
+                    return GuardianConsentConfirmationResult.Failure("Link potwierdzający jest nieprawidłowy.");
                 }
 
                 var consent = await _context.GuardianConsents.FirstOrDefaultAsync(gc => gc.UserId == userId);
                 if (consent == null)
                 {
                     _logger.LogWarning("Confirmation attempted for user {UserId} without pending consent.", userId);
-                    return (false, "Link potwierdzający jest nieprawidłowy.");
+                    return GuardianConsentConfirmationResult.Failure("Link potwierdzający jest nieprawidłowy.");
                 }
 
                 // Authenticate the token before revealing consent state.
@@ -149,20 +160,20 @@ public class GuardianConsentService
                         Convert.FromBase64String(tokenHash)))
                 {
                     _logger.LogWarning("Confirmation attempted with invalid token hash for user {UserId}.", userId);
-                    return (false, "Link potwierdzający jest nieprawidłowy.");
+                    return GuardianConsentConfirmationResult.Failure("Link potwierdzający jest nieprawidłowy.");
                 }
 
                 if (consent.ConfirmedAtUtc.HasValue)
                 {
                     _logger.LogWarning("Confirmation attempted for already-confirmed consent {ConsentId}.", consent.Id);
-                    return (false, "Ten link potwierdzający został już wykorzystany.");
+                    return GuardianConsentConfirmationResult.Failure("Ten link potwierdzający został już wykorzystany.");
                 }
 
                 if (now > consent.ExpiresAtUtc)
                 {
                     _logger.LogWarning("Confirmation attempted with expired token for user {UserId}. Expired at {ExpiresAtUtc}.",
                         userId, consent.ExpiresAtUtc);
-                    return (false, "Ten link potwierdzający wygasł. Po usunięciu oczekującego konta zarejestruj się ponownie.");
+                    return GuardianConsentConfirmationResult.Failure("Ten link potwierdzający wygasł. Po usunięciu oczekującego konta zarejestruj się ponownie.");
                 }
 
                 // Token is valid (verified above using a constant-time comparison);
@@ -176,10 +187,12 @@ public class GuardianConsentService
                 consent.ConfirmationIpAddress = ipAddress;
 
                 string message;
+                bool accountActivated = false;
                 if (user.EmailConfirmed)
                 {
                     user.IsVisible = true;
                     _context.Users.Update(user);
+                    accountActivated = true;
                     message = "Zgoda opiekuna została potwierdzona. Twoje konto jest teraz aktywne.";
                 }
                 else
@@ -196,13 +209,13 @@ public class GuardianConsentService
                     "Guardian consent confirmed for user {UserId}. Student email confirmed: {EmailConfirmed}. IP: {IpAddress}",
                     userId, user.EmailConfirmed, ipAddress ?? "unknown");
 
-                return (true, message);
+                return new GuardianConsentConfirmationResult(true, message, accountActivated, user.Email, user.UserName);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error confirming consent for user {UserId}.", userId);
-            return (false, "Wystąpił błąd podczas przetwarzania potwierdzenia. Spróbuj ponownie.");
+            return GuardianConsentConfirmationResult.Failure("Wystąpił błąd podczas przetwarzania potwierdzenia. Spróbuj ponownie.");
         }
     }
 
@@ -270,6 +283,22 @@ public class GuardianConsentService
         }
 
         return GuardianConsentTokenValidationResult.Valid(user.UserName, user.Email);
+    }
+
+    /// <summary>
+    /// Atomically claims the right to send the one-time "account activated" welcome
+    /// email for this user, by flipping User.WelcomeEmailSentAtUtc from null to now in a
+    /// single conditional UPDATE. Returns true only for the caller that performed the
+    /// flip - this guards against the student-confirmation and guardian-consent
+    /// endpoints racing and both sending the welcome email.
+    /// </summary>
+    public async Task<bool> TryClaimWelcomeEmailAsync(int userId)
+    {
+        var rowsAffected = await _context.Users
+            .Where(u => u.Id == userId && u.WelcomeEmailSentAtUtc == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.WelcomeEmailSentAtUtc, DateTime.UtcNow));
+
+        return rowsAffected == 1;
     }
 
     /// <summary>

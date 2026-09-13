@@ -2,6 +2,7 @@ using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.RateLimiting;
@@ -14,15 +15,18 @@ namespace Booker.Areas.Identity.Pages.Account
     public class ConfirmGuardianConsentModel : PageModel
     {
         private readonly GuardianConsentService _consentService;
+        private readonly IWelcomeEmailQueue _welcomeEmailQueue;
         private readonly ILogger<ConfirmGuardianConsentModel> _logger;
         private readonly GuardianConsentOptions _consentOptions;
 
         public ConfirmGuardianConsentModel(
             GuardianConsentService consentService,
+            IWelcomeEmailQueue welcomeEmailQueue,
             ILogger<ConfirmGuardianConsentModel> logger,
             IOptions<GuardianConsentOptions> consentOptions)
         {
             _consentService = consentService;
+            _welcomeEmailQueue = welcomeEmailQueue;
             _logger = logger;
             _consentOptions = consentOptions.Value;
         }
@@ -96,20 +100,30 @@ namespace Booker.Areas.Identity.Pages.Account
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             // Confirm consent atomically
-            var (success, message) = await _consentService.ConfirmConsentAsync(UserId, Token, ipAddress);
+            var consentResult = await _consentService.ConfirmConsentAsync(UserId, Token, ipAddress);
 
-            if (success)
+            if (consentResult.Success)
             {
                 _logger.LogInformation("Guardian consent confirmed for user ID {UserId}.", UserId);
-                Message = message;
+                Message = consentResult.Message;
+
+                if (consentResult.AccountActivated && !string.IsNullOrEmpty(consentResult.StudentEmail))
+                {
+                    // Claiming the send atomically prevents a double welcome email when this
+                    // path races with the student's own email-confirmation path.
+                    if (await _consentService.TryClaimWelcomeEmailAsync(UserId))
+                    {
+                        _welcomeEmailQueue.QueueWelcomeEmail(consentResult.StudentEmail);
+                    }
+                }
             }
             else
             {
-                _logger.LogWarning("Failed to confirm guardian consent for user ID {UserId}: {Reason}", UserId, message);
-                Message = message;
+                _logger.LogWarning("Failed to confirm guardian consent for user ID {UserId}: {Reason}", UserId, consentResult.Message);
+                Message = consentResult.Message;
             }
 
-            return RedirectToResult(success, message);
+            return RedirectToResult(consentResult.Success, consentResult.Message);
         }
 
         private IActionResult RedirectToResult(bool success, string message)

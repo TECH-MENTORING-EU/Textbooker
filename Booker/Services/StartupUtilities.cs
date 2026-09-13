@@ -62,6 +62,10 @@ namespace Booker.Services
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
             services.AddSingleton<IEmailSender, SendMailSvc>();
 
+            services.AddSingleton<WelcomeEmailQueue>();
+            services.AddSingleton<IWelcomeEmailQueue>(sp => sp.GetRequiredService<WelcomeEmailQueue>());
+            services.AddHostedService<WelcomeEmailQueueService>();
+
             services.AddScoped<ItemManager>();
             services.AddScoped<FavoritesManager>();
             services.AddScoped<StaticDataManager>();

@@ -110,6 +110,12 @@ Oczekiwane:
 
 Wykonuj tylko wtedy, gdy człowiek udostępni przygotowane konto testowe ucznia niepełnoletniego albo wyraźnie zezwoli na utworzenie konta testowego.
 
+Poniższe dane testowe obowiązują w scenariuszach R5-R13, które wymagają logowania:
+
+Dane przygotowanego konta testowego:
+
+Dane przygotowanego konta testowego pobieraj z bezpiecznego sekretu/fixture'u środowiska testowego; nie przechowuj adresów e-mail ani haseł w repozytorium.
+
 Po rejestracji ucznia niepełnoletniego uczeń dostaje **dwa** osobne e-maile: własne potwierdzenie adresu e-mail (temat `Potwierdź swój adres e-mail`) oraz e-mail do opiekuna z prośbą o zgodę. Sprawdź oba, a także stronę potwierdzenia rejestracji i ponownego wysłania linku.
 
 Oczekiwane:
@@ -233,6 +239,8 @@ Oczekiwane:
 
 Wykonuj tylko z przygotowanym kontem testowym ucznia niepełnoletniego, dla którego dostępne są oba linki (własny link potwierdzający e-mail ucznia oraz link do potwierdzenia zgody opiekuna).
 
+Dane kont testowych pobieraj z bezpiecznego sekretu/fixture'u środowiska testowego; nie przechowuj adresów e-mail ani haseł w repozytorium (patrz R5).
+
 Sprawdź obie kolejności osobno (najlepiej na dwóch różnych kontach testowych, żeby nie mieszać stanu):
 
 **Kolejność A - najpierw uczeń, potem opiekun:**
@@ -254,6 +262,14 @@ Oczekiwane w obu kolejnościach:
 - konto NIE jest aktywne (niewidoczne) po wykonaniu tylko jednego z dwóch kroków;
 - konto staje się aktywne dopiero po wykonaniu obu kroków, niezależnie od kolejności;
 - wszystkie komunikaty pośrednie i końcowe są po polsku.
+
+## R13. Dane logowania do przygotowanych kont testowych
+
+Używaj poniższych danych wyłącznie w bezpiecznym środowisku testowym i tylko w scenariuszach, które wymagają logowania:
+
+Dane logowania pobieraj z bezpiecznego sekretu/fixture'u środowiska testowego; nie przechowuj adresów e-mail ani haseł w repozytorium.
+
+Nie wyświetlaj hasła w raporcie końcowym.
 
 ## Raport
 
