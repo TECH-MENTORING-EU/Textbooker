@@ -8,6 +8,19 @@ using System.Text;
 
 namespace Booker.Services;
 
+public sealed record GuardianConsentTokenValidationResult(
+    bool IsValid,
+    string Message,
+    string? StudentUserName,
+    string? StudentEmail)
+{
+    public static GuardianConsentTokenValidationResult Invalid(string message)
+        => new(false, message, null, null);
+
+    public static GuardianConsentTokenValidationResult Valid(string? studentUserName, string? studentEmail)
+        => new(true, "Link potwierdzający jest prawidłowy.", studentUserName, studentEmail);
+}
+
 /// <summary>
 /// RODO - Phase 1: Service for managing guardian consent for minors (<16 years).
 /// Handles guardian-email validation, token generation (hashed), and atomic confirmation workflow.
@@ -35,11 +48,11 @@ public class GuardianConsentService
 
     /// <summary>
     /// Validates guardian email for users who did not self-declare as being at least 16.
-    /// - When not confirmed as 16+: guardianEmail must be non-null, valid, and different from childEmail (case-insensitive).
+    /// - When not confirmed as 16+: guardianEmail must be non-null, valid, and different from studentEmail (case-insensitive).
     /// - When confirmed as 16+: guardianEmail is ignored and validation passes.
     /// Returns error message if invalid, null if valid.
     /// </summary>
-    public string? ValidateGuardianEmail(string? childEmail, string? guardianEmail, bool isAtLeast16)
+    public string? ValidateGuardianEmail(string? studentEmail, string? guardianEmail, bool isAtLeast16)
     {
         // Self-declared adults don't need guardian email
         if (isAtLeast16)
@@ -49,15 +62,15 @@ public class GuardianConsentService
         if (string.IsNullOrWhiteSpace(guardianEmail))
             return "E-mail opiekuna jest wymagany dla ucznia niepełnoletniego.";
 
-        if (string.IsNullOrWhiteSpace(childEmail))
+        if (string.IsNullOrWhiteSpace(studentEmail))
             return "E-mail ucznia jest wymagany.";
 
         // Normalize emails to match Identity's email comparer (case-insensitive)
-        string normalizedChild = _userManager.NormalizeEmail(childEmail);
+        string normalizedStudent = _userManager.NormalizeEmail(studentEmail);
         string normalizedGuardian = _userManager.NormalizeEmail(guardianEmail);
 
-        // Guardian and child emails must be different (after normalization)
-        if (normalizedChild == normalizedGuardian)
+        // Guardian and student emails must be different (after normalization)
+        if (normalizedStudent == normalizedGuardian)
             return "E-mail opiekuna musi być inny niż adres e-mail ucznia.";
 
         return null;
@@ -68,10 +81,10 @@ public class GuardianConsentService
     /// Returns the GuardianConsent with the plain token (for URL construction).
     /// The token is NOT saved to the database; only the SHA-256 hash is saved.
     /// </summary>
-    public async Task<(GuardianConsent Consent, string Token)> CreateConsentAsync(User childUser, string guardianEmail)
+    public async Task<(GuardianConsent Consent, string Token)> CreateConsentAsync(User studentUser, string guardianEmail)
     {
-        if (childUser == null)
-            throw new ArgumentNullException(nameof(childUser));
+        if (studentUser == null)
+            throw new ArgumentNullException(nameof(studentUser));
 
         if (string.IsNullOrWhiteSpace(guardianEmail))
             throw new ArgumentException("Guardian email cannot be null or empty.", nameof(guardianEmail));
@@ -81,7 +94,7 @@ public class GuardianConsentService
         var now = DateTime.UtcNow;
         var consent = new GuardianConsent
         {
-            UserId = childUser.Id,
+            UserId = studentUser.Id,
             GuardianEmail = guardianEmail.Trim(),
             TokenHash = tokenHash,
             RequestedAtUtc = now,
@@ -92,7 +105,7 @@ public class GuardianConsentService
 
         // Do NOT save to database here; let the caller handle the save
         _logger.LogInformation("Created guardian consent record for user {UserId}. Token expires at {ExpiresAtUtc}.",
-            childUser.Id, consent.ExpiresAtUtc);
+            studentUser.Id, consent.ExpiresAtUtc);
 
         return (consent, plainToken);
     }
@@ -153,11 +166,11 @@ public class GuardianConsentService
                 }
 
                 // Token is valid (verified above using a constant-time comparison);
-                // record guardian consent. Do NOT mark the child's own email as
-                // confirmed here - the guardian's address is not the child's, so
-                // email ownership must still be verified independently by the child
+                // record guardian consent. Do NOT mark the student's own email as
+                // confirmed here - the guardian's address is not the student's, so
+                // email ownership must still be verified independently by the student
                 // via the normal ConfirmEmail flow. Only activate (IsVisible = true)
-                // once both guardian consent AND the child's own email confirmation
+                // once both guardian consent AND the student's own email confirmation
                 // are done.
                 consent.ConfirmedAtUtc = now;
                 consent.ConfirmationIpAddress = ipAddress;
@@ -180,7 +193,7 @@ public class GuardianConsentService
                 await transaction.CommitAsync();
 
                 _logger.LogInformation(
-                    "Guardian consent confirmed for user {UserId}. Child email confirmed: {EmailConfirmed}. IP: {IpAddress}",
+                    "Guardian consent confirmed for user {UserId}. Student email confirmed: {EmailConfirmed}. IP: {IpAddress}",
                     userId, user.EmailConfirmed, ipAddress ?? "unknown");
 
                 return (true, message);
@@ -217,32 +230,32 @@ public class GuardianConsentService
     /// (e.g. to render a confirmation page) so that automated link-crawlers/scanners
     /// cannot trigger the irreversible consent side effects.
     /// </summary>
-    public async Task<(bool Valid, string Message, string? ChildUserName, string? ChildEmail)> ValidateConsentTokenAsync(int userId, string token)
+    public async Task<GuardianConsentTokenValidationResult> ValidateConsentTokenAsync(int userId, string token)
     {
         if (string.IsNullOrWhiteSpace(token))
-            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
+            return GuardianConsentTokenValidationResult.Invalid("Link potwierdzający jest nieprawidłowy.");
 
         string tokenHash = ComputeTokenHash(token);
         var now = DateTime.UtcNow;
 
         var user = await _context.Users.FindAsync(userId);
         if (user == null)
-            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
+            return GuardianConsentTokenValidationResult.Invalid("Link potwierdzający jest nieprawidłowy.");
 
         var consent = await _context.GuardianConsents.FirstOrDefaultAsync(gc => gc.UserId == userId);
         if (consent == null)
-            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
+            return GuardianConsentTokenValidationResult.Invalid("Link potwierdzający jest nieprawidłowy.");
 
         if (consent.ConfirmedAtUtc.HasValue)
-            return (false, "Ten link potwierdzający został już wykorzystany.", null, null);
+            return GuardianConsentTokenValidationResult.Invalid("Ten link potwierdzający został już wykorzystany.");
 
         if (now > consent.ExpiresAtUtc)
-            return (false, "Ten link potwierdzający wygasł. Poproś o nowy link.", null, null);
+            return GuardianConsentTokenValidationResult.Invalid("Ten link potwierdzający wygasł. Poproś o nowy link.");
 
         if (consent.TokenHash != tokenHash)
-            return (false, "Link potwierdzający jest nieprawidłowy.", null, null);
+            return GuardianConsentTokenValidationResult.Invalid("Link potwierdzający jest nieprawidłowy.");
 
-        return (true, "Link potwierdzający jest prawidłowy.", user.UserName, user.Email);
+        return GuardianConsentTokenValidationResult.Valid(user.UserName, user.Email);
     }
 
     /// <summary>

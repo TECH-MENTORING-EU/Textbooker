@@ -89,10 +89,10 @@ namespace Booker.Areas.Identity.Pages.Account
 
             CanManageProfile = user.IsVisible;
 
-            // RODO - Phase 3: For minors, activation requires BOTH the child's own email
+            // RODO - Phase 3: For minors, activation requires BOTH the student's own email
             // confirmation (verified here) AND the guardian's consent confirmation.
-            // Marking the child's email as confirmed does not, by itself, use the guardian's
-            // address for anything - it independently verifies the child owns their address.
+            // Marking the student's email as confirmed does not, by itself, use the guardian's
+            // address for anything - it independently verifies the student owns their address.
             var consent = await _consentService.GetConsentAsync(user.Id);
             if (consent == null)
             {

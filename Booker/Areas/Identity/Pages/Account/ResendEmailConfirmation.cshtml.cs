@@ -127,7 +127,7 @@ namespace Booker.Areas.Identity.Pages.Account
         /// <summary>
         /// Rotates the guardian consent token and resends the email to the guardian.
         /// - Does NOT extend the account's original cleanup deadline (ExpiresAtUtc):
-        ///   anyone who knows the child's email must not be able to keep an unconfirmed
+        ///   anyone who knows the student's email must not be able to keep an unconfirmed
         ///   account alive indefinitely by repeatedly calling this endpoint.
         /// - Rejects (silently, from the caller's point of view) resend attempts once the
         ///   original deadline has already passed; the account is due for cleanup.

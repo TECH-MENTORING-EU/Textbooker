@@ -35,8 +35,8 @@ namespace Booker.Areas.Identity.Pages.Account
         /// </summary>
         public bool CanConfirm { get; set; }
 
-        public string? ChildUserName { get; set; }
-        public string? ChildEmail { get; set; }
+        public string? StudentUserName { get; set; }
+        public string? StudentEmail { get; set; }
 
         public int TokenExpirationDays => _consentOptions.TokenExpirationDays;
 
@@ -65,17 +65,17 @@ namespace Booker.Areas.Identity.Pages.Account
                 return Page();
             }
 
-            var (valid, message, childUserName, childEmail) = await _consentService.ValidateConsentTokenAsync(UserId, Token);
-            CanConfirm = valid;
-            ChildUserName = childUserName;
-            ChildEmail = childEmail;
-            Message = valid
+            var validation = await _consentService.ValidateConsentTokenAsync(UserId, Token);
+            CanConfirm = validation.IsValid;
+            StudentUserName = validation.StudentUserName;
+            StudentEmail = validation.StudentEmail;
+            Message = validation.IsValid
                 ? "Sprawdź poniższe informacje i potwierdź zgodę, klikając przycisk."
-                : message;
+                : validation.Message;
 
-            if (!valid)
+            if (!validation.IsValid)
             {
-                _logger.LogWarning("Guardian consent link validation failed for user ID {UserId}: {Reason}", UserId, message);
+                _logger.LogWarning("Guardian consent link validation failed for user ID {UserId}: {Reason}", UserId, validation.Message);
             }
 
             return Page();

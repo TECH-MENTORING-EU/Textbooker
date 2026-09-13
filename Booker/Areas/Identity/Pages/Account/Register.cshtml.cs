@@ -408,14 +408,14 @@ namespace Booker.Areas.Identity.Pages.Account
             string GuardianToken,
             DateTime GuardianConsentExpiresAt);
 
-        private string BuildGuardianConsentEmailBody(string childUsername, string childEmail, string confirmUrl, DateTime expiresAtUtc)
+        private string BuildGuardianConsentEmailBody(string studentUsername, string studentEmail, string confirmUrl, DateTime expiresAtUtc)
         {
             return $@"
                 <html>
                 <body>
                 <p>Witaj,</p>
-                <p>Użytkownik zarejestrowany jako <strong>{HtmlEncoder.Default.Encode(childUsername ?? "unknown")}</strong> 
-                z adresem e-mail <strong>{HtmlEncoder.Default.Encode(childEmail)}</strong> 
+                <p>Uczeń zarejestrowany jako <strong>{HtmlEncoder.Default.Encode(studentUsername ?? "unknown")}</strong>
+                z adresem e-mail <strong>{HtmlEncoder.Default.Encode(studentEmail)}</strong>
                 chce korzystać z platformy TextBooker, która wymaga Twojej zgody jako opiekuna.</p>
                 
                 <p>Konto będzie aktywne dopiero po Twojej zgodzie. Jeśli nie rozpoznajesz tej prośby, zignoruj tę wiadomość.</p>
