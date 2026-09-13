@@ -37,7 +37,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
         public IActionResult OnGet()
         {
-            return string.IsNullOrEmpty(Email) ? RedirectToPage("Index") : Page();
+            return string.IsNullOrEmpty(Email) ? RedirectToPage("/Index") : Page();
         }
     }
 }

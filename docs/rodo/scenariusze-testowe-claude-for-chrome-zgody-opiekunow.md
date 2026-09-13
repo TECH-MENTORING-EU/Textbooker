@@ -168,7 +168,7 @@ Oczekiwane:
 
 - link jest odrzucony;
 - komunikat o wygaśnięciu jest po polsku;
-- użytkownik jest informowany, że może poprosić o nowy link;
+- komunikat informuje, że po usunięciu oczekującego konta (cleanup) trzeba zarejestrować się ponownie - NIE że można poprosić o nowy link (ponowne wysłanie jest celowo bezczynne po upływie oryginalnego terminu, patrz niżej);
 - nie ma błędu 500.
 
 Po wykonaniu cleanupu przez aplikację, w bezpiecznym środowisku testowym sprawdź poza przeglądarką, że wygasła niepotwierdzona zgoda usuwa konto ucznia oraz powiązaną zgodę. Jeśli nie ma przygotowanego rekordu i dostępu do weryfikacji, oznacz test jako `NIE SPRAWDZONO`.

@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
@@ -33,7 +32,7 @@ namespace Booker.Areas.Identity.Pages.Account
             "Jeśli podany adres e-mail jest powiązany z kontem oczekującym na potwierdzenie, wysłaliśmy odpowiednią wiadomość z instrukcjami.";
 
         private readonly UserManager<User> _userManager;
-        private readonly IEmailSender _emailSender;
+        private readonly SendMailSvc _mailSvc;
         private readonly GuardianConsentService _consentService;
         private readonly DataContext _context;
         private readonly GuardianConsentOptions _consentOptions;
@@ -41,14 +40,14 @@ namespace Booker.Areas.Identity.Pages.Account
 
         public ResendEmailConfirmationModel(
             UserManager<User> userManager,
-            IEmailSender emailSender,
+            SendMailSvc mailSvc,
             GuardianConsentService consentService,
             DataContext context,
             IOptions<GuardianConsentOptions> consentOptions,
             ILogger<ResendEmailConfirmationModel> logger)
         {
             _userManager = userManager;
-            _emailSender = emailSender;
+            _mailSvc = mailSvc;
             _consentService = consentService;
             _context = context;
             _consentOptions = consentOptions.Value;
@@ -109,20 +108,20 @@ namespace Booker.Areas.Identity.Pages.Account
                 await TryResendGuardianConsentAsync(user, pendingConsent);
                 if (!user.EmailConfirmed)
                 {
-                    await SendEmailConfirmationAsync(user);
+                    await SendEmailConfirmationAsync(user, isMinor: true);
                 }
 
                 DisplayMessage = GenericResendMessage;
                 return Page();
             }
 
-            await SendEmailConfirmationAsync(user);
+            await SendEmailConfirmationAsync(user, isMinor: false);
 
             DisplayMessage = GenericResendMessage;
             return Page();
         }
 
-        private async Task SendEmailConfirmationAsync(User user)
+        private async Task SendEmailConfirmationAsync(User user, bool isMinor)
         {
             var userId = await _userManager.GetUserIdAsync(user);
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -132,10 +131,20 @@ namespace Booker.Areas.Identity.Pages.Account
                 pageHandler: null,
                 values: new { userId = userId, code = code },
                 protocol: Request.Scheme);
-            await _emailSender.SendEmailAsync(
+
+            // Mirror the initial-confirmation copy in Register.cshtml.cs: for a minor
+            // account, the resent link only confirms the student's own email and does
+            // not by itself activate the account, since guardian consent may still be
+            // pending. Using the adult-only "your account is now active" copy here
+            // would misstate the activation flow for this path.
+            var body = isMinor
+                ? $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Potwierdź swój adres e-mail, klikając w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>. Twoje konto będzie także wymagało zgody opiekuna, zanim zostanie aktywowane. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚"
+                : $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie utworzone. <br /> Kliknij w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> aby aktywować konto. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚";
+
+            await _mailSvc.SendEmailAsync(
                 user.Email,
                 "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
-                $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie utworzone. <br /> Kliknij w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> aby aktywować konto. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
+                body);
         }
 
         /// <summary>
@@ -168,18 +177,15 @@ namespace Booker.Areas.Identity.Pages.Account
                 values: new { area = "Identity", userId = user.Id, token = newToken },
                 protocol: Request.Scheme);
 
-            try
+            var sent = await _mailSvc.TrySendEmailAsync(
+                pendingConsent.GuardianEmail,
+                "TextBooker: Nowy link do potwierdzenia zgody",
+                $"Oto nowy link do potwierdzenia zgody na konto ucznia: <a href='{HtmlEncoder.Default.Encode(confirmGuardianUrl)}'>Potwierdź zgodę</a>. Link ważny do {pendingConsent.ExpiresAtUtc:yyyy-MM-dd HH:mm} UTC.");
+            if (!sent)
             {
-                await _emailSender.SendEmailAsync(
-                    pendingConsent.GuardianEmail,
-                    "TextBooker: Nowy link do potwierdzenia zgody",
-                    $"Oto nowy link do potwierdzenia zgody na konto ucznia: <a href='{HtmlEncoder.Default.Encode(confirmGuardianUrl)}'>Potwierdź zgodę</a>. Link ważny do {pendingConsent.ExpiresAtUtc:yyyy-MM-dd HH:mm} UTC.");
-            }
-            catch (Exception ex)
-            {
-                // Email delivery failed: keep the previously issued token valid so the
-                // guardian's original link (if ever delivered) still works.
-                _logger.LogError(ex, "Failed to send guardian consent resend email for user {UserId}. Keeping existing token.", user.Id);
+                // Email delivery failed (already logged by SendMailSvc): keep the
+                // previously issued token valid so the guardian's original link (if ever
+                // delivered) still works.
                 return;
             }
 

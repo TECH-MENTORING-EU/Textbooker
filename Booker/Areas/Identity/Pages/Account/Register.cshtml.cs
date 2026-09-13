@@ -206,7 +206,12 @@ namespace Booker.Areas.Identity.Pages.Account
                 return Page();
             }
 
+            // SendEmailAsync never throws (delivery failures are logged inside it), so a
+            // transient failure here can't surface as a 500 - the account is already
+            // created and committed above, and the user can request a replacement link
+            // via ResendEmailConfirmation.
             await SendConfirmationAsync(user, isAtLeast16, registration, returnUrl);
+
             return RedirectToPage("RegisterConfirmation", new { email = Input.Email, isMinor = !isAtLeast16, returnUrl });
         }
 
