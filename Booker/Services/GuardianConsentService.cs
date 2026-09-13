@@ -36,13 +36,18 @@ public class GuardianConsentService
     }
 
     /// <summary>
-    /// Calculates age based on birth year and current UTC year.
+    /// Calculates a conservative (minimum possible) age based on birth year only and the
+    /// current UTC year. Since we only collect the birth year (not the full birth date),
+    /// we cannot know whether the person's birthday has already occurred this year.
+    /// To avoid ever treating a possibly-under-16 user as 16+ (which would incorrectly skip
+    /// the guardian-consent flow), we assume the birthday has NOT happened yet this year,
+    /// i.e. age = (currentYear - birthYear - 1). This never overstates age.
     /// Returns -1 for invalid years (future or extremely old).
     /// </summary>
     public int CalculateAge(int birthYear)
     {
         int currentYear = DateTime.UtcNow.Year;
-        return birthYear > currentYear ? -1 : currentYear - birthYear;
+        return birthYear > currentYear ? -1 : currentYear - birthYear - 1;
     }
 
     /// <summary>
@@ -107,15 +112,7 @@ public class GuardianConsentService
         if (string.IsNullOrWhiteSpace(guardianEmail))
             throw new ArgumentException("Guardian email cannot be null or empty.", nameof(guardianEmail));
 
-        // Generate cryptographically random 32-byte token
-        byte[] tokenBytes = new byte[TokenLength];
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(tokenBytes);
-        }
-
-        string plainToken = Convert.ToBase64String(tokenBytes);
-        string tokenHash = ComputeTokenHash(plainToken);
+        var (plainToken, tokenHash) = GenerateToken();
 
         var now = DateTime.UtcNow;
         var consent = new GuardianConsent
@@ -191,24 +188,38 @@ public class GuardianConsentService
                     return (false, "Ten link potwierdzający wygasł. Poproś o nowy link.");
                 }
 
-                // Token is valid; confirm consent and activate user
+                // Token is valid (verified above using a constant-time comparison);
+                // record guardian consent. Do NOT mark the child's own email as
+                // confirmed here - the guardian's address is not the child's, so
+                // email ownership must still be verified independently by the child
+                // via the normal ConfirmEmail flow. Only activate (IsVisible = true)
+                // once both guardian consent AND the child's own email confirmation
+                // are done.
                 consent.ConfirmedAtUtc = now;
                 consent.ConfirmationIpAddress = ipAddress;
 
-                user.EmailConfirmed = true;
-                user.IsVisible = true;
+                string message;
+                if (user.EmailConfirmed)
+                {
+                    user.IsVisible = true;
+                    _context.Users.Update(user);
+                    message = "Zgoda opiekuna została potwierdzona. Twoje konto jest teraz aktywne.";
+                }
+                else
+                {
+                    message = "Zgoda opiekuna została potwierdzona. Konto zostanie aktywowane, gdy uczeń potwierdzi swój adres e-mail.";
+                }
 
                 _context.GuardianConsents.Update(consent);
-                _context.Users.Update(user);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 _logger.LogInformation(
-                    "Guardian consent confirmed for user {UserId}. Account activated. IP: {IpAddress}",
-                    userId, ipAddress ?? "unknown");
+                    "Guardian consent confirmed for user {UserId}. Child email confirmed: {EmailConfirmed}. IP: {IpAddress}",
+                    userId, user.EmailConfirmed, ipAddress ?? "unknown");
 
-                return (true, "Zgoda opiekuna została potwierdzona. Twoje konto jest teraz aktywne.");
+                return (true, message);
             }
         }
         catch (Exception ex)
@@ -219,6 +230,58 @@ public class GuardianConsentService
     }
 
     /// <summary>
+    /// Generates a cryptographically random token and its SHA-256 hash.
+    /// The plain token is never persisted; only the hash is stored.
+    /// </summary>
+    public (string Token, string TokenHash) GenerateToken()
+    {
+        byte[] tokenBytes = new byte[TokenLength];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(tokenBytes);
+        }
+
+        string plainToken = Convert.ToBase64String(tokenBytes);
+        string tokenHash = ComputeTokenHash(plainToken);
+        return (plainToken, tokenHash);
+    }
+
+    /// <summary>
+    /// Read-only validation of a guardian consent token: checks the user/consent exist,
+    /// the token has not been used, is not expired, and the hash matches.
+    /// Does NOT mutate any state. Intended to be safe to call from a GET request
+    /// (e.g. to render a confirmation page) so that automated link-crawlers/scanners
+    /// cannot trigger the irreversible consent side effects.
+    /// </summary>
+    public async Task<(bool Valid, string Message)> ValidateConsentTokenAsync(int userId, string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return (false, "Link potwierdzający jest nieprawidłowy.");
+
+        string tokenHash = ComputeTokenHash(token);
+        var now = DateTime.UtcNow;
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return (false, "Link potwierdzający jest nieprawidłowy.");
+
+        var consent = await _context.GuardianConsents.FirstOrDefaultAsync(gc => gc.UserId == userId);
+        if (consent == null)
+            return (false, "Link potwierdzający jest nieprawidłowy.");
+
+        if (consent.ConfirmedAtUtc.HasValue)
+            return (false, "Ten link potwierdzający został już wykorzystany.");
+
+        if (now > consent.ExpiresAtUtc)
+            return (false, "Ten link potwierdzający wygasł. Poproś o nowy link.");
+
+        if (consent.TokenHash != tokenHash)
+            return (false, "Link potwierdzający jest nieprawidłowy.");
+
+        return (true, "Link potwierdzający jest prawidłowy.");
+    }
+
+    /// <summary>
     /// Retrieves pending (unconfirmed) guardian consent for a user.
     /// Returns null if no pending consent exists.
     /// </summary>
@@ -226,6 +289,16 @@ public class GuardianConsentService
     {
         return await _context.GuardianConsents
             .FirstOrDefaultAsync(gc => gc.UserId == userId && gc.ConfirmedAtUtc == null);
+    }
+
+    /// <summary>
+    /// Retrieves the guardian consent record for a user regardless of confirmation status.
+    /// Returns null if the user never required guardian consent.
+    /// </summary>
+    public async Task<GuardianConsent?> GetConsentAsync(int userId)
+    {
+        return await _context.GuardianConsents
+            .FirstOrDefaultAsync(gc => gc.UserId == userId);
     }
 
     /// <summary>

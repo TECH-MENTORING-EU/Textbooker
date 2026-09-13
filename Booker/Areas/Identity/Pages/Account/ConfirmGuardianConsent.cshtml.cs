@@ -29,20 +29,74 @@ namespace Booker.Areas.Identity.Pages.Account
 
         public string? Message { get; set; }
         public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// True once the user has actually confirmed (POSTed) their consent and the
+        /// account has been activated/updated. False on the initial GET, where we only
+        /// show a confirmation prompt without performing any mutation.
+        /// </summary>
+        public bool IsConfirmed { get; set; }
+
+        /// <summary>
+        /// True when the GET-supplied link is valid and safe to present a confirmation
+        /// form for. False for invalid/expired/used links.
+        /// </summary>
+        public bool CanConfirm { get; set; }
+
         public int TokenExpirationDays => _consentOptions.TokenExpirationDays;
 
         [FromQuery(Name = "userId")]
+        [BindProperty(SupportsGet = true)]
         public int UserId { get; set; }
 
         [FromQuery(Name = "token")]
+        [BindProperty(SupportsGet = true)]
         public string? Token { get; set; }
 
+        /// <summary>
+        /// GET only renders a confirmation page. It must NOT perform the irreversible
+        /// consent/account-activation write, because email security scanners and
+        /// link-preview clients routinely follow links automatically and would
+        /// otherwise grant consent without the guardian intentionally acting.
+        /// The actual mutation only happens in OnPostAsync, which is protected by the
+        /// antiforgery token embedded in the confirmation form.
+        /// </summary>
         public async Task<IActionResult> OnGetAsync()
         {
             if (UserId <= 0 || string.IsNullOrWhiteSpace(Token))
             {
-                Message = "Invalid confirmation link.";
+                Message = "Nieprawidłowy link potwierdzający.";
                 IsSuccess = false;
+                CanConfirm = false;
+                return Page();
+            }
+
+            var (valid, message) = await _consentService.ValidateConsentTokenAsync(UserId, Token);
+            CanConfirm = valid;
+            IsSuccess = false;
+            Message = valid
+                ? "Sprawdź poniższe informacje i potwierdź zgodę, klikając przycisk."
+                : message;
+
+            if (!valid)
+            {
+                _logger.LogWarning("Guardian consent link validation failed for user ID {UserId}: {Reason}", UserId, message);
+            }
+
+            return Page();
+        }
+
+        /// <summary>
+        /// Performs the actual, irreversible consent confirmation and account activation.
+        /// Only reachable via a POST from the confirmation form (antiforgery-protected).
+        /// </summary>
+        public async Task<IActionResult> OnPostAsync()
+        {
+            if (UserId <= 0 || string.IsNullOrWhiteSpace(Token))
+            {
+                Message = "Nieprawidłowy link potwierdzający.";
+                IsSuccess = false;
+                CanConfirm = false;
                 return Page();
             }
 
@@ -55,7 +109,7 @@ namespace Booker.Areas.Identity.Pages.Account
             if (success)
             {
                 _logger.LogInformation("Guardian consent confirmed for user ID {UserId}.", UserId);
-                Message = "Thank you! Your consent has been confirmed and the account is now active.";
+                Message = message;
             }
             else
             {
@@ -64,6 +118,8 @@ namespace Booker.Areas.Identity.Pages.Account
             }
 
             IsSuccess = success;
+            IsConfirmed = true;
+            CanConfirm = false;
             return Page();
         }
     }

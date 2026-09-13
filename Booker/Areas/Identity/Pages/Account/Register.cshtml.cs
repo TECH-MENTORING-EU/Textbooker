@@ -99,13 +99,13 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Szkoła")]
             public int? SchoolId { get; set; }
 
-            [Required(ErrorMessage = "Year of birth is required.")]
-                [Range(typeof(int), "1910", "9999", ErrorMessage = "Year of birth must be between 1910 and current year.")]
-            [Display(Name = "Year of Birth")]
+            [Required(ErrorMessage = "Rok urodzenia jest wymagany.")]
+            [Range(typeof(int), "1910", "9999", ErrorMessage = "Rok urodzenia musi być pomiędzy 1910 a bieżącym rokiem.")]
+            [Display(Name = "Rok urodzenia")]
             public int? BirthYear { get; set; }
 
-            [EmailAddress(ErrorMessage = "Guardian email must be a valid email address.")]
-            [Display(Name = "Guardian Email")]
+            [EmailAddress(ErrorMessage = "E-mail opiekuna musi być prawidłowym adresem e-mail.")]
+            [Display(Name = "E-mail opiekuna")]
             public string GuardianEmail { get; set; }
 
             [MustBeTrue(ErrorMessage = "Musisz zaakceptować regulamin.")]
@@ -116,6 +116,15 @@ namespace Booker.Areas.Identity.Pages.Account
         public record GuardianEmailFieldModel(bool IsVisible, string GuardianEmail);
 
         public int CurrentYear => DateTime.UtcNow.Year;
+
+        // Derived from the posted (or bound) birth year so the guardian email field
+        // stays visible - and its validation error visible - after any server-side
+        // failure on a full-page re-render (e.g. failed POST), not just via the
+        // htmx partial swap.
+        public bool ShowGuardianEmailField =>
+            Input?.BirthYear.HasValue == true
+            && _consentService.IsValidBirthYear(Input.BirthYear)
+            && _consentService.CalculateAge(Input.BirthYear.Value) < 16;
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -217,7 +226,7 @@ namespace Booker.Areas.Identity.Pages.Account
 
             if (!_consentService.IsValidBirthYear(Input.BirthYear))
             {
-                ModelState.AddModelError("Input.BirthYear", "Please enter a valid year of birth.");
+                ModelState.AddModelError("Input.BirthYear", "Podaj prawidłowy rok urodzenia.");
                 return false;
             }
 
@@ -342,11 +351,15 @@ namespace Booker.Areas.Identity.Pages.Account
         {
             if (age < 16)
             {
+                // RODO - Phase 3: Minors must independently confirm they own their own
+                // email address, in addition to the guardian confirming consent.
+                // Activation requires both steps to complete.
                 await SendGuardianConfirmationAsync(user, registration);
+                await SendEmailConfirmationAsync(user, returnUrl, isMinor: true);
                 return;
             }
 
-            await SendEmailConfirmationAsync(user, returnUrl);
+            await SendEmailConfirmationAsync(user, returnUrl, isMinor: false);
         }
 
         private async Task SendGuardianConfirmationAsync(User user, RegistrationResult registration)
@@ -373,7 +386,7 @@ namespace Booker.Areas.Identity.Pages.Account
                 Input.GuardianEmail);
         }
 
-        private async Task SendEmailConfirmationAsync(User user, string returnUrl)
+        private async Task SendEmailConfirmationAsync(User user, string returnUrl, bool isMinor)
         {
             var userId = await _userManager.GetUserIdAsync(user);
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -384,13 +397,19 @@ namespace Booker.Areas.Identity.Pages.Account
                 values: new { area = "Identity", userId, code, returnUrl },
                 protocol: Request.Scheme);
 
+            var body = isMinor
+                ? $"Potwierdź swój adres e-mail, klikając <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>tutaj</a>. " +
+                  "Twoje konto będzie także wymagało zgody opiekuna, zanim zostanie aktywowane."
+                : $"Potwierdź swoje konto, klikając <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>tutaj</a>.";
+
             await _emailSender.SendEmailAsync(
                 Input.Email,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                "Potwierdź swój adres e-mail",
+                body);
 
             _logger.LogInformation(
-                "Adult user {UserName} (ID: {UserId}) registered.",
+                "{AccountType} user {UserName} (ID: {UserId}) registered.",
+                isMinor ? "Minor" : "Adult",
                 user.UserName,
                 user.Id);
         }

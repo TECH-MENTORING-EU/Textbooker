@@ -1,4 +1,9 @@
 @model Booker.Areas.Identity.Pages.Account.RegisterModel.GuardianEmailFieldModel
+@{
+    var guardianEmailErrors = ViewData.ModelState.TryGetValue("Input.GuardianEmail", out var guardianEmailEntry)
+        ? guardianEmailEntry.Errors
+        : null;
+}
 
 <div id="guardianEmailField" style="display: @(Model.IsVisible ? "block" : "none");">
     <label for="Input_GuardianEmail">E-mail opiekuna:</label>
@@ -9,5 +14,17 @@
            placeholder="e-mail rodzica/opiekuna"
            aria-describedby="Input_GuardianEmail-help"
            @(Model.IsVisible ? "required" : null) />
-    <small id="Input_GuardianEmail-help"><span id="Input_GuardianEmail-error"></span></small>
+    <small id="Input_GuardianEmail-help">
+        @if (guardianEmailErrors != null)
+        {
+            foreach (var error in guardianEmailErrors)
+            {
+                <span class="text-danger" id="Input_GuardianEmail-error">@error.ErrorMessage</span>
+            }
+        }
+        else
+        {
+            <span id="Input_GuardianEmail-error"></span>
+        }
+    </small>
 </div>

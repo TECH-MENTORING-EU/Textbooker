@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
@@ -24,24 +25,34 @@ namespace Booker.Areas.Identity.Pages.Account
     [EnableRateLimiting("IpRateLimit")]
     public class ResendEmailConfirmationModel : PageModel
     {
+        // Anti-enumeration: always show the exact same message to the user regardless
+        // of whether the account exists, is a minor account awaiting guardian consent,
+        // or is a regular unconfirmed account. This prevents distinguishing valid
+        // accounts (and their consent status) from unknown addresses.
+        private const string GenericResendMessage =
+            "Jeśli podany adres e-mail jest powiązany z kontem oczekującym na potwierdzenie, wysłaliśmy odpowiednią wiadomość z instrukcjami.";
+
         private readonly UserManager<User> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly GuardianConsentService _consentService;
         private readonly DataContext _context;
         private readonly GuardianConsentOptions _consentOptions;
+        private readonly ILogger<ResendEmailConfirmationModel> _logger;
 
         public ResendEmailConfirmationModel(
             UserManager<User> userManager,
             IEmailSender emailSender,
             GuardianConsentService consentService,
             DataContext context,
-            IOptions<GuardianConsentOptions> consentOptions)
+            IOptions<GuardianConsentOptions> consentOptions,
+            ILogger<ResendEmailConfirmationModel> logger)
         {
             _userManager = userManager;
             _emailSender = emailSender;
             _consentService = consentService;
             _context = context;
             _consentOptions = consentOptions.Value;
+            _logger = logger;
         }
 
         public string DisplayMessage { get; set; }
@@ -82,19 +93,17 @@ namespace Booker.Areas.Identity.Pages.Account
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.");
+                DisplayMessage = GenericResendMessage;
                 return Page();
             }
 
-            // RODO - Phase 3: Redirect minor to wait for guardian consent
+            // RODO - Phase 3: Minor accounts awaiting guardian consent get a new
+            // guardian link (without revealing this distinct status to the caller).
             var pendingConsent = await _consentService.GetPendingConsentAsync(user.Id);
             if (pendingConsent != null)
             {
-                await ResendGuardianConsentAsync(user, pendingConsent);
-                // This is a minor account awaiting guardian consent
-                DisplayMessage = "To konto oczekuje na zgodę opiekuna. " +
-                    "Link potwierdzający został wysłany na adres e-mail opiekuna. " +
-                    "Poczekaj, aż opiekun potwierdzi zgodę.";
+                await TryResendGuardianConsentAsync(user, pendingConsent);
+                DisplayMessage = GenericResendMessage;
                 return Page();
             }
 
@@ -111,34 +120,60 @@ namespace Booker.Areas.Identity.Pages.Account
                 "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
                 $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie utworzone. <br /> Kliknij w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> aby aktywować konto. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
 
-            ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.");
+            DisplayMessage = GenericResendMessage;
             return Page();
         }
 
-        // Helper method for resending to guardian
-        private async Task ResendGuardianConsentAsync(User user, GuardianConsent pendingConsent)
+        /// <summary>
+        /// Rotates the guardian consent token and resends the email to the guardian.
+        /// - Does NOT extend the account's original cleanup deadline (ExpiresAtUtc):
+        ///   anyone who knows the child's email must not be able to keep an unconfirmed
+        ///   account alive indefinitely by repeatedly calling this endpoint.
+        /// - Rejects (silently, from the caller's point of view) resend attempts once the
+        ///   original deadline has already passed; the account is due for cleanup.
+        /// - Only persists the rotated token AFTER the email has been sent successfully,
+        ///   so a transient SMTP failure never invalidates the previously delivered link
+        ///   without a working replacement.
+        /// </summary>
+        private async Task TryResendGuardianConsentAsync(User user, GuardianConsent pendingConsent)
         {
-            // Generate new token
-            var (newConsent, newToken) = await _consentService.CreateConsentAsync(user, pendingConsent.GuardianEmail);
+            if (DateTime.UtcNow > pendingConsent.ExpiresAtUtc)
+            {
+                _logger.LogInformation(
+                    "Guardian consent resend skipped for user {UserId}: original deadline {ExpiresAtUtc} has passed.",
+                    user.Id,
+                    pendingConsent.ExpiresAtUtc);
+                return;
+            }
 
-            // Update the existing consent record
-            pendingConsent.TokenHash = newConsent.TokenHash;
-            pendingConsent.RequestedAtUtc = newConsent.RequestedAtUtc;
-            pendingConsent.ExpiresAtUtc = newConsent.ExpiresAtUtc;
+            var (newToken, newTokenHash) = _consentService.GenerateToken();
 
-            await _context.SaveChangesAsync();
-
-            // Build and send new link to guardian
             var confirmGuardianUrl = Url.Page(
                 "/Account/ConfirmGuardianConsent",
                 pageHandler: null,
                 values: new { area = "Identity", userId = user.Id, token = newToken },
                 protocol: Request.Scheme);
 
-            await _emailSender.SendEmailAsync(
-                pendingConsent.GuardianEmail,
-                "TextBooker: Nowy link do potwierdzenia zgody",
-                $"Oto nowy link do potwierdzenia zgody na konto ucznia: <a href='{HtmlEncoder.Default.Encode(confirmGuardianUrl)}'>Potwierdź zgodę</a>. Link ważny przez {_consentOptions.TokenExpirationDays} dni.");
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    pendingConsent.GuardianEmail,
+                    "TextBooker: Nowy link do potwierdzenia zgody",
+                    $"Oto nowy link do potwierdzenia zgody na konto ucznia: <a href='{HtmlEncoder.Default.Encode(confirmGuardianUrl)}'>Potwierdź zgodę</a>. Link ważny do {pendingConsent.ExpiresAtUtc:yyyy-MM-dd HH:mm} UTC.");
+            }
+            catch (Exception ex)
+            {
+                // Email delivery failed: keep the previously issued token valid so the
+                // guardian's original link (if ever delivered) still works.
+                _logger.LogError(ex, "Failed to send guardian consent resend email for user {UserId}. Keeping existing token.", user.Id);
+                return;
+            }
+
+            // Only rotate the stored token hash once the new link has actually been sent.
+            // Deliberately do NOT touch RequestedAtUtc/ExpiresAtUtc - the original cleanup
+            // deadline (tied to account creation) must not be extended by resends.
+            pendingConsent.TokenHash = newTokenHash;
+            await _context.SaveChangesAsync();
         }
     }
 }
