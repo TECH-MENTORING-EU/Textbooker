@@ -87,6 +87,12 @@ namespace Booker.Services
             services.AddScoped<GuardianConsentService>();
             services.AddHostedService<GuardianConsentCleanupService>();
 
+            // Registered before AddDefaultIdentity (see Program.cs) so Identity's internal
+            // TryAddScoped<IUserConfirmation<User>, DefaultUserConfirmation<User>> is a no-op
+            // and this consent-aware check is used instead everywhere RequireConfirmedAccount
+            // gates sign-in (see GuardianConsentUserConfirmation).
+            services.AddScoped<IUserConfirmation<User>, GuardianConsentUserConfirmation>();
+
             return services;
         }
 

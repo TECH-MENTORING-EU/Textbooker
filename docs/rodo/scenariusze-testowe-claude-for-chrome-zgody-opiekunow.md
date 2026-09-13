@@ -90,7 +90,7 @@ Oczekiwane:
 
 ## R4. Walidacja e-maila opiekuna
 
-Przy roku oznaczającym wiek poniżej 16 lat sprawdź kolejno:
+Przy odznaczonym checkboxie `Mam co najmniej 16 lat` (niepełnoletni) sprawdź kolejno:
 
 1. pusty e-mail opiekuna;
 2. niepoprawny format e-maila opiekuna;
@@ -287,7 +287,7 @@ Za błąd blokujący uznaj:
 - akceptowanie wygasłego linku;
 - usunięcie aktywnego konta po potwierdzeniu zgody;
 - brak usunięcia niepotwierdzonego konta po wygaśnięciu zgody;
-- utratę danych formularza podczas zmiany roku lub szkoły;
+- utratę danych formularza podczas zmiany stanu checkboxa `Mam co najmniej 16 lat` lub szkoły;
 - różne komunikaty na stronie ponownego wysłania linku dla istniejącego i nieistniejącego adresu e-mail (enumeracja kont);
 - przedłużenie terminu wygaśnięcia konta przez samo ponowne wysłanie linku do opiekuna;
 - angielski komunikat w miejscu widocznym dla użytkownika;

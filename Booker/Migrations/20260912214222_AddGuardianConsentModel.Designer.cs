@@ -1596,7 +1596,6 @@ namespace Booker.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("GuardianEmail")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 

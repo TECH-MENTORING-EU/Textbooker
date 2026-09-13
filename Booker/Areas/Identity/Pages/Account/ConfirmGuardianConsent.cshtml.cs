@@ -114,8 +114,11 @@ namespace Booker.Areas.Identity.Pages.Account
 
         private IActionResult RedirectToResult(bool success, string message)
         {
-            TempData["GuardianConsentSuccess"] = success;
-            TempData["GuardianConsentMessage"] = message;
+            // Keys must match the [TempData] property names on
+            // ConfirmGuardianConsentResultModel (IsSuccess/Message), otherwise the
+            // redirected result page silently falls back to its failure branch.
+            TempData["IsSuccess"] = success;
+            TempData["Message"] = message;
             return RedirectToPage("ConfirmGuardianConsentResult");
         }
     }

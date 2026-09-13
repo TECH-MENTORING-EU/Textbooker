@@ -99,14 +99,31 @@ namespace Booker.Areas.Identity.Pages.Account
 
             // RODO - Phase 3: Minor accounts awaiting guardian consent get a new
             // guardian link (without revealing this distinct status to the caller).
+            // Activation requires BOTH confirmations, so also resend the child's own
+            // Identity confirmation email whenever it is still outstanding - otherwise
+            // a child whose own confirmation message was lost/undelivered would have
+            // no way to request a replacement while consent is pending.
             var pendingConsent = await _consentService.GetPendingConsentAsync(user.Id);
             if (pendingConsent != null)
             {
                 await TryResendGuardianConsentAsync(user, pendingConsent);
+                if (!user.EmailConfirmed)
+                {
+                    await SendEmailConfirmationAsync(user);
+                }
+
                 DisplayMessage = GenericResendMessage;
                 return Page();
             }
 
+            await SendEmailConfirmationAsync(user);
+
+            DisplayMessage = GenericResendMessage;
+            return Page();
+        }
+
+        private async Task SendEmailConfirmationAsync(User user)
+        {
             var userId = await _userManager.GetUserIdAsync(user);
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -116,12 +133,9 @@ namespace Booker.Areas.Identity.Pages.Account
                 values: new { userId = userId, code = code },
                 protocol: Request.Scheme);
             await _emailSender.SendEmailAsync(
-                Input.Email,
+                user.Email,
                 "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
                 $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie utworzone. <br /> Kliknij w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> aby aktywować konto. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
-
-            DisplayMessage = GenericResendMessage;
-            return Page();
         }
 
         /// <summary>

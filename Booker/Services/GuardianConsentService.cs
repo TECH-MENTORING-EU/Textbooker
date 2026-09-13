@@ -246,14 +246,28 @@ public class GuardianConsentService
         if (consent == null)
             return GuardianConsentTokenValidationResult.Invalid("Link potwierdzający jest nieprawidłowy.");
 
+        // Authenticate the token before revealing any consent state (used/expired),
+        // matching ConfirmConsentAsync's ordering. Otherwise an arbitrary/guessed
+        // token could be used to enumerate which sequential userIds are minors and
+        // what their guardian-consent status is, without ever knowing a real token.
+        if (!CryptographicOperations.FixedTimeEquals(
+                Convert.FromBase64String(consent.TokenHash),
+                Convert.FromBase64String(tokenHash)))
+        {
+            return GuardianConsentTokenValidationResult.Invalid("Link potwierdzający jest nieprawidłowy.");
+        }
+
         if (consent.ConfirmedAtUtc.HasValue)
             return GuardianConsentTokenValidationResult.Invalid("Ten link potwierdzający został już wykorzystany.");
 
         if (now > consent.ExpiresAtUtc)
-            return GuardianConsentTokenValidationResult.Invalid("Ten link potwierdzający wygasł. Poproś o nowy link.");
-
-        if (consent.TokenHash != tokenHash)
-            return GuardianConsentTokenValidationResult.Invalid("Link potwierdzający jest nieprawidłowy.");
+        {
+            // Same actionable guidance as the POST confirmation path: resending is
+            // deliberately a no-op once the original deadline has passed
+            // (TryResendGuardianConsentAsync), so don't promise a new link here.
+            return GuardianConsentTokenValidationResult.Invalid(
+                "Ten link potwierdzający wygasł. Po usunięciu oczekującego konta zarejestruj się ponownie.");
+        }
 
         return GuardianConsentTokenValidationResult.Valid(user.UserName, user.Email);
     }
