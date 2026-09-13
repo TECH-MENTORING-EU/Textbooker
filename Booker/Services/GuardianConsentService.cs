@@ -112,7 +112,7 @@ public class GuardianConsentService
 
     /// <summary>
     /// Confirms guardian consent if the token is valid, not expired, and not already confirmed.
-    /// Atomically updates User.EmailConfirmed = true, User.IsVisible = true, and saves audit data.
+    /// Atomically records audit data and sets User.IsVisible only when the child's email is already confirmed.
     /// Returns (Success=true, message) if confirmed, (Success=false, message) if failed.
     /// </summary>
     public async Task<(bool Success, string Message)> ConfirmConsentAsync(int userId, string token, string? ipAddress)
