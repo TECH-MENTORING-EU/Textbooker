@@ -57,6 +57,14 @@ namespace Booker.Areas.Identity.Pages.Account
 
             if (user.EmailConfirmed)
             {
+                var existingConsent = await _consentService.GetConsentAsync(user.Id);
+                if (existingConsent?.ConfirmedAtUtc.HasValue == false)
+                {
+                    StatusMessage = "Twój adres e-mail został potwierdzony. Czekamy jeszcze na zgodę opiekuna, aby aktywować konto.";
+                    CanManageProfile = false;
+                    return Page();
+                }
+
                 StatusMessage = "Email jest już potwierdzony. Możesz się zalogować.";
                 CanManageProfile = user.IsVisible;
                 return Page();
