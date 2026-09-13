@@ -5,6 +5,12 @@
 }
 
 <h1>@ViewData["Title"]</h1>
+@if (!string.IsNullOrEmpty(Model.DisplayMessage))
+{
+    <div class="alert alert-info" role="alert">
+        <p>@Model.DisplayMessage</p>
+    </div>
+}
 <section class="login-form">
     <form method="post">
         <h2>Podaj swój e-mail:</h2>

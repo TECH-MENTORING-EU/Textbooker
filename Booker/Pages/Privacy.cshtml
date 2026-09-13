@@ -52,6 +52,25 @@
         również z myślą o młodszych użytkownikach.
     </p>
 
+    <h3> Użytkownicy poniżej 16 lat</h3>
+    <p>
+        Dla użytkowników poniżej 16. roku życia wymagana jest zgoda rodzica lub opiekuna prawnego.
+        Podczas rejestracji użytkownik zaznacza, czy ma co najmniej 16 lat. Jeśli tego nie potwierdzi,
+        system generuje jednorazowy link potwierdzenia, który wysyłany jest wyłącznie na adres e-mail opiekuna.
+        <strong>Konto pozostaje nieaktywne i niedostępne do momentu potwierdzenia zgody.</strong>
+        Link jest ważny przez @Model.GuardianTokenExpirationDays dni. <strong>Jeśli zgoda nie zostanie potwierdzona w tym okresie, 
+        konto zostaje automatycznie usunięte.</strong>
+    </p>
+    <p>
+        <strong>Bezpieczeństwo:</strong> Standardowy link weryfikacyjny potwierdza wyłącznie adres e-mail ucznia i sam nie aktywuje konta.
+        Konto zostaje aktywowane dopiero po niezależnym potwierdzeniu adresu e-mail przez ucznia oraz zgody przez opiekuna.
+        Ponowne wysłanie wiadomości nie omija żadnego z tych wymogów.
+    </p>
+    <p>
+        <strong>Administratorzy:</strong> Mogą przeglądać wszystkie żądania zgód opiekunów (oczekujące i potwierdzone)
+        w sekcji „Zgody opiekunów" panelu administracyjnego, wraz z czasami, adresami IP i statusem potwierdzenia.
+    </p>
+
     <h2>3. Jakie dane przetwarzamy</h2>
     <p>W związku z korzystaniem z Serwisu Administrator może przetwarzać w szczególności następujące dane:</p>
     <ul>
@@ -142,6 +161,8 @@
     <h2>7. Okres przechowywania danych</h2>
     <ul>
         <li>dane konta i profilu — przez czas funkcjonowania konta w Serwisie, do momentu jego usunięcia przez użytkownika lub Administratora;</li>
+        <li>konta niezatwierdzone uczniów poniżej 16 lat (bez potwierdzonej zgody opiekuna) — usuwane automatycznie po upływie @Model.GuardianTokenExpirationDays dni od utworzenia, wraz z całą historią rejestracji (adres e-mail, ip adres opiekuna w logu potwierdzenia, jeśli są);</li>
+        <li>adres e-mail opiekuna oraz adres IP potwierdzenia zgody, zapisane w chwili wyrażenia zgody przez opiekuna — przechowywane przez @Model.ConfirmedDataRetentionDays dni od potwierdzenia zgody, a następnie automatycznie anonimizowane (usuwane z rekordu), przy zachowaniu samego faktu i daty udzielenia zgody;</li>
         <li>dane ogłoszeń — do czasu usunięcia ogłoszenia lub konta użytkownika;</li>
         <li>logi serwera oraz adresy IP — przez okres do 12 miesięcy od ich zapisania, po czym są automatycznie usuwane;</li>
         <li>korespondencja z Administratorem — przez okres niezbędny do obsługi zgłoszenia, a następnie do czasu przedawnienia ewentualnych roszczeń;</li>

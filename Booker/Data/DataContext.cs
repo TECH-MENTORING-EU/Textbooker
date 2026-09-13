@@ -15,6 +15,8 @@ namespace Booker.Data
         public DbSet<School> Schools { get; set; }
         public DbSet<ItemView> ItemViews { get; set; }
         public DbSet<AdminActionLog> AdminActionLogs { get; set; }
+        // RODO - Phase 1: Guardian consent for minors
+        public DbSet<GuardianConsent> GuardianConsents { get; set; }
 
         // C# doesn't support static local variables in methods, so we have to use a field instead
         private static IEnumerator<int> bookIdGenerator = GenerateAscendingIntegers().GetEnumerator();
@@ -70,6 +72,8 @@ namespace Booker.Data
                     {
                         uf.HasKey("UserId", "ItemId");
                     });
+                // RODO - Phase 1: One-to-one relationship with GuardianConsent
+                u.HasOne(u => u.GuardianConsent).WithOne(gc => gc.User).HasForeignKey<GuardianConsent>(gc => gc.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<ItemView>(iv =>
@@ -84,6 +88,13 @@ namespace Booker.Data
             {
                 al.HasIndex(a => a.CreatedAt);
                 al.HasIndex(a => a.AdminUserName);
+            });
+
+            // RODO - Phase 1: GuardianConsent configuration with indexes
+            modelBuilder.Entity<GuardianConsent>(gc =>
+            {
+                gc.HasIndex(g => g.UserId).IsUnique();
+                gc.HasIndex(g => g.ExpiresAtUtc);
             });
         }
 

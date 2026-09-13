@@ -1,0 +1,24 @@
+@page
+@model ConfirmGuardianConsentResultModel
+@using Booker.Utilities
+@{
+    ViewData["Title"] = "Potwierdzenie zgody opiekuna";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (Model.IsSuccess)
+{
+    <div class="alert alert-success" role="alert">
+        <strong>✅ Sukces!</strong>
+        <p>@Model.Message</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        <strong>❌ Błąd potwierdzenia</strong>
+        <p>@Model.Message</p>
+        <p>Jeśli potrzebujesz nowego linku, skontaktuj się z supportem: <a href="mailto:@ContactInfo.SupportEmail">@ContactInfo.SupportEmail</a></p>
+    </div>
+}

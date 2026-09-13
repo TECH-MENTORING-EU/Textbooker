@@ -126,6 +126,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                     pageHandler: null,
                     values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                     protocol: Request.Scheme);
+                // SendEmailAsync never throws (delivery failures are logged inside it), so
+                // a transient SMTP failure can't surface as a 500 to the user changing
+                // their email.
                 await _emailSender.SendEmailAsync(
                     Input.NewEmail,
                     "Zmiana e-mail w aplikacji TextBooker przebiegła pomyślnie🎉",
@@ -162,6 +165,9 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
                 pageHandler: null,
                 values: new { area = "Identity", userId = userId, code = code },
                 protocol: Request.Scheme);
+            // SendEmailAsync never throws (delivery failures are logged inside it), so a
+            // transient SMTP failure can't surface as a 500 to the user requesting a new
+            // link.
             await _emailSender.SendEmailAsync(
                 email,
                 "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",

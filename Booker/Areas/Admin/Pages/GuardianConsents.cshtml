@@ -1,0 +1,97 @@
+@page
+@model GuardianConsentsModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Zgody opiekunów - TextBooker";
+    ViewData["ActivePage"] = AdminNavPages.GuardianConsents;
+}
+
+<h3>Zgody opiekunów na konta małoletnich</h3>
+
+<form method="get">
+    <div class="grid">
+        <div>
+            <label for="filter-child">Użytkownik</label>
+            <input type="text" id="filter-child" name="ChildUserName" value="@Model.ChildUserName" placeholder="Nazwa użytkownika" />
+        </div>
+        <div>
+            <label for="filter-guardian">E-mail opiekuna</label>
+            <input type="email" id="filter-guardian" name="GuardianEmail" value="@Model.GuardianEmail" placeholder="E-mail opiekuna" />
+        </div>
+        <div>
+            <label for="filter-status">Status</label>
+            <select id="filter-status" name="Status" asp-for="Status">
+                <option value="">Wszystkie</option>
+                <option value="pending">Oczekujące</option>
+                <option value="confirmed">Potwierdzone</option>
+            </select>
+        </div>
+        <div>
+            <label for="filter-from">Od</label>
+            <input type="date" id="filter-from" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div>
+            <label for="filter-to">Do</label>
+            <input type="date" id="filter-to" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+        </div>
+    </div>
+    <button type="submit">Filtruj</button>
+    <a role="button" class="outline" asp-page="./GuardianConsents">Wyczyść</a>
+</form>
+
+<p class="table-scroll-hint" id="consents-table-hint">Przewiń tabelę poziomo, aby zobaczyć wszystkie kolumny.</p>
+<div class="table-scroll" role="region" aria-label="Tabela zgód opiekunów" aria-describedby="consents-table-hint" tabindex="0">
+<table id="consents-table">
+    <caption class="visually-hidden">Lista zgód opiekunów na konta małoletnich</caption>
+    <thead>
+        <tr>
+            <th scope="col">Kiedy</th>
+            <th scope="col">Uczeń (ID / Nazwa)</th>
+            <th scope="col">E-mail ucznia</th>
+            <th scope="col">E-mail opiekuna</th>
+            <th scope="col">Wygasa</th>
+            <th scope="col">Status</th>
+            <th scope="col">Potwierdzona</th>
+            <th scope="col">IP opiekuna</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var consent in Model.Consents)
+        {
+            <tr>
+                <td>@consent.RequestedAtUtc.ToString("g")</td>
+                <td>@consent.ChildUserId / @consent.ChildUserName</td>
+                <td>@consent.ChildEmail</td>
+                <td>@consent.GuardianEmail</td>
+                <td>@consent.ExpirationLabel</td>
+                <td>
+                    <span class="badge" style="@consent.StatusStyle">@consent.StatusPrefix@consent.StatusLabel</span>
+                </td>
+                <td>@(consent.ConfirmedAtUtc?.ToString("g") ?? "—")</td>
+                <td>@(consent.ConfirmationIpAddress ?? "—")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Stronicowanie zgód">
+        <ul class="pagination">
+            @foreach (var link in Model.PaginationLinks)
+            {
+                <li>
+                    <a role="button" class="outline" asp-page="./GuardianConsents"
+                       asp-route-ChildUserName="@Model.ChildUserName"
+                       asp-route-GuardianEmail="@Model.GuardianEmail"
+                       asp-route-Status="@Model.Status"
+                       asp-route-From="@(Model.From?.ToString("yyyy-MM-dd"))"
+                       asp-route-To="@(Model.To?.ToString("yyyy-MM-dd"))"
+                       asp-route-PageNumber="@link.PageNumber">@link.Label</a>
+                </li>
+            }
+            <li>Strona @(Model.PageNumber + 1) z @Model.TotalPages</li>
+        </ul>
+    </nav>
+}

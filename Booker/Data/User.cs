@@ -69,7 +69,14 @@ namespace Booker.Data
         [PersonalData]
         public string? TermsAcceptedVersion { get; set; }
 
+        // RODO - Phase 1: Timestamp of the user's self-declared age confirmation
+        // ("Mam co najmniej 16 lat" checkbox at registration). Set only when the
+        // user confirms they are at least 16 - null means they did not confirm,
+        // i.e. they are treated as a minor requiring guardian consent.
         [PersonalData]
         public DateTime? AgeConfirmationAcceptedAt { get; set; }
+
+        // RODO - Phase 1: Guardian consent for minors (<16 years).
+        public GuardianConsent? GuardianConsent { get; set; }
     }
 }

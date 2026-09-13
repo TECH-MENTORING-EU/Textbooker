@@ -17,7 +17,10 @@ namespace Booker.Services
             _smtpSettings = smtpSettings.Value;
         }
 
-        private async Task Send(MailMessage message)
+        // Lets exceptions propagate; both public methods below decide what to do with them
+        // (swallow-and-log, or report failure to the caller) so that decision isn't
+        // duplicated at every call site across the app.
+        private async Task SendCoreAsync(string email, string subject, string htmlMessage)
         {
             using SmtpClient smtpClient = new SmtpClient();
 
@@ -27,25 +30,46 @@ namespace Booker.Services
             smtpClient.UseDefaultCredentials = false;
             smtpClient.Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password);
 
-            try
-            {
-                await smtpClient.SendMailAsync(message);
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(new EventId(),ex,ex.Message,ex.InnerException?.Message);
-            }
-        }
-
-        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
-        {
             var message = new MailMessage();
             message.Subject = subject;
             message.Body = htmlMessage;
             message.To.Add(email);
             message.From = new MailAddress("no-reply@textbooker.pl");
             message.IsBodyHtml = true;
-            await this.Send(message);
+
+            await smtpClient.SendMailAsync(message);
+        }
+
+        // IEmailSender implementation: never throws. Most callers just want best-effort
+        // delivery and would otherwise all need their own try/catch to avoid turning a
+        // transient SMTP failure into a 500 (or leaking delivery status via an
+        // anti-enumeration response). A failure is still logged here.
+        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
+        {
+            try
+            {
+                await SendCoreAsync(email, subject, htmlMessage);
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Failed to send email to {Email} with subject '{Subject}'.", email, subject);
+            }
+        }
+
+        // For the rare caller that must react to delivery failure (e.g. skip rotating a
+        // stored token when the replacement email could not be delivered).
+        public async Task<bool> TrySendEmailAsync(string email, string subject, string htmlMessage)
+        {
+            try
+            {
+                await SendCoreAsync(email, subject, htmlMessage);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Failed to send email to {Email} with subject '{Subject}'.", email, subject);
+                return false;
+            }
         }
 
         public class SmtpSettings

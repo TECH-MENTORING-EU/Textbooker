@@ -74,6 +74,9 @@ namespace Booker.Areas.Identity.Pages.Account
                     values: new { area = "Identity", code },
                     protocol: Request.Scheme);
 
+                // SendEmailAsync never throws (delivery failures are logged inside it), so
+                // a transient SMTP failure can't surface as a 500 here or otherwise reveal
+                // to the caller whether sending succeeded (anti-enumeration).
                 await _emailSender.SendEmailAsync(
                     Input.Email,
                     "Zmień swoje hasło TextBooker✏️⚙️",

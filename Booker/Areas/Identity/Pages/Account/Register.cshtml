@@ -57,6 +57,24 @@
             </select>
             <small id="Input_SchoolId-help"><span asp-validation-for="Input.SchoolId" role="alert"></span></small>
         </div>
+        <fieldset>
+            <label for="Input_IsAtLeast16" class="form-check-label">
+                <input type="checkbox"
+                       id="Input_IsAtLeast16"
+                       name="Input.IsAtLeast16"
+                       value="true"
+                       checked="@(Model.Input?.IsAtLeast16 == true)"
+                       aria-describedby="isAtLeast16Info"
+                       hx-get="?handler=GuardianField"
+                       hx-trigger="change"
+                       hx-include="#Input_GuardianEmail"
+                       hx-target="#guardianEmailField"
+                       hx-swap="outerHTML" />
+                Mam co najmniej 16 lat
+            </label>
+            <small id="isAtLeast16Info">Jeśli nie zaznaczysz, poprosimy o e-mail opiekuna, który musi wyrazić zgodę na założenie konta.</small>
+        </fieldset>
+        <partial name="_GuardianEmailField" model="@(new RegisterModel.GuardianEmailFieldModel(Model.ShowGuardianEmailField, Model.Input?.GuardianEmail))" />
 
         <hr />
 
@@ -90,14 +108,6 @@
             </label>
         </fieldset>
         <small><span asp-validation-for="Input.AcceptTerms" class="text-danger" role="alert"></span></small>
-
-        <fieldset>
-            <label for="confirmsAgeRequirementCheckbox" class="form-check-label">
-                <input type="checkbox" id="confirmsAgeRequirementCheckbox" asp-for="Input.ConfirmsAgeRequirement" required>
-                @Html.DisplayNameFor(m => m.Input.ConfirmsAgeRequirement)
-            </label>
-        </fieldset>
-        <small><span asp-validation-for="Input.ConfirmsAgeRequirement" class="text-danger" role="alert"></span></small>
 
         <button id="registerSubmit" type="submit">Zarejestruj</button>
     </form>

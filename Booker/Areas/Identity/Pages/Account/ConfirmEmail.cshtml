@@ -5,5 +5,17 @@
 }
 
 <h1>@ViewData["Title"]</h1>
-<p>@Model.StatusMessage</p>
-<a asp-area="Identity" asp-page="/Account/Manage/Index" role="button">Zaloguj się i uzupełnij swój profil</a>
+@if (!string.IsNullOrEmpty(Model.DisplayMessage))
+{
+    <div class="alert alert-warning" role="alert">
+        <p>@Model.DisplayMessage</p>
+    </div>
+}
+else
+{
+    <p>@Model.StatusMessage</p>
+    @if (Model.CanManageProfile)
+    {
+        <a asp-area="Identity" asp-page="/Account/Manage/Index" role="button">Zaloguj się i uzupełnij swój profil</a>
+    }
+}

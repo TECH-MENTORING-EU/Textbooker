@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
+using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -18,11 +19,16 @@ namespace Booker.Areas.Identity.Pages.Account
     public class ConfirmEmailModel : PageModel
     {
         private readonly UserManager<User> _userManager;
+        private readonly GuardianConsentService _consentService;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
-        public ConfirmEmailModel(UserManager<User> userManager, ILogger<ConfirmEmailModel> logger)
+        public ConfirmEmailModel(
+            UserManager<User> userManager,
+            GuardianConsentService consentService,
+            ILogger<ConfirmEmailModel> logger)
         {
             _userManager = userManager;
+            _consentService = consentService;
             _logger = logger;
         }
 
@@ -32,6 +38,10 @@ namespace Booker.Areas.Identity.Pages.Account
         /// </summary>
         [TempData]
         public string StatusMessage { get; set; }
+
+        public string DisplayMessage { get; set; }
+        public bool CanManageProfile { get; private set; }
+
         public async Task<IActionResult> OnGetAsync(string userId, string code)
         {
             if (userId == null || code == null)
@@ -47,26 +57,69 @@ namespace Booker.Areas.Identity.Pages.Account
 
             if (user.EmailConfirmed)
             {
+                var existingConsent = await _consentService.GetConsentAsync(user.Id);
+                if (existingConsent?.ConfirmedAtUtc.HasValue == false)
+                {
+                    StatusMessage = "Twój adres e-mail został potwierdzony. Czekamy jeszcze na zgodę opiekuna, aby aktywować konto.";
+                    CanManageProfile = false;
+                    return Page();
+                }
+
                 StatusMessage = "Email jest już potwierdzony. Możesz się zalogować.";
+                CanManageProfile = user.IsVisible;
                 return Page();
             }
 
-            code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            try
+            {
+                code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            }
+            catch (FormatException)
+            {
+                _logger.LogWarning("Email confirmation received an invalid token format for userId {UserId}.", userId);
+                StatusMessage = "Błąd aktywacji konta. Link jest nieprawidłowy albo wygasł.";
+                return Page();
+            }
+
             var result = await _userManager.ConfirmEmailAsync(user, code);
 
-            if (result.Succeeded)
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                _logger.LogWarning(
+                    "Email confirmation failed for userId {UserId}. Errors: {Errors}",
+                    userId,
+                    errors);
+
+                StatusMessage = "Błąd aktywacji konta. Link mógł wygasnąć albo został już użyty.";
+                return Page();
+            }
+
+            CanManageProfile = user.IsVisible;
+
+            // RODO - Phase 3: For minors, activation requires BOTH the student's own email
+            // confirmation (verified here) AND the guardian's consent confirmation.
+            // Marking the student's email as confirmed does not, by itself, use the guardian's
+            // address for anything - it independently verifies the student owns their address.
+            var consent = await _consentService.GetConsentAsync(user.Id);
+            if (consent == null)
             {
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
                 return Page();
             }
 
-            var errors = string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
-            _logger.LogWarning(
-                "Email confirmation failed for userId {UserId}. Errors: {Errors}",
-                userId,
-                errors);
+            if (consent.ConfirmedAtUtc.HasValue)
+            {
+                user.IsVisible = true;
+                await _userManager.UpdateAsync(user);
+                CanManageProfile = true;
+                StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+            }
+            else
+            {
+                StatusMessage = "Twój adres e-mail został potwierdzony. Czekamy jeszcze na zgodę opiekuna, aby aktywować konto.";
+            }
 
-            StatusMessage = "Błąd aktywacji konta. Link mógł wygasnąć albo został już użyty.";
             return Page();
         }
     }
