@@ -148,15 +148,14 @@ namespace Booker.Areas.Identity.Pages.Account
         }
 
         /// <summary>
-        /// Rotates the guardian consent token and resends the email to the guardian.
+        /// Resends the guardian consent email to the guardian.
         /// - Does NOT extend the account's original cleanup deadline (ExpiresAtUtc):
         ///   anyone who knows the student's email must not be able to keep an unconfirmed
         ///   account alive indefinitely by repeatedly calling this endpoint.
         /// - Rejects (silently, from the caller's point of view) resend attempts once the
         ///   original deadline has already passed; the account is due for cleanup.
-        /// - Only persists the rotated token AFTER the email has been sent successfully,
-        ///   so a transient SMTP failure never invalidates the previously delivered link
-        ///   without a working replacement.
+        /// - Does not rotate the existing token on anonymous resend, so previously
+        ///   delivered links remain valid until the original deadline.
         /// </summary>
         private async Task TryResendGuardianConsentAsync(User user, GuardianConsent pendingConsent)
         {
@@ -169,7 +168,7 @@ namespace Booker.Areas.Identity.Pages.Account
                 return;
             }
 
-            var (newToken, newTokenHash) = _consentService.GenerateToken();
+            var (newToken, _) = _consentService.GenerateToken();
 
             var confirmGuardianUrl = Url.Page(
                 "/Account/ConfirmGuardianConsent",
@@ -189,11 +188,8 @@ namespace Booker.Areas.Identity.Pages.Account
                 return;
             }
 
-            // Only rotate the stored token hash once the new link has actually been sent.
             // Deliberately do NOT touch RequestedAtUtc/ExpiresAtUtc - the original cleanup
             // deadline (tied to account creation) must not be extended by resends.
-            pendingConsent.TokenHash = newTokenHash;
-            await _context.SaveChangesAsync();
         }
     }
 }
