@@ -418,7 +418,7 @@ namespace Booker.Areas.Identity.Pages.Account
                 z adresem e-mail <strong>{HtmlEncoder.Default.Encode(studentEmail)}</strong>
                 chce korzystać z platformy TextBooker, która wymaga Twojej zgody jako opiekuna.</p>
                 
-                <p>Konto będzie aktywne dopiero po Twojej zgodzie. Jeśli nie rozpoznajesz tej prośby, zignoruj tę wiadomość.</p>
+                <p>Konto będzie aktywne dopiero po Twojej zgodzie i potwierdzeniu własnego adresu e-mail przez ucznia. Jeśli nie rozpoznajesz tej prośby, zignoruj tę wiadomość.</p>
                 
                 <p><a href='{HtmlEncoder.Default.Encode(confirmUrl)}'>Potwierdź zgodę klikając tutaj</a></p>
                 
