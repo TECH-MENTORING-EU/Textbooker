@@ -21,18 +21,18 @@ namespace Booker.Areas.Identity.Pages.Account
     {
         private readonly UserManager<User> _userManager;
         private readonly GuardianConsentService _consentService;
-        private readonly IEmailSender _emailSender;
+        private readonly SendMailSvc _mailSvc;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
         public ConfirmEmailModel(
             UserManager<User> userManager,
             GuardianConsentService consentService,
-            IEmailSender emailSender,
+            SendMailSvc mailSvc,
             ILogger<ConfirmEmailModel> logger)
         {
             _userManager = userManager;
             _consentService = consentService;
-            _emailSender = emailSender;
+            _mailSvc = mailSvc;
             _logger = logger;
         }
 
@@ -108,7 +108,15 @@ namespace Booker.Areas.Identity.Pages.Account
             var consent = await _consentService.GetConsentAsync(user.Id);
             if (consent == null)
             {
+                // Adult (no guardian-consent record): email confirmation alone activates the
+                // account, so send the same one-time welcome email as the minor path below.
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+
+                if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
+                {
+                    await WelcomeEmailSender.SendWithRetryAsync(_mailSvc, _logger, user.Email);
+                }
+
                 return Page();
             }
 
@@ -119,10 +127,12 @@ namespace Booker.Areas.Identity.Pages.Account
                 CanManageProfile = true;
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
 
-                await _emailSender.SendEmailAsync(
-                    user.Email,
-                    "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
-                    "Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie aktywowane. Możesz się już zalogować. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
+                // Claiming the send atomically prevents a double welcome email when this
+                // path races with the guardian-consent confirmation path.
+                if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
+                {
+                    await WelcomeEmailSender.SendWithRetryAsync(_mailSvc, _logger, user.Email);
+                }
             }
             else
             {

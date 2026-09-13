@@ -239,13 +239,7 @@ Oczekiwane:
 
 Wykonuj tylko z przygotowanym kontem testowym ucznia niepełnoletniego, dla którego dostępne są oba linki (własny link potwierdzający e-mail ucznia oraz link do potwierdzenia zgody opiekuna).
 
-Dane kont testowych:
-
-- uczeń: `fitting_defer.43@icloud.com`
-- login ucznia: `lolipop`
-- szkoła ucznia: `Hogwort`
-- rodzic/opiekun: `unmoved_newt1j@icloud.com`
-- hasło testowe obu kont: `TestPass123!`
+Dane kont testowych pobieraj z bezpiecznego sekretu/fixture'u środowiska testowego; nie przechowuj adresów e-mail ani haseł w repozytorium (patrz R5).
 
 Sprawdź obie kolejności osobno (najlepiej na dwóch różnych kontach testowych, żeby nie mieszać stanu):
 

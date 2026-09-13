@@ -15,18 +15,18 @@ namespace Booker.Areas.Identity.Pages.Account
     public class ConfirmGuardianConsentModel : PageModel
     {
         private readonly GuardianConsentService _consentService;
-        private readonly IEmailSender _emailSender;
+        private readonly SendMailSvc _mailSvc;
         private readonly ILogger<ConfirmGuardianConsentModel> _logger;
         private readonly GuardianConsentOptions _consentOptions;
 
         public ConfirmGuardianConsentModel(
             GuardianConsentService consentService,
-            IEmailSender emailSender,
+            SendMailSvc mailSvc,
             ILogger<ConfirmGuardianConsentModel> logger,
             IOptions<GuardianConsentOptions> consentOptions)
         {
             _consentService = consentService;
-            _emailSender = emailSender;
+            _mailSvc = mailSvc;
             _logger = logger;
             _consentOptions = consentOptions.Value;
         }
@@ -109,10 +109,12 @@ namespace Booker.Areas.Identity.Pages.Account
 
                 if (consentResult.AccountActivated && !string.IsNullOrEmpty(consentResult.StudentEmail))
                 {
-                    await _emailSender.SendEmailAsync(
-                        consentResult.StudentEmail,
-                        "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
-                        "Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie aktywowane. Możesz się już zalogować. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
+                    // Claiming the send atomically prevents a double welcome email when this
+                    // path races with the student's own email-confirmation path.
+                    if (await _consentService.TryClaimWelcomeEmailAsync(UserId))
+                    {
+                        await WelcomeEmailSender.SendWithRetryAsync(_mailSvc, _logger, consentResult.StudentEmail);
+                    }
                 }
             }
             else

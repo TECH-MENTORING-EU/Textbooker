@@ -286,6 +286,22 @@ public class GuardianConsentService
     }
 
     /// <summary>
+    /// Atomically claims the right to send the one-time "account activated" welcome
+    /// email for this user, by flipping User.WelcomeEmailSentAtUtc from null to now in a
+    /// single conditional UPDATE. Returns true only for the caller that performed the
+    /// flip - this guards against the student-confirmation and guardian-consent
+    /// endpoints racing and both sending the welcome email.
+    /// </summary>
+    public async Task<bool> TryClaimWelcomeEmailAsync(int userId)
+    {
+        var rowsAffected = await _context.Users
+            .Where(u => u.Id == userId && u.WelcomeEmailSentAtUtc == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.WelcomeEmailSentAtUtc, DateTime.UtcNow));
+
+        return rowsAffected == 1;
+    }
+
+    /// <summary>
     /// Retrieves pending (unconfirmed) guardian consent for a user.
     /// Returns null if no pending consent exists.
     /// </summary>
