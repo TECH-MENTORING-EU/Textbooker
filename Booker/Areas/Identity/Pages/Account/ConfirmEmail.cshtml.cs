@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
@@ -20,15 +21,18 @@ namespace Booker.Areas.Identity.Pages.Account
     {
         private readonly UserManager<User> _userManager;
         private readonly GuardianConsentService _consentService;
+        private readonly IEmailSender _emailSender;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
         public ConfirmEmailModel(
             UserManager<User> userManager,
             GuardianConsentService consentService,
+            IEmailSender emailSender,
             ILogger<ConfirmEmailModel> logger)
         {
             _userManager = userManager;
             _consentService = consentService;
+            _emailSender = emailSender;
             _logger = logger;
         }
 
@@ -114,6 +118,11 @@ namespace Booker.Areas.Identity.Pages.Account
                 await _userManager.UpdateAsync(user);
                 CanManageProfile = true;
                 StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+
+                await _emailSender.SendEmailAsync(
+                    user.Email,
+                    "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
+                    "Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie aktywowane. Możesz się już zalogować. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
             }
             else
             {
