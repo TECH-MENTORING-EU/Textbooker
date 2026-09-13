@@ -9,12 +9,14 @@ using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
+using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
@@ -24,12 +26,25 @@ namespace Booker.Areas.Identity.Pages.Account
     {
         private readonly UserManager<User> _userManager;
         private readonly IEmailSender _emailSender;
+        private readonly GuardianConsentService _consentService;
+        private readonly DataContext _context;
+        private readonly GuardianConsentOptions _consentOptions;
 
-        public ResendEmailConfirmationModel(UserManager<User> userManager, IEmailSender emailSender)
+        public ResendEmailConfirmationModel(
+            UserManager<User> userManager,
+            IEmailSender emailSender,
+            GuardianConsentService consentService,
+            DataContext context,
+            IOptions<GuardianConsentOptions> consentOptions)
         {
             _userManager = userManager;
             _emailSender = emailSender;
+            _consentService = consentService;
+            _context = context;
+            _consentOptions = consentOptions.Value;
         }
+
+        public string DisplayMessage { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -67,7 +82,19 @@ namespace Booker.Areas.Identity.Pages.Account
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail..");
+                ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.");
+                return Page();
+            }
+
+            // RODO - Phase 3: Redirect minor to wait for guardian consent
+            var pendingConsent = await _consentService.GetPendingConsentAsync(user.Id);
+            if (pendingConsent != null)
+            {
+                await ResendGuardianConsentAsync(user, pendingConsent);
+                // This is a minor account awaiting guardian consent
+                DisplayMessage = "To konto oczekuje na zgodę opiekuna. " +
+                    "Link potwierdzający został wysłany na adres e-mail opiekuna. " +
+                    "Poczekaj, aż opiekun potwierdzi zgodę.";
                 return Page();
             }
 
@@ -86,6 +113,32 @@ namespace Booker.Areas.Identity.Pages.Account
 
             ModelState.AddModelError(string.Empty, "Wiadomość z linkiem aktywacyjnym konta została wysłana. Sprawdź swoją skrzynkę e-mail.");
             return Page();
+        }
+
+        // Helper method for resending to guardian
+        private async Task ResendGuardianConsentAsync(User user, GuardianConsent pendingConsent)
+        {
+            // Generate new token
+            var (newConsent, newToken) = await _consentService.CreateConsentAsync(user, pendingConsent.GuardianEmail);
+
+            // Update the existing consent record
+            pendingConsent.TokenHash = newConsent.TokenHash;
+            pendingConsent.RequestedAtUtc = newConsent.RequestedAtUtc;
+            pendingConsent.ExpiresAtUtc = newConsent.ExpiresAtUtc;
+
+            await _context.SaveChangesAsync();
+
+            // Build and send new link to guardian
+            var confirmGuardianUrl = Url.Page(
+                "/Account/ConfirmGuardianConsent",
+                pageHandler: null,
+                values: new { area = "Identity", userId = user.Id, token = newToken },
+                protocol: Request.Scheme);
+
+            await _emailSender.SendEmailAsync(
+                pendingConsent.GuardianEmail,
+                "TextBooker: Nowy link do potwierdzenia zgody",
+                $"Oto nowy link do potwierdzenia zgody na konto ucznia: <a href='{HtmlEncoder.Default.Encode(confirmGuardianUrl)}'>Potwierdź zgodę</a>. Link ważny przez {_consentOptions.TokenExpirationDays} dni.");
         }
     }
 }

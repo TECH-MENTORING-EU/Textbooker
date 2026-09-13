@@ -23,6 +23,7 @@ using Microsoft.EntityFrameworkCore;
 using Booker.Services;
 using Booker.Utilities;
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Booker.Areas.Identity.Pages.Account
 {
@@ -38,6 +39,7 @@ namespace Booker.Areas.Identity.Pages.Account
         private readonly DataContext _context;
         private readonly SchoolMappingService _schoolMappingService;
         private readonly IWebHostEnvironment _environment;
+        private readonly GuardianConsentService _consentService;
 
         public RegisterModel(
             UserManager<User> userManager,
@@ -47,7 +49,8 @@ namespace Booker.Areas.Identity.Pages.Account
             IEmailSender emailSender,
             DataContext context,
             SchoolMappingService schoolMappingService,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            GuardianConsentService consentService)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -58,6 +61,7 @@ namespace Booker.Areas.Identity.Pages.Account
             _context = context;
             _schoolMappingService = schoolMappingService;
             _environment = environment;
+            _consentService = consentService;
         }
 
         [BindProperty]
@@ -95,14 +99,23 @@ namespace Booker.Areas.Identity.Pages.Account
             [Display(Name = "Szkoła")]
             public int? SchoolId { get; set; }
 
+            [Required(ErrorMessage = "Year of birth is required.")]
+                [Range(typeof(int), "1910", "9999", ErrorMessage = "Year of birth must be between 1910 and current year.")]
+            [Display(Name = "Year of Birth")]
+            public int? BirthYear { get; set; }
+
+            [EmailAddress(ErrorMessage = "Guardian email must be a valid email address.")]
+            [Display(Name = "Guardian Email")]
+            public string GuardianEmail { get; set; }
+
             [MustBeTrue(ErrorMessage = "Musisz zaakceptować regulamin.")]
             [Display(Name = "Przeczytałem/am i akceptuję regulamin.")]
             public bool AcceptTerms { get; set; }
-
-            [MustBeTrue(ErrorMessage = "Musisz potwierdzić wiek lub zgodę opiekuna.")]
-            [Display(Name = "Oświadczam, że ukończyłem/am 16 lat, albo posiadam zgodę rodzica lub opiekuna prawnego na korzystanie z Serwisu.")]
-            public bool ConfirmsAgeRequirement { get; set; }
         }
+
+        public record GuardianEmailFieldModel(bool IsVisible, string GuardianEmail);
+
+        public int CurrentYear => DateTime.UtcNow.Year;
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -150,6 +163,17 @@ namespace Booker.Areas.Identity.Pages.Account
             return Content(options.ToString(), "text/html; charset=utf-8");
         }
 
+        public IActionResult OnGetGuardianField(
+            [FromQuery(Name = "Input.BirthYear")] int? birthYear,
+            [FromQuery(Name = "Input.GuardianEmail")] string guardianEmail)
+        {
+            var isVisible = !birthYear.HasValue
+                || !_consentService.IsValidBirthYear(birthYear)
+                || _consentService.CalculateAge(birthYear.Value) < 16;
+
+            return Partial("_GuardianEmailField", new GuardianEmailFieldModel(isVisible, guardianEmail));
+        }
+
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -157,97 +181,251 @@ namespace Booker.Areas.Identity.Pages.Account
             var activeSchools = await _context.Schools.Where(s => s.IsActive).OrderBy(s => s.Id).ToListAsync();
             AvailableSchools = new SelectList(activeSchools, "Id", "Name");
             Input ??= new InputModel();
-            
-            if (ModelState.IsValid)
+
+            if (!ModelState.IsValid)
             {
-                var user = CreateUser();
-
-                var autoAssignedSchoolId = await _schoolMappingService.GetSchoolIdByEmailAsync(Input.Email);
-                if (autoAssignedSchoolId.HasValue)
-                {
-                    user.SchoolId = autoAssignedSchoolId.Value;
-                    _logger.LogInformation(
-                        "User automatically assigned to school ID {SchoolId} based on email domain",
-                        autoAssignedSchoolId.Value
-                    );
-                }
-                else if (Input.SchoolId.HasValue)
-                {
-                    var selectedSchool = await _context.Schools
-                        .FirstOrDefaultAsync(s => s.Id == Input.SchoolId.Value && s.IsActive);
-
-                    if (selectedSchool is null)
-                    {
-                        _logger.LogWarning(
-                            "User tried to register with inactive/nonexistent school ID {SchoolId}",
-                            Input.SchoolId.Value
-                        );
-                        ModelState.AddModelError(
-                            "Input.SchoolId",
-                            "Wybrana szkoła nie jest dostępna. Wybierz inną szkołę."
-                        );
-                        return Page();
-                    }
-
-                    user.SchoolId = Input.SchoolId.Value;
-                    _logger.LogInformation(
-                        "User manually assigned to school ID {SchoolId}",
-                        Input.SchoolId.Value
-                    );
-                }
-                else
-                {
-                    ModelState.AddModelError(
-                        "Input.SchoolId",
-                        "Nie znaleziono szkoły dla podanego adresu e-mail. Wybierz szkołę ręcznie."
-                    );
-                    return Page();
-                }
-
-                user.Photo = "/img/default-profile-picture.jpg";
-
-                var now = DateTime.Now;
-                user.TermsAcceptedAt = now;
-                user.TermsAcceptedVersion = RegulaminInfo.CurrentVersion;
-                user.AgeConfirmationAcceptedAt = now;
-
-                await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-                var result = await _userManager.CreateAsync(user, Input.Password);
-
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation($"Użytkownik {user.UserName} utworzył nowe konto.");
-
-                    var userId = await _userManager.GetUserIdAsync(user);
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.Page(
-                        "/Account/ConfirmEmail",
-                        pageHandler: null,
-                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
-                        protocol: Request.Scheme);
-
-                    await _emailSender.SendEmailAsync(Input.Email, "Witamy w TextBooker! Twoje konto zostało pomyślnie utworzone 🎉",
-                        $"Cześć! <br /> Cieszymy się, że dołączyłeś/dołączyłaś do społeczności TextBooker! <br /> Twoje konto zostało pomyślnie utworzone. <br /> Kliknij w ten <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a> aby aktywować konto. <br /><br /> Pozdrawiamy, <br /> Zespół TextBooker📚");
-
-                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                    }
-                    else
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
-                    }
-                }
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                return Page();
             }
 
-            return Page();
+            if (!TryValidateRegistration(out var age))
+            {
+                return Page();
+            }
+
+            var user = CreateUser();
+            if (!await TryAssignSchoolAsync(user))
+            {
+                return Page();
+            }
+
+            InitializeUser(user, age);
+            var registration = await CreateAccountAsync(user, age);
+
+            if (!registration.Result.Succeeded)
+            {
+                AddIdentityErrors(registration.Result);
+                return Page();
+            }
+
+            await SendConfirmationAsync(user, age, registration, returnUrl);
+            return RedirectToPage("RegisterConfirmation", new { email = Input.Email, isMinor = age < 16, returnUrl });
+        }
+
+        private bool TryValidateRegistration(out int age)
+        {
+            age = 0;
+
+            if (!_consentService.IsValidBirthYear(Input.BirthYear))
+            {
+                ModelState.AddModelError("Input.BirthYear", "Please enter a valid year of birth.");
+                return false;
+            }
+
+            age = _consentService.CalculateAge(Input.BirthYear.Value);
+            var guardianEmailError = _consentService.ValidateGuardianEmail(Input.Email, Input.GuardianEmail, age);
+            if (guardianEmailError is null)
+            {
+                return true;
+            }
+
+            ModelState.AddModelError("Input.GuardianEmail", guardianEmailError);
+            return false;
+        }
+
+        private async Task<bool> TryAssignSchoolAsync(User user)
+        {
+            var autoAssignedSchoolId = await _schoolMappingService.GetSchoolIdByEmailAsync(Input.Email);
+            if (autoAssignedSchoolId.HasValue)
+            {
+                user.SchoolId = autoAssignedSchoolId.Value;
+                _logger.LogInformation(
+                    "User automatically assigned to school ID {SchoolId} based on email domain",
+                    autoAssignedSchoolId.Value);
+                return true;
+            }
+
+            if (!Input.SchoolId.HasValue)
+            {
+                ModelState.AddModelError(
+                    "Input.SchoolId",
+                    "Nie znaleziono szkoły dla podanego adresu e-mail. Wybierz szkołę ręcznie.");
+                return false;
+            }
+
+            var selectedSchool = await _context.Schools
+                .FirstOrDefaultAsync(s => s.Id == Input.SchoolId.Value && s.IsActive);
+            if (selectedSchool is null)
+            {
+                _logger.LogWarning(
+                    "User tried to register with inactive/nonexistent school ID {SchoolId}",
+                    Input.SchoolId.Value);
+                ModelState.AddModelError(
+                    "Input.SchoolId",
+                    "Wybrana szkoła nie jest dostępna. Wybierz inną szkołę.");
+                return false;
+            }
+
+            user.SchoolId = selectedSchool.Id;
+            _logger.LogInformation(
+                "User manually assigned to school ID {SchoolId}",
+                selectedSchool.Id);
+            return true;
+        }
+
+        private void InitializeUser(User user, int age)
+        {
+            user.Photo = "/img/default-profile-picture.jpg";
+            user.TermsAcceptedAt = DateTime.Now;
+            user.TermsAcceptedVersion = RegulaminInfo.CurrentVersion;
+            user.BirthYear = Input.BirthYear.Value;
+
+            if (age >= 16)
+            {
+                return;
+            }
+
+            user.EmailConfirmed = false;
+            user.IsVisible = false;
+        }
+
+        private async Task<RegistrationResult> CreateAccountAsync(User user, int age)
+        {
+            await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
+            await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+            if (age >= 16)
+            {
+                return new RegistrationResult(
+                    await _userManager.CreateAsync(user, Input.Password),
+                    null,
+                    default);
+            }
+
+            return await CreateMinorAccountAsync(user);
+        }
+
+        private async Task<RegistrationResult> CreateMinorAccountAsync(User user)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var result = await _userManager.CreateAsync(user, Input.Password);
+                if (!result.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return new RegistrationResult(result, null, default);
+                }
+
+                var consentResult = await _consentService.CreateConsentAsync(user, Input.GuardianEmail!);
+                _context.GuardianConsents.Add(consentResult.Consent);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new RegistrationResult(
+                    result,
+                    consentResult.Token,
+                    consentResult.Consent.ExpiresAtUtc);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        private async Task SendConfirmationAsync(
+            User user,
+            int age,
+            RegistrationResult registration,
+            string returnUrl)
+        {
+            if (age < 16)
+            {
+                await SendGuardianConfirmationAsync(user, registration);
+                return;
+            }
+
+            await SendEmailConfirmationAsync(user, returnUrl);
+        }
+
+        private async Task SendGuardianConfirmationAsync(User user, RegistrationResult registration)
+        {
+            var confirmGuardianUrl = Url.Page(
+                "/Account/ConfirmGuardianConsent",
+                pageHandler: null,
+                values: new { area = "Identity", userId = user.Id, token = registration.GuardianToken },
+                protocol: Request.Scheme);
+
+            await _emailSender.SendEmailAsync(
+                Input.GuardianEmail,
+                            "TextBooker: Prośba o wyrażenie zgody na konto ucznia",
+                BuildGuardianConsentEmailBody(
+                    user.UserName,
+                    Input.Email,
+                    confirmGuardianUrl,
+                    registration.GuardianConsentExpiresAt));
+
+            _logger.LogInformation(
+                "Minor user {UserName} (ID: {UserId}) registered; guardian consent sent to {GuardianEmail}.",
+                user.UserName,
+                user.Id,
+                Input.GuardianEmail);
+        }
+
+        private async Task SendEmailConfirmationAsync(User user, string returnUrl)
+        {
+            var userId = await _userManager.GetUserIdAsync(user);
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Page(
+                "/Account/ConfirmEmail",
+                pageHandler: null,
+                values: new { area = "Identity", userId, code, returnUrl },
+                protocol: Request.Scheme);
+
+            await _emailSender.SendEmailAsync(
+                Input.Email,
+                "Confirm your email",
+                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+            _logger.LogInformation(
+                "Adult user {UserName} (ID: {UserId}) registered.",
+                user.UserName,
+                user.Id);
+        }
+
+        private void AddIdentityErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+        }
+
+        private record RegistrationResult(
+            IdentityResult Result,
+            string GuardianToken,
+            DateTime GuardianConsentExpiresAt);
+
+        private string BuildGuardianConsentEmailBody(string childUsername, string childEmail, string confirmUrl, DateTime expiresAtUtc)
+        {
+            return $@"
+                <html>
+                <body>
+                <p>Witaj,</p>
+                <p>Użytkownik zarejestrowany jako <strong>{HtmlEncoder.Default.Encode(childUsername ?? "unknown")}</strong> 
+                z adresem e-mail <strong>{HtmlEncoder.Default.Encode(childEmail)}</strong> 
+                chce korzystać z platformy TextBooker, która wymaga Twojej zgody jako opiekuna.</p>
+                
+                <p>Konto będzie aktywne dopiero po Twojej zgodzie. Jeśli nie rozpoznajesz tej prośby, zignoruj tę wiadomość.</p>
+                
+                <p><a href='{HtmlEncoder.Default.Encode(confirmUrl)}'>Potwierdź zgodę klikając tutaj</a></p>
+                
+                <p>Link ważny do {expiresAtUtc:yyyy-MM-dd HH:mm} UTC.</p>
+                <p>Pozdrawiamy,<br/>Zespół TextBooker</p>
+                </body>
+                </html>";
         }
 
         private User CreateUser()

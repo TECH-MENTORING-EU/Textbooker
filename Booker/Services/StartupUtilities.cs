@@ -76,6 +76,17 @@ namespace Booker.Services
             services.AddScoped<SessionCacheManager>();
             services.AddHostedService<MaintenanceService>();
 
+            // RODO - Phase 1: Guardian consent configuration and service
+            services.AddOptions<GuardianConsentOptions>()
+                .Bind(configuration.GetSection("GuardianConsent"))
+                .Validate(options => options.TokenExpirationDays > 0
+                    && options.CleanupIntervalMinutes > 0
+                    && options.ConfirmedDataRetentionDays > 0,
+                    "GuardianConsent settings must contain positive durations.")
+                .ValidateOnStart();
+            services.AddScoped<GuardianConsentService>();
+            services.AddHostedService<GuardianConsentCleanupService>();
+
             return services;
         }
 

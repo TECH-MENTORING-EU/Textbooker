@@ -1,0 +1,13 @@
+@model Booker.Areas.Identity.Pages.Account.RegisterModel.GuardianEmailFieldModel
+
+<div id="guardianEmailField" style="display: @(Model.IsVisible ? "block" : "none");">
+    <label for="Input_GuardianEmail">E-mail opiekuna:</label>
+    <input type="email"
+           id="Input_GuardianEmail"
+           name="Input.GuardianEmail"
+           value="@Model.GuardianEmail"
+           placeholder="e-mail rodzica/opiekuna"
+           aria-describedby="Input_GuardianEmail-help"
+           @(Model.IsVisible ? "required" : null) />
+    <small id="Input_GuardianEmail-help"><span id="Input_GuardianEmail-error"></span></small>
+</div>

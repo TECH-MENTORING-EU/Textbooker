@@ -1,0 +1,33 @@
+@page
+@model ConfirmGuardianConsentModel
+@using Booker.Utilities
+@{
+    ViewData["Title"] = "Potwierdzenie zgody opiekuna";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (Model.IsSuccess)
+{
+    <div class="alert alert-success" role="alert">
+        <strong>✅ Sukces!</strong>
+        <p>@Model.Message</p>
+        <p>Konto ucznia jest teraz aktywne. Może się zalogować i zacząć korzystać z platformy TextBooker.</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        <strong>❌ Błąd potwierdzenia</strong>
+        <p>@Model.Message</p>
+        <p>
+            Możliwe przyczyny:
+            <ul>
+                <li>Link wygasł (ważny przez @Model.TokenExpirationDays dni)</li>
+                <li>Link został już wykorzystany</li>
+                <li>Zła liczba użytkownika</li>
+            </ul>
+        </p>
+        <p>Jeśli potrzebujesz nowego linku, skontaktuj się z supportem: <a href="mailto:@ContactInfo.SupportEmail">@ContactInfo.SupportEmail</a></p>
+    </div>
+}

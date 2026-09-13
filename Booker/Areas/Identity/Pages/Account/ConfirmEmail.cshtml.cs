@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
+using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -18,11 +19,16 @@ namespace Booker.Areas.Identity.Pages.Account
     public class ConfirmEmailModel : PageModel
     {
         private readonly UserManager<User> _userManager;
+        private readonly GuardianConsentService _consentService;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
-        public ConfirmEmailModel(UserManager<User> userManager, ILogger<ConfirmEmailModel> logger)
+        public ConfirmEmailModel(
+            UserManager<User> userManager,
+            GuardianConsentService consentService,
+            ILogger<ConfirmEmailModel> logger)
         {
             _userManager = userManager;
+            _consentService = consentService;
             _logger = logger;
         }
 
@@ -32,6 +38,9 @@ namespace Booker.Areas.Identity.Pages.Account
         /// </summary>
         [TempData]
         public string StatusMessage { get; set; }
+
+        public string DisplayMessage { get; set; }
+
         public async Task<IActionResult> OnGetAsync(string userId, string code)
         {
             if (userId == null || code == null)
@@ -39,10 +48,22 @@ namespace Booker.Areas.Identity.Pages.Account
                 return RedirectToPage("/Index");
             }
 
+            // RODO - Phase 3: Block confirmation via standard email token for minors awaiting guardian consent
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return NotFound($"Nie znaleziono użytkownika o ID '{userId}'.");
+            }
+
+            var pendingConsent = await _consentService.GetPendingConsentAsync(user.Id);
+            if (pendingConsent != null)
+            {
+                // This is a minor account awaiting guardian consent
+                // Block standard email confirmation
+                DisplayMessage = "Your account is awaiting guardian consent. " +
+                    "The confirmation link will be sent to your guardian's email address. " +
+                    "Please ask your guardian to check their email.";
+                return Page();
             }
 
             if (user.EmailConfirmed)
@@ -51,7 +72,17 @@ namespace Booker.Areas.Identity.Pages.Account
                 return Page();
             }
 
-            code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            try
+            {
+                code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            }
+            catch (FormatException)
+            {
+                _logger.LogWarning("Email confirmation received an invalid token format for userId {UserId}.", userId);
+                StatusMessage = "Błąd aktywacji konta. Link jest nieprawidłowy albo wygasł.";
+                return Page();
+            }
+
             var result = await _userManager.ConfirmEmailAsync(user, code);
 
             if (result.Succeeded)

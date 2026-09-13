@@ -29,8 +29,14 @@
         if (requirements && checkPasswordRequirements(event.currentTarget.value)) requirements.style.display = "none";
     });
 
-    document.querySelectorAll('#registerForm input[type="checkbox"][required]').forEach(checkbox => {
-        checkbox.addEventListener("invalid", () => checkbox.setCustomValidity("Zaznacz to pole, aby kontynuować."));
-        checkbox.addEventListener("change", () => checkbox.setCustomValidity(""));
+    // Dla checkboxów wymaganych — HTML5 validation
+    document.querySelectorAll('input[type="checkbox"][required]').forEach(checkbox => {
+        checkbox.addEventListener("invalid", () => {
+            checkbox.setCustomValidity("Zaznacz to pole, aby kontynuować.");
+        });
+        checkbox.addEventListener("change", () => {
+            checkbox.setCustomValidity("");
+        });
     });
 })();
+

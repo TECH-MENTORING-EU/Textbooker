@@ -57,6 +57,24 @@
             </select>
             <small id="Input_SchoolId-help"><span asp-validation-for="Input.SchoolId" role="alert"></span></small>
         </div>
+        <div>
+            <label asp-for="Input.BirthYear">Rok urodzenia:</label>
+            <input type="number" 
+                   asp-for="Input.BirthYear" 
+                   min="1910" 
+                   max="@Model.CurrentYear"
+                   required
+                   placeholder="np. 2005"
+                   aria-describedby="Input_BirthYear-help birthYearInfo"
+                   hx-get="?handler=GuardianField"
+                   hx-trigger="input changed delay:300ms, change"
+                   hx-include="#registerForm"
+                   hx-target="#guardianEmailField"
+                   hx-swap="outerHTML" />
+            <small id="Input_BirthYear-help"><span asp-validation-for="Input.BirthYear" id="Input_BirthYear-error"></span></small>
+            <small id="birthYearInfo">Potrzebny do sprawdzenia czy wymagana jest zgoda opiekuna.</small>
+        </div>
+        <partial name="_GuardianEmailField" model="@(new RegisterModel.GuardianEmailFieldModel(false, Model.Input?.GuardianEmail))" />
 
         <hr />
 
@@ -90,14 +108,6 @@
             </label>
         </fieldset>
         <small><span asp-validation-for="Input.AcceptTerms" class="text-danger" role="alert"></span></small>
-
-        <fieldset>
-            <label for="confirmsAgeRequirementCheckbox" class="form-check-label">
-                <input type="checkbox" id="confirmsAgeRequirementCheckbox" asp-for="Input.ConfirmsAgeRequirement" required>
-                @Html.DisplayNameFor(m => m.Input.ConfirmsAgeRequirement)
-            </label>
-        </fieldset>
-        <small><span asp-validation-for="Input.ConfirmsAgeRequirement" class="text-danger" role="alert"></span></small>
 
         <button id="registerSubmit" type="submit">Zarejestruj</button>
     </form>

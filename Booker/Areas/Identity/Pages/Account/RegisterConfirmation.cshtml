@@ -6,6 +6,21 @@
 
 <h1>@ViewData["Title"]</h1>
 
-<p>
-    Na Twoją skrzynkę e-mail została wysłana wiadomość z linkiem aktywacyjnym konta✅.
-</p>
+@if (Model.IsMinor)
+{
+    <div class="alert alert-info">
+        <p>Dziękujemy za rejestrację! 👋</p>
+        <p>Wysłaliśmy wiadomość e-mail do opiekuna/rodzica na adres, który podałeś/podałaś.</p>
+        <p>Twoje konto będzie aktywne po otrzymaniu zgody opiekuna. Link do potwierdzenia jest ważny przez <strong>@Model.TokenExpirationDays dni</strong>.</p>
+        <p>Jeśli wiadomość nie dotarła w ciągu kilku minut, sprawdź folder Spam/Wiadomości niechciane.</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <p>Dziękujemy za rejestrację! 🎉</p>
+        <p>Wysłaliśmy e-mail potwierdzający na adres <strong>@Html.Encode(Model.Email)</strong>.</p>
+        <p>Kliknij link w wiadomości, aby aktywować swoje konto.</p>
+        <p>Jeśli wiadomość nie dotarła w ciągu kilku minut, sprawdź folder Spam/Wiadomości niechciane.</p>
+    </div>
+}

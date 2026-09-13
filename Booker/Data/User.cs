@@ -71,5 +71,12 @@ namespace Booker.Data
 
         [PersonalData]
         public DateTime? AgeConfirmationAcceptedAt { get; set; }
+
+        // RODO - Phase 1: Birth year for age verification (16+ threshold).
+        [PersonalData]
+        public int? BirthYear { get; set; }
+
+        // RODO - Phase 1: Guardian consent for minors (<16 years).
+        public GuardianConsent? GuardianConsent { get; set; }
     }
 }
