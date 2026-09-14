@@ -119,7 +119,7 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             ModelState.Remove("Input.Grade");
             Input!.Grade = "";
             ModelState.Remove("Input.Level");
-            Input!.Level = ""
+            Input!.Level = "";
         }
 
         await LoadBooksSelect();
@@ -260,7 +260,7 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         return triggerName switch
         {
             "Input.Subject" => SelectToSwap.Title | SelectToSwap.Grade | SelectToSwap.Level,
-            "Input.Title" => SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level,
+            "Input.Title" => SelectToSwap.Title | SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level,
             "Input.Grade" or "Input.Level" => SelectToSwap.Title,
             _ => SelectToSwap.None
         };
