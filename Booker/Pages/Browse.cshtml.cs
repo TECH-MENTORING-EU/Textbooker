@@ -15,6 +15,7 @@ namespace Booker.Pages
         private readonly UserManager<User> _userManager;
 
         public List<int> ItemIds { get; set; } = new();
+        public string? PriceFilterError { get; private set; }
         public StaticDataManager.Parameters Params { get; set; } =
             new(null, new List<Grade>(), null, null);
         public List<SelectListItem>? Grades { get; set; }
@@ -47,6 +48,21 @@ namespace Booker.Pages
         public async Task<IActionResult> OnGetAsync(int pageNumber)
         {
             await LoadSelects();
+
+            if (!ModelState.IsValid)
+            {
+                // The price inputs are type="text" with data-val="false", so malformed
+                // values ("1.234.567", "1..2") reach the server and fail the decimal
+                // binder here. The htmx swap replaces only .grid-gallery, so the error
+                // must be rendered inside that fragment instead of silently falling
+                // back to the unfiltered gallery.
+                const string error = "Nieprawidłowa cena. Wpisz kwotę, np. 12,50.";
+                PriceFilterError = error;
+
+                return Request.Headers.ContainsKey("HX-Request")
+                    ? Content($"<p>{error}</p>", "text/html")
+                    : Page();
+            }
 
             Params = await _staticDataManager.ConvertParametersAsync(
                 null,
