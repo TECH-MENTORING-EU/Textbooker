@@ -114,10 +114,12 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             // from the previously added book silently filtered the new subject's
             // titles down to "Brak dostępnych książek" (e.g. picking German after
             // a rozszerzenie math book hid every Welttour Deutsch title).
+            ModelState.Remove("Input.Title");
+            Input!.Title = "";
             ModelState.Remove("Input.Grade");
             Input!.Grade = "";
             ModelState.Remove("Input.Level");
-            Input!.Level = "";
+            Input!.Level = ""
         }
 
         await LoadBooksSelect();
