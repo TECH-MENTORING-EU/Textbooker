@@ -25,11 +25,6 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
     protected readonly UserManager<User> _userManager;
     protected readonly StaticDataManager _staticDataManager;
     protected readonly ItemManager _itemManager;
-
-    // Catalog entry standing in for books that are not in the catalog. It carries the
-    // "Brak" pseudo-subject, so it must never decide the subject for the user.
-    private const string OtherBookTitle = "Inna";
-
     public bool IsFirstLoad { get; set; } = false;
     public SelectToSwap SelectsToSwap { get; private set; } = SelectToSwap.None;
 
@@ -160,7 +155,8 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         );
 
         Books = books
-                .OrderBy(b => b.Title)
+                .OrderBy(b => b.Title == StaticDataManager.OtherBookTitle)
+                .ThenBy(b => b.Title)
                 .Select(b => b.Title)
                 .Distinct()
                 .Select(t => new SelectListItem
@@ -179,16 +175,15 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             });
         }
 
-        // "Inna" is the escape hatch for books missing from the catalog (the form
-        // hint points at it). Its subject is the "Brak" pseudo-subject, so the
-        // subject filter always hides it - re-add it so it stays reachable for
-        // every subject selection.
-        if (Books.All(b => b.Value != OtherBookTitle))
+        // "Inna" is the escape hatch for books missing from the catalog (the form hint
+        // points at it). Its row has level "Brak", so picking any other level filters it
+        // out - re-add it so it stays reachable.
+        if (Books.All(b => b.Value != StaticDataManager.OtherBookTitle))
         {
             Books.Add(new SelectListItem
             {
-                Value = OtherBookTitle,
-                Text = OtherBookTitle
+                Value = StaticDataManager.OtherBookTitle,
+                Text = StaticDataManager.OtherBookTitle
             });
         }
     }
@@ -251,9 +246,10 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
 
         // A picked title decides the subject, overwriting whatever was selected before -
         // otherwise a subject left over from an earlier pick keeps filtering the book
-        // list to a different subject than the title that is now selected. "Inna" is
-        // exempt: it belongs to no real subject and must leave the user's choice alone.
-        if (string.IsNullOrWhiteSpace(Input?.Title) || Input.Title == OtherBookTitle)
+        // list to a different subject than the title that is now selected. "Inna" has a
+        // row in every subject, so it never resolves to a single one and the subject the
+        // user picked stays.
+        if (string.IsNullOrWhiteSpace(Input?.Title))
             return;
 
         var bookSubjects = await _staticDataManager.GetSubjectsByBookTitleAsync(Input.Title);
@@ -298,8 +294,13 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         return triggerName switch
         {
             "Input.Subject" => SelectToSwap.Title | SelectToSwap.Grade | SelectToSwap.Level,
+            // Title is swapped too: a picked title may set the subject, and the title list
+            // has to be rebuilt for it (LoadBooksSelect never filters by the title itself).
             "Input.Title" => SelectToSwap.Title | SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level,
-            "Input.Grade" or "Input.Level" => SelectToSwap.Title,
+            // Grade/Level can narrow each other's list down to a single, auto-selected
+            // value (see LoadGradesSelect/LoadLevelsSelect), so both must be swapped
+            // alongside Title or the browser keeps a stale dependent value.
+            "Input.Grade" or "Input.Level" => SelectToSwap.Title | SelectToSwap.Grade | SelectToSwap.Level,
             _ => SelectToSwap.None
         };
     }

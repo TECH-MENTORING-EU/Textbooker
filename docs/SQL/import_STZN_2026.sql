@@ -416,6 +416,29 @@ WHERE NOT EXISTS (SELECT 1 FROM BookGrades bg WHERE bg.BookId = s.BookId AND bg.
 
 PRINT CONCAT(N'Dodane przypisania do klas: ', @@ROWCOUNT);
 
+-- 6c. Osobna pozycja "Inna" dla każdego przedmiotu (ta sama logika co migracja
+--     AddOtherBookPerSubject). Ogłoszenie zapisuje tylko BookId, więc bez takiej
+--     pozycji książka spoza katalogu nie mogłaby mieć przedmiotu innego niż "Brak".
+SET IDENTITY_INSERT Books ON;
+
+INSERT INTO Books (Id, Title, SubjectId, LevelId)
+SELECT -1000 - s.Id, N'Inna', s.Id, -1
+FROM Subjects s
+WHERE s.Id > 0
+  AND NOT EXISTS (SELECT 1 FROM Books b WHERE b.Title = N'Inna' AND b.SubjectId = s.Id);
+
+SET IDENTITY_INSERT Books OFF;
+
+INSERT INTO BookGrades (BookId, GradeId)
+SELECT b.Id, g.Id
+FROM Books b
+CROSS JOIN Grades g
+WHERE b.Id <= -1000
+  AND b.Title = N'Inna'
+  AND NOT EXISTS (SELECT 1 FROM BookGrades bg WHERE bg.BookId = b.Id AND bg.GradeId = g.Id);
+
+PRINT CONCAT(N'Przypisania klas dla pozycji "Inna": ', @@ROWCOUNT);
+
 COMMIT TRANSACTION;
 
 /* ---------------------------------------------------------------------------

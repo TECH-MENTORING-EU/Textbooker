@@ -11,6 +11,10 @@ public class StaticDataManager(DataContext context, IMemoryCache cache)
 {
     public record Parameters(string? Title, List<Grade> Grades, Subject? Subject, Level? Level);
 
+    // Catalog title for books missing from the catalog. Every subject has its own row with
+    // this title (all grades, level "Brak") - see migration AddOtherBookPerSubject.
+    public const string OtherBookTitle = "Inna";
+
 
     public async Task<Book?> GetBookAsync(int id) =>
         (await GetBooksAsync()).FirstOrDefault(b => b.Id == id);
@@ -60,10 +64,17 @@ public class StaticDataManager(DataContext context, IMemoryCache cache)
         return books.SelectMany(b => b.Grades).Distinct().ToList();
     }
 
+    // "Inna" rows are left out: they span every grade, so counting them would offer
+    // grades no real book of the subject has.
     public async Task<List<Grade>> GetGradesByParamsAsync(Parameters input)
     {
         var books = await GetBooksByParamsAsync(input);
-        return books.SelectMany(b => b.Grades).Distinct().OrderBy(g => g.Id).ToList();
+        return books
+            .Where(b => b.Title != OtherBookTitle)
+            .SelectMany(b => b.Grades)
+            .Distinct()
+            .OrderBy(g => g.Id)
+            .ToList();
     }
 
     public async Task<List<Subject>> GetSubjectsAsync()
@@ -102,10 +113,17 @@ public class StaticDataManager(DataContext context, IMemoryCache cache)
         return books.Select(b => b.Level).Distinct().ToList();
     }
 
+    // "Inna" rows are left out for the same reason as in GetGradesByParamsAsync: their
+    // "Brak" level would show up for every subject.
     public async Task<List<Level>> GetLevelsByParamsAsync(Parameters input)
     {
         var books = await GetBooksByParamsAsync(input);
-        return books.Select(b => b.Level).Distinct().OrderBy(l => l.Id).ToList();
+        return books
+            .Where(b => b.Title != OtherBookTitle)
+            .Select(b => b.Level)
+            .Distinct()
+            .OrderBy(l => l.Id)
+            .ToList();
     }
 
     public async Task<Parameters> ConvertParametersAsync(string? title, string? grades, string? subject, string? level)
