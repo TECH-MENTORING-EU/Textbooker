@@ -2,7 +2,7 @@
     document.querySelectorAll("textarea").forEach(textarea => {
         const updateCount = () => {
             const counter = textarea.nextElementSibling?.querySelector(".char-count");
-            if (counter) counter.textContent = `${textarea.value.length} / ${textarea.maxLength || 200}`;
+            if (counter) counter.textContent = `${textarea.value.length} / ${textarea.maxLength}`;
         };
         textarea.addEventListener("input", updateCount);
         updateCount();
