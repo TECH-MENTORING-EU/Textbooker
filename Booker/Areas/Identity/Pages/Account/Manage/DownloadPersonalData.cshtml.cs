@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Booker.Data;
 using Booker.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -17,6 +18,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Booker.Areas.Identity.Pages.Account.Manage
 {
+    [Authorize]
     public class DownloadPersonalDataModel : PageModel
     {
         private readonly UserManager<User> _userManager;
