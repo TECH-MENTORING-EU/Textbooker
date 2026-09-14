@@ -22,6 +22,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
         private readonly FavoritesManager _favoritesManager;
         private readonly UserPhotoManager _userPhotoManager;
         private readonly DataContext _context;
+        private readonly ItemManager _itemManager;
 
         public DeletePersonalDataModel(
             UserManager<User> userManager,
@@ -29,7 +30,8 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             ILogger<DeletePersonalDataModel> logger,
             FavoritesManager favoritesManager,
             UserPhotoManager userPhotoManager,
-            DataContext context)
+            DataContext context,
+            ItemManager itemManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -37,6 +39,7 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             _favoritesManager = favoritesManager;
             _userPhotoManager = userPhotoManager;
             _context = context;
+            _itemManager = itemManager;
         }
 
         /// <summary>
@@ -109,6 +112,10 @@ namespace Booker.Areas.Identity.Pages.Account.Manage
             await using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 await _favoritesManager.RemoveAllFavoritesAsync(user.Id);
+
+                // The ItemView-to-user FK is NO ACTION in the database, so views must be
+                // removed explicitly before the account is deleted.
+                await _itemManager.DeleteViewsByUserAsync(user.Id);
 
                 var result = await _userManager.DeleteAsync(user);
                 if (!result.Succeeded)
