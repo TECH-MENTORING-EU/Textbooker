@@ -1,35 +1,16 @@
-using System;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
-using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Booker.Authorization;
 
-public class AdminHiddenAuthorizationRequirement : IAuthorizationRequirement, IAuthorizationHandler
+/// <summary>
+/// Marks a request as subject to the hidden-admin convention: admins pass,
+/// everyone else gets a bare 404 (see <see cref="AdminHiddenAuthorizationHandler"/>).
+/// </summary>
+public class AdminHiddenAuthorizationRequirement : IAuthorizationRequirement
 {
-    public Task HandleAsync(AuthorizationHandlerContext context)
-    {
-        if (!context.User.IsInRole("Admin"))
-        {
-            if (context.Resource is AuthorizationFilterContext afc)
-            {
-                afc.HttpContext.Response.StatusCode = 404;
-                afc.HttpContext.Items["HideUnauthorized"] = true;
-                afc.Result = new NotFoundResult();
-            }
-            else if (context.Resource is HttpContext hc)
-            {
-                hc.Response.StatusCode = 404;
-                hc.Items["HideUnauthorized"] = true;
-            }
-            context.Fail();
-        }
-        else
-        {
-            context.Succeed(this);
-        }
-        return Task.CompletedTask;
-    }
+    /// <summary>
+    /// HttpContext.Items key the handler sets so the cookie redirect overrides
+    /// in StartupUtilities return a bare 404 instead of a redirect.
+    /// </summary>
+    public const string HideUnauthorizedItemKey = "HideUnauthorized";
 }
