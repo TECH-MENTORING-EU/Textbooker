@@ -25,6 +25,11 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
     protected readonly UserManager<User> _userManager;
     protected readonly StaticDataManager _staticDataManager;
     protected readonly ItemManager _itemManager;
+
+    // Catalog entry standing in for books that are not in the catalog. It carries the
+    // "Brak" pseudo-subject, so it must never decide the subject for the user.
+    private const string OtherBookTitle = "Inna";
+
     public bool IsFirstLoad { get; set; } = false;
     public SelectToSwap SelectsToSwap { get; private set; } = SelectToSwap.None;
 
@@ -98,6 +103,8 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
     {
         if (trigger == "Input.Title" && string.IsNullOrWhiteSpace(Input?.Title))
         {
+            // "Wybierz książkę" starts over. The subject only ever narrowed the book
+            // list, so it is cleared with the rest and every title becomes reachable.
             ModelState.Remove("Input.Title");
             Input!.Title = "";
             ModelState.Remove("Input.Grade");
@@ -122,9 +129,11 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             Input!.Level = "";
         }
 
+        // Subjects run first so a title-derived subject (see LoadSubjectsSelect) is
+        // already set by the time the other three selects get filtered by it.
+        await LoadSubjectsSelect();
         await LoadBooksSelect();
         await LoadGradesSelect();
-        await LoadSubjectsSelect();
         await LoadLevelsSelect();
 
         Books.ForEach(b => b.Selected = b.Value == Input?.Title);
@@ -135,12 +144,18 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
 
     private async Task LoadBooksSelect()
     {
+        // No select is filtered by its own value, so the title is left out here.
+        // Grade and level go with it once a title is picked: both are then only
+        // echoes of that title, and filtering by them would collapse the list to
+        // the one book already selected instead of the whole subject.
+        var isTitleSet = !string.IsNullOrWhiteSpace(Input?.Title);
+
         var books = await _staticDataManager.GetBooksByParamsAsync(
             await _staticDataManager.ConvertParametersAsync(
-                Input?.Title,
-                Input?.Grade,
+                null,
+                isTitleSet ? null : Input?.Grade,
                 Input?.Subject,
-                Input?.Level
+                isTitleSet ? null : Input?.Level
             )
         );
 
@@ -168,50 +183,60 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         // hint points at it). Its subject is the "Brak" pseudo-subject, so the
         // subject filter always hides it - re-add it so it stays reachable for
         // every subject selection.
-        if (Books.All(b => b.Value != "Inna"))
+        if (Books.All(b => b.Value != OtherBookTitle))
         {
             Books.Add(new SelectListItem
             {
-                Value = "Inna",
-                Text = "Inna"
+                Value = OtherBookTitle,
+                Text = OtherBookTitle
             });
         }
     }
     
     private async Task LoadGradesSelect()
     {
-        var isTitleSet = !string.IsNullOrWhiteSpace(Input?.Title);
-
-        var grades = await (isTitleSet
-            ? _staticDataManager.GetGradesByBookTitleAsync(Input!.Title)
-            : _staticDataManager.GetGradesAsync());
-
-        if (isTitleSet)
-        {
-            Grades =
-            [
-                new SelectListItem
-                {
-                    Value = string.Join(',',grades.Select(g => g.GradeNumber)),
-                    Text = $"Klasa {string.Join(" / ", grades.Select(g => g.GradeNumber))}",
-                    Selected = true
-                }
-            ];
-        }
-        else
-        {
-            Grades = grades.Select(g => new SelectListItem
-            {
-                Value = g.GradeNumber,
-                Text = $"Klasa {g.GradeNumber}."
-            }).ToList();
-        }
+        Grades = string.IsNullOrWhiteSpace(Input?.Title)
+            ? await BuildGradeOptionsForSubject()
+            : await BuildGradeOptionsForTitle(Input.Title);
 
         if (Grades.Count == 1)
+        {
+            ModelState.Remove("Input.Grade");
+            Input!.Grade = Grades[0].Value;
+        }
+    }
+
+    // A book spans a fixed set of grades, so the select collapses to that one span.
+    private async Task<List<SelectListItem>> BuildGradeOptionsForTitle(string title)
+    {
+        var gradeNumbers = (await _staticDataManager.GetGradesByBookTitleAsync(title))
+            .Select(g => g.GradeNumber)
+            .ToList();
+
+        return
+        [
+            new SelectListItem
             {
-                ModelState.Remove("Input.Grade");
-                Input!.Grade = Grades[0].Value;
+                Value = string.Join(',', gradeNumbers),
+                Text = $"Klasa {string.Join(" / ", gradeNumbers)}",
+                Selected = true
             }
+        ];
+    }
+
+    // Only grades that some book of the selected subject is actually taught in.
+    // Offering the rest would let the user filter the book list down to nothing.
+    private async Task<List<SelectListItem>> BuildGradeOptionsForSubject()
+    {
+        var grades = await _staticDataManager.GetGradesByParamsAsync(
+            await _staticDataManager.ConvertParametersAsync(null, null, Input?.Subject, Input?.Level)
+        );
+
+        return grades.Select(g => new SelectListItem
+        {
+            Value = g.GradeNumber,
+            Text = $"Klasa {g.GradeNumber}."
+        }).ToList();
     }
 
     private async Task LoadSubjectsSelect()
@@ -224,22 +249,26 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             Text = s.Name
         }).ToList();
 
-        if (!string.IsNullOrWhiteSpace(Input?.Title))
-        {
-            var bookSubjects = await _staticDataManager.GetSubjectsByBookTitleAsync(Input.Title);
-            if (bookSubjects.Count == 1)
-            {
-                ModelState.Remove("Input.Subject");
-                Input!.Subject = bookSubjects[0].Name;
-            }
-        }
+        // A picked title decides the subject, overwriting whatever was selected before -
+        // otherwise a subject left over from an earlier pick keeps filtering the book
+        // list to a different subject than the title that is now selected. "Inna" is
+        // exempt: it belongs to no real subject and must leave the user's choice alone.
+        if (string.IsNullOrWhiteSpace(Input?.Title) || Input.Title == OtherBookTitle)
+            return;
+
+        var bookSubjects = await _staticDataManager.GetSubjectsByBookTitleAsync(Input.Title);
+        if (bookSubjects.Count != 1)
+            return;
+
+        ModelState.Remove("Input.Subject");
+        Input.Subject = bookSubjects[0].Name;
     }
 
     private async Task LoadLevelsSelect()
     {
-        var levels = await (string.IsNullOrWhiteSpace(Input?.Title)
-            ? _staticDataManager.GetLevelsAsync()
-            : _staticDataManager.GetLevelsByBookTitleAsync(Input.Title));
+        var levels = string.IsNullOrWhiteSpace(Input?.Title)
+            ? await GetLevelsForSubject()
+            : await _staticDataManager.GetLevelsByBookTitleAsync(Input.Title);
 
         Levels = levels.Select(l => new SelectListItem
         {
@@ -253,6 +282,13 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             Input!.Level = Levels[0].Value;
         }
     }
+
+    // Only the levels the selected subject is actually published at - every German book
+    // is "Podstawa+Rozszerzenie", so offering "Podstawa" would empty the book list.
+    private async Task<List<Level>> GetLevelsForSubject() =>
+        await _staticDataManager.GetLevelsByParamsAsync(
+            await _staticDataManager.ConvertParametersAsync(null, Input?.Grade, Input?.Subject, null)
+        );
 
     private static SelectToSwap GetSelectsToSwap(string triggerName, bool firstLoad)
     {

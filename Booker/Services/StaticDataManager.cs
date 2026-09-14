@@ -60,6 +60,12 @@ public class StaticDataManager(DataContext context, IMemoryCache cache)
         return books.SelectMany(b => b.Grades).Distinct().ToList();
     }
 
+    public async Task<List<Grade>> GetGradesByParamsAsync(Parameters input)
+    {
+        var books = await GetBooksByParamsAsync(input);
+        return books.SelectMany(b => b.Grades).Distinct().OrderBy(g => g.Id).ToList();
+    }
+
     public async Task<List<Subject>> GetSubjectsAsync()
     {
         if (!cache.TryGetValue("subjects", out List<Subject>? subjects))
@@ -94,6 +100,12 @@ public class StaticDataManager(DataContext context, IMemoryCache cache)
     {
         var books = await GetBooksByTitleAsync(title);
         return books.Select(b => b.Level).Distinct().ToList();
+    }
+
+    public async Task<List<Level>> GetLevelsByParamsAsync(Parameters input)
+    {
+        var books = await GetBooksByParamsAsync(input);
+        return books.Select(b => b.Level).Distinct().OrderBy(l => l.Id).ToList();
     }
 
     public async Task<Parameters> ConvertParametersAsync(string? title, string? grades, string? subject, string? level)
