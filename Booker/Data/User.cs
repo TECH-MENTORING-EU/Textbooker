@@ -69,7 +69,22 @@ namespace Booker.Data
         [PersonalData]
         public string? TermsAcceptedVersion { get; set; }
 
+        // RODO - Phase 1: Timestamp of the user's self-declared age confirmation
+        // ("Mam co najmniej 16 lat" checkbox at registration). Set only when the
+        // user confirms they are at least 16 - null means they did not confirm,
+        // i.e. they are treated as a minor requiring guardian consent.
         [PersonalData]
         public DateTime? AgeConfirmationAcceptedAt { get; set; }
+
+        // RODO - Phase 1: Guardian consent for minors (<16 years).
+        public GuardianConsent? GuardianConsent { get; set; }
+
+        /// <summary>
+        /// Idempotency marker for the one-time "account activated" welcome email.
+        /// Set atomically (see GuardianConsentService.TryClaimWelcomeEmailAsync) the first
+        /// time either activation path (student email confirmation or guardian consent
+        /// confirmation) claims the send, so a race between the two can never send it twice.
+        /// </summary>
+        public DateTime? WelcomeEmailSentAtUtc { get; set; }
     }
 }

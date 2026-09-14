@@ -21,10 +21,12 @@
             <input asp-for="Input.Password" autocomplete="current-password" required placeholder="Hasło" aria-describedby="Input_Password-error" />
             <small id="Input_Password-help"><span asp-validation-for="Input.Password" id="Input_Password-error"></span></small>
         </div>
-        <div class="form-check">
-            <input asp-for="Input.RememberMe" />
-            <label asp-for="Input.RememberMe" class="form-check-label">Zapamiętaj mnie</label>
-        </div>
+        <fieldset>
+            <label asp-for="Input.RememberMe">
+                <input asp-for="Input.RememberMe" />
+                Zapamiętaj mnie
+            </label>
+        </fieldset>
         <div>
             <button id="login-submit" type="submit">Zaloguj się</button>
         </div>

@@ -8,7 +8,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Booker.Data;
+using Booker.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
@@ -17,12 +20,23 @@ namespace Booker.Areas.Identity.Pages.Account
 {
     public class ConfirmEmailModel : PageModel
     {
+        private readonly DataContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly GuardianConsentService _consentService;
+        private readonly IWelcomeEmailQueue _welcomeEmailQueue;
         private readonly ILogger<ConfirmEmailModel> _logger;
 
-        public ConfirmEmailModel(UserManager<User> userManager, ILogger<ConfirmEmailModel> logger)
+        public ConfirmEmailModel(
+            DataContext context,
+            UserManager<User> userManager,
+            GuardianConsentService consentService,
+            IWelcomeEmailQueue welcomeEmailQueue,
+            ILogger<ConfirmEmailModel> logger)
         {
+            _context = context;
             _userManager = userManager;
+            _consentService = consentService;
+            _welcomeEmailQueue = welcomeEmailQueue;
             _logger = logger;
         }
 
@@ -32,6 +46,10 @@ namespace Booker.Areas.Identity.Pages.Account
         /// </summary>
         [TempData]
         public string StatusMessage { get; set; }
+
+        public string DisplayMessage { get; set; }
+        public bool CanManageProfile { get; private set; }
+
         public async Task<IActionResult> OnGetAsync(string userId, string code)
         {
             if (userId == null || code == null)
@@ -47,26 +65,85 @@ namespace Booker.Areas.Identity.Pages.Account
 
             if (user.EmailConfirmed)
             {
+                var existingConsent = await _consentService.GetConsentAsync(user.Id);
+                if (existingConsent?.ConfirmedAtUtc.HasValue == false)
+                {
+                    StatusMessage = "Twój adres e-mail został potwierdzony. Czekamy jeszcze na zgodę opiekuna, aby aktywować konto.";
+                    CanManageProfile = false;
+                    return Page();
+                }
+
                 StatusMessage = "Email jest już potwierdzony. Możesz się zalogować.";
+                CanManageProfile = user.IsVisible;
                 return Page();
             }
 
-            code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            try
+            {
+                code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            }
+            catch (FormatException)
+            {
+                _logger.LogWarning("Email confirmation received an invalid token format for userId {UserId}.", userId);
+                StatusMessage = "Błąd aktywacji konta. Link jest nieprawidłowy albo wygasł.";
+                return Page();
+            }
+
             var result = await _userManager.ConfirmEmailAsync(user, code);
 
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
-                StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+                var errors = string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                _logger.LogWarning(
+                    "Email confirmation failed for userId {UserId}. Errors: {Errors}",
+                    userId,
+                    errors);
+
+                StatusMessage = "Błąd aktywacji konta. Link mógł wygasnąć albo został już użyty.";
                 return Page();
             }
 
-            var errors = string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
-            _logger.LogWarning(
-                "Email confirmation failed for userId {UserId}. Errors: {Errors}",
-                userId,
-                errors);
+            CanManageProfile = user.IsVisible;
 
-            StatusMessage = "Błąd aktywacji konta. Link mógł wygasnąć albo został już użyty.";
+            // RODO - Phase 3: For minors, activation requires BOTH the student's own email
+            // confirmation (verified here) AND the guardian's consent confirmation.
+            // Marking the student's email as confirmed does not, by itself, use the guardian's
+            // address for anything - it independently verifies the student owns their address.
+            var consent = await _consentService.GetConsentAsync(user.Id);
+            if (consent == null)
+            {
+                // Adult (no guardian-consent record): email confirmation alone activates the
+                // account, so send the same one-time welcome email as the minor path below.
+                StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+
+                if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
+                {
+                    _welcomeEmailQueue.QueueWelcomeEmail(user.Email);
+                }
+
+                return Page();
+            }
+
+            if (consent.ConfirmedAtUtc.HasValue)
+            {
+                await _context.Users
+                    .Where(u => u.Id == user.Id)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.IsVisible, true));
+                CanManageProfile = true;
+                StatusMessage = "Twoje konto zostało pomyślnie aktywowane😉.";
+
+                // Claiming the send atomically prevents a double welcome email when this
+                // path races with the guardian-consent confirmation path.
+                if (await _consentService.TryClaimWelcomeEmailAsync(user.Id))
+                {
+                    _welcomeEmailQueue.QueueWelcomeEmail(user.Email);
+                }
+            }
+            else
+            {
+                StatusMessage = "Twój adres e-mail został potwierdzony. Czekamy jeszcze na zgodę opiekuna, aby aktywować konto.";
+            }
+
             return Page();
         }
     }
