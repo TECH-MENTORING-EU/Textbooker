@@ -12,7 +12,8 @@
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@(Model.SelectsToSwap.HasFlag(Shared.SelectToSwap.Title) ? "true" : null)"
 >
     <option value="">Wybierz książkę</option>
 </select>
@@ -21,7 +22,8 @@
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@(Model.SelectsToSwap.HasFlag(Shared.SelectToSwap.Subject) ? "true" : null)"
 >
     <option value="" disabled="@(Model.Subjects?.Count == 1)">Wybierz przedmiot</option>
 </select>
@@ -30,7 +32,8 @@
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@(Model.SelectsToSwap.HasFlag(Shared.SelectToSwap.Grade) ? "true" : null)"
 >
     <option value="" disabled="@(Model.Grades?.Count == 1)">Wybierz klasę</option>
 </select>
@@ -39,7 +42,8 @@
         hx-get="?handler=Params"
         hx-trigger="change"
         hx-include="@include"
-        hx-swap-oob="true"
+        hx-swap="none"
+        hx-swap-oob="@(Model.SelectsToSwap.HasFlag(Shared.SelectToSwap.Level) ? "true" : null)"
 >
     <option value="" disabled="@(Model.Levels?.Count == 1)">Wybierz poziom</option>
 </select>

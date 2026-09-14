@@ -10,12 +10,27 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Booker.Pages.Shared;
 
+[Flags]
+public enum SelectToSwap
+{
+    None = 0,
+    Title = 1,
+    Subject = 2,
+    Grade = 4,
+    Level = 8
+}
+
 public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInputModel
 {
     protected readonly UserManager<User> _userManager;
     protected readonly StaticDataManager _staticDataManager;
     protected readonly ItemManager _itemManager;
     public bool IsFirstLoad { get; set; } = false;
+    public SelectToSwap SelectsToSwap { get; private set; } = SelectToSwap.None;
+
+    // Name attribute of the select that fired the current Params request
+    // (from the HX-Trigger-Name header); empty on the initial firstLoad call.
+    public string TriggerName { get; private set; } = string.Empty;
 
     [BindProperty]
     public T? Input { get; set; }
@@ -39,7 +54,11 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
         Input = input;
 
         IsFirstLoad = firstLoad;
-        await LoadSelects(Request.Headers.ContainsKey("HX-Trigger-Name") ? Request.Headers["HX-Trigger-Name"].ToString() : string.Empty);
+        TriggerName = Request.Headers.TryGetValue("HX-Trigger-Name", out var triggerName)
+            ? triggerName.ToString()
+            : string.Empty;
+        SelectsToSwap = GetSelectsToSwap(TriggerName, firstLoad);
+        await LoadSelects(TriggerName);
         return Partial("_FormSelects", this);
     }
 
@@ -89,6 +108,20 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             Input!.Level = "";
         }
 
+        if (trigger == "Input.Subject")
+        {
+            // A new subject starts a fresh selection. Grade and level left over
+            // from the previously added book silently filtered the new subject's
+            // titles down to "Brak dostępnych książek" (e.g. picking German after
+            // a rozszerzenie math book hid every Welttour Deutsch title).
+            ModelState.Remove("Input.Title");
+            Input!.Title = "";
+            ModelState.Remove("Input.Grade");
+            Input!.Grade = "";
+            ModelState.Remove("Input.Level");
+            Input!.Level = ""
+        }
+
         await LoadBooksSelect();
         await LoadGradesSelect();
         await LoadSubjectsSelect();
@@ -128,6 +161,19 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
                 Value = "null",
                 Text = "Brak dostępnych książek",
                 Disabled = true
+            });
+        }
+
+        // "Inna" is the escape hatch for books missing from the catalog (the form
+        // hint points at it). Its subject is the "Brak" pseudo-subject, so the
+        // subject filter always hides it - re-add it so it stays reachable for
+        // every subject selection.
+        if (Books.All(b => b.Value != "Inna"))
+        {
+            Books.Add(new SelectListItem
+            {
+                Value = "Inna",
+                Text = "Inna"
             });
         }
     }
@@ -205,6 +251,20 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             Input!.Level = Levels[0].Value;
         }
     }
+
+    private static SelectToSwap GetSelectsToSwap(string triggerName, bool firstLoad)
+    {
+        if (firstLoad)
+            return SelectToSwap.Title | SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level;
+
+        return triggerName switch
+        {
+            "Input.Subject" => SelectToSwap.Title | SelectToSwap.Grade | SelectToSwap.Level,
+            "Input.Title" => SelectToSwap.Subject | SelectToSwap.Grade | SelectToSwap.Level,
+            "Input.Grade" or "Input.Level" => SelectToSwap.Title,
+            _ => SelectToSwap.None
+        };
+    }
 }
 
 public interface IBookForm
@@ -215,4 +275,6 @@ public interface IBookForm
     List<SelectListItem> Grades { get; }
     List<SelectListItem> Levels { get; }
     bool IsFirstLoad { get; }
+    string TriggerName { get; }
+    SelectToSwap SelectsToSwap { get; }
 }
