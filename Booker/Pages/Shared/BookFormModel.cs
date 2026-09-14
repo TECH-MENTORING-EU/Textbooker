@@ -186,8 +186,18 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
                 Text = StaticDataManager.OtherBookTitle
             });
         }
+
+        // Same as the grade and level selects: a single option is picked for the user.
+        // This matters for a subject whose only book is "Inna" (e.g. "Brak" on STZN) -
+        // without a title the grade and level selects would have nothing to offer.
+        // A dead end ("Brak dostępnych książek" + "Inna") has two entries and is skipped.
+        if (!isTitleSet && Books.Count == 1)
+        {
+            ModelState.Remove("Input.Title");
+            Input!.Title = Books[0].Value;
+        }
     }
-    
+
     private async Task LoadGradesSelect()
     {
         Grades = string.IsNullOrWhiteSpace(Input?.Title)
