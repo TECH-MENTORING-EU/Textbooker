@@ -28,3 +28,30 @@
     <p>Ogółem: @Model.TotalSchoolCount</p>
 </article>
 
+<article>
+    <header>
+        <h3>Uczniowie wg szkoły</h3>
+    </header>
+    <p class="table-scroll-hint" id="school-users-table-hint">Przewiń tabelę poziomo, aby zobaczyć wszystkie kolumny.</p>
+    <div class="table-scroll" role="region" aria-label="Tabela liczby uczniów wg szkoły" aria-describedby="school-users-table-hint" tabindex="0">
+    <table id="school-users-table">
+        <caption class="visually-hidden">Liczba uczniów przypisanych do każdej szkoły</caption>
+        <thead>
+            <tr>
+                <th scope="col">Szkoła</th>
+                <th scope="col">Liczba uczniów</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var school in Model.SchoolsWithUserCount)
+            {
+                <tr>
+                    <td>@school.School.Name</td>
+                    <td>@school.UserCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </div>
+</article>
+

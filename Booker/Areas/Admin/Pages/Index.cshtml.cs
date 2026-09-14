@@ -13,12 +13,14 @@ namespace Booker.Areas.Admin.Pages
         private readonly UserManager<User> _userManager;
         private readonly ItemManager _itemManager;
         private readonly DataContext _context;
+        private readonly SchoolService _schoolService;
 
-        public IndexModel(UserManager<User> userManager, ItemManager itemManager, DataContext context)
+        public IndexModel(UserManager<User> userManager, ItemManager itemManager, DataContext context, SchoolService schoolService)
         {
             _userManager = userManager;
             _itemManager = itemManager;
             _context = context;
+            _schoolService = schoolService;
         }
 
         public int TotalUserCount { get; set; }
@@ -30,6 +32,7 @@ namespace Booker.Areas.Admin.Pages
         public int TodayItemCount { get; set; }
         public int TotalSchoolCount { get; set; }
 
+        public List<SchoolWithUserCount> SchoolsWithUserCount { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -44,6 +47,8 @@ namespace Booker.Areas.Admin.Pages
 
             TotalItemCount = await _itemManager.GetAllItemsCountAsync(null); // Admin sees all items across all schools
             TotalSchoolCount = await _context.Schools.CountAsync();
+
+            SchoolsWithUserCount = await _schoolService.GetSchoolsWithUserCountAsync();
 
             return Page();
         }
