@@ -216,9 +216,7 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
 
     private async Task LoadSubjectsSelect()
     {
-        var subjects = await (string.IsNullOrWhiteSpace(Input?.Title)
-            ? _staticDataManager.GetSubjectsAsync()
-            : _staticDataManager.GetSubjectsByBookTitleAsync(Input.Title));
+        var subjects = await _staticDataManager.GetSubjectsAsync();
 
         Subjects = subjects.Select(s => new SelectListItem
         {
@@ -226,10 +224,14 @@ public abstract class BookFormModel<T> : PageModel, IBookForm where T : ItemInpu
             Text = s.Name
         }).ToList();
 
-        if (Subjects.Count == 1)
+        if (!string.IsNullOrWhiteSpace(Input?.Title))
         {
-            ModelState.Remove("Input.Subject");
-            Input!.Subject = Subjects[0].Value;
+            var bookSubjects = await _staticDataManager.GetSubjectsByBookTitleAsync(Input.Title);
+            if (bookSubjects.Count == 1)
+            {
+                ModelState.Remove("Input.Subject");
+                Input!.Subject = bookSubjects[0].Name;
+            }
         }
     }
 
