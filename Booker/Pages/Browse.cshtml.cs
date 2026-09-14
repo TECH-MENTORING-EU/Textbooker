@@ -1,10 +1,8 @@
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Booker.Services;
-using Microsoft.AspNetCore.Identity;
 
 namespace Booker.Pages
 {
@@ -12,9 +10,9 @@ namespace Booker.Pages
     {
         private readonly ItemManager _itemManager;
         private readonly StaticDataManager _staticDataManager;
-        private readonly UserManager<User> _userManager;
 
-        public List<int> ItemIds { get; set; } = new();
+        public ItemManager.Parameters ItemFilters { get; set; } =
+            new(null, new List<Grade>(), null, null, null, null);
         public StaticDataManager.Parameters Params { get; set; } =
             new(null, new List<Grade>(), null, null);
         public List<SelectListItem>? Grades { get; set; }
@@ -23,13 +21,11 @@ namespace Booker.Pages
 
         public BrowseModel(
             ItemManager itemManager,
-            StaticDataManager staticDataManager,
-            UserManager<User> userManager
+            StaticDataManager staticDataManager
             )
         {
             _itemManager = itemManager;
             _staticDataManager = staticDataManager;
-            _userManager = userManager;
         }
 
         [FromQuery]
@@ -55,7 +51,7 @@ namespace Booker.Pages
                 Input?.Level
             );
 
-            var params2 = new ItemManager.Parameters(
+            ItemFilters = new ItemManager.Parameters(
                 Input?.Search,
                 Params.Grades,
                 Params.Subject,
@@ -64,17 +60,11 @@ namespace Booker.Pages
                 Input?.MaxPrice
             );
 
-            var currentUser = User.Identity?.IsAuthenticated == true
-                ? await _userManager.GetUserAsync(User)
-                : null;
-
-            ItemIds = await _itemManager.GetItemIdsByParamsAsync(params2, currentUser).ToListAsync();
-
             if (Request.Headers.ContainsKey("HX-Request"))
             {
                 return ViewComponent("ItemGallery", new
                 {
-                    itemIds = ItemIds,
+                    itemFilters = ItemFilters,
                     parameters = Params,
                     pageNumber = pageNumber
                 });

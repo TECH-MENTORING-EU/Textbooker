@@ -4,6 +4,7 @@ using Booker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booker.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260826105810_AddItemListingIndexes")]
+    partial class AddItemListingIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -854,51 +857,6 @@ namespace Booker.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Booker.Data.AdminActionLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ActionType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("AdminUserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AdminUserName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Parameters")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TargetId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TargetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TargetType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminUserName");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.ToTable("AdminActionLogs");
-                });
-
             modelBuilder.Entity("Booker.Data.Book", b =>
                 {
                     b.Property<int>("Id")
@@ -1574,49 +1532,6 @@ namespace Booker.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Booker.Data.GuardianConsent", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ConfirmationIpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
-
-                    b.Property<DateTime?>("ConfirmedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("GuardianEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<DateTime>("RequestedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpiresAtUtc");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("GuardianConsents");
-                });
-
             modelBuilder.Entity("Booker.Data.Item", b =>
                 {
                     b.Property<int>("Id")
@@ -1637,9 +1552,6 @@ namespace Booker.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("FlaggedForReview")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
@@ -1893,9 +1805,6 @@ namespace Booker.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("AgeConfirmationAcceptedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<bool>("AreFavoritesPublic")
                         .HasColumnType("bit");
 
@@ -1909,16 +1818,7 @@ namespace Booker.Migrations
                     b.Property<bool>("DisplayEmail")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("DisplayInstagram")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("DisplayMessenger")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("DisplayPhone")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("DisplaySchool")
                         .HasColumnType("bit");
 
                     b.Property<bool>("DisplayWhatsapp")
@@ -1975,21 +1875,12 @@ namespace Booker.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("TermsAcceptedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TermsAcceptedVersion")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<DateTime?>("WelcomeEmailSentAtUtc")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -2192,17 +2083,6 @@ namespace Booker.Migrations
                     b.Navigation("Subject");
                 });
 
-            modelBuilder.Entity("Booker.Data.GuardianConsent", b =>
-                {
-                    b.HasOne("Booker.Data.User", "User")
-                        .WithOne("GuardianConsent")
-                        .HasForeignKey("Booker.Data.GuardianConsent", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Booker.Data.Item", b =>
                 {
                     b.HasOne("Booker.Data.Book", "Book")
@@ -2334,8 +2214,6 @@ namespace Booker.Migrations
 
             modelBuilder.Entity("Booker.Data.User", b =>
                 {
-                    b.Navigation("GuardianConsent");
-
                     b.Navigation("ItemViews");
 
                     b.Navigation("Items");

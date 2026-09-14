@@ -1,7 +1,6 @@
 using Booker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Booker.Services;
 using Microsoft.AspNetCore.Identity;
 
@@ -41,34 +40,19 @@ namespace Booker.Pages
                 ? await _userManager.GetUserAsync(User)
                 : null;
 
-            var params2 = new ItemManager.Parameters(
-                Search: null,
-                Grades: new(),
-                Subject: null,
-                Level: null,
-                MinPrice: null,
-                MaxPrice: null
-            );
+            // One query feeds both the hero and the gallery; hidden items are
+            // excluded in SQL so the landing page always shows a full set.
+            var landingItems = await _itemManager.GetRecentItemsAsync(12, currentUser);
 
-            var landingItemIds = await _itemManager
-                .GetItemIdsByParamsAsync(params2, currentUser)
-                .Take(12)
-                .ToListAsync();
+            RecentItemIds = landingItems.Take(8).Select(i => i.Id).ToList();
 
-            RecentItemIds = landingItemIds.Take(8).ToList();
-
-            HeroItems = await _itemManager
-                .GetItemsByIdsAsync(landingItemIds, currentUser)
-                .Where(i => i.IsVisible)
-                .Take(12)
-                .Select(i => new HeroItem(
-                    i.Book.Title,
-                    i.Price.ToString("F2") + " zł",
-                    i.Photo != null && i.Photo.Length > 0
-                        ? _photosManager.GetPhotoUrl(i.Photo.Split(';')[0].Trim())
-                        : ""
-                ))
-                .ToListAsync();
+            HeroItems = landingItems.Select(i => new HeroItem(
+                i.Book.Title,
+                i.Price.ToString("F2") + " zł",
+                !string.IsNullOrEmpty(i.Photo)
+                    ? _photosManager.GetPhotoUrl(i.Photo.Split(';')[0].Trim())
+                    : ""
+            )).ToList();
 
             return Page();
         }
