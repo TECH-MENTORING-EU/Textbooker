@@ -303,6 +303,8 @@
                         CreatedAt = DateTime.Now.AddDays(-(Random.Shared.Next(7 * 24 * 60) / (24 * 60.0))),
                         Description = "Książka w dobrym stanie, prawie nie używana, nie zalana, rogi delikatnie zagięte, polecam kebab Zahir i pytam czy idziecie na sylwestra do zduniaka.",
                         State = "bardzo dobry",
+                        // A root-relative asset passes GetPhotoUrl trust checks; a foreign absolute
+                        // URL (the previous Unsplash link) would render as the default placeholder.
                         Photo = "/img/default-book.svg"
                     };
                 })

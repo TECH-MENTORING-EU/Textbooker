@@ -1,12 +1,13 @@
 ﻿@model Profile.IndexModel.UserModel
 @using Profile
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject Booker.Services.PhotosManager PhotosManager
 
 @{
     var profilePhotosEnabled = Configuration.GetValue<bool>("Features:ProfilePhotosEnabled");
     var defaultAvatarPath = Configuration.GetValue<string>("Features:DefaultProfilePicturePath") ?? "/img/default-profile-picture.jpg";
-    var profilePhotoUrl = profilePhotosEnabled && !string.IsNullOrWhiteSpace(Model.RequestUser.Photo)
-        ? Model.RequestUser.Photo
+    var profilePhotoUrl = profilePhotosEnabled
+        ? PhotosManager.GetPhotoUrl(Model.RequestUser.Photo, defaultAvatarPath)
         : defaultAvatarPath;
 }
 
@@ -24,7 +25,7 @@
             {
                 <p>
                     <small>
-                        Twoja szkoła: <strong>@Model.SchoolName</strong> (nie można jej zmienić — zmiana
+                        Twoja szkoła: <strong>@Model.SchoolName</strong> (nie można jej zmienić - zmiana
                         wymaga założenia nowego konta)
                     </small>
                 </p>

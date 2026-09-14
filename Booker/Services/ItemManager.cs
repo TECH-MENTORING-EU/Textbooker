@@ -505,7 +505,7 @@ public class ItemManager(DataContext context, StaticDataManager staticDataManage
 	{
 		return (item.Photo ?? "")
 			.Split(';', StringSplitOptions.RemoveEmptyEntries)
-			.Select(f => photosManager.GetPhotoUrl(f.Trim()))
+			.Select(f => photosManager.GetPhotoUrl(f.Trim(), "/img/default-book.svg"))
 			.ToList();
 	}
 
